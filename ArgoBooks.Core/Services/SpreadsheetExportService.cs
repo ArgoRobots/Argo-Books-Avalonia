@@ -33,22 +33,30 @@ public class SpreadsheetExportService
 
         _country = companyData.Settings.Company.Country;
 
-        using var workbook = new XLWorkbook();
-
-        foreach (var dataItem in selectedDataItems)
+        // Building the workbook runs off the calling thread, not just saving it. Composing a
+        // sheet per data type for a whole company is where the seconds go, and doing that on the
+        // UI thread meant the caller's loading overlay was set and then never painted: the
+        // window simply froze until the file appeared. The PDF export below has always worked
+        // this way.
+        await Task.Run(() =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            AddWorksheet(workbook, dataItem, companyData, startDate, endDate);
-        }
+            using var workbook = new XLWorkbook();
 
-        // Ensure at least one worksheet exists
-        if (workbook.Worksheets.Count == 0)
-        {
-            var ws = workbook.Worksheets.Add("Empty");
-            ws.Cell(1, 1).Value = "No data selected for export";
-        }
+            foreach (var dataItem in selectedDataItems)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                AddWorksheet(workbook, dataItem, companyData, startDate, endDate);
+            }
 
-        await Task.Run(() => workbook.SaveAs(filePath), cancellationToken);
+            // Ensure at least one worksheet exists
+            if (workbook.Worksheets.Count == 0)
+            {
+                var ws = workbook.Worksheets.Add("Empty");
+                ws.Cell(1, 1).Value = "No data selected for export";
+            }
+
+            workbook.SaveAs(filePath);
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -68,15 +76,23 @@ public class SpreadsheetExportService
 
         _country = companyData.Settings.Company.Country;
 
-        var sb = new StringBuilder();
-
-        foreach (var dataItem in selectedDataItems)
+        // Off the calling thread for the same reason as the Excel export above: the text is
+        // built a row at a time out of the whole company, and the caller cannot paint a loading
+        // overlay while that happens on its own thread.
+        string csv = await Task.Run(() =>
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            AppendCsvSection(sb, dataItem, companyData, startDate, endDate);
-        }
+            var sb = new StringBuilder();
 
-        await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8, cancellationToken);
+            foreach (var dataItem in selectedDataItems)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                AppendCsvSection(sb, dataItem, companyData, startDate, endDate);
+            }
+
+            return sb.ToString();
+        }, cancellationToken);
+
+        await File.WriteAllTextAsync(filePath, csv, Encoding.UTF8, cancellationToken);
     }
 
     /// <summary>
@@ -275,6 +291,7 @@ public class SpreadsheetExportService
         {
             "Customers" => GetCustomersData(data),
             "Invoices" => GetInvoicesData(data, startDate, endDate),
+            "Invoice Line Items" => GetInvoiceLineItemsData(data, startDate, endDate),
             "Expenses" or "Purchases" => GetExpensesData(data, startDate, endDate),
             "Products" => GetProductsData(data),
             "Inventory" => GetInventoryData(data),
@@ -289,9 +306,38 @@ public class SpreadsheetExportService
             "Stock Adjustments" => GetStockAdjustmentsData(data, startDate, endDate),
             "Purchase Orders" => GetPurchaseOrdersData(data, startDate, endDate),
             "Purchase Order Line Items" => GetPurchaseOrderLineItemsData(data, startDate, endDate),
+            "Employees" => GetEmployeesData(data),
+            "Pay Runs" => GetPayRunsData(data, startDate, endDate),
             _ => ([], [])
         };
     }
+
+    /// <summary>
+    /// Id to name for the sheets that print both.
+    ///
+    /// Tolerates a repeated id by keeping the last one rather than throwing, which
+    /// <c>ToDictionary</c> would. A name column is a convenience and must never be the reason a
+    /// whole export fails: the ids come from imported files as well as from this app.
+    /// </summary>
+    private static Dictionary<string, string> NameLookup<T>(
+        IEnumerable<T> items, Func<T, string> id, Func<T, string> name)
+    {
+        var lookup = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (T item in items)
+        {
+            lookup[id(item)] = name(item);
+        }
+
+        return lookup;
+    }
+
+    /// <summary>
+    /// The name for an id, or blank. Blank rather than the id repeated, so an empty cell reads
+    /// as "nobody was recorded" and the reader looks at the id column beside it.
+    /// </summary>
+    private static string Named(Dictionary<string, string> lookup, string? id) =>
+        id is { Length: > 0 } && lookup.TryGetValue(id, out string? name) ? name : "";
 
     private (string[] Headers, List<object[]> Rows) GetCustomersData(CompanyData data)
     {
@@ -318,12 +364,22 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetInvoicesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "Invoice #", "Customer ID", "Issue Date", "Due Date", "Subtotal", "Tax", "Total", "Paid", "Balance", "Status" };
+        // Who the invoice was for, beside the id that identifies them. Chasing an unpaid
+        // invoice off this sheet meant looking CUS-003 up somewhere else first.
+        var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
+
+        // ID and Invoice # are two different values: INV-2026-00001 and #INV-2026-00001. Only
+        // the first appears anywhere else, so exporting only the second left the payments sheet
+        // pointing at invoice ids that were nowhere on the invoices sheet, and re-importing put
+        // the display number in the id field and prefixed every invoice with a hash.
+        var headers = new[] { "ID", "Invoice #", "Customer ID", "Customer Name", "Issue Date", "Due Date", "Subtotal", "Tax", "Total", "Paid", "Balance", "Status", "Currency" };
         var filtered = data.Invoices.Where(i => IsInDateRange(i.IssueDate, startDate, endDate));
         var rows = filtered.Select(i => new object[]
         {
+            i.Id,
             i.InvoiceNumber,
             i.CustomerId,
+            Named(customerNames, i.CustomerId),
             i.IssueDate,
             i.DueDate,
             i.Subtotal,
@@ -331,25 +387,72 @@ public class SpreadsheetExportService
             i.Total,
             i.AmountPaid,
             i.Balance,
-            i.Status.ToString()
+            i.Status.ToString(),
+            i.OriginalCurrency
         }).ToList();
+        return (headers, rows);
+    }
+
+    /// <summary>
+    /// What was actually on each invoice, one row per line.
+    ///
+    /// Modelled on the Purchase Order Line Items sheet, which had the same shape and the same
+    /// reason to exist. Without it an invoice exports as a set of totals with nothing behind
+    /// them, and re-importing produces an invoice with no lines at all.
+    /// </summary>
+    private (string[] Headers, List<object[]> Rows) GetInvoiceLineItemsData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    {
+        var headers = new[] { "Invoice ID", "Product ID", "Description", "Quantity", "Unit Price", "Tax Rate", "Discount", "Amount" };
+        var filtered = data.Invoices.Where(i => IsInDateRange(i.IssueDate, startDate, endDate));
+        var rows = filtered
+            .SelectMany(i => i.LineItems.Select(li => new object[]
+            {
+                i.Id,
+                li.ProductId ?? "",
+                li.Description,
+                li.Quantity,
+                li.UnitPrice,
+                li.TaxRate,
+                li.Discount,
+
+                // Derived on the model rather than stored, so it is printed for reading and not
+                // read back on import: quantity, price and discount are what rebuild the line.
+                li.Amount
+            }))
+            .ToList();
         return (headers, rows);
     }
 
     private (string[] Headers, List<object[]> Rows) GetExpensesData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Supplier ID", "Product", "Unit Price", "Tax", "Total", "Payment Method" };
+        // The name sits beside the id so a sheet of scanned receipts can be read on its own,
+        // without holding it next to the Suppliers sheet to find out who SUP-014 is.
+        //
+        // Presentation only. Supplier ID is still what identifies the supplier, and the Expenses
+        // import schema does not carry a name column, so a re-imported export is unchanged.
+        var supplierNames = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
+
+        // Quantity, Shipping, Reference and Currency were all missing. Quantity mattered most:
+        // the Unit Price column was being fed Amount, which is quantity times unit price, so on
+        // any row with more than one unit the columns visibly failed to add up to the total and
+        // a re-import turned three units into one.
+        var headers = new[] { "ID", "Date", "Supplier ID", "Supplier Name", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Method", "Currency" };
         var filtered = data.Expenses.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
             p.Date,
             p.SupplierId ?? "",
+            Named(supplierNames, p.SupplierId),
             p.Description,
-            p.Amount,
+            p.Quantity,
+            p.UnitPrice,
             p.TaxAmount,
+            p.ShippingCost,
             p.Total,
-            p.PaymentMethod.ToString()
+            p.ReferenceNumber,
+            p.PaymentMethod.ToString(),
+            p.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -357,8 +460,8 @@ public class SpreadsheetExportService
     private (string[] Headers, List<object[]> Rows) GetProductsData(CompanyData data)
     {
         // Build lookup dictionaries for category and supplier names
-        var categoryLookup = data.Categories.ToDictionary(c => c.Id, c => c.Name);
-        var supplierLookup = data.Suppliers.ToDictionary(s => s.Id, s => s.Name);
+        var categoryLookup = NameLookup(data.Categories, c => c.Id, c => c.Name);
+        var supplierLookup = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
 
         var headers = new[] { "ID", "Name", "Type", "Item Type", "SKU", "Description", "Category ID", "Category Name", "Supplier ID", "Supplier Name", "Reorder Point", "Overstock Threshold" };
         var rows = data.Products.Select(p => new object[]
@@ -375,9 +478,9 @@ public class SpreadsheetExportService
             p.Sku,
             p.Description,
             p.CategoryId ?? "",
-            p.CategoryId != null && categoryLookup.TryGetValue(p.CategoryId, out var catName) ? catName : "",
+            Named(categoryLookup, p.CategoryId),
             p.SupplierId ?? "",
-            p.SupplierId != null && supplierLookup.TryGetValue(p.SupplierId, out var supName) ? supName : "",
+            Named(supplierLookup, p.SupplierId),
             p.ReorderPoint,
             p.OverstockThreshold
         }).ToList();
@@ -404,18 +507,24 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetPaymentsData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Invoice ID", "Customer ID", "Date", "Amount", "Payment Method", "Reference", "Notes" };
+        // Reconciling a bank statement against this sheet is the main use for it, and a column
+        // of customer ids is the wrong thing to be holding a statement next to.
+        var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
+
+        var headers = new[] { "ID", "Invoice ID", "Customer ID", "Customer Name", "Date", "Amount", "Payment Method", "Reference", "Notes", "Currency" };
         var filtered = data.Payments.Where(p => IsInDateRange(p.Date, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
             p.InvoiceId,
             p.CustomerId,
+            Named(customerNames, p.CustomerId),
             p.Date,
             p.Amount,
             p.PaymentMethod.ToString(),
             p.ReferenceNumber ?? "",
-            p.Notes
+            p.Notes,
+            p.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -443,18 +552,28 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetRevenueData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Date", "Customer ID", "Product", "Unit Price", "Tax", "Total", "Payment Status" };
+        // The mirror of the supplier name on the expenses sheet, and presentation only for the
+        // same reason: Customer ID identifies the customer, this just saves the cross-reference.
+        var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
+
+        // The same four columns the expenses sheet was missing, for the same reasons.
+        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Status", "Currency" };
         var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {
             s.Id,
             s.Date,
             s.CustomerId ?? "",
+            Named(customerNames, s.CustomerId),
             s.Description,
-            s.Amount,
+            s.Quantity,
+            s.UnitPrice,
             s.TaxAmount,
+            s.ShippingCost,
             s.Total,
-            s.PaymentStatus.ToString()
+            s.ReferenceNumber,
+            s.PaymentStatus.ToString(),
+            s.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -591,16 +710,20 @@ public class SpreadsheetExportService
 
     private (string[] Headers, List<object[]> Rows) GetPurchaseOrdersData(CompanyData data, DateTime? startDate, DateTime? endDate)
     {
-        var headers = new[] { "ID", "Supplier ID", "Order Date", "Expected Date", "Total", "Status" };
+        var supplierNames = NameLookup(data.Suppliers, s => s.Id, s => s.Name);
+
+        var headers = new[] { "ID", "Supplier ID", "Supplier Name", "Order Date", "Expected Date", "Total", "Status", "Currency" };
         var filtered = data.PurchaseOrders.Where(p => IsInDateRange(p.OrderDate, startDate, endDate));
         var rows = filtered.Select(p => new object[]
         {
             p.Id,
             p.SupplierId,
+            Named(supplierNames, p.SupplierId),
             p.OrderDate,
             p.ExpectedDeliveryDate,
             p.Total,
-            p.Status.ToString()
+            p.Status.ToString(),
+            p.OriginalCurrency
         }).ToList();
         return (headers, rows);
     }
@@ -619,6 +742,132 @@ public class SpreadsheetExportService
                 li.QuantityReceived
             }))
             .ToList();
+        return (headers, rows);
+    }
+
+    /// <summary>
+    /// The payroll list, as an entity sheet like Customers and Suppliers.
+    ///
+    /// Includes the social insurance number, because without it the sheet cannot be used to set
+    /// payroll up again and a T4 cannot be filed. It is the employer's own record of their own
+    /// staff, which is what the rest of this export is too, but it is the most sensitive column
+    /// the app writes and worth knowing is there before mailing a workbook to anyone.
+    /// </summary>
+    private (string[] Headers, List<object[]> Rows) GetEmployeesData(CompanyData data)
+    {
+        var (stateLabel, _, postalLabel, _) = ImportSchemaDefinition.GetAddressLabels(_country);
+
+        var headers = new[]
+        {
+            "ID", "Name", "Employee #", "SIN", "Province of Employment", "Pay Type", "Pay Rate",
+            "Pay Frequency", "Standard Hours Per Week", "Federal Claim Amount", "Provincial Claim Amount",
+            "Ontario Dependants", "CPP Exempt", "EI Exempt", "Dental Benefit", "Start Date", "End Date",
+            "Street", "City", stateLabel, postalLabel, "Country", "Status", "Notes"
+        };
+
+        var rows = data.Employees.Select(e => new object[]
+        {
+            e.Id,
+            e.Name,
+            e.EmployeeNumber,
+            e.Sin,
+
+            // Where they WORK, which picks the tax table. Their home province is in the address
+            // columns and is not necessarily the same one.
+            e.Province,
+            e.PayType.ToString(),
+            e.PayRate,
+            e.PayFrequency.ToString(),
+
+            // Blank rather than zero when unknown. Zero hours on a record of employment costs
+            // the employee their claim, so the difference has to survive the trip.
+            e.StandardHoursPerWeek.HasValue ? (object)e.StandardHoursPerWeek.Value : "",
+            e.FederalClaimAmount,
+            e.ProvincialClaimAmount,
+
+            // Ontario only, and zero everywhere else. Exported so a sheet round trip does not
+            // quietly drop it, the way the per-line invoice discount was being dropped.
+            e.OntarioDependants,
+            e.IsCppExempt,
+            e.IsEiExempt,
+            e.DentalBenefit.ToString(),
+            e.StartDate ?? DateTime.MinValue,
+            e.EndDate ?? DateTime.MinValue,
+            e.Address.Street,
+            e.Address.City,
+            e.Address.State,
+            e.Address.ZipCode,
+            e.Address.Country,
+            e.IsArchived ? "Archived" : "Active",
+            e.Notes
+        }).ToList();
+
+        return (headers, rows);
+    }
+
+    /// <summary>
+    /// The payroll register: one row per employee per pay run, with the run's own details
+    /// repeated across its rows.
+    ///
+    /// Flat rather than split into a runs sheet and a lines sheet, because this is the shape an
+    /// accountant asks for and the shape a pivot table wants. It is also why it is export only:
+    /// see the note on <see cref="Models.Payroll.PayRun"/>. An approved run's figures are frozen
+    /// so a stub reprinted next year still matches the one the employee was handed, and an
+    /// importer that let those be typed over in a spreadsheet would defeat that.
+    /// </summary>
+    private (string[] Headers, List<object[]> Rows) GetPayRunsData(CompanyData data, DateTime? startDate, DateTime? endDate)
+    {
+        var headers = new[]
+        {
+            "Run ID", "Pay Date", "Period Start", "Period End", "Status", "Rate Edition", "Voids Run ID",
+            "Employee ID", "Employee Name", "Province", "Pay Periods Per Year", "Hours Worked",
+            "Base Pay", "Bonus", "Vacation Pay", "Gross Pay",
+            "CPP", "CPP2", "EI", "QPIP", "Federal Tax", "Provincial Tax", "Net Pay",
+            "Employer CPP", "Employer CPP2", "Employer EI", "Employer QPIP",
+            "Total Remittance", "Total Cost", "Expense ID"
+        };
+
+        var filtered = data.PayRuns.Where(r => IsInDateRange(r.PayDate, startDate, endDate));
+
+        var rows = filtered
+            .SelectMany(run => run.Lines.Select(line => new object[]
+            {
+                run.Id,
+                run.PayDate,
+                run.PeriodStart,
+                run.PeriodEnd,
+                run.Status.ToString(),
+
+                // Which CRA edition produced these figures. Two runs in the same year can use
+                // different tables, so a register without it cannot be checked against anything.
+                run.RateEditionId,
+                run.VoidsPayRunId ?? "",
+                line.EmployeeId,
+                line.EmployeeName,
+                line.Province,
+                line.PayPeriodsPerYear,
+                line.HoursWorked,
+                line.BasePay,
+                line.Bonus,
+                line.VacationPay,
+                line.GrossPay,
+                line.CppEmployee,
+                line.Cpp2Employee,
+                line.EiEmployee,
+                line.QpipEmployee,
+                line.FederalTax,
+                line.ProvincialTax,
+                line.NetPay,
+                line.CppEmployer,
+                line.Cpp2Employer,
+                line.EiEmployer,
+                line.QpipEmployer,
+                line.TotalRemittance,
+                line.TotalCost,
+                line.ExpenseId ?? ""
+            }))
+            .ToList();
+
         return (headers, rows);
     }
 

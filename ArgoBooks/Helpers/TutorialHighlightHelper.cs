@@ -43,56 +43,6 @@ public static class TutorialHighlightHelper
     }
 
     /// <summary>
-    /// Computes a bounding rectangle around the actual TabItem headers inside
-    /// a named TabControl, relative to the overlay. The ItemsPresenter stretches
-    /// full width, so we union the bounds of each TabItem to get a tight fit.
-    /// </summary>
-    public static Rect? GetTabItemsBounds(Control overlay, Visual root, string tabControlName)
-    {
-        var tabControl = FindElementByName<TabControl>(root, tabControlName);
-        if (tabControl == null)
-            return null;
-
-        Rect? union = null;
-
-        foreach (var descendant in tabControl.GetVisualDescendants())
-        {
-            if (descendant is not TabItem tabItem || !tabItem.IsVisible)
-                continue;
-
-            try
-            {
-                var transform = tabItem.TransformToVisual(overlay);
-                if (transform == null)
-                    continue;
-
-                var itemBounds = new Rect(0, 0, tabItem.Bounds.Width, tabItem.Bounds.Height);
-                var topLeft = transform.Value.Transform(itemBounds.TopLeft);
-                var bottomRight = transform.Value.Transform(itemBounds.BottomRight);
-                var mapped = new Rect(topLeft, bottomRight);
-
-                union = union == null ? mapped : union.Value.Union(mapped);
-            }
-            catch
-            {
-                // skip items we can't transform
-            }
-        }
-
-        if (union == null)
-            return null;
-
-        // Add padding around the tab items, then border thickness outside that
-        const double padding = 6;
-        var r = union.Value;
-        return new Rect(
-            r.X - padding - BorderThickness,
-            r.Y - padding - BorderThickness,
-            r.Width + (padding + BorderThickness) * 2,
-            r.Height + (padding + BorderThickness) * 2);
-    }
-
-    /// <summary>
     /// Calculates highlight bounds relative to the overlay, with proper edge
     /// clamping to prevent overflow.
     /// </summary>

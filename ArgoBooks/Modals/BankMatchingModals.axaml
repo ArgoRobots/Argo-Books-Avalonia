@@ -162,7 +162,7 @@
 
                         <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                <Button Grid.Column="0" Content="{loc:Loc 'Clear Filters'}" Classes="secondary-button"
+                                <Button Grid.Column="0" Content="{loc:Loc 'Clear filters'}" Classes="secondary-button"
                                         HorizontalAlignment="Left" Command="{Binding ClearFiltersCommand}" />
                                 <Button Grid.Column="2" Content="{loc:Loc Cancel}" Classes="secondary-button"
                                         Margin="0,0,12,0" Command="{Binding CloseFilterModalCommand}" />
@@ -221,7 +221,7 @@
 
                         <Border Padding="24,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                <Button Grid.Column="0" Content="{loc:Loc 'Clear Filters'}" Classes="secondary-button"
+                                <Button Grid.Column="0" Content="{loc:Loc 'Clear filters'}" Classes="secondary-button"
                                         HorizontalAlignment="Left" Command="{Binding ClearMissingFiltersCommand}" />
                                 <Button Grid.Column="2" Content="{loc:Loc Cancel}" Classes="secondary-button"
                                         Margin="0,0,12,0" Command="{Binding CloseMissingFilterModalCommand}" />

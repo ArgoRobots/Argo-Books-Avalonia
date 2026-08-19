@@ -807,29 +807,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         CloseDeleteConfirm();
     }
 
-    /// <summary>
-    /// Gets the name of the category being deleted (for display in confirmation).
-    /// </summary>
-    public string DeletingCategoryName => _deletingCategory?.Name ?? string.Empty;
-
-    /// <summary>
-    /// Gets whether the category being deleted has child categories.
-    /// </summary>
-    public bool DeletingCategoryHasChildren
-    {
-        get
-        {
-            if (_deletingCategory == null)
-                return false;
-
-            var companyData = App.CompanyManager?.CompanyData;
-            if (companyData == null)
-                return false;
-
-            return companyData.Categories.Any(c => c.ParentId == _deletingCategory.Id);
-        }
-    }
-
     #endregion
 
     #region Move Category
@@ -996,10 +973,6 @@ public partial class CategoryDisplayItem : ObservableObject
     [ObservableProperty]
     private CategoryType _type;
 
-    /// <summary>
-    /// Display string for product/service count.
-    /// </summary>
-    public string ProductCountDisplay => ProductCount == 1 ? "1 item" : $"{ProductCount} items";
 }
 
 /// <summary>

@@ -1,4 +1,6 @@
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Models.Payroll;
+using ArgoBooks.Core.Services.Payroll;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -302,6 +304,207 @@ public class SampleCompanyServiceTests
         var path = SampleCompanyService.GetSampleCompanyPath();
 
         Assert.Contains("ArgoBooks", path);
+    }
+
+    #endregion
+
+    #region Sample payroll
+
+    /// <summary>
+    /// A reference date the shipped rate editions cover for all six runs, which reach back
+    /// seventy days from it. Payroll is skipped outright when nothing covers a pay date, which is
+    /// correct behaviour and would quietly make every assertion below vacuous.
+    ///
+    /// Fixed rather than relative to today, so these test the generator and not the calendar, and
+    /// far enough back that the time-shift has something to move: it does nothing when the data
+    /// is already current.
+    /// </summary>
+    private static readonly DateTime Covered = new(2026, 6, 15);
+
+    private static CompanyData WithSamplePayroll()
+    {
+        var data = new CompanyData();
+
+        // The real sample company fills these in before payroll is added. Year end validation
+        // reads them, so a bare CompanyData would fail on the company rather than the payroll.
+        data.Settings.Company.Name = "TechFlow Solutions";
+        data.Settings.Localization.Currency = "CAD";
+
+        SampleCompanyService.AddSamplePayroll(data, Covered);
+        return data;
+    }
+
+    [Fact]
+    public void SamplePayroll_AddsEmployeesAndApprovedRuns()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        Assert.Equal(3, data.Employees.Count);
+        Assert.NotEmpty(data.PayRuns);
+        Assert.All(data.PayRuns, r => Assert.Equal(PayRunStatus.Approved, r.Status));
+    }
+
+    /// <summary>
+    /// The real sample company arrives with employees already imported from the workbook's
+    /// Employees sheet, carrying a name and a salary but nothing payroll needs. This used to see
+    /// them, conclude payroll was set up, and add nothing, so the sample shipped with eight
+    /// nameless employees and no pay runs.
+    /// </summary>
+    [Fact]
+    public void SamplePayroll_CompletesEmployeesThatCameFromTheSpreadsheet()
+    {
+        var data = new CompanyData();
+        data.Settings.Company.Name = "TechFlow Solutions";
+        data.Settings.Localization.Currency = "CAD";
+        data.Employees.Add(new Employee
+        {
+            Id = "EMP-001",
+            Name = "Marcus Johnson",
+            PayType = PayType.Salary,
+            PayRate = 95000m,
+            PayFrequency = PayFrequency.Biweekly,
+        });
+
+        SampleCompanyService.AddSamplePayroll(data, Covered);
+
+        Employee employee = data.Employees.Single();
+
+        // The spreadsheet's own values survive.
+        Assert.Equal("Marcus Johnson", employee.Name);
+        Assert.Equal(95000m, employee.PayRate);
+
+        // What payroll needs and the sheet does not carry is filled in.
+        Assert.NotEmpty(employee.Province);
+        Assert.Equal(9, employee.Sin.Length);
+        Assert.NotEmpty(employee.Address.City);
+
+        Assert.NotEmpty(data.PayRuns);
+        Assert.All(data.PayRuns.SelectMany(r => r.Lines), l => Assert.True(l.GrossPay > 0));
+    }
+
+    /// <summary>
+    /// The point of building these through PayrollService rather than writing figures out by
+    /// hand: every deduction is real CRA arithmetic, so nobody has to redo the sample when the
+    /// rates change.
+    /// </summary>
+    [Fact]
+    public void SamplePayroll_HasRealDeductionsOnEveryLine()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        Assert.All(data.PayRuns.SelectMany(r => r.Lines), line =>
+        {
+            Assert.True(line.GrossPay > 0, "every line should have been paid something");
+            Assert.True(line.NetPay > 0 && line.NetPay < line.GrossPay, "net should be gross less deductions");
+            Assert.True(line.FederalTax > 0);
+        });
+    }
+
+    /// <summary>An hourly employee earns nothing until hours are put on the run.</summary>
+    [Fact]
+    public void SamplePayroll_PaysTheHourlyEmployee()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        Employee hourly = data.Employees.Single(e => e.PayType == PayType.Hourly);
+
+        Assert.All(
+            data.PayRuns.SelectMany(r => r.Lines).Where(l => l.EmployeeId == hourly.Id),
+            line => Assert.Equal(75m * hourly.PayRate, line.BasePay));
+    }
+
+    /// <summary>
+    /// Runs are built oldest first so each one's deductions see the year-to-date the ones before
+    /// it produced. Built the other way round everybody restarts at zero and the annual ceilings
+    /// never bite.
+    /// </summary>
+    [Fact]
+    public void SamplePayroll_AccumulatesYearToDate()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        Employee salaried = data.Employees.First(e => e.PayType == PayType.Salary);
+        PayrollYearToDate ytd = new PayrollService().YearToDateFor(data, salaried.Id);
+
+        decimal paid = data.PayRuns
+            .SelectMany(r => r.Lines)
+            .Where(l => l.EmployeeId == salaried.Id)
+            .Sum(l => l.GrossPay);
+
+        Assert.Equal(paid, ytd.PensionableEarnings);
+        Assert.True(ytd.CppEmployee > 0);
+    }
+
+    /// <summary>Wages have to reach the books, or the sample contradicts what the app claims.</summary>
+    [Fact]
+    public void SamplePayroll_RecordsTheWagesAsExpenses()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        Assert.All(data.PayRuns.SelectMany(r => r.Lines), line => Assert.NotNull(line.ExpenseId));
+        Assert.Equal(data.PayRuns.Sum(r => r.Lines.Count), data.Expenses.Count);
+    }
+
+    /// <summary>
+    /// The sample must not trip the year end validation it exists to demonstrate. Every rule
+    /// added for the T4 filing applies to these employees too.
+    /// </summary>
+    [Fact]
+    public void SamplePayroll_PassesYearEndValidation()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        T4Return t4 = new T4Service().Build(data, Covered.Year);
+
+        Assert.Empty(T4Service.Validate(data, t4));
+        Assert.Empty(T4Service.Warnings(t4));
+    }
+
+    /// <summary>
+    /// The wage expenses shift with everything else, so the runs have to move by the same offset
+    /// or a pay run and the expense it created land on different days.
+    /// </summary>
+    [Fact]
+    public void TimeShift_MovesPayrollWithTheRestOfTheData()
+    {
+        CompanyData data = WithSamplePayroll();
+
+        DateTime firstPayDate = data.PayRuns.Min(r => r.PayDate);
+        DateTime firstWage = data.Expenses.Min(e => e.Date);
+
+        SampleCompanyService.TimeShiftSampleData(data);
+
+        Assert.Equal(
+            (data.Expenses.Min(e => e.Date) - firstWage).Days,
+            (data.PayRuns.Min(r => r.PayDate) - firstPayDate).Days);
+
+        Assert.NotEqual(firstPayDate, data.PayRuns.Min(r => r.PayDate));
+    }
+
+    /// <summary>
+    /// The guard is on pay runs, not employees.
+    ///
+    /// It used to be on employees, which is what made the sample ship with none: the workbook's
+    /// Employees sheet meant there were always some, so payroll was never added. Existing
+    /// employees are now deliberately topped up rather than treated as a reason to stop, so what
+    /// has to hold instead is that a company which already has payroll is left completely alone.
+    /// </summary>
+    [Fact]
+    public void SamplePayroll_DoesNothingWhenPayrollAlreadyExists()
+    {
+        var data = new CompanyData();
+        data.Employees.Add(new Employee { Id = "EMP-900", Name = "Real Person", Province = "AB" });
+        data.PayRuns.Add(new PayRun { Id = "PR-0001", PayDate = Covered, Status = PayRunStatus.Approved });
+
+        SampleCompanyService.AddSamplePayroll(data, Covered);
+
+        Employee employee = data.Employees.Single();
+
+        Assert.Equal("Real Person", employee.Name);
+        Assert.Equal("AB", employee.Province);
+        Assert.Empty(employee.Sin);
+        Assert.Single(data.PayRuns);
+        Assert.Empty(data.Expenses);
     }
 
     #endregion

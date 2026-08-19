@@ -88,7 +88,7 @@
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
                                                    SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
 
-                        <table:ArgoTableHeader Header="{loc:Loc 'In Stock'}" ColumnName="InStock" SortProperty="InStock"
+                        <table:ArgoTableHeader Header="{loc:Loc 'In stock'}" ColumnName="InStock" SortProperty="InStock"
                                                    ColumnWidth="{Binding ColumnWidths.InStockColumnWidth}"
                                                    IsColumnVisible="{Binding ShowInStockColumn}"
                                                    SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -243,7 +243,7 @@
             <StackPanel Spacing="4">
                 <CheckBox IsChecked="{Binding ShowItemColumn}" Content="{loc:Loc 'Item'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc 'Status'}" Classes="column-toggle" />
-                <CheckBox IsChecked="{Binding ShowInStockColumn}" Content="{loc:Loc 'In Stock'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowInStockColumn}" Content="{loc:Loc 'In stock'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDailyRateColumn}" Content="{loc:Loc 'Daily Rate'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowWeeklyRateColumn}" Content="{loc:Loc 'Weekly Rate'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDepositColumn}" Content="{loc:Loc 'Deposit'}" Classes="column-toggle" />

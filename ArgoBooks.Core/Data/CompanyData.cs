@@ -63,6 +63,20 @@ public class CompanyData
     public List<Supplier> Suppliers { get; init; } = [];
 
     /// <summary>
+    /// Everyone on the payroll, including those who have left. Employees are archived rather
+    /// than removed, because a T4 must still be produceable for someone who left mid-year.
+    /// </summary>
+    [JsonPropertyName("employees")]
+    public List<Models.Payroll.Employee> Employees { get; init; } = [];
+
+    /// <summary>
+    /// Every payroll ever run, including voided ones and the reversals that cancelled them.
+    /// Nothing is removed: an approved run's figures are what the employee's pay stub says.
+    /// </summary>
+    [JsonPropertyName("payRuns")]
+    public List<Models.Payroll.PayRun> PayRuns { get; init; } = [];
+
+    /// <summary>
     /// All categories (revenue, expense, rental).
     /// </summary>
     [JsonPropertyName("categories")]
@@ -271,23 +285,6 @@ public class CompanyData
     #region Helper Methods
 
     /// <summary>
-    /// Gets the earliest transaction date across revenues, expenses, and payments only.
-    /// Returns DateTime.Today if no transactions exist.
-    /// Prefer <see cref="GetEarliestDate"/> when you need the earliest date across all data.
-    /// </summary>
-    public DateTime GetEarliestTransactionDate()
-    {
-        // Use year 1900 as minimum to avoid DateTime arithmetic overflow from default/unset dates
-        var minValid = new DateTime(1900, 1, 1);
-        var dates = new List<DateTime>();
-        if (Revenues.Count > 0) dates.Add(Revenues.Where(r => r.Date >= minValid).Select(r => r.Date).DefaultIfEmpty(DateTime.Today).Min());
-        if (Expenses.Count > 0) dates.Add(Expenses.Where(e => e.Date >= minValid).Select(e => e.Date).DefaultIfEmpty(DateTime.Today).Min());
-        if (Payments.Count > 0) dates.Add(Payments.Where(p => p.Date >= minValid).Select(p => p.Date).DefaultIfEmpty(DateTime.Today).Min());
-
-        return dates.Count > 0 ? dates.Min() : DateTime.Today;
-    }
-
-    /// <summary>
     /// Gets the earliest date across all dated collections (revenues, expenses, payments,
     /// invoices, stock adjustments, purchase orders, and rental records).
     /// Returns DateTime.Today if no dated records exist.
@@ -472,22 +469,10 @@ public class CompanyData
     }
 
     /// <summary>
-    /// Gets inventory item by product and location.
-    /// </summary>
-    public InventoryItem? GetInventoryItem(string productId, string locationId) =>
-        Inventory.FirstOrDefault(i => i.ProductId == productId && i.LocationId == locationId);
-
-    /// <summary>
     /// Gets an invoice template by ID.
     /// </summary>
     public InvoiceTemplate? GetInvoiceTemplate(string id) =>
         InvoiceTemplates.FirstOrDefault(t => t.Id == id);
-
-    /// <summary>
-    /// Gets the default invoice template, or null if none is set.
-    /// </summary>
-    public InvoiceTemplate? GetDefaultInvoiceTemplate() =>
-        InvoiceTemplates.FirstOrDefault(t => t.IsDefault) ?? InvoiceTemplates.FirstOrDefault();
 
     /// <summary>
     /// Marks the data as modified.

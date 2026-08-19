@@ -67,36 +67,10 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
     public ObservableCollection<CounterpartyOption> SupplierOptions => CounterpartyOptions;
 
-    // Filter aliases
-    public CounterpartyOption? FilterSelectedSupplier
-    {
-        get => FilterSelectedCounterparty;
-        set => FilterSelectedCounterparty = value;
-    }
-
     public string? FilterSupplierId
     {
         get => FilterCounterpartyId;
         set => FilterCounterpartyId = value;
-    }
-
-    // Delete aliases
-    public string DeleteExpenseId
-    {
-        get => DeleteTransactionId;
-        set => DeleteTransactionId = value;
-    }
-
-    public string DeleteExpenseDescription
-    {
-        get => DeleteTransactionDescription;
-        set => DeleteTransactionDescription = value;
-    }
-
-    public string DeleteExpenseAmount
-    {
-        get => DeleteTransactionAmount;
-        set => DeleteTransactionAmount = value;
     }
 
     // Command aliases for AXAML bindings
@@ -521,8 +495,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash,
             Notes = ModalNotes,
             ReferenceNumber = string.Empty,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             // USD conversion fields
             OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD",
             TotalUSD = ConvertedTotal?.AmountUSD ?? Total,
@@ -631,7 +605,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
         expense.Total = Total;
         expense.PaymentMethod = Enum.TryParse<PaymentMethod>(SelectedPaymentMethod.Replace(" ", ""), out var pm) ? pm : PaymentMethod.Cash;
         expense.Notes = ModalNotes;
-        expense.UpdatedAt = DateTime.Now;
+        expense.UpdatedAt = DateTime.UtcNow;
         // USD conversion fields
         expense.OriginalCurrency = ConvertedTotal?.OriginalCurrency ?? "USD";
         expense.TotalUSD = ConvertedTotal?.AmountUSD ?? Total;
@@ -755,7 +729,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             Date = ModalDate?.DateTime ?? DateTime.Now,
             Supplier = supplier,
             Source = "Manual",
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
     }
 

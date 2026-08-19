@@ -263,20 +263,23 @@ public class LicenseService
         }
         catch (HttpRequestException ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network, "License validation network error");
+            // The probe runs either way to pick the user's message, so classifying the log
+            // entry from its answer is free: a customer whose connection dropped is a
+            // warning, our licence endpoint being unreachable is an error worth chasing.
             return new LicenseValidationResult
             {
                 Status = LicenseValidationStatus.NetworkError,
-                Message = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken)
+                Message = await NetworkFailure.ResolveAndReportAsync(
+                    _errorLogger, ex, "License validation network error", _connectivityService, cancellationToken)
             };
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || !cancellationToken.IsCancellationRequested)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Network, "License validation timeout");
             return new LicenseValidationResult
             {
                 Status = LicenseValidationStatus.NetworkError,
-                Message = await ConnectivityMessage.ResolveAsync(_connectivityService, cancellationToken)
+                Message = await NetworkFailure.ResolveAndReportAsync(
+                    _errorLogger, ex, "License validation timeout", _connectivityService, cancellationToken)
             };
         }
         catch (TaskCanceledException)

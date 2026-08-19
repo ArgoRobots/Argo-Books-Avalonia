@@ -81,43 +81,6 @@ public partial class LoadingSpinner : UserControl
         _ => 3
     };
 
-    /// <summary>
-    /// Gets the arc start point.
-    /// </summary>
-    public Point ArcStart
-    {
-        get
-        {
-            var center = ComputedSize / 2;
-            return new Point(center, StrokeThickness / 2);
-        }
-    }
-
-    /// <summary>
-    /// Gets the arc end point (90 degrees sweep).
-    /// </summary>
-    public Point ArcEnd
-    {
-        get
-        {
-            var center = ComputedSize / 2;
-            var radius = center - StrokeThickness / 2;
-            return new Point(center + radius, center);
-        }
-    }
-
-    /// <summary>
-    /// Gets the arc size for the path.
-    /// </summary>
-    public Size ArcSize
-    {
-        get
-        {
-            var radius = (ComputedSize - StrokeThickness) / 2;
-            return new Size(radius, radius);
-        }
-    }
-
     #endregion
 
     public LoadingSpinner()

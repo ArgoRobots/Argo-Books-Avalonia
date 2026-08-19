@@ -495,20 +495,6 @@ public class SpreadsheetImportService
         return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
     }
 
-    /// <summary>
-    /// Imports AI-processed entities and then runs AI categorization for any uncategorized products.
-    /// </summary>
-    public async Task<SheetImportResult> ImportProcessedEntitiesAsync(
-        CompanyData companyData,
-        List<LlmProcessedData> processedData,
-        string sheetName,
-        ImportOptions? options = null,
-        CancellationToken cancellationToken = default)
-    {
-        _ = cancellationToken; // reserved for future use
-        return ImportProcessedEntitiesCore(companyData, processedData, sheetName, options);
-    }
-
     private SheetImportResult ImportProcessedEntitiesCore(
         CompanyData companyData,
         List<LlmProcessedData> processedData,
@@ -851,8 +837,20 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.PurchaseOrders:
                 ImportPurchaseOrders(data, headers, rows, options);
                 break;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                ImportInvoiceLineItems(data, headers, rows, options);
+                break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.Employees:
+                ImportEmployees(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.PayRuns:
+                // Export only. An approved run's figures are frozen so a stub reprinted next
+                // year still matches the one the employee was handed, and reading them back
+                // from a sheet somebody could have typed in would defeat that. Listed rather
+                // than left to fall through, so the decision is visible here.
                 break;
             case SpreadsheetSheetType.Returns:
                 ImportReturns(data, headers, rows, options);
@@ -888,7 +886,9 @@ public class SpreadsheetImportService
         SpreadsheetSheetType.RecurringInvoices => data.RecurringInvoices.Count,
         SpreadsheetSheetType.StockAdjustments => data.StockAdjustments.Count,
         SpreadsheetSheetType.PurchaseOrders => data.PurchaseOrders.Count,
+        SpreadsheetSheetType.InvoiceLineItems => data.Invoices.SelectMany(i => i.LineItems).Count(),
         SpreadsheetSheetType.PurchaseOrderLineItems => data.PurchaseOrders.SelectMany(po => po.LineItems).Count(),
+        SpreadsheetSheetType.Employees => data.Employees.Count,
         SpreadsheetSheetType.Returns => data.Returns.Count,
         SpreadsheetSheetType.LostDamaged => data.LostDamaged.Count,
         _ => 0
@@ -920,10 +920,13 @@ public class SpreadsheetImportService
         }
         var countAfter = GetEntityCount(data, sheetType);
 
-        // Purchase-order line items are merged onto their parent order rather than added as
+        // Line items are merged onto their parent order or invoice rather than added as
         // first-class entities, so the collection-count delta doesn't reflect the rows processed.
         // Use the explicit per-row count the importer recorded instead.
-        var inserted = sheetType == SpreadsheetSheetType.PurchaseOrderLineItems && options != null
+        bool mergedOntoParent = sheetType is SpreadsheetSheetType.PurchaseOrderLineItems
+                                          or SpreadsheetSheetType.InvoiceLineItems;
+
+        var inserted = mergedOntoParent && options != null
             ? options.InsertedCount
             : Math.Max(0, countAfter - countBefore);
 
@@ -949,7 +952,8 @@ public class SpreadsheetImportService
         // span several rows; purchase-order line items merge onto a parent) legitimately have
         // more rows than entities, so the difference there is expected, not a dropped row.
         bool rowMapsToEntity = sheetType is not (
-            SpreadsheetSheetType.RentalRecords or SpreadsheetSheetType.PurchaseOrderLineItems);
+            SpreadsheetSheetType.RentalRecords or SpreadsheetSheetType.PurchaseOrderLineItems
+            or SpreadsheetSheetType.InvoiceLineItems);
         if (rowMapsToEntity)
         {
             var totalAccountedFor = result.Inserted + result.Updated + result.Skipped;
@@ -1649,11 +1653,20 @@ public class SpreadsheetImportService
                 return ImportEntityResult.Failed;
             case SpreadsheetSheetType.Invoices:
                 var invoice = JsonSerializer.Deserialize<Invoice>(jsonStr, opts);
+
+                // Either column can identify the invoice, and each fills in for the other.
+                // Sheets from elsewhere usually carry only an invoice number, and this app's own
+                // export now carries both, so neither can be assumed present.
+                if (invoice != null)
+                {
+                    if (string.IsNullOrEmpty(invoice.Id))
+                        invoice.Id = invoice.InvoiceNumber;
+                    else if (string.IsNullOrEmpty(invoice.InvoiceNumber))
+                        invoice.InvoiceNumber = invoice.Id;
+                }
+
                 if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
                 {
-                    // Ensure InvoiceNumber is set (schema maps "Invoice #" to "id", not "invoiceNumber")
-                    if (string.IsNullOrEmpty(invoice.InvoiceNumber))
-                        invoice.InvoiceNumber = invoice.Id;
 
                     var invoiceCurrency = ExtractRowCurrency(entityJson, options);
                     if (!string.IsNullOrEmpty(invoiceCurrency))
@@ -1968,6 +1981,23 @@ public class SpreadsheetImportService
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
                 return ImportEntityResult.Failed;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                // Like PO line items below: they belong to an invoice rather than to a
+                // collection of their own, so the parent has to be found first.
+                var invoiceLineItem = JsonSerializer.Deserialize<LineItem>(jsonStr, opts);
+                if (invoiceLineItem != null
+                    && entityJson.TryGetProperty("invoiceId", out var invoiceIdEl))
+                {
+                    var lineInvoiceId = invoiceIdEl.GetString();
+                    var parentInvoice = data.Invoices.FirstOrDefault(i => i.Id == lineInvoiceId)
+                                        ?? data.Invoices.FirstOrDefault(i => i.InvoiceNumber == lineInvoiceId);
+                    if (parentInvoice != null)
+                    {
+                        parentInvoice.LineItems.Add(invoiceLineItem);
+                        return ImportEntityResult.Inserted;
+                    }
+                }
+                return ImportEntityResult.Failed;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 // PO line items need special handling - they belong to a PurchaseOrder
                 var poLineItem = JsonSerializer.Deserialize<PurchaseOrderLineItem>(jsonStr, opts);
@@ -2012,6 +2042,21 @@ public class SpreadsheetImportService
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
                 return ImportEntityResult.Failed;
+            case SpreadsheetSheetType.Employees:
+                // Reachable: ImportSchemaDefinition publishes an Employees schema and the
+                // rescue classifier can return it. Same shape as Customers above.
+                var employee = JsonSerializer.Deserialize<Models.Payroll.Employee>(jsonStr, opts);
+                if (employee != null && !string.IsNullOrEmpty(employee.Id))
+                {
+                    employee.Name = NameOrUnknown(employee.Name);
+                    var existingEmployee = data.Employees.FirstOrDefault(e => e.Id == employee.Id);
+                    if (skipExisting && existingEmployee != null) return ImportEntityResult.SkippedExisting;
+                    if (existingEmployee != null) data.Employees.Remove(existingEmployee);
+                    data.Employees.Add(employee);
+                    return existingEmployee != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
+                }
+                return ImportEntityResult.Failed;
+
             default:
                 return ImportEntityResult.Failed;
         }
@@ -2033,13 +2078,15 @@ public class SpreadsheetImportService
             var rows = GetDataRows(worksheet, headers.Count);
             var sheetName = worksheet.Name;
 
-            var idColumn = sheetName switch
-            {
-                "Invoices" => "Invoice #",
-                _ => "ID"
-            };
+            // The Invoices sheet exports both "ID" (INV-2026-00001) and "Invoice #"
+            // (#INV-2026-00001), and the line item and payment sheets reference the ID, so that
+            // is what has to be collected. But ImportInvoices falls back to the number when a
+            // sheet has no ID column, and the schema documents that a sheet carrying only
+            // "Invoice #" still works, so this has to mirror that fallback per row or every
+            // child row of such a sheet is flagged as an orphan.
+            bool invoices = sheetName == "Invoices";
 
-            if (!headers.Contains(idColumn)) continue;
+            if (!headers.Contains("ID") && !(invoices && headers.Contains("Invoice #"))) continue;
 
             var entityType = GetEntityTypeFromSheetName(sheetName);
             if (string.IsNullOrEmpty(entityType)) continue;
@@ -2049,7 +2096,11 @@ public class SpreadsheetImportService
 
             foreach (var row in rows)
             {
-                var id = GetString(row, headers, idColumn);
+                var id = GetString(row, headers, "ID");
+
+                if (string.IsNullOrEmpty(id) && invoices)
+                    id = GetString(row, headers, "Invoice #");
+
                 if (!string.IsNullOrEmpty(id))
                     ids[entityType].Add(id);
             }
@@ -2172,6 +2223,9 @@ public class SpreadsheetImportService
                 break;
             case SpreadsheetSheetType.PurchaseOrders:
                 ValidateExpenseOrderReferences(sheetName, rows, headers, data, importedIds, result);
+                break;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                ValidateInvoiceLineItemReferences(sheetName, rows, headers, data, importedIds, result);
                 break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ValidatePurchaseOrderLineItemReferences(sheetName, rows, headers, data, importedIds, result);
@@ -2576,6 +2630,48 @@ public class SpreadsheetImportService
         }
     }
 
+    private void ValidateInvoiceLineItemReferences(
+        string sheetName,
+        List<List<object?>> rows, List<string> headers,
+        CompanyData data, Dictionary<string, HashSet<string>> importedIds,
+        ImportValidationResult result)
+    {
+        var existingProducts = data.Products.Select(p => p.Id).ToHashSet();
+        var importedProducts = importedIds.GetValueOrDefault("Products") ?? [];
+
+        // Either column can identify an invoice, so both count as known. Checking only the id
+        // would flag every line on a sheet that identifies its invoices by number.
+        var existingInvoices = data.Invoices.Select(i => i.Id)
+            .Concat(data.Invoices.Select(i => i.InvoiceNumber))
+            .Where(v => !string.IsNullOrEmpty(v))
+            .ToHashSet(StringComparer.Ordinal);
+        var importedInvoices = importedIds.GetValueOrDefault("Invoices") ?? [];
+
+        for (int i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            var rowNumber = i + 2;
+            var invoiceId = GetNullableString(row, headers, "Invoice ID");
+            var productId = GetNullableString(row, headers, "Product ID");
+
+            if (!string.IsNullOrEmpty(productId) &&
+                !existingProducts.Contains(productId) &&
+                !importedProducts.Contains(productId))
+            {
+                result.AddIssue(sheetName, rowNumber, "Product ID", productId, "Products",
+                    $"Product '{productId}' not found", isAutoFixable: false, rowId: invoiceId);
+            }
+
+            if (!string.IsNullOrEmpty(invoiceId) &&
+                !existingInvoices.Contains(invoiceId) &&
+                !importedInvoices.Contains(invoiceId))
+            {
+                result.AddIssue(sheetName, rowNumber, "Invoice ID", invoiceId, "Invoices",
+                    $"Invoice '{invoiceId}' not found", isAutoFixable: false, rowId: invoiceId);
+            }
+        }
+    }
+
     private void ValidatePurchaseOrderLineItemReferences(
         string sheetName,
         List<List<object?>> rows, List<string> headers,
@@ -2930,8 +3026,20 @@ public class SpreadsheetImportService
             case SpreadsheetSheetType.PurchaseOrders:
                 ImportPurchaseOrders(data, headers, rows, options);
                 break;
+            case SpreadsheetSheetType.InvoiceLineItems:
+                ImportInvoiceLineItems(data, headers, rows, options);
+                break;
             case SpreadsheetSheetType.PurchaseOrderLineItems:
                 ImportPurchaseOrderLineItems(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.Employees:
+                ImportEmployees(data, headers, rows, options);
+                break;
+            case SpreadsheetSheetType.PayRuns:
+                // Export only. An approved run's figures are frozen so a stub reprinted next
+                // year still matches the one the employee was handed, and reading them back
+                // from a sheet somebody could have typed in would defeat that. Listed rather
+                // than left to fall through, so the decision is visible here.
                 break;
             case SpreadsheetSheetType.Returns:
                 ImportReturns(data, headers, rows, options);
@@ -3335,28 +3443,41 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
+
+            // Two columns, either of which can identify the invoice. This app's own export
+            // carries both; a sheet from elsewhere usually has only the number. Whichever is
+            // present fills in for the other, so payments and line items still find their
+            // parent either way.
+            var invoiceId = GetString(row, headers, "ID");
             var invoiceNumber = GetString(row, headers, "Invoice #");
             var customerId = GetString(row, headers, "Customer ID");
             var issueDate = GetDateTime(row, headers, "Issue Date");
             var total = GetDecimal(row, headers, "Total");
 
-            // Skip fully-empty rows (no number, customer, date, or amount).
-            if (string.IsNullOrWhiteSpace(invoiceNumber) && string.IsNullOrWhiteSpace(customerId)
+            // Skip fully-empty rows (no id, number, customer, date, or amount).
+            if (string.IsNullOrWhiteSpace(invoiceId) && string.IsNullOrWhiteSpace(invoiceNumber)
+                && string.IsNullOrWhiteSpace(customerId)
                 && issueDate == DateTime.MinValue && total == 0)
                 continue;
 
-            // Blank invoice #: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(invoiceId))
+                invoiceId = invoiceNumber;
             if (string.IsNullOrWhiteSpace(invoiceNumber))
+                invoiceNumber = invoiceId;
+
+            // Blank on both: mint a unique one so distinct rows aren't collapsed into a single record.
+            if (string.IsNullOrWhiteSpace(invoiceId))
             {
                 data.IdCounters.Invoice++;
-                invoiceNumber = $"INV-{data.IdCounters.Invoice:D3}";
+                invoiceId = $"INV-{data.IdCounters.Invoice:D3}";
+                invoiceNumber = invoiceId;
             }
 
-            var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceNumber);
+            var existing = data.Invoices.FirstOrDefault(i => i.Id == invoiceId);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var invoice = existing ?? new Invoice();
-            invoice.Id = invoiceNumber;
+            invoice.Id = invoiceId;
             invoice.InvoiceNumber = invoiceNumber;
             invoice.CustomerId = customerId;
             invoice.IssueDate = issueDate;
@@ -3738,6 +3859,190 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             else if (options != null)
                 options.UpdatedCount++;
         }
+    }
+
+    /// <summary>
+    /// The payroll list. An ordinary entity sheet, unlike the pay runs themselves, which are
+    /// export only because an approved run's figures are frozen.
+    /// </summary>
+    private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
+    {
+        foreach (var row in rows)
+        {
+            var id = GetString(row, headers, "ID");
+            var name = GetString(row, headers, "Name");
+
+            // A single Name column is what this app exports, but almost nothing else does: payroll
+            // systems and HR exports split the name in two. Resolved BEFORE the emptiness test
+            // below, or a sheet with no ID column has both blank on every row and imports nobody,
+            // which is exactly the shape this fallback exists for.
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                name = string.Join(' ', new[]
+                {
+                    GetString(row, headers, "First Name"),
+                    GetString(row, headers, "Last Name"),
+                }.Where(part => !string.IsNullOrWhiteSpace(part))).Trim();
+            }
+
+            // Skip fully-empty rows so trailing/blank template rows aren't imported as junk records.
+            if (string.IsNullOrWhiteSpace(id) && string.IsNullOrWhiteSpace(name))
+                continue;
+
+            // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
+            // Numbered off the existing employees rather than an IdCounters entry, because that
+            // is how the employee form mints them and there is no counter for them in the file.
+            if (string.IsNullOrWhiteSpace(id))
+                id = NextEmployeeId(data);
+
+            var existing = data.Employees.FirstOrDefault(e => e.Id == id);
+            if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
+
+            var employee = existing ?? new Models.Payroll.Employee();
+
+            // A column the sheet does not carry leaves the stored value alone. Writing every
+            // field unconditionally meant importing an ID plus Notes sheet to annotate staff
+            // turned every hourly employee into a salaried one at nil pay, blanked their social
+            // insurance number and wiped their address: the next pay run would pay them nothing
+            // and their T4 could not be filed. Province already guarded for exactly this.
+            bool Has(params string[] columns) => columns.Any(headers.Contains);
+
+            employee.Id = id;
+            employee.Name = name;
+
+            if (Has("Employee #"))
+                employee.EmployeeNumber = GetString(row, headers, "Employee #");
+
+            // Digits only, the way the employee form stores it. People write it with spaces or
+            // dashes, and a T4 will not file unless it is nine digits.
+            if (Has("SIN"))
+                employee.Sin = new string(GetString(row, headers, "SIN").Where(char.IsAsciiDigit).ToArray());
+
+            var province = GetString(row, headers, "Province of Employment");
+            if (!string.IsNullOrWhiteSpace(province))
+                employee.Province = province.Trim().ToUpperInvariant();
+
+            // "Salary Type" and "Salary Amount" are the common names elsewhere for what this app
+            // calls Pay Type and Pay Rate. Only consulted when the app's own column is absent or
+            // empty, so an export from Argo Books still wins.
+            if (Has("Pay Type", "Salary Type"))
+            {
+                var payTypeText = GetString(row, headers, "Pay Type");
+                if (string.IsNullOrWhiteSpace(payTypeText))
+                    payTypeText = GetString(row, headers, "Salary Type");
+
+                // Anything not explicitly hourly is salaried, which is what "Annual" means.
+                employee.PayType = payTypeText.Trim().Equals("Hourly", StringComparison.OrdinalIgnoreCase)
+                    ? Models.Payroll.PayType.Hourly
+                    : Models.Payroll.PayType.Salary;
+            }
+
+            if (Has("Pay Rate", "Salary Amount"))
+            {
+                decimal rate = GetDecimal(row, headers, "Pay Rate");
+                if (rate == 0m)
+                    rate = GetDecimal(row, headers, "Salary Amount");
+
+                employee.PayRate = rate;
+            }
+
+            // Hyphens and spaces stripped, so "Bi-weekly" and "Semi Monthly" land on the enum
+            // rather than silently falling back to the default.
+            if (Has("Pay Frequency"))
+            {
+                var frequencyText = new string(GetString(row, headers, "Pay Frequency")
+                    .Where(char.IsAsciiLetter).ToArray());
+                employee.PayFrequency = ParseEnum(frequencyText, Models.Payroll.PayFrequency.Biweekly);
+            }
+
+            // Null rather than zero when the cell is blank. Zero reads as "worked no hours" on a
+            // record of employment, which costs the employee their claim.
+            if (Has("Standard Hours Per Week"))
+                employee.StandardHoursPerWeek =
+                    SpreadsheetRowReader.GetNullableDecimal(row, headers, "Standard Hours Per Week");
+
+            if (Has("Federal Claim Amount"))
+                employee.FederalClaimAmount = GetDecimal(row, headers, "Federal Claim Amount");
+
+            if (Has("Provincial Claim Amount"))
+                employee.ProvincialClaimAmount = GetDecimal(row, headers, "Provincial Claim Amount");
+
+            if (Has("Ontario Dependants"))
+                employee.OntarioDependants = Math.Max(0, GetInt(row, headers, "Ontario Dependants"));
+
+            if (Has("CPP Exempt"))
+                employee.IsCppExempt = ReadBool(row, headers, "CPP Exempt");
+
+            if (Has("EI Exempt"))
+                employee.IsEiExempt = ReadBool(row, headers, "EI Exempt");
+
+            if (Has("Dental Benefit"))
+                employee.DentalBenefit = ParseEnum(GetString(row, headers, "Dental Benefit"),
+                    Models.Payroll.DentalBenefitCode.NotEligible);
+
+            // "Hire Date" is the usual name for it outside this app.
+            if (Has("Start Date", "Hire Date"))
+                employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date")
+                                     ?? SpreadsheetRowReader.GetNullableDateTime(row, headers, "Hire Date");
+
+            if (Has("End Date"))
+                employee.EndDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "End Date");
+
+            // Replaced wholesale rather than merged, so a sheet carrying an address is
+            // authoritative for all of it, but only when it carries one at all.
+            if (Has("Street", "City", "Country") || Has(StateVariants) || Has(PostalCodeVariants))
+            {
+                employee.Address = new Address
+                {
+                    Street = GetString(row, headers, "Street"),
+                    City = GetString(row, headers, "City"),
+                    State = GetStringMulti(row, headers, StateVariants),
+                    ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
+                    Country = GetString(row, headers, "Country")
+                };
+            }
+
+            employee.IsArchived = GetString(row, headers, "Status")
+                .Trim().Equals("Archived", StringComparison.OrdinalIgnoreCase);
+            employee.Notes = GetString(row, headers, "Notes");
+
+            if (existing == null)
+                data.Employees.Add(employee);
+            else if (options != null)
+                options.UpdatedCount++;
+        }
+    }
+
+    private static string NextEmployeeId(CompanyData data)
+    {
+        int highest = 0;
+
+        foreach (var e in data.Employees)
+        {
+            if (e.Id.StartsWith("EMP-", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(e.Id[4..], out int n) && n > highest)
+            {
+                highest = n;
+            }
+        }
+
+        return $"EMP-{highest + 1:D3}";
+    }
+
+    /// <summary>
+    /// Reads a yes/no cell. Excel gives a real bool, a CSV gives whatever was typed, and the
+    /// app's own export writes True/False, so all three have to be understood.
+    /// </summary>
+    private static bool ReadBool(List<object?> row, List<string> headers, string columnName)
+    {
+        var text = GetString(row, headers, columnName).Trim();
+
+        if (bool.TryParse(text, out bool parsed))
+            return parsed;
+
+        return text.Equals("yes", StringComparison.OrdinalIgnoreCase)
+               || text.Equals("y", StringComparison.OrdinalIgnoreCase)
+               || text == "1";
     }
 
     private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
@@ -4294,6 +4599,75 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 data.PurchaseOrders.Add(po);
             else if (options != null)
                 options.UpdatedCount++;
+        }
+    }
+
+    /// <summary>
+    /// Puts the lines back on their invoices.
+    ///
+    /// Mirrors <see cref="ImportPurchaseOrderLineItems"/>, including the part that reads oddly:
+    /// the whole sheet is grouped first and each invoice's lines are then REPLACED in one go,
+    /// rather than appended row by row. Appending would double every line on a second import of
+    /// the same file, which is the normal way people re-run an import after fixing something.
+    ///
+    /// The line's Amount column is deliberately not read. It is quantity times price less
+    /// discount plus tax, all four of which are in the sheet, so recomputing it means a hand
+    /// edit to one of the parts cannot leave a total that contradicts them.
+    /// </summary>
+    private void ImportInvoiceLineItems(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
+    {
+        var lineItemsByInvoice = new Dictionary<string, List<LineItem>>(StringComparer.Ordinal);
+
+        foreach (var row in rows)
+        {
+            var invoiceId = GetString(row, headers, "Invoice ID");
+            if (string.IsNullOrEmpty(invoiceId)) continue;
+
+            var lineItem = new LineItem
+            {
+                ProductId = GetNullableString(row, headers, "Product ID"),
+                Description = GetString(row, headers, "Description"),
+                Quantity = GetDecimal(row, headers, "Quantity"),
+                UnitPrice = GetDecimal(row, headers, "Unit Price"),
+                TaxRate = GetDecimal(row, headers, "Tax Rate"),
+                Discount = GetDecimal(row, headers, "Discount")
+            };
+
+            if (!lineItemsByInvoice.ContainsKey(invoiceId))
+                lineItemsByInvoice[invoiceId] = [];
+
+            lineItemsByInvoice[invoiceId].Add(lineItem);
+        }
+
+        foreach (var (invoiceId, lineItems) in lineItemsByInvoice)
+        {
+            // Match on either column, because either can identify an invoice on the sheet it
+            // came from. See the fallback in ImportInvoices.
+            var invoice = data.Invoices.FirstOrDefault(i => i.Id == invoiceId)
+                          ?? data.Invoices.FirstOrDefault(i => i.InvoiceNumber == invoiceId);
+
+            // No matching invoice: leave these rows unassigned (counted as unimported by the caller).
+            if (invoice == null) continue;
+
+            if (options?.SkipExistingRecords == true && invoice.LineItems.Count > 0)
+            {
+                options.SkippedCount += lineItems.Count;
+                continue;
+            }
+
+            bool hadLineItems = invoice.LineItems.Count > 0;
+            invoice.LineItems = lineItems;
+
+            // The invoice's own totals are NOT recalculated from these lines. Tax, discounts,
+            // shipping, deposits and a custom fee all sit on the invoice rather than on its
+            // lines, and the Invoices sheet already carries the figures the customer was billed.
+            // Deriving them here from lines alone would quietly restate what was sent out.
+
+            if (options != null)
+            {
+                if (hadLineItems) options.UpdatedCount += lineItems.Count;
+                else options.InsertedCount += lineItems.Count;
+            }
         }
     }
 

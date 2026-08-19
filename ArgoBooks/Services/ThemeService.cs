@@ -14,6 +14,9 @@ public class ThemeService : IThemeService
 {
     private IGlobalSettingsService? _globalSettingsService;
 
+    /// <summary>Whether the OS theme-change subscription is already in place.</summary>
+    private bool _systemThemeHookInstalled;
+
     /// <summary>
     /// Gets the singleton instance of the ThemeService.
     /// </summary>
@@ -247,9 +250,11 @@ public class ThemeService : IThemeService
     public void Initialize()
     {
         var app = Application.Current;
-        if (app != null)
+        if (app != null && !_systemThemeHookInstalled)
         {
-            // Subscribe to system theme changes
+            // Guarded: startup calls Initialize twice (before the splash, then again in
+            // the async init path) and a second subscribe would double-fire.
+            _systemThemeHookInstalled = true;
             app.ActualThemeVariantChanged += OnSystemThemeChanged;
         }
 

@@ -105,13 +105,14 @@ public partial class ErrorLogger : IErrorLogger
     }
 
     /// <inheritdoc />
-    public void LogWarning(string message, string? context = null)
+    public void LogWarning(string message, string? context = null, ErrorCategory category = ErrorCategory.Unknown, string? code = null)
     {
-        var entry = CreateLogEntry(LogLevel.Warning, ErrorCategory.Unknown, context);
+        var entry = CreateLogEntry(LogLevel.Warning, category, context);
         entry.Message = SanitizeMessage(message);
+        entry.ErrorCode = code;
 
         AddEntry(entry);
-        Debug.WriteLine($"[WARNING] {message}");
+        Debug.WriteLine($"[WARNING] [{category}] {message}");
     }
 
     /// <inheritdoc />
@@ -210,8 +211,13 @@ public partial class ErrorLogger : IErrorLogger
         // Raise event
         ErrorLogged?.Invoke(this, entry);
 
-        // Report to telemetry if available and this is an error
-        if (entry.Level == LogLevel.Error && TelemetryManager != null)
+        // Report to telemetry. Errors always go up. Warnings only go up when the caller
+        // gave them a code, which is the opt-in: there are dozens of LogWarning calls
+        // across the app and most are local diagnostics with no grouping key, so
+        // uploading them wholesale would bury the ones worth watching.
+        var reportable = entry.Level == LogLevel.Error
+            || (entry.Level == LogLevel.Warning && !string.IsNullOrEmpty(entry.ErrorCode));
+        if (reportable && TelemetryManager != null)
         {
             _ = TelemetryManager.TrackErrorAsync(entry);
         }

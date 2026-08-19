@@ -1,0 +1,206 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:table="using:ArgoBooks.Controls.ArgoTable"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.EmployeesPage"
+             x:DataType="vm:EmployeesPageViewModel">
+
+    <Design.DataContext>
+        <vm:EmployeesPageViewModel />
+    </Design.DataContext>
+
+    <Panel>
+    <Grid RowDefinitions="*">
+        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+
+            <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
+                <controls:StatCard Label="{loc:Loc 'Active employees'}"
+                                   Value="{Binding ActiveCount}"
+                                   Icon="{x:Static icons:Icons.Customers}"
+                                   IconColor="Primary" />
+                <!-- Salaried people only. An hourly employee has no annual figure until their
+                     hours are entered on a pay run, so including them would be a guess. -->
+                <controls:StatCard Label="{loc:Loc 'Salaried payroll'}"
+                                   Value="{Binding AnnualPayroll}"
+                                   Icon="{x:Static icons:Icons.Dollar}"
+                                   IconColor="Success" />
+                <controls:StatCard Label="{loc:Loc 'Archived'}"
+                                   Value="{Binding ArchivedCount}"
+                                   Icon="{x:Static icons:Icons.Suppliers}"
+                                   IconColor="Warning" />
+            </controls:StatCardsRow>
+
+            <table:ArgoTable Grid.Row="1"
+                             Title="{loc:Loc Employees}"
+                             ItemsSource="{Binding Employees}"
+                             SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
+                             SearchPlaceholder="{loc:Loc 'Search employees...'}"
+                             SearchBoxWidth="{Binding ResponsiveHeader.SearchBoxWidth}"
+                             SearchBoxMinHeight="{Binding ResponsiveHeader.SearchBoxMinHeight}"
+                             SearchIconMargin="{Binding ResponsiveHeader.SearchIconMargin}"
+                             HeaderPadding="{Binding ResponsiveHeader.HeaderPadding}"
+                             HeaderSpacing="{Binding ResponsiveHeader.HeaderSpacing}"
+                             IsCompactMode="{Binding ResponsiveHeader.IsCompactMode}"
+                             IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
+                             ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
+                             FilterCommand="{Binding OpenFilterModalCommand}"
+                             AddCommand="{Binding AddEmployeeCommand}"
+                             AddButtonText="{loc:Loc 'Add employee'}"
+                             AddButtonTooltip="{loc:Loc 'Add employee'}"
+                             ColumnWidthsManager="{Binding ColumnWidths}"
+                             CurrentPage="{Binding CurrentPage, Mode=TwoWay}"
+                             TotalPages="{Binding TotalPages}"
+                             PageSize="{Binding PageSize, Mode=TwoWay}"
+                             PaginationText="{Binding PaginationText}"
+                             GoToPageCommand="{Binding GoToPageCommand}"
+                             GoToPreviousPageCommand="{Binding GoToPreviousPageCommand}"
+                             GoToNextPageCommand="{Binding GoToNextPageCommand}"
+                             ToggleColumnMenuCommand="{Binding ToggleColumnMenuCommand}"
+                             EmptyIcon="{x:Static icons:Icons.Customers}"
+                             EmptyTitle="{loc:Loc 'No employees yet'}"
+                             EmptyMessage="{loc:Loc 'Add the people you pay, then run payroll to work out their deductions.'}"
+                             BorderSizeChanged="OnHeaderSizeChanged"
+                             TableGridSizeChanged="OnTableSizeChanged">
+
+                <table:ArgoTable.HeaderContent>
+                    <StackPanel Orientation="Horizontal">
+                        <table:ArgoTableHeader Header="{loc:Loc Employee}" ColumnName="Employee" SortProperty="Name"
+                                               ColumnWidth="{Binding ColumnWidths.EmployeeColumnWidth}"
+                                               IsColumnVisible="{Binding ShowEmployeeColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Province}" ColumnName="Province" SortProperty="Province"
+                                               ColumnWidth="{Binding ColumnWidths.ProvinceColumnWidth}"
+                                               IsColumnVisible="{Binding ShowProvinceColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc 'Pay type'}" ColumnName="PayType" SortProperty="PayType"
+                                               ColumnWidth="{Binding ColumnWidths.PayTypeColumnWidth}"
+                                               IsColumnVisible="{Binding ShowPayTypeColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc 'Pay rate'}" ColumnName="PayRate" SortProperty="PayRate"
+                                               ColumnWidth="{Binding ColumnWidths.PayRateColumnWidth}"
+                                               IsColumnVisible="{Binding ShowPayRateColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Frequency}" ColumnName="Frequency" SortProperty="Frequency"
+                                               ColumnWidth="{Binding ColumnWidths.FrequencyColumnWidth}"
+                                               IsColumnVisible="{Binding ShowFrequencyColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Status}" ColumnName="Status" SortProperty="Status"
+                                               ColumnWidth="{Binding ColumnWidths.StatusColumnWidth}"
+                                               IsColumnVisible="{Binding ShowStatusColumn}"
+                                               SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
+                                               SortCommand="{Binding SortByCommand}" ColumnWidths="{Binding ColumnWidths}" />
+
+                        <table:ArgoTableHeader Header="{loc:Loc Actions}" ColumnName="Actions"
+                                               ColumnWidth="{Binding ColumnWidths.ActionsColumnWidth}"
+                                               IsSortable="False" IsResizable="False" ShowSeparator="False" />
+                    </StackPanel>
+                </table:ArgoTable.HeaderContent>
+
+                <table:ArgoTable.RowsContent>
+                    <ItemsControl Classes="table-rows" ItemsSource="{Binding Employees}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:EmployeeDisplayItem">
+                                <!-- Padding matches the header border in ArgoTable, otherwise every
+                                     column separator sits 24px left of its header. -->
+                                <Border Padding="24,0"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="0,0,0,1"
+                                        MinHeight="52">
+                                    <StackPanel Orientation="Horizontal">
+                                        <table:ArgoTableCell Text="{Binding Name}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.EmployeeColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ShowEmployeeColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Province}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.ProvinceColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ShowProvinceColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding PayType, Converter={StaticResource TranslateConverter}}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.PayTypeColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ShowPayTypeColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding PayRate}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.PayRateColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ShowPayRateColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Frequency, Converter={StaticResource TranslateConverter}}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.FrequencyColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ShowFrequencyColumn}" />
+
+                                        <table:ArgoTableCell Text="{Binding Status, Converter={StaticResource TranslateConverter}}"
+                                                             ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.StatusColumnWidth}"
+                                                             IsColumnVisible="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ShowStatusColumn}" />
+
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ColumnWidths.ActionsColumnWidth}"
+                                                             ShowSeparator="False">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
+                                                    <Button Classes="icon-button" ToolTip.Tip="{loc:Loc Edit}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).EditEmployeeCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <!-- Due five days after the pay period in which someone stops
+                                                         being paid, so it belongs on the row rather than at year end. -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Record of Employment worksheet'}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).RecordOfEmploymentCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Reports}" Width="16" Height="16" />
+                                                    </Button>
+                                                    <!-- Archive, never delete: pay history points at this employee and a
+                                                         T4 must stay produceable for someone who left mid-year. -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{Binding ArchiveTooltip, Converter={StaticResource TranslateConverter}}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:EmployeesPageViewModel)DataContext).ArchiveEmployeeCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Suppliers}" Width="16" Height="16" />
+                                                    </Button>
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </table:ArgoTable.RowsContent>
+            </table:ArgoTable>
+        </Grid>
+    </Grid>
+
+    <controls:ColumnVisibilityMenu IsOpen="{Binding IsColumnMenuOpen}"
+                                   MenuX="{Binding ColumnWidths.ColumnMenuX}"
+                                   MenuY="{Binding ColumnWidths.ColumnMenuY}"
+                                   CloseCommand="{Binding CloseColumnMenuCommand}"
+                                   ResetCommand="{Binding ResetColumnVisibilityCommand}">
+        <controls:ColumnVisibilityMenu.ColumnsContent>
+            <StackPanel Spacing="4">
+                <CheckBox IsChecked="{Binding ShowEmployeeColumn}" Content="{loc:Loc Employee}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowProvinceColumn}" Content="{loc:Loc Province}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPayTypeColumn}" Content="{loc:Loc 'Pay type'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowPayRateColumn}" Content="{loc:Loc 'Pay rate'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowFrequencyColumn}" Content="{loc:Loc Frequency}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowStatusColumn}" Content="{loc:Loc Status}" Classes="column-toggle" />
+            </StackPanel>
+        </controls:ColumnVisibilityMenu.ColumnsContent>
+    </controls:ColumnVisibilityMenu>
+    </Panel>
+
+</UserControl>

@@ -39,11 +39,6 @@ public static class CurrencyService
     public static string CurrentSymbol => CurrentCurrency.Symbol;
 
     /// <summary>
-    /// Gets the current currency display string for dropdowns (e.g., "USD - US Dollar ($)").
-    /// </summary>
-    public static string CurrentDisplayString => CurrentCurrency.DisplayString;
-
-    /// <summary>
     /// Shown in place of an amount when no exact-date rate is available to convert it to the
     /// display currency (e.g. a future-dated row, or one saved offline whose rate was never
     /// fetched). The exact-date rule forbids showing a wrong-date number. See docs/Calculations.md.

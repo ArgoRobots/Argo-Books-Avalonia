@@ -15,41 +15,6 @@ namespace ArgoBooks.Core.Services;
 public static class RefundAggregator
 {
     /// <summary>
-    /// Total amount refunded against a single original Payment, from any number
-    /// of partial refund Payments tied to it via RefundedFromPaymentId.
-    /// </summary>
-    public static decimal GetRefundedForPayment(Payment original, IEnumerable<Payment> allPayments)
-    {
-        if (original == null) return 0m;
-        return allPayments
-            .Where(r => r.IsRefund && r.RefundedFromPaymentId == original.Id)
-            .Sum(r => Math.Abs(r.Amount));
-    }
-
-    /// <summary>
-    /// Total amount refunded against the invoice this revenue is tied to.
-    /// Returns 0 for revenues without an InvoiceId (e.g. manual entries).
-    /// </summary>
-    public static decimal GetRefundedForRevenue(Revenue revenue, IEnumerable<Payment> allPayments)
-    {
-        if (revenue == null || string.IsNullOrEmpty(revenue.InvoiceId)) return 0m;
-        return allPayments
-            .Where(p => p.IsRefund && p.InvoiceId == revenue.InvoiceId)
-            .Sum(p => Math.Abs(p.Amount));
-    }
-
-    /// <summary>
-    /// Sum of refund amounts (in original currency) whose refund date falls
-    /// inside [start, end]. For UI surfaces that display per-payment currency.
-    /// </summary>
-    public static decimal GetRefundedInDateRange(IEnumerable<Payment> allPayments, DateTime start, DateTime end)
-    {
-        return allPayments
-            .Where(p => p.IsRefund && p.Date >= start && p.Date <= end)
-            .Sum(p => Math.Abs(p.Amount));
-    }
-
-    /// <summary>
     /// USD-normalized variant for dashboard aggregations. Uses Payment.EffectiveAmountUSD
     /// so multi-currency portals roll up consistently.
     /// </summary>

@@ -145,16 +145,16 @@ The app verifies an Ed25519 signature on every update it downloads, and refuses 
    - On each `<enclosure>`, update `sparkle:edSignature`. The signature is the long base64 string printed in step 1. The `.exe`'s signature goes on the `sparkle:os="windows"` enclosure, the `.AppImage`'s on the `sparkle:os="linux"` one.
    - All the version numbers in the file. For example, do a replace all for `2.0.11` and update it to `2.0.12`, or whatever the version is.
 
-3. Regenerate the translations for the new version's strings (see `ArgoBooks.TranslationTool/README.md`):
+3. Regenerate the translations for the new version's strings (see `tools/ArgoBooks.Translations/README.md`):
 
    ```powershell
    $env:AZURE_TRANSLATOR_REGION = "canadacentral"
    $env:AZURE_TRANSLATOR_KEY = "your-api-key"
-   cd ArgoBooks.TranslationTool
+   cd tools/ArgoBooks.Translations
    dotnet run -- --translate
    ```
 
-   The JSON files land in `ArgoBooks.TranslationTool/languages/`, ready to upload in step 7.
+   The JSON files land in `tools/ArgoBooks.Translations/languages/`, ready to upload in step 7.
 
 4. In the website repo, add an entry for the new version to the What's New page (`whats-new/index.php`).
 

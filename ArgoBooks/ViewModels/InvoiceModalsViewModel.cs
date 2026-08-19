@@ -305,13 +305,20 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var accounts = App.CompanyManager?.CompanyData?.Settings.PaymentPortal?.ConnectedAccounts;
             var portal = accounts != null &&
                 (accounts.StripeConnected || accounts.PaypalConnected || accounts.SquareConnected);
+            // So the live recompute can take it off the balance. Fixed for the life of the
+            // dialog, since payments cannot be edited from this screen.
+            decimal paid = string.IsNullOrEmpty(_editingInvoiceId)
+                ? 0m
+                : App.CompanyManager?.CompanyData?.GetInvoice(_editingInvoiceId)?.AmountPaid ?? 0m;
+
             return System.Text.Json.JsonSerializer.Serialize(new
             {
                 symbol = InvoiceCurrencySymbol,
                 code = SelectedCurrencyCode,
                 deposit = SecurityDeposit,
                 portal,
-                passFee = OptPassProcessingFee
+                passFee = OptPassProcessingFee,
+                paid
             });
         }
     }
@@ -442,7 +449,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void BackToEditor() => IsEditorPreviewing = false;
+    private void BackToEditor()
+    {
+        IsEditorPreviewing = false;
+        // Re-render so the editable rows (zero-value shipping/discount) come back.
+        RegeneratePaper();
+    }
 
     [ObservableProperty]
     private DateTimeOffset? _modalIssueDate = DateTimeOffset.Now;
@@ -1389,6 +1401,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 Description = lineItem.Description,
                 Quantity = lineItem.Quantity,
                 UnitPrice = lineItem.UnitPrice,
+
+                // Carried rather than shown. The form has nowhere to display either, but
+                // dropping them here is what made saving an imported invoice erase them.
+                Discount = lineItem.Discount,
+                TaxRate = lineItem.TaxRate,
                 InvoiceCurrencyCode = SelectedCurrencyCode
             };
             displayItem.PropertyChanged += OnLineItemPropertyChanged;
@@ -1542,6 +1559,46 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #region History Modal
 
+    /// <summary>
+    /// Opens a payment from the history timeline for editing. Payments live only
+    /// under their invoice, so this is the way in.
+    /// </summary>
+    [RelayCommand]
+    private void EditHistoryPayment(InvoiceHistoryDisplayItem? entry)
+    {
+        if (string.IsNullOrEmpty(entry?.PaymentId)) return;
+
+        App.PaymentModalsViewModel?.OpenEditModal(BuildPaymentDisplayItem(entry.PaymentId));
+    }
+
+    [RelayCommand]
+    private void DeleteHistoryPayment(InvoiceHistoryDisplayItem? entry)
+    {
+        if (string.IsNullOrEmpty(entry?.PaymentId)) return;
+
+        App.PaymentModalsViewModel?.OpenDeleteConfirm(BuildPaymentDisplayItem(entry.PaymentId));
+    }
+
+    /// <summary>
+    /// Both payment modals take a display item and re-look-up the Payment by Id, so this
+    /// only fills the fields their confirmation text actually reads.
+    /// </summary>
+    private static PaymentDisplayItem? BuildPaymentDisplayItem(string paymentId)
+    {
+        Payment? payment = App.CompanyManager?.CompanyData?.Payments
+            .FirstOrDefault(p => p.Id == paymentId);
+        if (payment == null) return null;
+
+        return new PaymentDisplayItem
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            AmountUSD = payment.AmountUSD,
+            OriginalCurrency = payment.OriginalCurrency,
+            Date = payment.Date,
+        };
+    }
+
     public void OpenHistoryModal(InvoiceDisplayItem? item)
     {
         if (item == null) return;
@@ -1575,7 +1632,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 ActionType = "Payment",
                 Description = $"Payment of {CurrencyService.Format(payment.Amount)} received via {payment.PaymentMethod}",
-                DateTime = payment.Date
+                DateTime = payment.Date,
+                PaymentId = payment.Id,
+                CanEditPayment = payment.Source != PaymentSource.Online
             });
         }
 
@@ -1658,14 +1717,17 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 Description = li.Description,
                 Quantity = li.Quantity ?? 0,
-                UnitPrice = li.UnitPrice ?? 0
+                UnitPrice = li.UnitPrice ?? 0,
+                Discount = li.Discount,
+                TaxRate = li.TaxRate
             }).ToList()
         };
 
         ApplyOptionsTo(previewInvoice);
 
-        // Calculate totals
-        previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
+        // Calculate totals. Less the line's own discount, per docs/Calculations.md §4, so the
+        // preview shows the same subtotal the form does.
+        previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice - li.Discount);
         previewInvoice.SecurityDeposit = SecurityDeposit;
         // Tax applies to the subtotal AFTER discount and the taxable fee plus shipping (docs/Calculations.md §4).
         var previewTaxableBase = previewInvoice.Subtotal - DiscountCalculated + CustomFeeCalculated + ShippingAmount;
@@ -1680,7 +1742,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         {
             // Preview reflects the invoice's selected currency, not the user's display setting.
             var currencySymbol = CurrencyService.GetSymbol(SelectedCurrencyCode);
-            PreviewHtml = renderer.RenderInvoice(previewInvoice, template, companyData, currencySymbol, editable: true);
+            // Preview mode renders non-editable so zero-value shipping/discount rows drop
+            // out and the paper matches what the customer receives.
+            PreviewHtml = renderer.RenderInvoice(
+                previewInvoice, template, companyData, currencySymbol, editable: !IsEditorPreviewing);
         }
         else
         {
@@ -1943,7 +2008,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             // Leave the status as Draft during the send attempt; it's set to Sent only after publish/email
             // succeeds (below). Flipping it to Pending here left the draft stuck and un-continuable if the
             // send then failed (ContinueDraftInvoice only accepts Draft).
-            invoice.UpdatedAt = DateTime.Now;
+            invoice.UpdatedAt = DateTime.UtcNow;
             invoice.LineItems = LineItems.Select(i => new LineItem
             {
                 ProductId = i.SelectedProduct?.Id,
@@ -1980,8 +2045,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 DiscountIsPercent = DiscountIsPercent,
                 Notes = ModalNotes,
                 Status = InvoiceStatus.Pending,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
                 LineItems = LineItems.Select(i => new LineItem
                 {
                     ProductId = i.SelectedProduct?.Id,
@@ -1990,7 +2055,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                     Description = i.Description,
                     Quantity = i.Quantity ?? 0,
                     UnitPrice = i.UnitPrice ?? 0,
-                    TaxRate = 0
+
+                    // Written back rather than zeroed. Both are zero on anything this form
+                    // created; an imported line can carry them, and hard-coding zero here
+                    // silently discarded whatever the sheet supplied.
+                    TaxRate = i.TaxRate,
+                    Discount = i.Discount
                 }).ToList()
             };
         }
@@ -1999,7 +2069,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Calculate invoice totals (Subtotal / TaxAmount / Total, these are
         // invoice-level math, not Payment-derived).
-        invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice);
+        invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice - li.Discount);
         var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
         var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
         // Tax applies to the subtotal AFTER discount and the taxable fee plus shipping (docs/Calculations.md §4).
@@ -2310,6 +2380,23 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     #region Save Invoice
 
+    /// <summary>
+    /// Opens the invoice modal on its "sent" success screen only, with no form
+    /// behind it. Lets the resend action on the invoices page report the same way
+    /// a first send does.
+    /// </summary>
+    public void ShowSentSuccess(string customerName, string customerEmail)
+    {
+        // ResetForm clears the success fields, so it has to run first.
+        ResetForm();
+        IsViewOnly = false;
+        IsShowingPreview = false;
+        SuccessTitle = "Invoice Sent!".Translate();
+        SuccessMessage = "Your invoice has been sent to {0} at {1}".TranslateFormat(customerName, customerEmail);
+        IsShowingSuccess = true;
+        IsCreateEditModalOpen = true;
+    }
+
     [RelayCommand]
     private void CloseCreateEditModal()
     {
@@ -2429,7 +2516,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Description = i.Description,
             Quantity = i.Quantity ?? 0,
             UnitPrice = i.UnitPrice ?? 0,
-            TaxRate = 0
+
+            // Carried through, as on the send path. Zero on anything created here.
+            TaxRate = i.TaxRate,
+            Discount = i.Discount
         }).ToList();
 
         Invoice invoice;
@@ -2449,7 +2539,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             invoice.DiscountAmount = DiscountAmount;
             invoice.DiscountIsPercent = DiscountIsPercent;
             invoice.Notes = ModalNotes;
-            invoice.UpdatedAt = DateTime.Now;
+            invoice.UpdatedAt = DateTime.UtcNow;
             invoice.LineItems = newLineItems;
         }
         else
@@ -2472,8 +2562,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 DiscountIsPercent = DiscountIsPercent,
                 Notes = ModalNotes,
                 Status = InvoiceStatus.Draft,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
                 LineItems = newLineItems
             };
         }
@@ -2519,6 +2609,12 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         LinkInvoiceToRentals(invoice, companyData);
 
         CreateRecurringScheduleIfNeeded(invoice, companyData, idGenerator);
+
+        // Editing an already-published invoice changes what the customer owes,
+        // so the portal needs the new total or it would chase the old one. A
+        // no-op for invoices that were never published, and for brand-new ones
+        // the publish path sends the full record anyway.
+        App.PortalBalanceSyncService?.Queue(invoice.Id);
 
         LastSavedInvoiceId = invoice.Id;
         InvoiceSaved?.Invoke(this, EventArgs.Empty);
@@ -2639,8 +2735,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Notes = $"Auto-created from invoice {invoice.InvoiceNumber}",
             InvoiceId = invoice.Id,
             ReferenceNumber = invoice.InvoiceNumber,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             // Currency fields: use EffectiveTotalUSD to avoid mixing currencies
             // (returns 0 for pending-conversion invoices, correct USD for others)
             OriginalCurrency = invoice.OriginalCurrency,
@@ -2771,6 +2867,29 @@ public partial class LineItemDisplayModel : ObservableObject
     private string? _revenueRecordId;
 
     /// <summary>
+    /// Per-line discount, and the per-line tax rate below it.
+    ///
+    /// Neither is editable here: the invoice form offers one discount and one tax rate for the
+    /// whole invoice, which is the model docs/Calculations.md §4 describes. They are carried
+    /// because a line can arrive with them already set. The spreadsheet importer reads a
+    /// Discount and a Tax Rate column for every invoice line, and the exporter writes both, so
+    /// a sheet edited by hand or produced by another system can bring in values this form has
+    /// nowhere to show.
+    ///
+    /// Before they were carried, opening such an invoice and pressing Save wrote the lines back
+    /// with both fields zeroed, so the discount vanished with nothing said. Round-tripping a
+    /// file through the exporter and the importer is the normal way to bulk-edit, and it was
+    /// losing data every time.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Amount))]
+    [NotifyPropertyChangedFor(nameof(AmountFormatted))]
+    private decimal _discount;
+
+    [ObservableProperty]
+    private decimal _taxRate;
+
+    /// <summary>
     /// ISO code of the parent invoice's currency. Set by the parent ViewModel so AmountFormatted
     /// reflects the invoice's selected currency instead of the global display setting.
     /// </summary>
@@ -2778,7 +2897,20 @@ public partial class LineItemDisplayModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(AmountFormatted))]
     private string _invoiceCurrencyCode = "USD";
 
-    public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
+    /// <summary>
+    /// The line's contribution to the invoice subtotal: quantity times price, less the line's
+    /// own discount. That is docs/Calculations.md §4 verbatim, and it matches
+    /// <see cref="Core.Models.Common.LineItem.Subtotal"/>.
+    ///
+    /// The per-line tax rate is deliberately NOT added. §4 is explicit that the invoice header
+    /// rate is what produces the stored tax, and adding a line's own tax here would have the
+    /// invoice-level rate charged on top of it.
+    ///
+    /// Discount is zero on every line this form creates, so for an invoice made in the app this
+    /// is exactly what it always was.
+    /// </summary>
+    public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0) - Discount;
+
     public string AmountFormatted => CurrencyInfo.GetByCode(InvoiceCurrencyCode).Format(Amount);
 
     partial void OnSelectedProductChanged(ProductOption? value)
@@ -2814,6 +2946,15 @@ public class InvoiceHistoryDisplayItem
     public string Description { get; set; } = string.Empty;
     public DateTime DateTime { get; set; }
     public bool IsLast { get; set; }
+
+    /// <summary>
+    /// Set on payment rows so they can be edited or deleted from here. Payments are
+    /// only reachable through their invoice, so this timeline is where they are managed.
+    /// </summary>
+    public string? PaymentId { get; set; }
+
+    /// <summary>Portal payments are read-only, matching the payment modal's own rule.</summary>
+    public bool CanEditPayment { get; set; }
 
     public string DateTimeFormatted => TimeZoneService.FormatDateTime(DateTime);
 }

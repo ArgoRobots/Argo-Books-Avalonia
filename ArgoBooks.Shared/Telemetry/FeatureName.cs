@@ -48,5 +48,12 @@ public enum FeatureName
     CompanyCreated,
     ChecklistStepCompleted,
     OnboardingCompleted,
-    OnboardingSkipped
+    OnboardingSkipped,
+
+    /// <summary>
+    /// The user chose the demo company from the welcome screen rather than creating one.
+    /// Their subsequent activity is evaluation, not real bookkeeping, and without this
+    /// event the two are indistinguishable.
+    /// </summary>
+    SampleCompanyOpened
 }

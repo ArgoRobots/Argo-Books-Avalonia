@@ -22,5 +22,6 @@ public enum WidgetType
     ExpenseByCategory,
     // 18 was CashFlowSummary, removed, keep gap to avoid shifting values
     OverdueRentals = 19,
-    Chart = 20
+    Chart = 20,
+    StatCardPayrollRemittance = 21
 }

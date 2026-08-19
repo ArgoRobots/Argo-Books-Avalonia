@@ -1,0 +1,450 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:icons="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:local="using:ArgoBooks.Converters"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="700"
+             x:Class="ArgoBooks.Modals.PayrollModals"
+             x:DataType="vm:PayrollModalsViewModel">
+
+    <Design.DataContext>
+        <vm:PayrollModalsViewModel />
+    </Design.DataContext>
+
+    <Panel>
+        <!-- ======================= ADD / EDIT EMPLOYEE ======================= -->
+        <controls:ModalOverlay IsOpen="{Binding IsEmployeeModalOpen}"
+                               ClosingCommand="{Binding RequestCloseEmployeeModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="640" MaxHeight="700"
+                        Background="{DynamicResource SurfaceBrush}"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding ModalTitle}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="icon-button"
+                                        Command="{Binding CloseEmployeeModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="18">
+
+                                <Grid ColumnDefinitions="*,16,*">
+                                    <StackPanel Grid.Column="0" Spacing="6">
+                                        <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
+                                        <TextBox Text="{Binding Name, Mode=TwoWay}" Classes="form-input"
+                                                 PlaceholderText="{loc:Loc 'Jordan Fielding'}" />
+                                        <TextBlock Text="{Binding NameError}" FontSize="12"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   IsVisible="{Binding NameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Employee number'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBox Text="{Binding EmployeeNumber, Mode=TwoWay}" Classes="form-input"
+                                                 PlaceholderText="{loc:Loc 'Optional, e.g. E-014'}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="*,16,*">
+                                    <StackPanel Grid.Column="0" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Province of employment'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding SupportedProvinces}"
+                                                  SelectedItem="{Binding Province, Mode=TwoWay}"
+                                                  Classes="form-combobox" HorizontalAlignment="Stretch">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={x:Static local:ProvinceNameConverter.Instance}}" />
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                        <!-- Only provinces the loaded rate table covers are offered, so an
+                                             employee can never be created that a pay run would refuse. -->
+                                        <TextBlock Text="{loc:Loc 'Where they work, which may differ from where they live.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <!-- Said here rather than at pay-run time. Someone whose staff work
+                                             in a province that is not covered needs to know before they
+                                             enter an employee, not after they try to pay them. -->
+                                        <TextBlock Text="{Binding ProvinceSupportNote}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource WarningBrush}"
+                                                   IsVisible="{Binding ProvinceSupportNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Pay frequency'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <ComboBox ItemsSource="{Binding Frequencies}"
+                                                  SelectedItem="{Binding PayFrequency, Mode=TwoWay}"
+                                                  Classes="form-combobox" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <StackPanel Spacing="8">
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Pay'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
+                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                        <RadioButton GroupName="PayType" Content="{loc:Loc 'Salary'}"
+                                                     IsChecked="{Binding IsSalaried, Mode=TwoWay}" />
+                                        <RadioButton GroupName="PayType" Content="{loc:Loc 'Hourly'}"
+                                                     IsChecked="{Binding !IsSalaried}" />
+                                    </StackPanel>
+                                    <!-- No IsDecimalOnly here: it rejects any keystroke whose
+                                         RESULT is not bare digits, so it blocks typing into a box
+                                         this behavior has already put a symbol in. Currency
+                                         formatting does the same filtering itself. -->
+                                    <TextBox Text="{Binding PayRate, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             PlaceholderText="0.00"
+                                             behaviors:CurrencyInputBehavior.FormatAsCurrency="True"
+                                             MaxLength="16" />
+                                    <TextBlock Text="{Binding PayRateHint}" FontSize="11"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <TextBlock Text="{Binding PayRateError}" FontSize="12"
+                                               Foreground="{DynamicResource ErrorBrush}"
+                                               IsVisible="{Binding PayRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                    <!-- Salary only. An hourly employee's real hours are entered on
+                                         every pay run, so asking for contract hours would invite
+                                         the wrong number to be used on their ROE. -->
+                                    <StackPanel Spacing="4" IsVisible="{Binding IsSalaried}">
+                                        <TextBlock Text="{loc:Loc 'Hours in a normal week'}" FontSize="12"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <TextBox Text="{Binding StandardHoursPerWeek, Mode=TwoWay}"
+                                                 Classes="form-input"
+                                                 PlaceholderText="40"
+                                                 behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                 MaxLength="5" />
+                                        <TextBlock Text="{loc:Loc 'Optional. Used only for the Record of Employment, which asks for insurable hours. Without it that box has to be filled from the employment contract.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="{loc:Loc 'Tax credits'}" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <!-- Left blank, the basic personal amount is used. An employer applies
+                                             whatever the employee wrote on their TD1. -->
+                                        <TextBlock Text="{loc:Loc 'Leave blank to use the basic personal amount. Enter the totals from the employee''s TD1 forms if they claim more.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <Grid ColumnDefinitions="*,16,*">
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Federal TD1'}" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding FederalClaimAmount, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         PlaceholderText="0.00"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="{loc:Loc 'Provincial TD1'}" FontSize="12"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                <TextBox Text="{Binding ProvincialClaimAmount, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         PlaceholderText="0.00"
+                                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                                         MaxLength="13" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Ontario alone has a dependant component in its tax
+                                             reduction, so the question is only asked of Ontario
+                                             employees rather than being shown and ignored. -->
+                                        <StackPanel Spacing="6" IsVisible="{Binding ShowOntarioDependants}">
+                                            <TextBlock Text="{loc:Loc 'Dependants on their TD1ON'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding OntarioDependants, Mode=TwoWay}"
+                                                     Classes="form-input"
+                                                     PlaceholderText="0"
+                                                     behaviors:NumericInputBehavior.IsIntegerOnly="True"
+                                                     MaxLength="2" />
+                                            <TextBlock Text="{loc:Loc 'Dependants under 19 plus disabled dependants. Optional: leaving it blank withholds slightly more, which the employee gets back on their return.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Spacing="8">
+                                    <CheckBox IsChecked="{Binding IsCppExempt, Mode=TwoWay}"
+                                              Content="{loc:Loc 'Exempt from CPP'}" />
+                                    <TextBlock Text="{loc:Loc 'Under 18, over 70, or already receiving a CPP retirement pension.'}"
+                                               FontSize="11" Margin="28,0,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    <CheckBox IsChecked="{Binding IsEiExempt, Mode=TwoWay}"
+                                              Content="{loc:Loc 'Exempt from EI'}" />
+                                    <TextBlock Text="{loc:Loc 'Usually an owner controlling more than 40% of the voting shares.'}"
+                                               FontSize="11" Margin="28,0,0,0" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                </StackPanel>
+
+                                <Grid ColumnDefinitions="*,16,*">
+                                    <StackPanel Grid.Column="0" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'Start date'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding StartDate, Mode=TwoWay}"
+                                                    Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="2" Spacing="6">
+                                        <TextBlock Text="{loc:Loc 'End date'}" FontSize="13" FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                        <DatePicker SelectedDate="{Binding EndDate, Mode=TwoWay}"
+                                                    Classes="form-datepicker" MinWidth="0" HorizontalAlignment="Stretch" />
+                                        <!-- Leaving is recorded here, archiving is a separate decision. The
+                                             T4 and the record of employment both need the actual last day,
+                                             and it is not the day someone got round to tidying the list. -->
+                                        <TextBlock Text="{loc:Loc 'Their last day, if they have left.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        <TextBlock Text="{Binding EndDateError}" FontSize="12"
+                                                   Foreground="{DynamicResource ErrorBrush}"
+                                                   IsVisible="{Binding EndDateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Everything below is only needed to file a T4. Grouped and
+                                     labelled as such so someone who has not reached year end
+                                     knows they can skip it. -->
+                                <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
+                                    <StackPanel Spacing="12">
+                                        <TextBlock Text="{loc:Loc 'For their T4'}" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Used at year end, and you can add them later. A T4 files without a social insurance number, but the contributions are not credited to the employee. An RL-1 or a record of employment does need one.'}"
+                                                   FontSize="11" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Social insurance number'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <!-- Masked. It is the most sensitive thing this app
+                                                 holds and an employee list is often shown on a
+                                                 shared screen. -->
+                                            <TextBox Text="{Binding Sin, Mode=TwoWay}" Classes="form-input"
+                                                     PasswordChar="*" MaxLength="11"
+                                                     PlaceholderText="000 000 000" />
+                                            <TextBlock Text="{Binding SinError}" FontSize="12"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding SinError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Home address'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBox Text="{Binding AddressStreet, Mode=TwoWay}" Classes="form-input"
+                                                     PlaceholderText="{loc:Loc 'Street'}" MaxLength="30" />
+                                            <Grid ColumnDefinitions="*,8,80,8,110">
+                                                <TextBox Grid.Column="0" Text="{Binding AddressCity, Mode=TwoWay}"
+                                                         Classes="form-input" PlaceholderText="{loc:Loc 'City'}" MaxLength="28" />
+                                                <TextBox Grid.Column="2" Text="{Binding AddressProvince, Mode=TwoWay}"
+                                                         Classes="form-input" PlaceholderText="{Binding AddressProvinceLabel}" MaxLength="2" />
+                                                <TextBox Grid.Column="4" Text="{Binding AddressPostalCode, Mode=TwoWay}"
+                                                         Classes="form-input" PlaceholderText="{loc:Loc 'Postal code'}" MaxLength="10" />
+                                            </Grid>
+                                            <!-- CRA reads the province box differently depending on
+                                                 the country: a code for Canada, a state for the US,
+                                                 and ZZ for anywhere else. -->
+                                            <controls:CountryInput SelectedCountryName="{Binding AddressCountry, Mode=TwoWay}" />
+
+                                            <TextBlock Text="{Binding AddressError}" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding AddressError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                            <TextBlock Text="{Binding AddressProvinceError}" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding AddressProvinceError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                            <TextBlock Text="{Binding AddressPostalCodeError}" FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource ErrorBrush}"
+                                                       IsVisible="{Binding AddressPostalCodeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+                                            <!-- Not the same as the province of employment above. -->
+                                            <TextBlock Text="{loc:Loc 'Where they live, which may differ from where they work.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+
+                                        <StackPanel Spacing="6">
+                                            <TextBlock Text="{loc:Loc 'Dental coverage you offered'}" FontSize="12"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <ComboBox ItemsSource="{Binding DentalOptions}"
+                                                      SelectedItem="{Binding DentalBenefit, Mode=TwoWay}"
+                                                      Classes="form-combobox" HorizontalAlignment="Stretch">
+                                                <ComboBox.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Converter={x:Static local:DentalBenefitConverter.Instance}}" />
+                                                    </DataTemplate>
+                                                </ComboBox.ItemTemplate>
+                                            </ComboBox>
+                                            <TextBlock Text="{loc:Loc 'Whether they or their family could access dental coverage on 31 December. Required on every T4.'}"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Notes'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding Notes, Mode=TwoWay}" Classes="form-input"
+                                             AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" MaxLength="500" />
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+                                <Button Classes="secondary-button" Content="{loc:Loc Cancel}"
+                                        Command="{Binding CloseEmployeeModalCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc Save}"
+                                        Command="{Binding SaveEmployeeCommand}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+
+        <!-- ============================ FILTER ============================ -->
+        <controls:ModalOverlay IsOpen="{Binding IsFilterModalOpen}"
+                               ClosingCommand="{Binding RequestCloseFilterModalCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Width="450"
+                        Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        BoxShadow="0 8 32 0 #40000000">
+                    <Grid RowDefinitions="Auto,*,Auto">
+
+                        <!-- Header -->
+                        <Border Grid.Row="0" Padding="24,20"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{loc:Loc 'Filter employees'}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button Grid.Column="1" Classes="icon-button"
+                                        Command="{Binding CloseFilterModalCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <StackPanel Margin="24" Spacing="20">
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc Status}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding StatusOptions}"
+                                              SelectedItem="{Binding FilterStatus}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc Province}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding ProvinceFilterOptions}"
+                                              SelectedItem="{Binding FilterProvince}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={x:Static local:ProvinceNameConverter.Instance}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Pay type'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding PayTypeOptions}"
+                                              SelectedItem="{Binding FilterPayType}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc Frequency}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox ItemsSource="{Binding FrequencyOptions}"
+                                              SelectedItem="{Binding FilterFrequency}"
+                                              Classes="form-combobox" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource TranslateConverter}}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Footer -->
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Button Grid.Column="0" Classes="secondary-button"
+                                        Content="{loc:Loc 'Clear filters'}"
+                                        Command="{Binding ClearFiltersCommand}" />
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                                    <Button Classes="secondary-button" Content="{loc:Loc Cancel}"
+                                            Command="{Binding CloseFilterModalCommand}" />
+                                    <Button Classes="primary-button" Content="{loc:Loc Apply}"
+                                            Command="{Binding ApplyFiltersCommand}" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+
+</UserControl>

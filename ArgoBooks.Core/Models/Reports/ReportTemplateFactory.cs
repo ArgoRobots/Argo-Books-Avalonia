@@ -29,40 +29,7 @@ public static class ReportTemplateFactory
         public const string ARaging = "Accounts Receivable Aging";
         public const string TaxSummary = "Tax Summary";
         public const string ProductSales = "Sales by Product";
-    }
-
-    /// <summary>
-    /// Gets all available accounting template names.
-    /// </summary>
-    public static string[] GetAccountingTemplateNames() =>
-    [
-        TemplateNames.IncomeStatement,
-        TemplateNames.BalanceSheet,
-        TemplateNames.CashFlowStatement,
-        TemplateNames.GeneralLedger,
-        TemplateNames.ARaging,
-        TemplateNames.TaxSummary,
-        TemplateNames.ProductSales
-    ];
-
-    /// <summary>
-    /// Gets all available built-in template names.
-    /// </summary>
-    public static string[] GetBuiltInTemplateNames()
-    {
-        return
-        [
-            TemplateNames.Custom,
-            TemplateNames.MonthlyRevenue,
-            TemplateNames.FinancialOverview,
-            TemplateNames.PerformanceAnalysis,
-            TemplateNames.ReturnsAnalysis,
-            TemplateNames.LossesAnalysis,
-            TemplateNames.GeographicAnalysis,
-            TemplateNames.CustomerAnalysis,
-            TemplateNames.ExpenseBreakdown,
-            .. GetAccountingTemplateNames()
-        ];
+        public const string PayrollRemittance = "Payroll Remittance";
     }
 
     /// <summary>
@@ -88,7 +55,8 @@ public static class ReportTemplateFactory
                templateName == TemplateNames.GeneralLedger ||
                templateName == TemplateNames.ARaging ||
                templateName == TemplateNames.TaxSummary ||
-               templateName == TemplateNames.ProductSales;
+               templateName == TemplateNames.ProductSales ||
+               templateName == TemplateNames.PayrollRemittance;
     }
 
     /// <summary>
@@ -113,6 +81,7 @@ public static class ReportTemplateFactory
             TemplateNames.ARaging => CreateAccountingTemplate(AccountingReportType.AccountsReceivableAging, "Accounts Receivable Aging", DatePresetNames.AllTime),
             TemplateNames.TaxSummary => CreateAccountingTemplate(AccountingReportType.TaxSummary, "Tax Summary", DatePresetNames.YearToDate),
             TemplateNames.ProductSales => CreateAccountingTemplate(AccountingReportType.ProductSales, "Sales by Product", DatePresetNames.YearToDate),
+            TemplateNames.PayrollRemittance => CreateAccountingTemplate(AccountingReportType.PayrollRemittance, "Payroll Remittance", DatePresetNames.ThisMonth),
             _ => new ReportConfiguration()
         };
     }

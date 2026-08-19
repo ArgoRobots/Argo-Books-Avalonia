@@ -1,0 +1,641 @@
+{
+  "editionId": "2026-07",
+  "effectiveFrom": "2026-07-01T00:00:00",
+  "effectiveTo": "2026-12-31T00:00:00",
+  "_source": "CRA T4127 Payroll Deductions Formulas, 123rd edition effective July 1 2026. CPP, CPP2 and EI from the CRA rate pages. Every value below was returned independently by two retrievals that agreed exactly, and the derived maximums reproduce from their own rates: CPP 4230.45 = (74600-3500)*0.0595, CPP2 416.00 = (85000-74600)*0.04, EI 1123.07 = 68900*0.0163.",
+  "_verification": "Checked cell by cell against T4127 123rd edition Chapter 8 on canada.ca: Table 8.1 (every bracket, rate and constant for the federal table and all twelve provinces and territories), Table 8.2 (every basic personal amount, the Canada Employment Amount, BC's and Ontario's S2, Ontario's surtax bands and Quebec's abatement) and Tables 8.3 to 8.8 (CPP, CPP2, EI, QPP and QPIP). Ontario's five health premium bands were checked against the V2 formula and BC's tax reduction against the S formula, including the footnote that 44,952 is a hard cut-off rather than where the taper reaches zero. Quebec was checked against Revenu Quebec's Principal Changes for 2026: the four thresholds, the basic personal amount of 18,952, the 1,450 worker deduction and the 18,952 gratuities threshold, and the four bracket constants reproduce from those thresholds by continuity. Zero mismatches.",
+  "_provinces_note": "All thirteen jurisdictions are present: the twelve provinces and territories that use CRA's rate-and-constant structure, plus Quebec, which is held in its own block because Revenu Quebec's formula is a different shape. Adding a jurisdiction is data plus test fixtures, not code.",
+  "federal": {
+    "brackets": [
+      {
+        "upTo": 58523,
+        "rate": 0.14,
+        "constantK": 0
+      },
+      {
+        "upTo": 117045,
+        "rate": 0.205,
+        "constantK": 3804
+      },
+      {
+        "upTo": 181440,
+        "rate": 0.26,
+        "constantK": 10241
+      },
+      {
+        "upTo": 258482,
+        "rate": 0.29,
+        "constantK": 15685
+      },
+      {
+        "upTo": null,
+        "rate": 0.33,
+        "constantK": 26024
+      }
+    ],
+    "basicPersonalAmount": {
+      "maximum": 16452,
+      "minimum": 14829,
+      "phaseoutStart": 181440,
+      "phaseoutEnd": 258482
+    },
+    "canadaEmploymentAmount": 1501,
+    "lowestRateForCredits": 0.14,
+    "flatBonusCeiling": 5000,
+    "flatBonusRate": 0.15
+  },
+  "cpp": {
+    "rateEmployee": 0.0595,
+    "rateEmployer": 0.0595,
+    "baseRateEmployee": 0.0495,
+    "basicExemptionAnnual": 3500,
+    "ympeCeiling": 74600,
+    "maxContributionEmployee": 4230.45
+  },
+  "cpp2": {
+    "rateEmployee": 0.04,
+    "rateEmployer": 0.04,
+    "yampeCeiling": 85000,
+    "maxContributionEmployee": 416.0
+  },
+  "ei": {
+    "rateEmployee": 0.0163,
+    "employerMultiplier": 1.4,
+    "maxInsurableEarnings": 68900,
+    "maxPremiumEmployee": 1123.07,
+    "quebecRateEmployee": 0.013,
+    "quebecEmployerMultiplier": 1.4
+  },
+  "quebec": {
+    "qpp": {
+      "rateEmployee": 0.063,
+      "rateEmployer": 0.063,
+      "baseRateEmployee": 0.053,
+      "basicExemptionAnnual": 3500,
+      "ympeCeiling": 74600,
+      "maxContributionEmployee": 4479.3
+    },
+    "qpp2": {
+      "rateEmployee": 0.04,
+      "rateEmployer": 0.04,
+      "yampeCeiling": 85000,
+      "maxContributionEmployee": 416.0
+    },
+    "qpip": {
+      "rateEmployee": 0.0043,
+      "rateEmployer": 0.00602,
+      "maxInsurableEarnings": 103000,
+      "maxPremiumEmployee": 442.9,
+      "maxPremiumEmployer": 620.06
+    },
+    "brackets": [
+      {
+        "upTo": 54345,
+        "rate": 0.14,
+        "constantK": 0
+      },
+      {
+        "upTo": 108680,
+        "rate": 0.19,
+        "constantK": 2717
+      },
+      {
+        "upTo": 132245,
+        "rate": 0.24,
+        "constantK": 8151
+      },
+      {
+        "upTo": null,
+        "rate": 0.2575,
+        "constantK": 10465
+      }
+    ],
+    "basicPersonalAmount": 18952,
+    "creditRate": 0.14,
+    "workerDeductionRate": 0.06,
+    "workerDeductionMaxAnnual": 1450,
+    "federalAbatement": 0.165,
+    "eiMaxPremiumEmployee": 895.7,
+    "flatBonusCeiling": 18952,
+    "flatBonusRate": 0.07,
+    "federalFlatBonusRate": 0.1
+  },
+  "provinces": {
+    "AB": {
+      "brackets": [
+        {
+          "upTo": 61200,
+          "rate": 0.08,
+          "constantK": 0
+        },
+        {
+          "upTo": 154259,
+          "rate": 0.1,
+          "constantK": 1224
+        },
+        {
+          "upTo": 185111,
+          "rate": 0.12,
+          "constantK": 4309
+        },
+        {
+          "upTo": 246813,
+          "rate": 0.13,
+          "constantK": 6160
+        },
+        {
+          "upTo": 370220,
+          "rate": 0.14,
+          "constantK": 8628
+        },
+        {
+          "upTo": null,
+          "rate": 0.15,
+          "constantK": 12331
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 22769,
+        "minimum": 22769,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "BC": {
+      "brackets": [
+        {
+          "upTo": 50363,
+          "rate": 0.0614,
+          "constantK": 0
+        },
+        {
+          "upTo": 100728,
+          "rate": 0.077,
+          "constantK": 786
+        },
+        {
+          "upTo": 115648,
+          "rate": 0.105,
+          "constantK": 3606
+        },
+        {
+          "upTo": 140430,
+          "rate": 0.1229,
+          "constantK": 5676
+        },
+        {
+          "upTo": 190405,
+          "rate": 0.147,
+          "constantK": 9061
+        },
+        {
+          "upTo": 265545,
+          "rate": 0.168,
+          "constantK": 13059
+        },
+        {
+          "upTo": null,
+          "rate": 0.205,
+          "constantK": 22884
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 13216,
+        "minimum": 13216,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": {
+        "basic": 805,
+        "perDependant": 0,
+        "phaseOutStart": 25570,
+        "phaseOutRate": 0.0356,
+        "phaseOutEnd": 44952
+      },
+      "healthPremium": null
+    },
+    "MB": {
+      "brackets": [
+        {
+          "upTo": 47000,
+          "rate": 0.108,
+          "constantK": 0
+        },
+        {
+          "upTo": 100000,
+          "rate": 0.1275,
+          "constantK": 917
+        },
+        {
+          "upTo": null,
+          "rate": 0.174,
+          "constantK": 5567
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 15780,
+        "minimum": 0,
+        "phaseoutStart": 200000,
+        "phaseoutEnd": 400000
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "NB": {
+      "brackets": [
+        {
+          "upTo": 52333,
+          "rate": 0.094,
+          "constantK": 0
+        },
+        {
+          "upTo": 104666,
+          "rate": 0.14,
+          "constantK": 2407
+        },
+        {
+          "upTo": 193861,
+          "rate": 0.16,
+          "constantK": 4501
+        },
+        {
+          "upTo": null,
+          "rate": 0.195,
+          "constantK": 11286
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 13664,
+        "minimum": 13664,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "NL": {
+      "brackets": [
+        {
+          "upTo": 44678,
+          "rate": 0.087,
+          "constantK": 0
+        },
+        {
+          "upTo": 89354,
+          "rate": 0.145,
+          "constantK": 2591
+        },
+        {
+          "upTo": 159528,
+          "rate": 0.158,
+          "constantK": 3753
+        },
+        {
+          "upTo": 223340,
+          "rate": 0.178,
+          "constantK": 6943
+        },
+        {
+          "upTo": 285319,
+          "rate": 0.198,
+          "constantK": 11410
+        },
+        {
+          "upTo": 570638,
+          "rate": 0.208,
+          "constantK": 14263
+        },
+        {
+          "upTo": 1141275,
+          "rate": 0.213,
+          "constantK": 17117
+        },
+        {
+          "upTo": null,
+          "rate": 0.218,
+          "constantK": 22823
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 15000,
+        "minimum": 15000,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "NS": {
+      "brackets": [
+        {
+          "upTo": 30995,
+          "rate": 0.0879,
+          "constantK": 0
+        },
+        {
+          "upTo": 61991,
+          "rate": 0.1495,
+          "constantK": 1909
+        },
+        {
+          "upTo": 97417,
+          "rate": 0.1667,
+          "constantK": 2976
+        },
+        {
+          "upTo": 157124,
+          "rate": 0.175,
+          "constantK": 3784
+        },
+        {
+          "upTo": null,
+          "rate": 0.21,
+          "constantK": 9283
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 11932,
+        "minimum": 11932,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "NT": {
+      "brackets": [
+        {
+          "upTo": 53003,
+          "rate": 0.059,
+          "constantK": 0
+        },
+        {
+          "upTo": 106009,
+          "rate": 0.086,
+          "constantK": 1431
+        },
+        {
+          "upTo": 172346,
+          "rate": 0.122,
+          "constantK": 5247
+        },
+        {
+          "upTo": null,
+          "rate": 0.1405,
+          "constantK": 8436
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 18198,
+        "minimum": 18198,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "NU": {
+      "brackets": [
+        {
+          "upTo": 55801,
+          "rate": 0.04,
+          "constantK": 0
+        },
+        {
+          "upTo": 111602,
+          "rate": 0.07,
+          "constantK": 1674
+        },
+        {
+          "upTo": 181439,
+          "rate": 0.09,
+          "constantK": 3906
+        },
+        {
+          "upTo": null,
+          "rate": 0.115,
+          "constantK": 8442
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 19659,
+        "minimum": 19659,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "ON": {
+      "brackets": [
+        {
+          "upTo": 53891,
+          "rate": 0.0505,
+          "constantK": 0
+        },
+        {
+          "upTo": 107785,
+          "rate": 0.0915,
+          "constantK": 2210
+        },
+        {
+          "upTo": 150000,
+          "rate": 0.1116,
+          "constantK": 4376
+        },
+        {
+          "upTo": 220000,
+          "rate": 0.1216,
+          "constantK": 5876
+        },
+        {
+          "upTo": null,
+          "rate": 0.1316,
+          "constantK": 8076
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 12989,
+        "minimum": 12989,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": {
+        "thresholds": [
+          0,
+          5818,
+          7446
+        ],
+        "rates": [
+          0.0,
+          0.2,
+          0.36
+        ]
+      },
+      "taxReduction": {
+        "basic": 300,
+        "perDependant": 554,
+        "phaseOutStart": 0,
+        "phaseOutRate": 0,
+        "phaseOutEnd": 0
+      },
+      "healthPremium": [
+        {
+          "incomeOver": 20000,
+          "incomeUpTo": 36000,
+          "premium": 0,
+          "rateOnExcess": 0.06,
+          "maxPremium": 300
+        },
+        {
+          "incomeOver": 36000,
+          "incomeUpTo": 48000,
+          "premium": 300,
+          "rateOnExcess": 0.06,
+          "maxPremium": 450
+        },
+        {
+          "incomeOver": 48000,
+          "incomeUpTo": 72000,
+          "premium": 450,
+          "rateOnExcess": 0.25,
+          "maxPremium": 600
+        },
+        {
+          "incomeOver": 72000,
+          "incomeUpTo": 200000,
+          "premium": 600,
+          "rateOnExcess": 0.25,
+          "maxPremium": 750
+        },
+        {
+          "incomeOver": 200000,
+          "incomeUpTo": null,
+          "premium": 750,
+          "rateOnExcess": 0.25,
+          "maxPremium": 900
+        }
+      ]
+    },
+    "PE": {
+      "brackets": [
+        {
+          "upTo": 33928,
+          "rate": 0.095,
+          "constantK": 0
+        },
+        {
+          "upTo": 65820,
+          "rate": 0.1347,
+          "constantK": 1347
+        },
+        {
+          "upTo": 106890,
+          "rate": 0.166,
+          "constantK": 3407
+        },
+        {
+          "upTo": 142520,
+          "rate": 0.1762,
+          "constantK": 4497
+        },
+        {
+          "upTo": 200000,
+          "rate": 0.19,
+          "constantK": 6464
+        },
+        {
+          "upTo": null,
+          "rate": 0.21,
+          "constantK": 10464
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 15000,
+        "minimum": 15000,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "SK": {
+      "brackets": [
+        {
+          "upTo": 54532,
+          "rate": 0.105,
+          "constantK": 0
+        },
+        {
+          "upTo": 155805,
+          "rate": 0.125,
+          "constantK": 1091
+        },
+        {
+          "upTo": null,
+          "rate": 0.145,
+          "constantK": 4207
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 20381,
+        "minimum": 20381,
+        "phaseoutStart": 0,
+        "phaseoutEnd": 0
+      },
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    },
+    "YT": {
+      "brackets": [
+        {
+          "upTo": 58523,
+          "rate": 0.064,
+          "constantK": 0
+        },
+        {
+          "upTo": 117045,
+          "rate": 0.09,
+          "constantK": 1522
+        },
+        {
+          "upTo": 181440,
+          "rate": 0.109,
+          "constantK": 3745
+        },
+        {
+          "upTo": 500000,
+          "rate": 0.128,
+          "constantK": 7193
+        },
+        {
+          "upTo": null,
+          "rate": 0.15,
+          "constantK": 18193
+        }
+      ],
+      "basicPersonalAmount": {
+        "maximum": 16452,
+        "minimum": 14829,
+        "phaseoutStart": 181440,
+        "phaseoutEnd": 258482
+      },
+      "canadaEmploymentAmount": 1501,
+      "surtax": null,
+      "taxReduction": null,
+      "healthPremium": null
+    }
+  }
+}

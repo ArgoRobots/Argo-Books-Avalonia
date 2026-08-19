@@ -188,7 +188,7 @@
                                                 <controls:SearchableDropdown
                                                     Grid.Row="0" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center"
                                                     Classes="compact"
-                                                    Placeholder="{loc:Loc 'Product...'}"
+                                                    Placeholder="{loc:Loc 'Search for a product...'}"
                                                     ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableProducts}"
                                                     SelectedItem="{Binding ResolvedProductObject, Mode=TwoWay}"
                                                     SearchText="{Binding ProductSearchText, Mode=TwoWay}"
@@ -270,7 +270,7 @@
                                                     <controls:SearchableDropdown
                                                         IsVisible="{Binding !CreateAsRevenue}"
                                                         Classes="compact"
-                                                        Placeholder="{loc:Loc 'Supplier...'}"
+                                                        Placeholder="{loc:Loc 'Search suppliers...'}"
                                                         ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableSuppliers}"
                                                         SelectedItem="{Binding ResolvedSupplierObject, Mode=TwoWay}"
                                                         SearchText="{Binding CounterpartySearchText, Mode=TwoWay}"
@@ -286,7 +286,7 @@
                                                     <controls:SearchableDropdown
                                                         IsVisible="{Binding CreateAsRevenue}"
                                                         Classes="compact"
-                                                        Placeholder="{loc:Loc 'Customer...'}"
+                                                        Placeholder="{loc:Loc 'Search customers...'}"
                                                         ItemsSource="{Binding $parent[ItemsControl].((vm:BankStatementImportModalViewModel)DataContext).AvailableCustomers}"
                                                         SelectedItem="{Binding ResolvedCustomerObject, Mode=TwoWay}"
                                                         SearchText="{Binding CounterpartySearchText, Mode=TwoWay}"

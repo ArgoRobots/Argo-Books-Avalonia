@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+        Reports public/internal members that nothing in the solution references.
+
+        Deliberately NOT part of ArgoBooks.sln: it is a diagnostic, not part of the app.
+        It reads the source as text, so it needs no reference to the projects it scans.
+        Build it on demand with "dotnet build tools/ArgoBooks.UnusedCode", then run the
+        produced argo-unused-code executable. "dotnet run" against this folder works too.
+    -->
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>ArgoBooks.UnusedCode</RootNamespace>
+        <AssemblyName>argo-unused-code</AssemblyName>
+    </PropertyGroup>
+
+</Project>

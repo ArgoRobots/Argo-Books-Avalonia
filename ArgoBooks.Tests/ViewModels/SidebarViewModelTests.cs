@@ -242,11 +242,11 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void SetActivePage_WithExpenses_ActivatesTransactionItem()
+    public void SetActivePage_WithExpenses_ActivatesExpenseItem()
     {
         _viewModel.SetActivePage("Expenses");
 
-        Assert.Contains(_viewModel.TransactionItems, item => item.PageName == "Expenses" && item.IsActive);
+        Assert.Contains(_viewModel.ExpenseItems, item => item.PageName == "Expenses" && item.IsActive);
     }
 
     #endregion
@@ -272,27 +272,9 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void Constructor_DefaultState_ShowPayrollIsTrue()
-    {
-        Assert.True(_viewModel.ShowPayroll);
-    }
-
-    [Fact]
-    public void Constructor_DefaultState_ShowTeamIsFalse()
-    {
-        Assert.False(_viewModel.ShowTeam);
-    }
-
-    [Fact]
     public void Constructor_DefaultState_HasPremiumIsFalse()
     {
         Assert.False(_viewModel.HasPremium);
-    }
-
-    [Fact]
-    public void Constructor_DefaultState_HasEnterpriseIsFalse()
-    {
-        Assert.False(_viewModel.HasEnterprise);
     }
 
     [Fact]
@@ -343,23 +325,6 @@ public class SidebarViewModelTests
         Assert.Null(insightsItem.BadgeText);
     }
 
-    [Fact]
-    public void HasEnterprise_WhenSetToTrue_ShowsTeamSection()
-    {
-        _viewModel.HasEnterprise = true;
-
-        Assert.True(_viewModel.ShowTeam);
-    }
-
-    [Fact]
-    public void HasEnterprise_WhenSetToFalse_HidesTeamSection()
-    {
-        _viewModel.HasEnterprise = true;
-        _viewModel.HasEnterprise = false;
-
-        Assert.False(_viewModel.ShowTeam);
-    }
-
     #endregion
 
     #region Navigation Items Initialization Tests
@@ -371,21 +336,27 @@ public class SidebarViewModelTests
     }
 
     [Fact]
-    public void Constructor_InitializesTransactionItems()
+    public void Constructor_InitializesExpenseItems()
     {
-        Assert.True(_viewModel.TransactionItems.Count > 0);
+        Assert.True(_viewModel.ExpenseItems.Count > 0);
+    }
+
+    [Fact]
+    public void Constructor_InitializesRevenueItems()
+    {
+        Assert.True(_viewModel.RevenueItems.Count > 0);
+    }
+
+    [Fact]
+    public void Constructor_InitializesImportItems()
+    {
+        Assert.True(_viewModel.ImportItems.Count > 0);
     }
 
     [Fact]
     public void Constructor_InitializesRentalItems()
     {
         Assert.True(_viewModel.RentalItems.Count > 0);
-    }
-
-    [Fact]
-    public void Constructor_InitializesManagementItems()
-    {
-        Assert.True(_viewModel.ManagementItems.Count > 0);
     }
 
     [Fact]

@@ -2132,11 +2132,6 @@ public partial class SkiaReportDesignCanvas : UserControl
         return _selectedElements.FirstOrDefault();
     }
 
-    public IReadOnlyList<ReportElementBase> GetSelectedElements()
-    {
-        return _selectedElements.AsReadOnly();
-    }
-
     public void SelectElement(ReportElementBase element, bool addToSelection = false)
     {
         if (!addToSelection)

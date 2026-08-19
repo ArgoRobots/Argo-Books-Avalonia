@@ -246,4 +246,75 @@ public class ErrorLoggerTests
     }
 
     #endregion
+
+    #region Telemetry Forwarding Tests
+
+    // Warnings are opt-in: one reaches telemetry only when the caller gives it a code,
+    // which is what makes it groupable on the dashboard. Without this rule the dozens of
+    // existing LogWarning calls would all upload as uncategorised noise, so these tests
+    // pin the rule rather than the implementation that happens to satisfy it today.
+
+    [Fact]
+    public void LogWarning_WithCode_IsReportedToTelemetry()
+    {
+        var telemetry = new RecordingTelemetryManager();
+        var logger = new ErrorLogger(maxEntries: 100) { TelemetryManager = telemetry };
+
+        logger.LogWarning("Scan timed out", "ctx", ErrorCategory.Api, "ReceiptScanTimeout");
+
+        var reported = Assert.Single(telemetry.Reported);
+        Assert.Equal(LogLevel.Warning, reported.Level);
+        Assert.Equal("ReceiptScanTimeout", reported.ErrorCode);
+        Assert.Equal(ErrorCategory.Api, reported.Category);
+    }
+
+    [Fact]
+    public void LogWarning_WithoutCode_StaysLocal()
+    {
+        var telemetry = new RecordingTelemetryManager();
+        var logger = new ErrorLogger(maxEntries: 100) { TelemetryManager = telemetry };
+
+        logger.LogWarning("Just a local diagnostic");
+
+        Assert.Empty(telemetry.Reported);
+        // Still recorded in the in-app log, which is where support reads it from.
+        Assert.Single(logger.GetAllErrors());
+    }
+
+    [Fact]
+    public void LogError_IsAlwaysReportedToTelemetry()
+    {
+        var telemetry = new RecordingTelemetryManager();
+        var logger = new ErrorLogger(maxEntries: 100) { TelemetryManager = telemetry };
+
+        logger.LogError("Something broke", ErrorCategory.FileSystem);
+
+        var reported = Assert.Single(telemetry.Reported);
+        Assert.Equal(LogLevel.Error, reported.Level);
+    }
+
+    /// <summary>Captures what ErrorLogger hands to telemetry. Every other member is unused.</summary>
+    private sealed class RecordingTelemetryManager : ITelemetryManager
+    {
+        public List<ErrorLogEntry> Reported { get; } = [];
+
+        public Task TrackErrorAsync(ErrorLogEntry errorEntry, CancellationToken cancellationToken = default)
+        {
+            Reported.Add(errorEntry);
+            return Task.CompletedTask;
+        }
+
+        public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task EndSessionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackApiCallAsync(ApiName apiName, long durationMs, bool success, string? model = null, int? tokensUsed = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackCompanyProfileAsync(string? companyName, string? businessType, string? industry, string? country, string? currency, string? language, bool isSample, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackStartupAsync(long? toFirstPaintMs, long? toReadyMs, bool coldStart, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default) => Task.FromResult(new TelemetryUploadResult());
+        public Task ClearAllDataAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task<TelemetryStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new TelemetryStatistics());
+    }
+
+    #endregion
 }

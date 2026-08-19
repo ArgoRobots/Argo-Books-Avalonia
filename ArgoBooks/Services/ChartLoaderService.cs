@@ -44,7 +44,6 @@ public class ChartLoaderService
     /// Chart aggregations are all USD-normalized (so multi-currency data rolls up consistently),
     /// but charts must render in the display currency or the bars / tooltips disagree with the
     /// stat cards. Apply this at the boundary right before passing values to LiveCharts.
-    /// (Replaces the single-date variant, which was removed.)
     /// </summary>
     public static double[] ConvertUSDValuesToDisplay(double[] usdValues, DateTime[] dates)
     {
@@ -68,16 +67,6 @@ public class ChartLoaderService
             if (p.Date.HasValue)
                 p.Value = (double)CurrencyService.GetDisplayAmount((decimal)p.Value, p.Date.Value);
         return dailyPoints;
-    }
-
-    /// <summary>
-    /// Gets the legend text paint based on the current theme.
-    /// </summary>
-    public static SolidColorPaint GetLegendTextPaint()
-    {
-        var isDarkTheme = ThemeService.Instance.IsDarkTheme;
-        var textColor = isDarkTheme ? SKColor.Parse(AppColors.TextDark) : SKColor.Parse(AppColors.TextLight);
-        return new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") };
     }
 
     // Maximum length for legend labels to prevent overflow

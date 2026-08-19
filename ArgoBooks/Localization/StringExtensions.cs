@@ -93,14 +93,5 @@ public static class StringExtensions
             return LanguageService.Instance.HasTranslation(text);
         }
 
-        /// <summary>
-        /// Gets the translation key for a string.
-        /// Useful for debugging or for the TranslationGenerator.
-        /// </summary>
-        /// <returns>The translation key that would be used for this string.</returns>
-        public string GetTranslationKey()
-        {
-            return LanguageService.GetStringKey(text);
-        }
     }
 }

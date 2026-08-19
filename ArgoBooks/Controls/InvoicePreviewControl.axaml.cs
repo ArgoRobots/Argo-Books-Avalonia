@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using ArgoBooks.Services;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -476,6 +477,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         var deposit = Number(cfg.deposit) || 0;
         var portal = !!cfg.portal;
         var passFee = cfg.passFee !== false;
+        var paid = Number(cfg.paid) || 0;
 
         function num(el) { return el ? (parseFloat((el.textContent || '').replace(/[^0-9.\-]/g, '')) || 0) : 0; }
         function money(a) { return sym + a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -513,14 +515,20 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             var taxableBase = subtotal - discountCalc + feeCalc + shipping;
             var taxAmount = taxMode === 'fixed' ? tax : taxableBase * tax / 100;
             var total = taxableBase + taxAmount + deposit;
-            var balance = total;
+
+            // Less whatever has already been paid. This was 'balance = total', so editing a
+            // part-paid invoice showed Amount to Pay as the full total sitting right beneath the
+            // Amount Paid row. Floored at zero so an overpayment does not render a negative.
+            var balance = Math.max(0, total - paid);
             var procFee = (portal && passFee && balance > 0) ? Math.round((balance * 2.9 / 100 + 0.30) * 100) / 100 : 0;
 
+            // The (x%) suffix on the tax label is server-rendered, so it has to be
+            // rewritten here or it keeps showing the rate the paper loaded with.
+            // Trims trailing zeros to match the C# ""0.##"" format.
+            setOut('taxRateLabel', taxMode === 'fixed' ? '' : ' (' + String(parseFloat(tax.toFixed(2))) + '%)');
             setOut('subtotal', money(subtotal));
-            setOut('total', due(total));
             setOut('processingFee', money(procFee));
             setOut('amountToPay', due(balance + procFee));
-            setOut('balance', due(balance));
         };
 
         // Rate placeholder: show a greyed hint (e.g. ""$0.00"") instead of a literal zero, so clicking
@@ -555,11 +563,25 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     public InvoicePreviewControl()
     {
         InitializeComponent();
+
+        // The web view is declared in XAML, so it attaches as soon as this control does, and
+        // attaching is what creates the WebView2 environment. OnLoaded already runs too late to
+        // influence that, so the lookup is duplicated here rather than moved.
+        if (this.FindControl<NativeWebView>("WebView") is { } webView)
+        {
+            WebViewEnvironment.Configure(webView);
+        }
     }
 
     protected override void OnLoaded(RoutedEventArgs e)
     {
         base.OnLoaded(e);
+
+        // Subscribed on every load, above the initialised check, so it stays paired with the
+        // unsubscribe in OnUnloaded. A control that is unloaded and loaded again skips the
+        // block below, and would otherwise come back without a subscription.
+        WebViewEnvironment.Failed -= OnWebViewFailed;
+        WebViewEnvironment.Failed += OnWebViewFailed;
 
         if (_isInitialized)
             return;
@@ -610,7 +632,11 @@ window.__totalsConfig = __TOTALS_CONFIG__;
 
     private void InitializePlatformPreview()
     {
-        if (PlatformSupportsInlineWebView)
+        // A web view that already failed to start this session fails the same way again, and it
+        // fails silently from here: the exception never reaches this call. Without the check the
+        // preview would show an empty panel, so treat it exactly like a platform that cannot
+        // embed one and offer the browser instead.
+        if (PlatformSupportsInlineWebView && !WebViewEnvironment.HasFailed)
         {
             ActivateWebView();
         }
@@ -618,6 +644,16 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         {
             ShowFallback();
         }
+    }
+
+    /// <summary>
+    /// The web view died after this control activated it, so the preview is showing nothing.
+    /// Swap it for the fallback the Linux path already uses.
+    /// </summary>
+    private void OnWebViewFailed(object? sender, EventArgs e)
+    {
+        DeactivateWebView();
+        ShowFallback();
     }
 
     /// <summary>Activates the WebView (or fallback) if it should be showing but isn't yet.
@@ -1332,6 +1368,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     protected override void OnUnloaded(RoutedEventArgs e)
     {
         base.OnUnloaded(e);
+        // Paired with the subscribe in OnLoaded. WebViewEnvironment.Failed is static, so an
+        // unloaded preview left subscribed would be held alive for the life of the process.
+        WebViewEnvironment.Failed -= OnWebViewFailed;
         DeactivateWebView();
     }
 }

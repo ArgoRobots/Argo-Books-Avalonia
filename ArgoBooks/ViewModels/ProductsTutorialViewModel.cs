@@ -16,20 +16,20 @@ public partial class ProductsTutorialViewModel : ViewModelBase
     [
         new TutorialStep
         {
-            Title = "Expense & Revenue Products",
-            Description = "Use the tabs above to switch between Expense products (items you purchase like supplies, materials) and Revenue products (items you sell like goods, services).",
-            HighlightArea = "tabs"
+            Title = "Products",
+            Description = "This is the list of things you buy for your business, like supplies and materials.",
+            HighlightArea = "none"
         },
         new TutorialStep
         {
-            Title = "Track Your Products",
-            Description = "Add products to keep track of what you buy and sell. Each product can have a category, supplier, and inventory thresholds.",
+            Title = "What you can store",
+            Description = "Give each one a category and a supplier, and Argo Books can warn you when you are running low.",
             HighlightArea = "content"
         },
         new TutorialStep
         {
-            Title = "Products & Services",
-            Description = "Products can be physical items or services. Pick whichever fits what you're tracking.",
+            Title = "Not just physical things",
+            Description = "A product can also be a service you pay for, like a monthly subscription. Add whatever you need to track.",
             HighlightArea = "none"
         }
     ];

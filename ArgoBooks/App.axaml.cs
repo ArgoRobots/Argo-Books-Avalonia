@@ -63,6 +63,12 @@ public partial class App : Application
     public static PaymentPortalService? PaymentPortalService { get; private set; }
 
     /// <summary>
+    /// Pushes locally-recorded invoice payments up to the portal, so the server
+    /// stops treating cash-paid invoices as unpaid and chasing the customer.
+    /// </summary>
+    public static PortalBalanceSyncService? PortalBalanceSyncService { get; private set; }
+
+    /// <summary>
     /// Gets the mobile-sync service instance used to upload company snapshots and pull
     /// the capture queue from the phone-pairing backend.
     /// </summary>
@@ -199,6 +205,11 @@ public partial class App : Application
     /// Gets the locations modals view model for shared access.
     /// </summary>
     public static LocationsModalsViewModel? LocationsModalsViewModel => _appShellViewModel?.LocationsModalsViewModel;
+    public static PayrollModalsViewModel? PayrollModalsViewModel => _appShellViewModel?.PayrollModalsViewModel;
+
+    public static PayRunModalsViewModel? PayRunModalsViewModel => _appShellViewModel?.PayRunModalsViewModel;
+
+    public static YearEndModalViewModel? YearEndModalViewModel => _appShellViewModel?.YearEndModalViewModel;
 
     /// <summary>
     /// Gets the stock adjustments modals view model for shared access.
@@ -398,6 +409,19 @@ public partial class App : Application
             // Always advance the sync timestamp on success to avoid re-querying the same window
             portalSettings.LastSyncTime = syncResponse.SyncTimestamp ?? DateTime.UtcNow;
 
+            // Sweep locally-recorded balances up to the server while we already
+            // have it on the line, so payments taken in cash (or on another
+            // machine, or while this one was offline) stop the reminder cron
+            // chasing an invoice that is already settled.
+            //
+            // Deliberately ABOVE the no-new-payments return below: having
+            // nothing to pull down is the common case, and it says nothing
+            // about whether we have something to push up.
+            if (PortalBalanceSyncService != null)
+            {
+                await PortalBalanceSyncService.ReconcileAsync();
+            }
+
             if (syncResponse.Payments.Count == 0)
                 return;
 
@@ -441,7 +465,6 @@ public partial class App : Application
                 // Refresh any already-instantiated page ViewModels so the UI reflects the new data
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
-                    _paymentsPageViewModel?.RefreshPaymentsCommand.Execute(null);
                     _invoicesPageViewModel?.RefreshInvoicesCommand.Execute(null);
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);
 
@@ -616,6 +639,15 @@ public partial class App : Application
     {
         var companyData = CompanyManager?.CompanyData;
         if (companyData == null)
+            return;
+
+        // Never for the sample company. Its data is time-shifted to look recent on every open, so
+        // its invoices and rentals are permanently "overdue" and its stock permanently low, which
+        // means someone opening the sample to look around is greeted by a stack of warnings about
+        // a business that does not exist. Gated here rather than at each alert because this is the
+        // one entry point for all of them, and the notifications a user's own action produces
+        // ("Password has been set") should still appear.
+        if (CompanyManager?.IsSampleCompany == true)
             return;
 
         var settings = companyData.Settings.Notifications;
@@ -834,11 +866,6 @@ public partial class App : Application
     public static Controls.ColumnWidths.StockLevelsTableColumnWidths StockLevelsColumnWidths { get; } = new();
 
     /// <summary>
-    /// Gets the shared column widths for the Payments table.
-    /// </summary>
-    public static Controls.ColumnWidths.PaymentsTableColumnWidths PaymentsColumnWidths { get; } = new();
-
-    /// <summary>
     /// Gets the shared column widths for the Receipts table.
     /// </summary>
     public static Controls.ColumnWidths.ReceiptsTableColumnWidths ReceiptsColumnWidths { get; } = new();
@@ -867,6 +894,9 @@ public partial class App : Application
     /// Gets the shared column widths for the Locations table.
     /// </summary>
     public static Controls.ColumnWidths.LocationsTableColumnWidths LocationsColumnWidths { get; } = new();
+    public static Controls.ColumnWidths.EmployeesTableColumnWidths EmployeesColumnWidths { get; } = new();
+
+    public static Controls.ColumnWidths.PayRunsTableColumnWidths PayRunsColumnWidths { get; } = new();
 
     /// <summary>
     /// Gets the shared column widths for the Stock Adjustments table.
@@ -895,11 +925,12 @@ public partial class App : Application
     private static RevenuePageViewModel? _revenuePageViewModel;
     private static ExpensesPageViewModel? _expensesPageViewModel;
     private static InvoicesPageViewModel? _invoicesPageViewModel;
-    private static PaymentsPageViewModel? _paymentsPageViewModel;
     private static BankMatchingPageViewModel? _bankMatchingPageViewModel;
     private static ProductsPageViewModel? _productsPageViewModel;
     private static StockLevelsPageViewModel? _stockLevelsPageViewModel;
     private static LocationsPageViewModel? _locationsPageViewModel;
+    private static EmployeesPageViewModel? _employeesPageViewModel;
+    private static PayRunsPageViewModel? _payRunsPageViewModel;
     private static StockAdjustmentsPageViewModel? _stockAdjustmentsPageViewModel;
     private static PurchaseOrdersPageViewModel? _purchaseOrdersPageViewModel;
     private static CategoriesPageViewModel? _categoriesPageViewModel;
@@ -925,11 +956,12 @@ public partial class App : Application
         foreach (var vm in new object?[]
         {
             _dashboardPageViewModel, _analyticsPageViewModel, _insightsPageViewModel, _reportsPageViewModel,
-            _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel, _paymentsPageViewModel,
+            _revenuePageViewModel, _expensesPageViewModel, _invoicesPageViewModel,
             _bankMatchingPageViewModel, _productsPageViewModel, _stockLevelsPageViewModel, _locationsPageViewModel,
             _stockAdjustmentsPageViewModel, _purchaseOrdersPageViewModel, _categoriesPageViewModel,
             _customersPageViewModel, _suppliersPageViewModel, _rentalInventoryPageViewModel,
-            _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel
+            _rentalRecordsPageViewModel, _returnsPageViewModel, _lostDamagedPageViewModel, _receiptsPageViewModel,
+            _employeesPageViewModel, _payRunsPageViewModel
         })
             (vm as ICleanupViewModel)?.Cleanup();
 
@@ -940,7 +972,6 @@ public partial class App : Application
         _revenuePageViewModel = null;
         _expensesPageViewModel = null;
         _invoicesPageViewModel = null;
-        _paymentsPageViewModel = null;
         _bankMatchingPageViewModel = null;
         _productsPageViewModel = null;
         _stockLevelsPageViewModel = null;
@@ -955,6 +986,8 @@ public partial class App : Application
         _returnsPageViewModel = null;
         _lostDamagedPageViewModel = null;
         _receiptsPageViewModel = null;
+        _employeesPageViewModel = null;
+        _payRunsPageViewModel = null;
 
         // The "N recurring invoices were generated" banner count is process-wide static state. Clear
         // it on a company switch/close so a count produced for the previous company can't surface as a
@@ -1044,6 +1077,26 @@ public partial class App : Application
             // entries as breadcrumbs.
             CrashReporter.SetBreadcrumbSource(errorLogger);
 
+            // A web view that cannot start throws from an async void attach handler, which
+            // lands on the dispatcher as an unhandled exception and ends the process. Install
+            // the guard before any window exists so the first attach is already covered.
+            WebViewEnvironment.InstallDispatcherGuard(errorLogger);
+
+            // Before any window exists: RequestedThemeVariant is "Default" (follows the OS)
+            // until the saved theme is applied, so applying it late flashes the wrong palette.
+            // Both calls are cheap and synchronous.
+            SettingsService = new GlobalSettingsService(errorLogger);
+            try
+            {
+                SettingsService.LoadGlobalSettings();
+                ThemeService.Instance.SetGlobalSettingsService(SettingsService);
+                ThemeService.Instance.Initialize();
+            }
+            catch (Exception ex)
+            {
+                errorLogger.LogWarning($"Failed to apply saved theme during startup: {ex.Message}", "Startup");
+            }
+
             // Show a splash straight away. Avalonia only shows MainWindow once this method
             // returns, and everything below builds the service graph first, so without this
             // the screen stays empty for several seconds. Users read that as a failed launch
@@ -1062,6 +1115,11 @@ public partial class App : Application
                 // the window stays blank: present and marked visible to the OS, but showing
                 // nothing. Force those jobs through now, while there is still a gap to do it in.
                 Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+                // Marked after RunJobs, not after Show(), because Show() alone only queues the
+                // window. This is the first moment the user has something to look at, which is
+                // what the measurement is for.
+                StartupTimeline.MarkFirstPaint();
             }
             catch (Exception ex)
             {
@@ -1074,7 +1132,7 @@ public partial class App : Application
             var footerService = new FooterService();
             var encryptionService = new EncryptionService();
             _fileService = new FileService(compressionService, footerService, encryptionService);
-            SettingsService = new GlobalSettingsService(errorLogger);
+            // SettingsService is built and loaded above; re-creating it would discard those settings.
             LicenseService = new LicenseService(encryptionService, SettingsService, errorLogger);
             CompanyManager = new CompanyManager(_fileService, SettingsService, footerService, errorLogger);
 
@@ -1094,6 +1152,12 @@ public partial class App : Application
 
             // Initialize payment portal service
             PaymentPortalService = new PaymentPortalService();
+            // Resolves the company lazily: this is built once at startup but the
+            // open company changes over the session.
+            PortalBalanceSyncService = new PortalBalanceSyncService(
+                PaymentPortalService,
+                () => CompanyManager?.CompanyData,
+                errorLogger);
             InvoiceUsageService = new InvoiceUsageService(LicenseService, ErrorLogger);
 
             // Initialize mobile-sync service (shares the same long-lived HttpClient)
@@ -1313,22 +1377,7 @@ public partial class App : Application
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
 
-            // Load settings synchronously: sidebar state, theme, and language depend on them.
-            // Direct sync read avoids the thread-pool marshaling cost of sync-over-async;
-            // the settings file is small (<10KB). Recent companies are loaded asynchronously
-            // in InitializeAsync after the window is shown.
-            try
-            {
-                SettingsService?.LoadGlobalSettings();
-            }
-            catch (Exception ex)
-            {
-                ErrorLogger.LogWarning($"Failed to load settings during startup: {ex.Message}", "Startup");
-            }
-
             // Apply saved sidebar collapsed state after settings are loaded from disk.
-            // The SidebarViewModel was created before settings were loaded, so its constructor
-            // read the default value. Re-apply the persisted state now.
             var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
             if (savedCollapsed)
             {
@@ -1357,6 +1406,22 @@ public partial class App : Application
                     }
                 };
             }
+
+            // Record how long this launch took, once the main window is genuinely on screen.
+            // Separate from the splash handler above so it still runs on the path where the
+            // splash failed to open, which is exactly the launch worth knowing about.
+            desktop.MainWindow.Opened += (_, _) =>
+            {
+                if (!StartupTimeline.TryClaimReport())
+                {
+                    return;
+                }
+
+                _ = TelemetryManager?.TrackStartupAsync(
+                    StartupTimeline.ToFirstPaintMs,
+                    StartupTimeline.ToReadyMs(),
+                    StartupTimeline.IsColdStart);
+            };
 
             // Process pending conversions when window is activated (e.g., user returns after going offline)
             desktop.MainWindow.Activated += async (_, _) =>
@@ -1515,7 +1580,7 @@ public partial class App : Application
                         }
                         catch (Exception ex)
                         {
-                            ErrorLogger?.LogError(ex, ErrorCategory.Network, "Translation cache refresh failed");
+                            NetworkFailure.Report(ErrorLogger, ex, "Translation cache refresh failed");
                         }
                     });
                 }
@@ -2040,6 +2105,12 @@ public partial class App : Application
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
+
+                // Exploring in the sample company looks identical to real use on the
+                // dashboard otherwise: the same CustomerCreated and ProductCreated events
+                // arrive with no CompanyCreated before them, which reads as lost telemetry
+                // rather than as someone evaluating with the demo data.
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.SampleCompanyOpened);
 
                 await LoadRecentCompaniesAsync();
             }
@@ -3932,32 +4003,37 @@ public partial class App : Application
                     InvoiceModalsViewModel?.OpenCreateFromRental(rentalParam.RentalRecordId);
                 });
             }
-            else if (param is TransactionNavigationParameter navParam)
-            {
-                _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
-                _invoicesPageViewModel.ApplyHighlight();
-            }
-            else if (param is Dictionary<string, object?> dict
+            if (param is Dictionary<string, object?> dict
                 && dict.TryGetValue("selectedTabIndex", out var tabIndex) && tabIndex is int index)
             {
                 _invoicesPageViewModel.SelectedTabIndex = index;
             }
-            return new InvoicesPage { DataContext = _invoicesPageViewModel };
-        });
-        navigationService.RegisterPage("Payments", param =>
-        {
-            _paymentsPageViewModel ??= new PaymentsPageViewModel();
-            _paymentsPageViewModel.HighlightTransactionId = null;
+
+            // The ViewModel is cached across navigations, so without this the page
+            // shows whatever it held when it was first built. Refresh reads the
+            // current CompanyData, and the portal sync pulls in online payments
+            // that landed since, which is what flips an invoice to Paid. The sync
+            // refreshes these ViewModels again when it completes, so an invoice
+            // paid on the portal shows up on arriving here rather than only after
+            // visiting Payments or waiting out the 5-minute timer.
+            //
+            // It also refreshes the statistics tiles, the recurring badge and the sent count,
+            // which is why it runs on every arrival rather than being skipped when a row is
+            // being highlighted.
+            _invoicesPageViewModel.RefreshInvoicesCommand.Execute(null);
+
+            // After the refresh, never before. ApplyHighlight re-filters and then clears the id,
+            // so a refresh afterwards rebuilds the list with nothing highlighted and the row the
+            // user searched for comes back looking like every other one.
             if (param is TransactionNavigationParameter navParam)
             {
-                _paymentsPageViewModel.HighlightTransactionId = navParam.TransactionId;
-                _paymentsPageViewModel.ApplyHighlight();
+                _invoicesPageViewModel.HighlightTransactionId = navParam.TransactionId;
+                _invoicesPageViewModel.ApplyHighlight();
             }
-            _ = AutoSyncPortalPaymentsAsync();
-            _ = AutoMobileSyncAsync();
-            return new PaymentsPage { DataContext = _paymentsPageViewModel };
-        });
 
+            _ = AutoSyncPortalPaymentsAsync();
+            return new InvoicesPage { DataContext = _invoicesPageViewModel };
+        });
         // Inventory Section
         navigationService.RegisterPage("Products", param =>
         {
@@ -4051,6 +4127,52 @@ public partial class App : Application
                 }
             }
             return new CategoriesPage { DataContext = _categoriesPageViewModel };
+        });
+
+        // The sidebar lists each side of the categories and products pages separately.
+        // Both sides are still one page and one view model, entered on the matching tab,
+        // so these registrations only preset the tab. The pages have no tab bar.
+        navigationService.RegisterPage("ExpenseCategories", _ => CategoriesPageForTab(0));
+        navigationService.RegisterPage("RevenueCategories", _ => CategoriesPageForTab(1));
+        navigationService.RegisterPage("ExpenseProducts", _ => ProductsPageForTab(0));
+        navigationService.RegisterPage("RevenueProducts", _ => ProductsPageForTab(1));
+
+        CategoriesPage CategoriesPageForTab(int tabIndex)
+        {
+            _categoriesPageViewModel ??= new CategoriesPageViewModel();
+            _categoriesPageViewModel.IsAddModalOpen = false;
+            _categoriesPageViewModel.SelectedTabIndex = tabIndex;
+            return new CategoriesPage { DataContext = _categoriesPageViewModel };
+        }
+
+        ProductsPage ProductsPageForTab(int tabIndex)
+        {
+            _productsPageViewModel ??= new ProductsPageViewModel();
+            _productsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            _productsPageViewModel.IsAddModalOpen = false;
+            _productsPageViewModel.HighlightTransactionId = null;
+            _productsPageViewModel.SelectedTabIndex = tabIndex;
+            return new ProductsPage { DataContext = _productsPageViewModel };
+        }
+
+        // Payroll Section
+        navigationService.RegisterPage("Employees", _ =>
+        {
+            _employeesPageViewModel ??= new EmployeesPageViewModel();
+            _employeesPageViewModel.Load();
+            return new EmployeesPage { DataContext = _employeesPageViewModel };
+        });
+
+        navigationService.RegisterPage("PayRuns", _ =>
+        {
+            if (_payRunsPageViewModel == null)
+            {
+                _payRunsPageViewModel = new PayRunsPageViewModel();
+                _payRunsPageViewModel.UpgradeRequested += (_, _) => _appShellViewModel!.UpgradeModalViewModel.OpenCommand.Execute(null);
+            }
+            _payRunsPageViewModel.HasPremium = _appShellViewModel!.SidebarViewModel.HasPremium;
+            _payRunsPageViewModel.Load();
+            return new PayRunsPage { DataContext = _payRunsPageViewModel };
         });
 
         // Contacts Section

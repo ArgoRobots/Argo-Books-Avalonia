@@ -46,6 +46,12 @@ public class TelemetryManager : ITelemetryManager
     private int _heartbeatTicks;
     private int _uploadInFlight;
 
+    // Company profiles already recorded this session, so reopening or re-saving a company
+    // does not record it again. Session-scoped on purpose: a profile per launch is a
+    // reasonable refresh rate for details the user can edit at any time.
+    private readonly HashSet<string> _reportedCompanyProfiles = [];
+    private readonly Lock _profileGate = new();
+
     /// <summary>
     /// Initializes a new instance of the TelemetryManager.
     /// </summary>
@@ -272,6 +278,74 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
+    public async Task TrackCompanyProfileAsync(
+        string? companyName,
+        string? businessType,
+        string? industry,
+        string? country,
+        string? currency,
+        string? language,
+        bool isSample,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // One row per company per session. Callers fire this from the company-opened
+            // path, which also runs on every save and on returning from settings, so
+            // without this a long session would record the same profile dozens of times.
+            //
+            // Language is in the key even though it makes a second row possible, because it
+            // is the one field here a user actively changes mid-session, and they change it
+            // in the settings screen whose exit re-fires this. Keyed without it we would
+            // only ever record the language they opened with, which is the opposite of the
+            // question the field exists to answer.
+            var key = $"{companyName}|{country}|{currency}|{language}|{isSample}";
+            lock (_profileGate)
+            {
+                if (!_reportedCompanyProfiles.Add(key))
+                {
+                    return;
+                }
+            }
+
+            var profileEvent = await CreateEventAsync<CompanyProfileEvent>(cancellationToken);
+            profileEvent.CompanyName = companyName;
+            profileEvent.BusinessType = businessType;
+            profileEvent.Industry = industry;
+            profileEvent.Country = country;
+            profileEvent.Currency = currency;
+            profileEvent.Language = language;
+            profileEvent.IsSample = isSample;
+            await _storageService.RecordEventAsync(profileEvent, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger.LogDebug($"Failed to track company profile: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task TrackStartupAsync(
+        long? toFirstPaintMs,
+        long? toReadyMs,
+        bool coldStart,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var startupEvent = await CreateEventAsync<StartupEvent>(cancellationToken);
+            startupEvent.ToFirstPaintMs = toFirstPaintMs;
+            startupEvent.ToReadyMs = toReadyMs;
+            startupEvent.ColdStart = coldStart;
+            await _storageService.RecordEventAsync(startupEvent, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger.LogDebug($"Failed to track startup timing: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
     public async Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default)
     {
         try
@@ -313,6 +387,9 @@ public class TelemetryManager : ITelemetryManager
         try
         {
             var errorEvent = await CreateEventAsync<ErrorEvent>(cancellationToken);
+            // Anything below Warning never reaches here (see ErrorLogger.AddEntry), so
+            // the only values that travel are Warning and Error.
+            errorEvent.Severity = errorEntry.Level == LogLevel.Warning ? LogLevel.Warning : LogLevel.Error;
             errorEvent.ErrorCode = errorEntry.ErrorCode ?? "Unknown";
             errorEvent.ErrorCategory = errorEntry.Category;
             errorEvent.Message = errorEntry.Message;

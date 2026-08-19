@@ -18,7 +18,8 @@ public enum StatCardKind
     NetProfit,
     TotalCustomers,
     InventoryValue,
-    OverdueInvoices
+    OverdueInvoices,
+    PayrollRemittance
 }
 
 public partial class StatCardWidgetViewModel : WidgetViewModelBase
@@ -35,6 +36,7 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         StatCardKind.TotalCustomers => WidgetType.StatCardTotalCustomers,
         StatCardKind.InventoryValue => WidgetType.StatCardInventoryValue,
         StatCardKind.OverdueInvoices => WidgetType.StatCardOverdueInvoices,
+        StatCardKind.PayrollRemittance => WidgetType.StatCardPayrollRemittance,
         _ => WidgetType.StatCardRevenue
     };
 
@@ -112,6 +114,11 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
                 IconGeometry = Geometry.Parse(Icons.WarningCircle);
                 IconColor = StatCardColor.Danger;
                 break;
+            case StatCardKind.PayrollRemittance:
+                Label = "Next Remittance Due";
+                IconGeometry = Geometry.Parse(Icons.Payments);
+                IconColor = StatCardColor.Warning;
+                break;
         }
     }
 
@@ -150,6 +157,9 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
                 break;
             case StatCardKind.OverdueInvoices:
                 LoadOverdueInvoices(data);
+                break;
+            case StatCardKind.PayrollRemittance:
+                LoadPayrollRemittance(data);
                 break;
         }
     }
@@ -266,6 +276,31 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         Value = CurrencyService.Format(totalValue);
         var lowStock = data.Inventory.Count(i => i.InStock <= i.ReorderPoint && i.InStock > 0);
         SecondaryText = lowStock > 0 ? $"{lowStock} low stock" : $"{data.Inventory.Count} items";
+    }
+
+    /// <summary>
+    /// What is owed to CRA for last month's payroll, and the date it is due.
+    ///
+    /// Last month rather than the current one, because a regular remitter pays for the month
+    /// just ended. Once that is paid the card rolls forward on its own, so there is nothing to
+    /// mark off. Everything but drafts counts: a voided run and its reversal are both included
+    /// and cancel to zero.
+    /// </summary>
+    private void LoadPayrollRemittance(CompanyData data)
+    {
+        DateTime firstOfThisMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+        DateTime firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+
+        decimal owing = data.PayRuns
+            .Where(r => r.Status != Core.Models.Payroll.PayRunStatus.Draft
+                        && r.PayDate >= firstOfLastMonth
+                        && r.PayDate < firstOfThisMonth)
+            .Sum(r => r.TotalRemittance);
+
+        Value = CurrencyService.Format(owing);
+        SecondaryText = owing > 0
+            ? $"Due {firstOfThisMonth.AddDays(14):d MMM}"
+            : "Nothing owing";
     }
 
     private void LoadOverdueInvoices(CompanyData data)

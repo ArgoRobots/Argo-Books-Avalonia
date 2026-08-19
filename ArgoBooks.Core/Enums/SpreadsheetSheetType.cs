@@ -11,6 +11,7 @@ public enum SpreadsheetSheetType
     Categories,
     Locations,
     Invoices,
+    InvoiceLineItems,
     Expenses,
     Inventory,
     Payments,
@@ -23,6 +24,18 @@ public enum SpreadsheetSheetType
     PurchaseOrderLineItems,
     Returns,
     LostDamaged,
+
+    /// <summary>The payroll list. Imports like any other entity sheet.</summary>
+    Employees,
+
+    /// <summary>
+    /// The payroll register. Export only: an approved run's figures are frozen so that a stub
+    /// reprinted next year still matches the one the employee was handed, and letting them be
+    /// typed over in a spreadsheet would defeat that. Recognised so that the sheet is skipped
+    /// deliberately rather than as an unnamed one.
+    /// </summary>
+    PayRuns,
+
     BankStatement,
     Unknown
 }
@@ -32,6 +45,18 @@ public enum SpreadsheetSheetType
 /// </summary>
 public static class SpreadsheetSheetTypeExtensions
 {
+    /// <summary>
+    /// Whether a sheet of this type can be read back in.
+    ///
+    /// Nearly all of them can. <see cref="SpreadsheetSheetType.PayRuns"/> is exported to be read
+    /// and not imported, because an approved run's figures are frozen so that a stub reprinted
+    /// next year still matches the one the employee was handed; taking them back from a sheet
+    /// somebody could have edited would defeat that. Employees, being an ordinary list rather
+    /// than a record of what was paid, do import.
+    /// </summary>
+    public static bool IsImportable(this SpreadsheetSheetType type) =>
+        type is not (SpreadsheetSheetType.PayRuns or SpreadsheetSheetType.Unknown);
+
     /// <summary>
     /// Parses a worksheet name string to a SpreadsheetSheetType enum value.
     /// Handles common aliases (e.g., "Sales" → Revenue, "Purchases" → Expenses).
@@ -46,6 +71,7 @@ public static class SpreadsheetSheetTypeExtensions
             "categories" => SpreadsheetSheetType.Categories,
             "locations" => SpreadsheetSheetType.Locations,
             "invoices" => SpreadsheetSheetType.Invoices,
+            "invoice line items" or "invoice items" => SpreadsheetSheetType.InvoiceLineItems,
             "expenses" or "purchases" => SpreadsheetSheetType.Expenses,
             "inventory" => SpreadsheetSheetType.Inventory,
             "payments" => SpreadsheetSheetType.Payments,
@@ -56,6 +82,8 @@ public static class SpreadsheetSheetTypeExtensions
             "stock adjustments" => SpreadsheetSheetType.StockAdjustments,
             "purchase orders" => SpreadsheetSheetType.PurchaseOrders,
             "purchase order line items" => SpreadsheetSheetType.PurchaseOrderLineItems,
+            "employees" or "staff" => SpreadsheetSheetType.Employees,
+            "pay runs" or "payroll" => SpreadsheetSheetType.PayRuns,
             "returns" => SpreadsheetSheetType.Returns,
             "lost damaged" or "lost / damaged" or "lost/damaged" => SpreadsheetSheetType.LostDamaged,
             "bank statement" or "bank" or "bank transactions" => SpreadsheetSheetType.BankStatement,

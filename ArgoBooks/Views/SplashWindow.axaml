@@ -14,11 +14,10 @@
         WindowDecorations="None"
         Background="Transparent">
 
-    <!-- Fixed colours rather than theme resources: this window is shown before the saved
-         theme has been read from settings, so a DynamicResource lookup here would flash the
-         wrong palette. Dark navy reads correctly against both themes. -->
-    <Border Background="#111827"
-            BorderBrush="#3B82F6"
+    <!-- Depends on OnFrameworkInitializationCompleted applying the saved theme before this
+         window is constructed. Move that later and this renders in the wrong palette. -->
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource PrimaryBrush}"
             BorderThickness="1"
             CornerRadius="10">
         <StackPanel HorizontalAlignment="Center"
@@ -31,14 +30,14 @@
             <TextBlock Text="Argo Books"
                        FontSize="22"
                        FontWeight="SemiBold"
-                       Foreground="#F9FAFB"
+                       Foreground="{DynamicResource TextPrimaryBrush}"
                        HorizontalAlignment="Center" />
             <!-- Static text rather than an animated progress bar. The UI thread is fully
                  occupied building the service graph for the few seconds this is on screen, so
                  nothing here can animate. A frozen spinner reads as a hang; plain text does not. -->
             <TextBlock Text="Starting..."
                        FontSize="13"
-                       Foreground="#9CA3AF"
+                       Foreground="{DynamicResource TextTertiaryBrush}"
                        HorizontalAlignment="Center" />
         </StackPanel>
     </Border>

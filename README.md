@@ -80,11 +80,11 @@ of the codebase.
 | Document | Read it when |
 |---|---|
 | [Publishing](docs/Publishing.md) | Building and packaging a release for Windows, Linux or macOS, and signing it |
-| [Password recovery](docs/Password%20recovery.md) | A customer has lost their company file password. Internal, not for customers |
+| [Password recovery](tools/ArgoBooks.Recovery/README.md) | A customer has lost their company file password. Internal, not for customers |
 
 ### Sub-projects
 
 | Document | Read it when |
 |---|---|
 | [ArgoBooks.Mobile](ArgoBooks.Mobile/README.md) | Working on the Android companion app |
-| [ArgoBooks.TranslationTool](ArgoBooks.TranslationTool/README.md) | Working on the translation tooling |
+| [ArgoBooks.Translations](tools/ArgoBooks.Translations/README.md) | Working on the translation tooling |

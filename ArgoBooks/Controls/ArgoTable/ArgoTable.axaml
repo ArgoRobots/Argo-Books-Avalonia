@@ -40,6 +40,14 @@
                                VerticalAlignment="Center"
                                IsVisible="{Binding #Root.Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
+                    <!-- Page-supplied status, sitting just left of the search box. The middle
+                         column was already here and empty. -->
+                    <ContentPresenter Grid.Column="1"
+                                      Content="{Binding #Root.HeaderInfoContent}"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Center"
+                                      Margin="16,0" />
+
                     <!-- Search + Filter + Add Button (Right aligned) -->
                     <StackPanel Grid.Column="2"
                                 Orientation="Horizontal"

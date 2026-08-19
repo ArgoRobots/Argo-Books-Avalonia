@@ -53,6 +53,64 @@ public partial class UpgradeModal : UserControl
             if (vm.ShowContinueButton)
                 PlayContinueButtonAnimation();
         }
+        else if (e.PropertyName == nameof(UpgradeModalViewModel.IsYearlyBilling))
+        {
+            PlayPriceSwapAnimation(vm.IsYearlyBilling);
+        }
+    }
+
+    /// <summary>
+    /// Slides the Premium price in from the side the billing toggle moved toward,
+    /// mirroring the website's cycle switch. Only the Premium card animates, the
+    /// Free card's $0 doesn't change.
+    /// </summary>
+    private async void PlayPriceSwapAnimation(bool toYearly)
+    {
+        try
+        {
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                if (PremiumPriceBlock == null)
+                    return;
+
+                // Annual is the right-hand tab, so its price enters from the right.
+                var startX = toYearly ? 16.0 : -16.0;
+
+                var animation = new Animation
+                {
+                    Duration = TimeSpan.FromMilliseconds(260),
+                    Easing = new CubicEaseOut(),
+                    FillMode = FillMode.Forward,
+                    Children =
+                    {
+                        new KeyFrame
+                        {
+                            Cue = new Cue(0),
+                            Setters =
+                            {
+                                new Setter(OpacityProperty, 0.0),
+                                new Setter(TranslateTransform.XProperty, startX)
+                            }
+                        },
+                        new KeyFrame
+                        {
+                            Cue = new Cue(1),
+                            Setters =
+                            {
+                                new Setter(OpacityProperty, 1.0),
+                                new Setter(TranslateTransform.XProperty, 0.0)
+                            }
+                        }
+                    }
+                };
+
+                await animation.RunAsync(PremiumPriceBlock);
+            });
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "PlayPriceSwapAnimation");
+        }
     }
 
     private void ResetSuccessAnimation()

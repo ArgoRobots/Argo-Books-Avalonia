@@ -23,8 +23,8 @@
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1"
                     CornerRadius="12"
-                    Width="740"
-                    MaxHeight="750"
+                    Width="780"
+                    MaxHeight="860"
                     VerticalAlignment="Center"
                     BoxShadow="0 8 32 0 #40000000">
 
@@ -109,55 +109,80 @@
                                            MaxWidth="360" />
                             </StackPanel>
 
-                            <!-- Plan Cards (only shown when loaded successfully) -->
-                            <StackPanel Margin="24" Spacing="16" IsVisible="{Binding ShowPlans}">
+                            <!-- Plan Cards (only shown when loaded successfully).
+                                 Layout mirrors the website's pricing cards (partials/pricing-cards.php):
+                                 chip + "Plan", pitch, price block, CTA, list lead-in, features. -->
+                            <StackPanel Margin="24,16,24,24" Spacing="20" IsVisible="{Binding ShowPlans}">
 
                                 <!-- Billing cycle toggle (above both cards, centered) -->
                                 <Border Classes="cycle-toggle" HorizontalAlignment="Center">
                                     <Grid ColumnDefinitions="*,*">
                                         <Button Grid.Column="0"
                                                 Classes="cycle-option"
-                                                Classes.active="{Binding IsYearlyBilling}"
-                                                Command="{Binding SelectYearlyBillingCommand}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <TextBlock Text="{loc:Loc Yearly}" VerticalAlignment="Center" />
-                                                <Border Classes="save-pill">
-                                                    <TextBlock Text="{Binding YearlySavingsPercentDisplay}" />
-                                                </Border>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button Grid.Column="1"
-                                                Classes="cycle-option"
                                                 Classes.active="{Binding IsMonthlyBilling}"
                                                 Command="{Binding SelectMonthlyBillingCommand}"
                                                 Content="{loc:Loc Monthly}" />
+                                        <Button Grid.Column="1"
+                                                Classes="cycle-option"
+                                                Classes.active="{Binding IsYearlyBilling}"
+                                                Command="{Binding SelectYearlyBillingCommand}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc Annual}" VerticalAlignment="Center" />
+                                                <Border Classes="save-pill"
+                                                        IsVisible="{Binding YearlySavingsDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                                    <TextBlock Text="{Binding YearlySavingsDisplay}" />
+                                                </Border>
+                                            </StackPanel>
+                                        </Button>
                                     </Grid>
                                 </Border>
 
-                                <!-- Cards row -->
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
+                                <!-- Cards row. Top margin leaves room for the Premium card's
+                                     "Recommended" flag, which rides above its top edge. -->
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,10,0,0">
                                 <!-- Free Plan -->
                                 <Border Classes="plan-card" Width="340" IsVisible="{Binding !HasPremium}">
-                                    <Grid RowDefinitions="Auto,*,Auto">
-                                        <!-- Plan Header -->
-                                        <StackPanel Grid.Row="0" Spacing="4">
-                                            <TextBlock Text="{loc:Loc Free}"
-                                                       FontSize="16"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="$0"
-                                                       FontSize="28"
-                                                       FontWeight="Bold"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                       HorizontalAlignment="Center" />
-                                            <TextBlock Text="{loc:Loc 'Current Plan'}"
-                                                       FontSize="12"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}"
-                                                       HorizontalAlignment="Center" />
+                                    <StackPanel>
+                                        <!-- Plan name: chip + "Plan" -->
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Border Classes="plan-chip">
+                                                <TextBlock Text="{Binding FreeChip}" />
+                                            </Border>
+                                            <TextBlock Classes="plan-name" Text="{loc:Loc Plan}" />
                                         </StackPanel>
 
+                                        <!-- Pitch -->
+                                        <TextBlock Classes="plan-pitch" Text="{Binding FreePlanPitch}" />
+
+                                        <!-- Price -->
+                                        <StackPanel Classes="price-block">
+                                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                                <TextBlock Classes="price-currency" Text="$" />
+                                                <TextBlock Classes="price-amount" Text="0" />
+                                            </StackPanel>
+                                            <!-- Invisible copy of the Premium card's struck-out line, so
+                                                 both price blocks are the same height. -->
+                                            <TextBlock Classes="price-strike"
+                                                       Text="{Binding PremiumStrikeText}"
+                                                       Opacity="0"
+                                                       IsHitTestVisible="False" />
+                                            <TextBlock Classes="price-billed" Text="{loc:Loc 'Free forever'}" />
+                                        </StackPanel>
+
+                                        <!-- CTA row. The free plan is what the user is already on, so this
+                                             states that rather than offering a download link like the website. -->
+                                        <Border Classes="plan-cta-static">
+                                            <TextBlock Text="{loc:Loc 'Current Plan'}" />
+                                        </Border>
+
+                                        <!-- Counterpart to the Premium card's lead-in: no text, but it carries
+                                             the divider and keeps both feature lists starting level. -->
+                                        <Border Classes="plan-plus">
+                                            <TextBlock Classes="plan-plus-text" Text=" " />
+                                        </Border>
+
                                         <!-- Features (from API) -->
-                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding FreePlanFeatures}" Margin="0,16,0,0">
+                                        <ItemsControl ItemsSource="{Binding FreePlanFeatures}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Classes="feature-item">
@@ -165,7 +190,7 @@
                                                             <PathIcon Grid.Column="0"
                                                                       Data="{x:Static local:Icons.Check}"
                                                                       Width="14" Height="14"
-                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      Foreground="{DynamicResource TextSecondaryBrush}"
                                                                       Margin="0,0,10,0" />
                                                             <TextBlock Grid.Column="1" Text="{Binding}" />
                                                         </Grid>
@@ -173,103 +198,89 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-
-                                        <!-- Current Plan Label -->
-                                        <TextBlock Grid.Row="2"
-                                                   Text="{loc:Loc 'Current Plan'}"
-                                                   FontSize="13"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                   HorizontalAlignment="Center"
-                                                   Margin="0,16,0,0" />
-                                    </Grid>
+                                    </StackPanel>
                                 </Border>
 
                                 <!-- Premium Plan -->
-                                <Border Classes="plan-card" Width="340">
-                                    <Grid RowDefinitions="Auto,*,Auto">
-                                        <!-- Plan Header -->
-                                        <Panel Grid.Row="0">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Text="{loc:Loc Premium}"
-                                                           FontSize="16"
-                                                           FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-
-                                                <!-- Monthly price -->
-                                                <StackPanel HorizontalAlignment="Center"
-                                                            Spacing="2"
-                                                            IsVisible="{Binding IsMonthlyBilling}">
-                                                    <!-- Invisible placeholder to match the yearly view's strikethrough,
-                                                         so the card doesn't change height when toggling cycles. -->
-                                                    <TextBlock Text="{Binding PremiumMonthlyStrike}"
-                                                               FontSize="13"
-                                                               FontWeight="SemiBold"
-                                                               TextDecorations="Strikethrough"
-                                                               HorizontalAlignment="Center"
-                                                               Opacity="0"
-                                                               IsHitTestVisible="False" />
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
-                                                        <TextBlock Text="{Binding PremiumMonthlyPrice}"
-                                                                   FontSize="28"
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{DynamicResource PrimaryBrush}" />
-                                                        <TextBlock Text="{Binding PremiumBillingPeriod}"
-                                                                   FontSize="13"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   VerticalAlignment="Bottom"
-                                                                   Margin="0,0,0,5" />
-                                                    </StackPanel>
-                                                    <TextBlock Text="{loc:Loc 'Billed monthly'}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               HorizontalAlignment="Center" />
-                                                </StackPanel>
-
-                                                <!-- Yearly price (default) -->
-                                                <StackPanel HorizontalAlignment="Center"
-                                                            Spacing="2"
-                                                            IsVisible="{Binding IsYearlyBilling}">
-                                                    <TextBlock Text="{Binding PremiumMonthlyStrike}"
-                                                               FontSize="13"
-                                                               FontWeight="SemiBold"
-                                                               TextDecorations="Strikethrough"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               HorizontalAlignment="Center" />
-                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="4">
-                                                        <TextBlock Text="{Binding PremiumYearlyPerMonth}"
-                                                                   FontSize="28"
-                                                                   FontWeight="Bold"
-                                                                   Foreground="{DynamicResource PrimaryBrush}" />
-                                                        <TextBlock Text="{Binding PremiumBillingPeriod}"
-                                                                   FontSize="13"
-                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                                                   VerticalAlignment="Bottom"
-                                                                   Margin="0,0,0,5" />
-                                                    </StackPanel>
-                                                    <TextBlock Text="{loc:Loc 'Billed annually'}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               HorizontalAlignment="Center" />
-                                                </StackPanel>
+                                <Panel Width="340">
+                                    <Border Classes="plan-card plan-card-premium">
+                                    <StackPanel>
+                                        <!-- Plan name: chip + "Plan" -->
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                                <Border Classes="plan-chip plan-chip-premium">
+                                                    <TextBlock Text="{Binding PremiumChip}" />
+                                                </Border>
+                                                <TextBlock Classes="plan-name" Text="{loc:Loc Plan}" />
                                             </StackPanel>
 
                                             <!-- Active Badge (when has Premium) -->
-                                            <Border Background="{DynamicResource SuccessBrush}"
+                                            <Border Grid.Column="2"
+                                                    Background="{DynamicResource SuccessBrush}"
                                                     CornerRadius="4"
                                                     Padding="8,4"
-                                                    HorizontalAlignment="Right"
-                                                    VerticalAlignment="Top"
+                                                    VerticalAlignment="Center"
                                                     IsVisible="{Binding ShowPremiumActive}">
                                                 <TextBlock Text="{loc:Loc Active}"
                                                            FontSize="11"
                                                            FontWeight="SemiBold"
                                                            Foreground="White" />
                                             </Border>
-                                        </Panel>
+                                        </Grid>
+
+                                        <!-- Pitch -->
+                                        <TextBlock Classes="plan-pitch" Text="{Binding PremiumPlanPitch}" />
+
+                                        <!-- Price. One block for both cycles rather than two swapped blocks:
+                                             only the number and the line below it change, and the struck-out
+                                             line always occupies its row (hidden on monthly), so switching
+                                             cycle never shifts the CTA underneath. -->
+                                        <StackPanel Classes="price-block">
+                                            <!-- Only the figures slide on a cycle switch. The billing note
+                                                 below sits outside this panel so it stays put. -->
+                                            <StackPanel x:Name="PremiumPriceBlock" Spacing="2">
+                                                <StackPanel.RenderTransform>
+                                                    <TranslateTransform X="0" />
+                                                </StackPanel.RenderTransform>
+                                                <StackPanel Orientation="Horizontal" Spacing="3">
+                                                    <TextBlock Classes="price-currency price-premium" Text="$" />
+                                                    <TextBlock Classes="price-amount price-premium"
+                                                               Text="{Binding PremiumAmountDisplay}" />
+                                                    <TextBlock Classes="price-period price-premium"
+                                                               Text="{Binding PremiumBillingPeriod}" />
+                                                </StackPanel>
+                                                <TextBlock Classes="price-strike"
+                                                           Text="{Binding PremiumStrikeText}"
+                                                           IsVisible="{Binding IsYearlyBilling}" />
+                                                <!-- Holds the strike line's row without showing it, so the
+                                                     monthly view is exactly as tall as the annual one. -->
+                                                <TextBlock Classes="price-strike"
+                                                           Text="{Binding PremiumStrikeText}"
+                                                           IsVisible="{Binding IsMonthlyBilling}"
+                                                           Opacity="0"
+                                                           IsHitTestVisible="False" />
+                                            </StackPanel>
+                                            <TextBlock Classes="price-billed" Text="{Binding PremiumBilledText}" />
+                                        </StackPanel>
+
+                                        <!-- CTA -->
+                                        <Button Classes="primary-button plan-cta"
+                                                Command="{Binding SelectPremiumCommand}"
+                                                Content="{loc:Loc 'Buy now'}"
+                                                IsVisible="{Binding ShowSelectPremium}" />
+                                        <Button Classes="secondary-button plan-cta"
+                                                Command="{Binding CancelSubscriptionCommand}"
+                                                Content="{loc:Loc 'Manage Subscription'}"
+                                                IsVisible="{Binding ShowCancelPremium}" />
+
+                                        <!-- Feature list lead-in -->
+                                        <Border Classes="plan-plus plan-plus-premium">
+                                            <TextBlock Classes="plan-plus-text"
+                                                       Text="{loc:Loc 'Everything in Free, plus...'}" />
+                                        </Border>
 
                                         <!-- Features (from API) -->
-                                        <ItemsControl Grid.Row="1" ItemsSource="{Binding PremiumPlanFeatures}" Margin="0,16,0,16">
+                                        <ItemsControl ItemsSource="{Binding PremiumPlanFeatures}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Classes="feature-item">
@@ -277,7 +288,7 @@
                                                             <PathIcon Grid.Column="0"
                                                                       Data="{x:Static local:Icons.Check}"
                                                                       Width="14" Height="14"
-                                                                      Foreground="{DynamicResource SuccessBrush}"
+                                                                      Foreground="{DynamicResource PrimaryBrush}"
                                                                       Margin="0,0,10,0" />
                                                             <TextBlock Grid.Column="1" Text="{Binding}" />
                                                         </Grid>
@@ -285,24 +296,14 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                    </StackPanel>
+                                    </Border>
 
-                                        <StackPanel Grid.Row="2" Spacing="8">
-                                            <!-- Select Premium Button (only when doesn't have Premium) -->
-                                            <Button Classes="primary-button"
-                                                    HorizontalAlignment="Stretch"
-                                                    HorizontalContentAlignment="Center"
-                                                    Command="{Binding SelectPremiumCommand}"
-                                                    Content="{loc:Loc 'Select Premium'}"
-                                                    IsVisible="{Binding ShowSelectPremium}" />
-                                            <Button Classes="secondary-button"
-                                                    HorizontalAlignment="Stretch"
-                                                    HorizontalContentAlignment="Center"
-                                                    Command="{Binding CancelSubscriptionCommand}"
-                                                    Content="{loc:Loc 'Manage Subscription'}"
-                                                    IsVisible="{Binding ShowCancelPremium}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
+                                    <!-- "Recommended" flag riding the card's top edge -->
+                                    <Border Classes="plan-badge">
+                                        <TextBlock Text="{loc:Loc Recommended}" />
+                                    </Border>
+                                </Panel>
                                 </StackPanel>
                             </StackPanel>
                         </Panel>
@@ -344,7 +345,7 @@
                 <Panel>
                     <!-- Normal Entry View -->
                     <Grid RowDefinitions="Auto,*,Auto"
-                          IsVisible="{Binding !IsVerificationSuccess}">
+                          IsVisible="{Binding ShowKeyEntryForm}">
                         <!-- Header -->
                         <Border Grid.Row="0"
                                 Padding="24,20"
@@ -430,6 +431,54 @@
                     </Grid>
 
                     <!-- Success Animation View -->
+                    <!-- Email capture. Only shown for a key the server holds no address for,
+                         which means a batch sold through a reseller. Premium is already active
+                         by the time this appears: this step collects a contact address, it does
+                         not stand between the customer and what they paid for. -->
+                    <StackPanel IsVisible="{Binding IsEmailCaptureStep}"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Center"
+                                Spacing="20"
+                                MaxWidth="380"
+                                Margin="48">
+                        <PathIcon Data="{x:Static local:Icons.Check}"
+                                  Width="40" Height="40"
+                                  Foreground="{DynamicResource SuccessBrush}"
+                                  HorizontalAlignment="Center" />
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="{loc:Loc 'Premium is active'}"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SuccessBrush}"
+                                       HorizontalAlignment="Center" />
+                            <TextBlock Text="{loc:Loc 'Where should we send your receipt? We use this to reach you about your licence, and to help if you ever move it to another computer.'}"
+                                       FontSize="13"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="6">
+                            <TextBox Text="{Binding CustomerEmail, Mode=TwoWay}"
+                                     Classes="form-input"
+                                     PlaceholderText="you@example.com"
+                                     MaxLength="255" />
+                            <TextBlock Text="{Binding EmailError}"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       IsVisible="{Binding EmailError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        </StackPanel>
+
+                        <Button Classes="primary-button"
+                                Content="{loc:Loc Continue}"
+                                Command="{Binding SubmitEmailCommand}"
+                                IsEnabled="{Binding !IsSubmittingEmail}"
+                                HorizontalAlignment="Center"
+                                Padding="32,12" />
+                    </StackPanel>
+
                     <StackPanel IsVisible="{Binding IsVerificationSuccess}"
                                 VerticalAlignment="Center"
                                 HorizontalAlignment="Center"
@@ -529,7 +578,147 @@
             <Setter Property="Padding" Value="20" />
         </Style>
 
-        <!-- Billing cycle toggle (yearly | monthly) -->
+        <!-- Premium card: accented border, no fill -->
+        <Style Selector="Border.plan-card-premium">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- "Recommended" flag riding the Premium card's top edge -->
+        <Style Selector="Border.plan-badge">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="10,3" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+            <Setter Property="Margin" Value="0,-11,0,0" />
+        </Style>
+        <Style Selector="Border.plan-badge TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Plan name row: "FREE" / "PREMIUM" chip beside the word "Plan" -->
+        <Style Selector="Border.plan-chip">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Border.plan-chip TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.plan-chip-premium">
+            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="Border.plan-chip-premium TextBlock">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <Style Selector="TextBlock.plan-name">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- One-line pitch under the plan name. The fixed minimum height keeps the
+             price blocks level across both cards when the two pitches wrap to a
+             different number of lines. -->
+        <Style Selector="TextBlock.plan-pitch">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineHeight" Value="19" />
+            <Setter Property="MinHeight" Value="57" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Margin" Value="0,14,0,0" />
+        </Style>
+
+        <!-- Price block: amount row, struck-out reference price, billing note -->
+        <Style Selector="StackPanel.price-block">
+            <Setter Property="Spacing" Value="2" />
+            <Setter Property="Margin" Value="0,14,0,18" />
+        </Style>
+        <Style Selector="TextBlock.price-currency">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+        <Style Selector="TextBlock.price-amount">
+            <Setter Property="FontSize" Value="34" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+        </Style>
+        <Style Selector="TextBlock.price-period">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="Margin" Value="3,0,0,5" />
+        </Style>
+        <Style Selector="TextBlock.price-premium">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.price-strike">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextDecorations" Value="Strikethrough" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+        </Style>
+        <Style Selector="TextBlock.price-billed">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Medium" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+        </Style>
+
+        <!-- Full-width CTA above the feature list -->
+        <Style Selector="Button.plan-cta">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="16,11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <!-- The Free card's CTA row. Not a button: the user is already on this plan,
+             so it states that rather than offering something to click. -->
+        <Style Selector="Border.plan-cta-static">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,11" />
+        </Style>
+        <Style Selector="Border.plan-cta-static TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <!-- "Everything in Free, plus..." lead-in, and the Free card's silent
+             counterpart which carries the same divider so both lists start level. -->
+        <Style Selector="Border.plan-plus">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+            <Setter Property="Margin" Value="0,22,0,0" />
+            <Setter Property="Padding" Value="0,18,0,0" />
+        </Style>
+        <Style Selector="Border.plan-plus-premium">
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+        <Style Selector="TextBlock.plan-plus-text">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Billing cycle toggle (monthly | annual) -->
         <Style Selector="Border.cycle-toggle">
             <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
             <Setter Property="CornerRadius" Value="8" />
@@ -567,25 +756,34 @@
             <Setter Property="BoxShadow" Value="0 1 4 0 #20000000" />
         </Style>
 
-        <!-- "Save X%" pill on the yearly toggle button -->
+        <!-- "Save $X" pill on the annual toggle button. Tinted only while that
+             option is active, so the inactive tab stays visually quiet. The idle
+             fill is SurfacePressed rather than SurfaceAlt, which is the same colour
+             as the toggle track in the dark theme and left the pill invisible. -->
         <Style Selector="Border.save-pill">
-            <Setter Property="Background" Value="{DynamicResource SuccessBrush}" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Padding" Value="6,1" />
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="7,2" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style Selector="Border.save-pill TextBlock">
             <Setter Property="FontSize" Value="10" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
+
+        <Style Selector="Button.cycle-option.active Border.save-pill">
+            <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
+        </Style>
+
+        <Style Selector="Button.cycle-option.active Border.save-pill TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
         </Style>
 
         <!-- Feature Item -->
         <Style Selector="Border.feature-item">
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="0,0,0,1" />
-            <Setter Property="Padding" Value="0,8" />
+            <Setter Property="Padding" Value="0,7" />
         </Style>
         <Style Selector="Border.feature-item TextBlock">
             <Setter Property="FontSize" Value="13" />

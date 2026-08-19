@@ -4,7 +4,7 @@ This guide walks through everything you need to set up in Microsoft Azure to bui
 
 Argo Books uses Azure for two things:
 
-1. **Azure Translator** - used by `ArgoBooks.TranslationTool` to translate UI strings into every supported language
+1. **Azure Translator** - used by `ArgoBooks.Translations` to translate UI strings into every supported language
 2. **Azure Artifact Signing** - used to digitally sign the Windows `.exe` installer produced by Advanced Installer
 
 Azure is not used by Argo Books day to day. It's only used to generate translations or publish a signed Windows release.
@@ -62,7 +62,7 @@ Used by the translation tool to generate `fr.json`, `de.json`, etc. from English
 3. Click **Create** and fill in:
    - **Subscription:** the subscription you created above
    - **Resource group:** `ArgoBooks`
-   - **Region:** `Canada Central` (any region works as long as you set `AZURE_TRANSLATOR_REGION` to match, when you use `ArgoBooks.TranslationTool`)
+   - **Region:** `Canada Central` (any region works as long as you set `AZURE_TRANSLATOR_REGION` to match, when you use `ArgoBooks.Translations`)
    - **Name:** `ArgoBooks-Translator`
    - **Pricing tier:** Choose **Free F0**. Free as long as you stay under 2M characters per month.
 4. **Review + create**, then **Create**
@@ -82,7 +82,7 @@ This only happens if you regenerate every language from scratch, which should ne
 2. In the left sidebar, click **Keys and Endpoint**
 3. Copy **Key 1** and note the **Location/Region** (e.g. `canadacentral`)
 
-You will need these to run the translation tool. See [ArgoBooks.TranslationTool/README.md](../../ArgoBooks.TranslationTool/README.md) for usage, or [Localization.md](../Localization.md) for the full picture of how localization works in Argo Books.
+You will need these to run the translation tool. See [ArgoBooks.Translations/README.md](../../tools/ArgoBooks.Translations/README.md) for usage, or [Localization.md](../Localization.md) for the full picture of how localization works in Argo Books.
 
 ## Part 3: Azure Artifact Signing
 

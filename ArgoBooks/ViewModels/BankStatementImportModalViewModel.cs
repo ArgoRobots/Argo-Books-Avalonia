@@ -1021,9 +1021,6 @@ public partial class ImportLineRow : ObservableObject
     /// <summary>Position in the parent Rows collection, used to map AI suggestions back to the row.</summary>
     public int Index { get; set; }
 
-    /// <summary>The original, unedited bank statement text, shown read-only as a caption.</summary>
-    public string RawDescription => SourceLine.Description;
-
     public ImportLineRow(BankStatementLine line)
     {
         SourceLine = line;

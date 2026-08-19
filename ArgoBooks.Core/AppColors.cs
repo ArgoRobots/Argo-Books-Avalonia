@@ -10,7 +10,6 @@ public static class AppColors
     // ── Primary Brand ───────────────────────────────────────────────
     public const string Primary = "#3B82F6";
     public const string PrimaryLight = "#DBEAFE";
-    public const string PrimaryLighter = "#93C5FD";
     public const string PrimaryLightest = "#EFF6FF";
     public const string PrimaryDark = "#1D4ED8";
     public const string PrimaryHover = "#2563EB";
@@ -20,25 +19,21 @@ public static class AppColors
     // ── Semantic: Success ───────────────────────────────────────────
     public const string Success = "#22C55E";
     public const string SuccessLight = "#DCFCE7";
-    public const string SuccessDark = "#16A34A";
     public const string SuccessText = "#166534";
 
     // ── Semantic: Warning / Amber ───────────────────────────────────
     public const string Warning = "#F59E0B";
     public const string WarningLight = "#FEF3C7";
-    public const string WarningDark = "#D97706";
     public const string WarningText = "#92400E";
 
     // ── Semantic: Error / Danger ────────────────────────────────────
     public const string Error = "#DC2626";
     public const string ErrorLight = "#FEE2E2";
     public const string ErrorLightest = "#FEF2F2";
-    public const string ErrorDark = "#B91C1C";
     public const string ErrorDarkest = "#991B1B";
 
     // ── Semantic: Info ──────────────────────────────────────────────
     public const string Info = "#0369A1";
-    public const string InfoLight = "#F0F9FF";
     // ── Semantic: Purple ────────────────────────────────────────────
     public const string Purple = "#A855F7";
     public const string PurpleLight = "#F3E8FF";
@@ -60,7 +55,6 @@ public static class AppColors
     public const string EmeraldDark = "#047857";
 
     public const string Cyan = "#06B6D4";
-    public const string CyanLight = "#CFFAFE";
 
     public const string Yellow = "#EAB308";
     public const string Amber = "#FBBF24";
@@ -97,7 +91,6 @@ public static class AppColors
     public const string White = "#FFFFFF";
     public const string Black = "#000000";
     public const string GrayLightest = "#F3F4F6";
-    public const string GrayLighter = "#E5E7EB";
     public const string Gray = "#9CA3AF";
     public const string GrayMedium = "#6B7280";
     public const string GrayText = "#4B5563";

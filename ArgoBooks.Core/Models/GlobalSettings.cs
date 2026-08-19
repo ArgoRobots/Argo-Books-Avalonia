@@ -121,7 +121,6 @@ public class QuickActionsSettings
 
     // Product & Inventory actions
     public bool ShowNewProduct { get; set; } = false;
-    public bool ShowRecordPayment { get; set; } = false;
 
     // Rental actions
     public bool ShowNewRentalItem { get; set; } = false;

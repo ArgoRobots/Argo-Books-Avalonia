@@ -165,7 +165,12 @@ public static class ImportSchemaDefinition
 
             [SpreadsheetSheetType.Invoices] =
             [
-                new("Invoice #", "string", "Invoice number (e.g., INV-2024-001)", Required: true, JsonName: "id"),
+                // Two different values. ID is what payments and line items point at; Invoice # is
+                // what the customer sees on the paperwork, and in this app it is the id with a
+                // hash in front. A sheet that only has Invoice # still works: the importer falls
+                // back to it for the id, which is what it always used to do.
+                new("ID", "string", "Unique identifier (e.g., INV-2024-00001)", JsonName: "id"),
+                new("Invoice #", "string", "Invoice number shown on the invoice (e.g., #INV-2024-00001). Used as the identifier when there is no ID column", Required: true, JsonName: "invoiceNumber"),
                 new("Customer ID", "string", "Customer identifier", Required: true, JsonName: "customerId"),
                 new("Issue Date", "datetime", "Date invoice was issued", JsonName: "issueDate"),
                 new("Due Date", "datetime", "Payment due date", JsonName: "dueDate"),
@@ -314,13 +319,56 @@ public static class ImportSchemaDefinition
                 new("Currency", "string", "ISO currency code the amounts are in (e.g., USD, EUR, GBP). Map when the sheet has a per-row currency column, OR when an amount cell itself contains a currency symbol or code (e.g. '£100', '$10 CAD'): output the ISO code, or the raw symbol if the code is unclear. Leave unmapped if all amounts are plainly in the company currency", JsonName: "originalCurrency"),
             ],
 
+            [SpreadsheetSheetType.InvoiceLineItems] =
+            [
+                new("Invoice ID", "string", "Identifier of the invoice these lines belong to", Required: true, JsonName: "invoiceId"),
+                new("Product ID", "string", "Product identifier, if the line is linked to a product", JsonName: "productId"),
+                new("Description", "string", "What the line is for", JsonName: "description"),
+                new("Quantity", "decimal", "Number of units", JsonName: "quantity"),
+                new("Unit Price", "decimal", "Price per unit before tax and discount", JsonName: "unitPrice"),
+                new("Tax Rate", "decimal", "Tax rate as a decimal (e.g., 0.08 for 8%)", JsonName: "taxRate"),
+                new("Discount", "decimal", "Discount applied to this line", JsonName: "discount"),
+                // Amount is quantity x price less discount, plus tax. It is exported so the sheet
+                // reads on its own and is deliberately not imported: the line is rebuilt from its
+                // parts, so a stale total in the file cannot contradict them.
+            ],
+
             [SpreadsheetSheetType.PurchaseOrderLineItems] =
             [
-                new("PO ID", "string", "Purchase order identifier", Required: true),
+                new("PO ID", "string", "Purchase order identifier", Required: true, JsonName: "poId"),
                 new("Product ID", "string", "Product identifier", Required: true, JsonName: "productId"),
                 new("Quantity", "int", "Ordered quantity", JsonName: "quantity"),
                 new("Unit Cost", "decimal", "Cost per unit", JsonName: "unitCost"),
                 new("Quantity Received", "int", "Quantity received so far", JsonName: "quantityReceived"),
+            ],
+
+            [SpreadsheetSheetType.Employees] =
+            [
+                new("ID", "string", "Unique identifier (e.g., EMP-001)", Required: true, JsonName: "id"),
+                new("Name", "string", "Full name, as it should appear on the T4", Required: true, JsonName: "name"),
+                new("Employee #", "string", "Optional payroll number", JsonName: "employeeNumber"),
+                new("SIN", "string", "Social insurance number, digits only", JsonName: "sin"),
+                new("Province of Employment", "string", "Two letter code for where the employee WORKS, which decides the tax table and is not necessarily where they live", JsonName: "province"),
+                new("Pay Type", "enum:Salary,Hourly", "Whether the pay rate is an annual salary or an hourly rate", JsonName: "payType"),
+                new("Pay Rate", "decimal", "Annual salary, or the hourly rate, depending on Pay Type", JsonName: "payRate"),
+                new("Pay Frequency", "enum:Weekly,Biweekly,SemiMonthly,Monthly", "How often the employee is paid", JsonName: "payFrequency"),
+                new("Standard Hours Per Week", "decimal", "Contract hours in a normal week, for salaried staff only. Leave blank when unknown rather than entering zero", JsonName: "standardHoursPerWeek"),
+                new("Federal Claim Amount", "decimal", "Total claim amount from the federal TD1. Zero means none was filed", JsonName: "federalClaimAmount"),
+                new("Provincial Claim Amount", "decimal", "Total claim amount from the provincial or territorial TD1", JsonName: "provincialClaimAmount"),
+                new("CPP Exempt", "bool", "Under 18, over 70, or already drawing a CPP retirement pension", JsonName: "isCppExempt"),
+                new("EI Exempt", "bool", "Typically an owner controlling more than 40% of the voting shares", JsonName: "isEiExempt"),
+                new("Dental Benefit", "enum:NotEligible,PayeeOnly,PayeeAndSpouse,PayeeAndChildren,PayeeSpouseAndChildren", "Box 45 on the T4: what dental coverage the employer offered", JsonName: "dentalBenefit"),
+                new("Start Date", "datetime", "First day worked", JsonName: "startDate"),
+                new("End Date", "datetime", "Last day worked, if they have left", JsonName: "endDate"),
+                // The home address, which the T4 is posted to. Not the same as Province of
+                // Employment above: someone can live in one province and work in another.
+                new("Street", "string", "Home address street", JsonName: "address.street"),
+                new("City", "string", "City", JsonName: "address.city"),
+                new(stateLabel, "string", stateDesc, JsonName: "address.state"),
+                new(postalLabel, "string", postalDesc, JsonName: "address.zipCode"),
+                new("Country", "string", "Country", JsonName: "address.country"),
+                new("Status", "enum:Active,Archived", "Archived employees stay in the file but are hidden from pay runs"),
+                new("Notes", "string", "Additional notes", JsonName: "notes"),
             ],
 
             [SpreadsheetSheetType.Returns] =

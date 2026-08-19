@@ -1,3 +1,5 @@
+using ArgoBooks.Core.Services;
+
 namespace ArgoBooks.Core.Models.Telemetry;
 
 /// <summary>
@@ -7,6 +9,16 @@ public class ErrorEvent : TelemetryEvent
 {
     /// <inheritdoc />
     public override TelemetryDataType DataType => TelemetryDataType.Error;
+
+    /// <summary>
+    /// How serious this is. <see cref="LogLevel.Error"/> is a genuine failure;
+    /// <see cref="LogLevel.Warning"/> is an expected, handled condition that is worth
+    /// knowing about but is not a defect (a company file saved by a newer build, say).
+    /// Only these two levels ever reach telemetry. The dashboard keeps warnings out of
+    /// its error charts, and treats an event with no severity at all as an error.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public LogLevel Severity { get; set; } = LogLevel.Error;
 
     /// <summary>
     /// Error code or exception type name.

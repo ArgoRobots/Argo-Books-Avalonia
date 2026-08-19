@@ -40,6 +40,13 @@ public class CompanySettings
     [JsonPropertyName("invoiceTotalsHealedVersion")]
     public string? InvoiceTotalsHealedVersion { get; set; }
 
+    /// <summary>
+    /// Marks that revenue-linked payments have been folded into their Revenue rows.
+    /// See <c>CompanyManager.MigrateRevenueLinkedPayments</c>.
+    /// </summary>
+    [JsonPropertyName("revenuePaymentsMigratedVersion")]
+    public string? RevenuePaymentsMigratedVersion { get; set; }
+
     [JsonPropertyName("company")]
     public CompanyInfo Company { get; set; } = new();
     [JsonPropertyName("localization")]
@@ -90,6 +97,63 @@ public class CompanyInfo
     public string? Country { get; set; }
     [JsonPropertyName("logoFileName")]
     public string? LogoFileName { get; set; }
+
+    /// <summary>
+    /// Postal code. Only payroll needs it so far, because a T4 carries the employer's full
+    /// address, but it is ordinary company information rather than a payroll field.
+    /// </summary>
+    [JsonPropertyName("postalCode")]
+    public string? PostalCode { get; set; }
+
+    /// <summary>
+    /// CRA payroll program account, the fifteen character BN15 in the form 000000000RP0000.
+    /// Required on both the T4 slip (box 54) and the summary, and CRA validates that the two
+    /// match, so it is stored once here rather than per employee.
+    /// </summary>
+    [JsonPropertyName("payrollAccountNumber")]
+    public string? PayrollAccountNumber { get; set; }
+
+    /// <summary>
+    /// The person CRA should call about a T4 filing, required on the summary. Kept separate
+    /// from the company's own name and phone because it is a named individual, and because a
+    /// bookkeeper filing on the owner's behalf puts themselves here.
+    /// </summary>
+    [JsonPropertyName("payrollContactName")]
+    public string? PayrollContactName { get; set; }
+
+    [JsonPropertyName("payrollContactPhone")]
+    public string? PayrollContactPhone { get; set; }
+
+    /// <summary>
+    /// Where CRA writes back about an electronic filing. Required by the T619 transmittal record
+    /// that wraps every submission, and the only field of it this app did not already hold.
+    ///
+    /// CRA states it is used "to facilitate communication regarding the processing of information
+    /// returns received", so it is where a rejection or a query arrives. Getting it wrong is
+    /// quiet: the submission goes through and the answer goes nowhere.
+    /// </summary>
+    [JsonPropertyName("payrollContactEmail")]
+    public string? PayrollContactEmail { get; set; }
+
+    /// <summary>
+    /// The Revenu Quebec identification number, ten digits then a two letter file code then
+    /// four digits, as in 1234567890RS0001. Needed only by an employer with Quebec staff, and
+    /// it is NOT the CRA payroll account number: a Quebec employer holds both, files a T4 with
+    /// one and an RL-1 with the other, and the two look nothing alike.
+    /// </summary>
+    [JsonPropertyName("quebecIdentificationNumber")]
+    public string? QuebecIdentificationNumber { get; set; }
+
+    /// <summary>
+    /// How often CRA expects the deductions, which it assigns and tells the employer rather than
+    /// anything derivable from the pay runs here.
+    ///
+    /// Defaults to regular. That is where most small employers sit, and it is also the value
+    /// every existing company file will deserialize to, which matches what the app assumed
+    /// before this setting existed.
+    /// </summary>
+    [JsonPropertyName("remitterType")]
+    public Models.Payroll.RemitterType RemitterType { get; set; } = Models.Payroll.RemitterType.Regular;
 }
 
 public class LocalizationSettings

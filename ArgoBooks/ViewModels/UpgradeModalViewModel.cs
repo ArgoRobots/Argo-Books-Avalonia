@@ -19,6 +19,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
 {
     private static readonly HttpClient HttpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
     private static readonly string LicenseRedeemUrl = $"{ApiConfig.BaseUrl}/api/license/redeem.php";
+    private static readonly string LicenseCaptureEmailUrl = $"{ApiConfig.BaseUrl}/api/license/capture-email.php";
     private readonly IConnectivityService _connectivityService = new ConnectivityService();
     private static readonly string PricingApiUrl = $"{ApiConfig.BaseUrl}/api/pricing/plans.php";
 
@@ -69,6 +70,10 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     partial void OnIsVerificationSuccessChanged(bool value)
     {
+        // The key entry form is hidden by either this or the email step, so it has to be told
+        // when either moves.
+        OnPropertyChanged(nameof(ShowKeyEntryForm));
+
         if (value)
         {
             // Show continue button after 2 second delay
@@ -91,39 +96,54 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
     #region Pricing
 
+    // The headline figure only, without a currency symbol: the "$" is a separate,
+    // smaller run in the card so the layout matches the website's price block.
+    // Holds the monthly price or the yearly-billed per-month equivalent depending
+    // on the selected cycle, so a single price block serves both.
     [ObservableProperty]
-    private string _premiumMonthlyPrice = "";
+    private string _premiumAmountDisplay = "";
 
     [ObservableProperty]
     private string _premiumBillingPeriod = "";
 
+    // Struck-out monthly price (e.g. "$15/month") shown above the amount on yearly.
     [ObservableProperty]
-    private string _premiumYearlyPrice = "";
+    private string _premiumStrikeText = "";
+
+    // "Billed monthly" or "Billed annually at $150 CAD", below the amount.
+    [ObservableProperty]
+    private string _premiumBilledText = "";
+
+    // "Save $30" pill on the annual toggle option. The dollar figure, not a
+    // percentage, so it matches the website's toggle.
+    [ObservableProperty]
+    private string _yearlySavingsDisplay = "";
+
+    // One-line plan pitches above the price, matching the website cards. These
+    // live here rather than the plans API because the website hardcodes them too.
+    [ObservableProperty]
+    private string _freePlanPitch = "";
 
     [ObservableProperty]
-    private string _premiumYearlySavings = "";
+    private string _premiumPlanPitch = "";
 
-    // New: yearly billed-per-month price (e.g., "$8.33 CAD") shown when yearly is selected
+    // Uppercase plan chips ("FREE" / "PREMIUM") beside the word "Plan".
     [ObservableProperty]
-    private string _premiumYearlyPerMonth = "";
+    private string _freeChip = "";
 
-    // New: strikethrough monthly price (e.g., "$10/month") shown above the yearly-per-month
     [ObservableProperty]
-    private string _premiumMonthlyStrike = "";
+    private string _premiumChip = "";
 
-    // New: "Save 17%" pill shown on the yearly toggle option
+    // Billing-cycle toggle state. Monthly is the default, as on the website.
     [ObservableProperty]
-    private string _yearlySavingsPercentDisplay = "";
-
-    // New: billing-cycle toggle state. Yearly is the default.
-    [ObservableProperty]
-    private bool _isYearlyBilling = true;
+    private bool _isYearlyBilling;
 
     public bool IsMonthlyBilling => !IsYearlyBilling;
 
     partial void OnIsYearlyBillingChanged(bool value)
     {
         OnPropertyChanged(nameof(IsMonthlyBilling));
+        RefreshCycleDisplay();
     }
 
     [ObservableProperty]
@@ -241,53 +261,62 @@ public partial class UpgradeModalViewModel : ViewModelBase
             ? "/" + monthWord
             : _rawCurrency + "/" + monthWord;
 
-        if (_rawPremiumYearlyPriceDisplay is not null && _rawPremiumYearlySavingsDisplay is not null)
-        {
-            PremiumYearlyPrice = "or {0}/year".TranslateFormat(_rawPremiumYearlyPriceDisplay);
-            // Parens are added separately so Azure can translate the bare phrase reliably,
-            // it leaves "(save {0})" unchanged for several languages (mt, nl, sk).
-            PremiumYearlySavings = "(" + "save {0}".TranslateFormat(_rawPremiumYearlySavingsDisplay) + ")";
-        }
-        else
-        {
+        FreePlanPitch = "Just starting out, or you only need the basics? This is the place.".Translate();
+        PremiumPlanPitch = "Want unlimited invoicing, bigger monthly limits, and forecasts you can act on? Go Premium.".Translate();
+        FreeChip = "Free".Translate().ToUpperInvariant();
+        PremiumChip = "Premium".Translate().ToUpperInvariant();
+
+        YearlySavingsDisplay = _rawPremiumYearlySavingsDisplay is not null
+            ? "Save {0}".TranslateFormat(_rawPremiumYearlySavingsDisplay)
             // Clear stale text from a prior fetch, otherwise an API response that omits
-            // the yearly fields would leave the previous yearly pricing visible.
-            PremiumYearlyPrice = string.Empty;
-            PremiumYearlySavings = string.Empty;
-        }
+            // the yearly fields would leave the previous savings figure visible.
+            : string.Empty;
 
-        // Rebuild the big-number strings from the raw numeric prices so the currency
-        // sits with the period text rather than next to the dollar amount.
-        if (_rawMonthlyPrice > 0 && _rawYearlyPrice > 0)
-        {
-            PremiumMonthlyPrice = string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
-                "${0:0}",
-                _rawMonthlyPrice);
-
-            var perMonth = _rawYearlyPrice / 12.0;
-            PremiumYearlyPerMonth = string.Format(
-                System.Globalization.CultureInfo.InvariantCulture,
-                "${0:0.00}",
-                perMonth);
-            PremiumMonthlyStrike = string.Format(
+        // Struck-out reference price, from the raw numeric so the currency stays with
+        // the period text rather than sitting next to the dollar amount.
+        PremiumStrikeText = _rawMonthlyPrice > 0
+            ? string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 "${0:0}/month",
-                _rawMonthlyPrice);
+                _rawMonthlyPrice)
+            : string.Empty;
 
-            var savingsPct = (int)Math.Round((1 - _rawYearlyPrice / (_rawMonthlyPrice * 12)) * 100);
-            // Keep the % glued to the number rather than in the format string,
-            // some translation passes strip lone '%' characters.
-            var savingsPctText = savingsPct.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%";
-            YearlySavingsPercentDisplay = "Save {0}".TranslateFormat(savingsPctText);
+        RefreshCycleDisplay();
+    }
+
+    /// <summary>
+    /// Rebuilds the parts of the price block that depend on the selected billing
+    /// cycle. One block serves both cycles, so switching only changes text.
+    /// </summary>
+    private void RefreshCycleDisplay()
+    {
+        if (_rawMonthlyPrice <= 0 || _rawYearlyPrice <= 0)
+        {
+            PremiumAmountDisplay = string.Empty;
+            PremiumBilledText = string.Empty;
+            return;
+        }
+
+        if (IsYearlyBilling)
+        {
+            // The headline figure is the per-month equivalent so it compares
+            // like-for-like against the monthly plan, but the amount actually
+            // charged today has to be stated or checkout comes as a surprise.
+            PremiumAmountDisplay = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "{0:0.00}",
+                _rawYearlyPrice / 12.0);
+            PremiumBilledText = _rawPremiumYearlyPriceDisplay is not null
+                ? "Billed annually at {0}".TranslateFormat(_rawPremiumYearlyPriceDisplay)
+                : "Billed annually".Translate();
         }
         else
         {
-            // Leave PremiumMonthlyPrice as set by the caller (the API display string) so we
-            // don't blank out the price when only display strings are available.
-            PremiumYearlyPerMonth = string.Empty;
-            PremiumMonthlyStrike = string.Empty;
-            YearlySavingsPercentDisplay = string.Empty;
+            PremiumAmountDisplay = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                "{0:0}",
+                _rawMonthlyPrice);
+            PremiumBilledText = "Billed monthly".Translate();
         }
     }
 
@@ -310,12 +339,111 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
     }
 
+    #region Email capture
+
+    /// <summary>
+    /// Shown between redeeming the key and the success panel, and only for a key we hold no
+    /// contact address for.
+    ///
+    /// Keys sold through a reseller arrive as a pre-generated batch with no buyer details, so
+    /// this is the only moment their address can be asked for. Anyone who bought through the
+    /// website is already on record and never sees this: they get the success panel directly,
+    /// exactly as before.
+    ///
+    /// Premium is ALREADY active by the time this appears, both on the server and locally.
+    /// Nothing here can withhold it, and closing the modal at this step costs us an address
+    /// rather than costing the customer what they paid for.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowKeyEntryForm))]
+    private bool _isEmailCaptureStep;
+
+    [ObservableProperty]
+    private string _customerEmail = string.Empty;
+
+    [ObservableProperty]
+    private string? _emailError;
+
+    [ObservableProperty]
+    private bool _isSubmittingEmail;
+
+    /// <summary>The key just redeemed, kept so the capture call can identify it.</summary>
+    private string _redeemedKey = string.Empty;
+
+    /// <summary>The entry form is now one of three states rather than the inverse of success.</summary>
+    public bool ShowKeyEntryForm => !IsVerificationSuccess && !IsEmailCaptureStep;
+
+
+    /// <summary>
+    /// Records the address, then moves on to the success panel.
+    ///
+    /// A server failure still advances. The licence is active either way, and stopping someone
+    /// on a dead-end screen over a contact detail is precisely the support ticket this whole
+    /// flow is meant to avoid.
+    /// </summary>
+    [RelayCommand]
+    private async Task SubmitEmailAsync()
+    {
+        string email = CustomerEmail.Trim();
+
+        if (email.Length == 0)
+        {
+            EmailError = "Please enter your email address".Translate();
+            return;
+        }
+
+        // Deliberately loose. The server validates properly, and a regex that rejects a real
+        // address here would cost us the very thing we are trying to collect.
+        int at = email.IndexOf('@');
+        if (at <= 0 || email.IndexOf('.', at) <= at + 1 || email.EndsWith('.'))
+        {
+            EmailError = "That does not look like an email address".Translate();
+            return;
+        }
+
+        IsSubmittingEmail = true;
+        EmailError = null;
+
+        try
+        {
+            await CaptureEmailAsync(_redeemedKey, email);
+        }
+        catch (Exception ex)
+        {
+            // Logged, not shown. There is nothing the customer can usefully do about it.
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "License email capture failed");
+        }
+        finally
+        {
+            IsSubmittingEmail = false;
+        }
+
+        IsEmailCaptureStep = false;
+        IsVerificationSuccess = true;
+    }
+
+    private async Task CaptureEmailAsync(string premiumKey, string email)
+    {
+        var deviceId = App.LicenseService?.GetDeviceId() ?? "";
+
+        var requestBody = new { premium_key = premiumKey, device_id = deviceId, email };
+        var json = JsonSerializer.Serialize(requestBody);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        await HttpClient.PostAsync(LicenseCaptureEmailUrl, content);
+    }
+
+    #endregion
+
     [RelayCommand]
     private void Close()
     {
         IsOpen = false;
         IsEnterKeyModalOpen = false;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
+        CustomerEmail = string.Empty;
+        EmailError = null;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -373,6 +501,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsOpen = false;
         IsEnterKeyModalOpen = true;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -383,6 +512,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsEnterKeyModalOpen = false;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -393,6 +523,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         IsEnterKeyModalOpen = false;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         VerificationError = null;
         SuccessMessage = null;
@@ -405,6 +536,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsEnterKeyModalOpen = false;
         KeyVerified?.Invoke(this, LicenseKey);
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
         LicenseKey = string.Empty;
         SuccessMessage = null;
     }
@@ -430,6 +562,7 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsVerifying = true;
         VerificationError = null;
         IsVerificationSuccess = false;
+        IsEmailCaptureStep = false;
 
         try
         {
@@ -437,8 +570,19 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (response?.Success == true)
             {
-                IsVerificationSuccess = true;
+                _redeemedKey = key;
                 SuccessMessage = response.Message ?? "License activated successfully!";
+
+                // Ask for an address only when the server has none. Anyone who bought through
+                // the website goes straight to the success panel, unchanged.
+                if (response.NeedsEmail)
+                {
+                    IsEmailCaptureStep = true;
+                }
+                else
+                {
+                    IsVerificationSuccess = true;
+                }
 
                 // Save license securely
                 var licenseType = response.Type?.ToLowerInvariant() ?? "";
@@ -475,13 +619,18 @@ public partial class UpgradeModalViewModel : ViewModelBase
                 VerificationError = response?.Message ?? "Invalid license key";
             }
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            VerificationError = (await ConnectivityMessage.ResolveAsync(_connectivityService)).Translate();
+            // Someone trying to redeem a licence and failing is the most expensive network
+            // failure in the app, so it is worth knowing whether it was their connection or
+            // ours. The probe was already running to choose the message.
+            VerificationError = (await NetworkFailure.ResolveAndReportAsync(
+                App.ErrorLogger, ex, "License redemption network error", _connectivityService)).Translate();
         }
         catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException || ex.CancellationToken != default)
         {
-            VerificationError = (await ConnectivityMessage.ResolveAsync(_connectivityService)).Translate();
+            VerificationError = (await NetworkFailure.ResolveAndReportAsync(
+                App.ErrorLogger, ex, "License redemption timeout", _connectivityService)).Translate();
         }
         catch (TaskCanceledException)
         {
@@ -547,7 +696,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
             if (apiResponse?.Pricing != null)
             {
-                PremiumMonthlyPrice = apiResponse.Pricing.PremiumPriceDisplay;
                 _rawPremiumYearlyPriceDisplay = apiResponse.Pricing.PremiumYearlyPriceDisplay;
                 _rawPremiumYearlySavingsDisplay = apiResponse.Pricing.PremiumYearlySavingsDisplay;
                 _rawMonthlyPrice = apiResponse.Pricing.PremiumMonthlyPriceNumeric;
@@ -585,7 +733,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
             else
             {
                 HasLoadError = true;
-                App.ErrorLogger?.LogError(ex, ErrorCategory.Network, "Failed to fetch plans from API");
+                // isConnectivityError already ruled out the offline case above, so anything
+                // reaching here failed with a working connection and is ours.
+                NetworkFailure.Report(App.ErrorLogger, ex, "Failed to fetch plans from API");
             }
         }
         finally
@@ -695,6 +845,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
         [JsonPropertyName("duration_months")]
         public int DurationMonths { get; init; }
+
+        /// <summary>
+        /// True when the server holds no contact address for this key, which is the case for a
+        /// batch sold through a reseller. False for anything bought through the website, so an
+        /// existing customer is never asked twice.
+        /// </summary>
+        [JsonPropertyName("needs_email")]
+        public bool NeedsEmail { get; init; }
     }
 
     #endregion

@@ -17,23 +17,10 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid RowDefinitions="Auto,*">
-        <!-- Tab Bar -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource SurfaceBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,0,0,1">
-            <TabControl x:Name="ProductsPageTabs"
-                        SelectedIndex="{Binding SelectedTabIndex}"
-                        Margin="0"
-                        Classes="page-tabs">
-                <TabItem Header="{loc:Loc 'Expense Products'}" />
-                <TabItem Header="{loc:Loc 'Revenue Products'}" />
-            </TabControl>
-        </Border>
-
-        <!-- Main Content -->
-        <Grid Grid.Row="1" RowDefinitions="*" Margin="24">
+    <Grid RowDefinitions="*">
+        <!-- Main Content. The expense and revenue sides are separate sidebar entries,
+             so there is no tab bar; SelectedTabIndex is set by the navigation target. -->
+        <Grid Grid.Row="0" RowDefinitions="*" Margin="24">
             <!-- Main Content Card using ArgoTable -->
             <table:ArgoTable Grid.Row="0"
                                 Title="{Binding IsExpensesTabSelected, Converter={x:Static local:BoolConverters.ToExpensesOrRevenue}}"
@@ -74,7 +61,7 @@
                     <Panel>
                         <!-- Table Header - Expenses Tab (8 columns) -->
                         <StackPanel Orientation="Horizontal" IsVisible="{Binding IsExpensesTabSelected}">
-                            <table:ArgoTableHeader Header="{loc:Loc 'Product Name'}" ColumnName="Name" SortProperty="Name"
+                            <table:ArgoTableHeader Header="{loc:Loc 'Product name'}" ColumnName="Name" SortProperty="Name"
                                                        ColumnWidth="{Binding ColumnWidths.NameColumnWidth}"
                                                        IsColumnVisible="{Binding ShowNameColumn}"
                                                        SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -126,7 +113,7 @@
 
                         <!-- Table Header - Revenue Tab (5 columns) -->
                         <StackPanel Orientation="Horizontal" IsVisible="{Binding IsRevenueTabSelected}">
-                            <table:ArgoTableHeader Header="{loc:Loc 'Product Name'}" ColumnName="Name" SortProperty="Name"
+                            <table:ArgoTableHeader Header="{loc:Loc 'Product name'}" ColumnName="Name" SortProperty="Name"
                                                        ColumnWidth="{Binding ColumnWidths.NameColumnWidth}"
                                                        IsColumnVisible="{Binding ShowNameColumn}"
                                                        SortColumn="{Binding SortColumn}" SortDirection="{Binding SortDirection}"
@@ -338,7 +325,7 @@
                                     ResetCommand="{Binding ResetColumnVisibilityCommand}">
         <controls:ColumnVisibilityMenu.ColumnsContent>
             <StackPanel Spacing="4">
-                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Product Name'}" Classes="column-toggle" />
+                <CheckBox IsChecked="{Binding ShowNameColumn}" Content="{loc:Loc 'Product name'}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowTypeColumn}" Content="{loc:Loc Type}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowDescriptionColumn}" Content="{loc:Loc Description}" Classes="column-toggle" />
                 <CheckBox IsChecked="{Binding ShowCategoryColumn}" Content="{loc:Loc Category}" Classes="column-toggle" />

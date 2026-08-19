@@ -156,47 +156,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     #region Combined Data
 
-    /// <summary>
-    /// Gets combined transaction data (sales and purchases) for table display.
-    /// </summary>
-    public List<TransactionTableRow> GetAllTransactionsTableData(TableReportElement tableConfig)
-    {
-        var noMaxConfig = new TableReportElement
-        {
-            DataSelection = tableConfig.DataSelection,
-            SortOrder = tableConfig.SortOrder,
-            MaxRows = 0
-        };
-
-        var sales = filters.TransactionType is not TransactionType.Expenses
-            ? GetRevenueTableData(noMaxConfig)
-            : [];
-
-        var purchases = filters.TransactionType is not TransactionType.Revenue
-            ? GetExpensesTableData(noMaxConfig)
-            : [];
-
-        var combined = sales.Concat(purchases).ToList();
-
-        // Apply sort order
-        combined = tableConfig.SortOrder switch
-        {
-            TableSortOrder.DateAscending => combined.OrderBy(t => t.Date).ToList(),
-            TableSortOrder.DateDescending => combined.OrderByDescending(t => t.Date).ToList(),
-            TableSortOrder.AmountAscending => combined.OrderBy(t => t.Total).ToList(),
-            TableSortOrder.AmountDescending => combined.OrderByDescending(t => t.Total).ToList(),
-            _ => combined.OrderByDescending(t => t.Date).ToList()
-        };
-
-        // Apply max rows
-        if (tableConfig.MaxRows > 0)
-        {
-            combined = combined.Take(tableConfig.MaxRows).ToList();
-        }
-
-        return combined;
-    }
-
     #endregion
 
     #region Invoices Data
@@ -1076,57 +1035,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return supplierPurchases;
     }
 
-    /// <summary>
-    /// Gets top accountants by transaction volume.
-    /// </summary>
-    public List<AccountantAnalysisRow> GetTopAccountantsByVolume(int count = 10)
-    {
-        if (companyData == null)
-            return [];
-
-        var (startDate, endDate) = GetDateRange();
-
-        var accountantData = new Dictionary<string, (decimal Revenues, decimal Expenses, int Count)>();
-
-        foreach (var revenue in companyData.Revenues.Where(s => s.Date >= startDate && s.Date <= endDate))
-        {
-            var accountantId = revenue.AccountantId ?? "";
-            if (!accountantData.ContainsKey(accountantId))
-                accountantData[accountantId] = (0, 0, 0);
-
-            var current = accountantData[accountantId];
-            accountantData[accountantId] = (current.Revenues + revenue.EffectiveSubtotalUSD, current.Expenses, current.Count + 1);
-        }
-
-        foreach (var expense in companyData.Expenses.Where(p => p.Date >= startDate && p.Date <= endDate))
-        {
-            var accountantId = expense.AccountantId ?? "";
-            if (!accountantData.ContainsKey(accountantId))
-                accountantData[accountantId] = (0, 0, 0);
-
-            var current = accountantData[accountantId];
-            accountantData[accountantId] = (current.Revenues, current.Expenses + expense.EffectiveSubtotalUSD, current.Count + 1);
-        }
-
-        return accountantData
-            .Select(kvp =>
-            {
-                var accountant = companyData.GetAccountant(kvp.Key);
-                return new AccountantAnalysisRow
-                {
-                    AccountantId = kvp.Key,
-                    AccountantName = accountant?.Name ?? "Unknown",
-                    TotalRevenue = kvp.Value.Revenues,
-                    TotalPurchases = kvp.Value.Expenses,
-                    TotalVolume = kvp.Value.Revenues + kvp.Value.Expenses,
-                    TransactionCount = kvp.Value.Count
-                };
-            })
-            .OrderByDescending(a => a.TotalVolume)
-            .Take(count)
-            .ToList();
-    }
-
     #endregion
 }
 
@@ -1489,7 +1397,6 @@ public class AccountantAnalysisRow
     public string AccountantName { get; set; } = string.Empty;
     public decimal TotalRevenue { get; set; }
     public decimal TotalPurchases { get; set; }
-    public decimal TotalVolume { get; set; }
     public int TransactionCount { get; set; }
 }
 

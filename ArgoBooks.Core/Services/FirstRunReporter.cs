@@ -121,8 +121,7 @@ public sealed class FirstRunReporter
             {
                 IncrementAttemptCount(attemptsPath, attempts + 1);
             }
-            _errorLogger?.LogError(ex, ErrorCategory.Network,
-                context: "FirstRunReporter.ReportIfFirstRunAsync");
+            NetworkFailure.Report(_errorLogger, ex, "FirstRunReporter.ReportIfFirstRunAsync");
         }
     }
 

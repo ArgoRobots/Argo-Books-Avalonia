@@ -93,8 +93,8 @@ public static class CaptureIngestService
             PaymentMethod = PaymentMethod.Cash,
             ReceiptId = receiptId,
             OriginalCurrency = companyCurrency,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         var receipt = BuildReceipt(tx, receiptId, expenseId, "Expense");
@@ -131,8 +131,8 @@ public static class CaptureIngestService
             PaymentStatus = RevenuePaymentStatus.Paid,
             ReceiptId = receiptId,
             OriginalCurrency = companyCurrency,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         var receipt = BuildReceipt(tx, receiptId, revenueId, "Revenue");
@@ -164,7 +164,7 @@ public static class CaptureIngestService
             Date = tx.Date,
             Supplier = tx.SupplierOrCustomer ?? string.Empty,
             Source = "Mobile",
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.UtcNow
         };
     }
 

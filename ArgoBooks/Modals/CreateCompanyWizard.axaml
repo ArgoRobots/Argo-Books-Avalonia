@@ -424,7 +424,7 @@
                                         </StackPanel>
 
                                         <StackPanel Spacing="6">
-                                            <TextBlock Text="{loc:Loc 'Confirm Password'}"
+                                            <TextBlock Text="{loc:Loc 'Confirm password'}"
                                                        FontSize="13"
                                                        FontWeight="Medium"
                                                        Foreground="{DynamicResource TextSecondaryBrush}" />

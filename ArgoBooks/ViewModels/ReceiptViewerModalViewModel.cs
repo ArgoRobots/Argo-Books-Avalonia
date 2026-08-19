@@ -12,6 +12,11 @@ namespace ArgoBooks.ViewModels;
 
 /// <summary>
 /// ViewModel for the receipt viewer modal.
+///
+/// Also shows generated documents that are not receipts, such as the Record of Employment
+/// worksheet, through <see cref="ShowDocument"/>. They share everything that matters here (page
+/// streaming, zoom, fullscreen, download) and differ only in where the bytes come from and
+/// whether deleting makes sense, so a second viewer would have been the same code twice.
 /// </summary>
 public partial class ReceiptViewerModalViewModel : ViewModelBase
 {
@@ -20,6 +25,56 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _receiptId = string.Empty;
+
+    /// <summary>
+    /// Set when showing a generated document rather than a stored receipt. Held so Download can
+    /// write the original PDF instead of a rendered page image.
+    /// </summary>
+    private byte[]? _documentBytes;
+
+    private string _documentFileName = string.Empty;
+
+    /// <summary>
+    /// False for a generated document. There is nothing to delete: it is not stored anywhere,
+    /// and it is rebuilt from the books every time it is opened.
+    /// </summary>
+    [ObservableProperty]
+    private bool _canDelete = true;
+
+    /// <summary>
+    /// The documents this viewer can page between, when it was opened on a set rather than a
+    /// single file. Empty for a receipt or a one-off document.
+    /// </summary>
+    public ObservableCollection<ViewerDocument> Documents { get; } = new();
+
+    /// <summary>True when there is a set to pick from, which is what shows the picker.</summary>
+    public bool HasDocumentSet => Documents.Count > 1;
+
+    /// <summary>
+    /// The document on screen. Changing it renders that one and only that one, which is the
+    /// whole point: a hundred stubs cost the same to open as one.
+    /// </summary>
+    [ObservableProperty]
+    private ViewerDocument? _selectedDocument;
+
+    partial void OnSelectedDocumentChanged(ViewerDocument? value)
+    {
+        if (value != null)
+        {
+            _ = ShowSelectedDocumentAsync(value);
+        }
+    }
+
+    /// <summary>
+    /// What to call the thing on screen while it loads or fails. The viewer shows generated
+    /// documents as well as receipts now, and a Record of Employment announcing itself as a
+    /// receipt is just wrong.
+    /// </summary>
+    [ObservableProperty]
+    private string _loadingMessage = "Loading receipt...";
+
+    [ObservableProperty]
+    private string _emptyMessage = "Receipt preview not available";
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -58,11 +113,148 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     public void Show(string receiptId, string? title = null)
     {
         ReceiptId = receiptId;
+        _documentBytes = null;
+        ClearDocumentSet();
+        _documentFileName = string.Empty;
+        CanDelete = true;
+        LoadingMessage = "Loading receipt...";
+        EmptyMessage = "Receipt preview not available";
         Title = title ?? $"Receipt for {receiptId}";
         IsFullscreen = false;
         ReceiptPages.Clear();
         IsOpen = true;
         _ = LoadPagesAsync(receiptId);
+    }
+
+    /// <summary>
+    /// Shows a generated PDF that is not a stored receipt, using the same page streaming, zoom
+    /// and fullscreen as a receipt.
+    /// </summary>
+    /// <param name="title">Shown in the header.</param>
+    /// <param name="pdfBytes">The document itself, kept so Download saves the PDF not a page.</param>
+    /// <param name="fileName">Suggested name when saving, and the basis of the cache file name.</param>
+    public void ShowDocument(string title, byte[] pdfBytes, string fileName)
+    {
+        ReceiptId = string.Empty;
+        _documentBytes = pdfBytes;
+        ClearDocumentSet();
+        _documentFileName = fileName;
+        CanDelete = false;
+        LoadingMessage = "Loading document...";
+        EmptyMessage = "Document preview not available";
+        Title = title;
+        IsFullscreen = false;
+        ReceiptPages.Clear();
+        IsOpen = true;
+        _ = LoadDocumentPagesAsync(pdfBytes, fileName);
+    }
+
+    /// <summary>
+    /// Shows a set of related documents with a picker, rendering only the one selected.
+    ///
+    /// Built for per-employee output: pay stubs now, and the T4, RL-1 and record of employment
+    /// slips have the same shape. The alternative, one combined document, has to compose and
+    /// rasterise every page before showing anything, which at a hundred employees is a long wait
+    /// for a scroll bar nobody can navigate.
+    /// </summary>
+    /// <param name="title">Shown in the header, describing the set rather than one item.</param>
+    /// <param name="documents">The set. A single item simply shows without a picker.</param>
+    public void ShowDocumentSet(string title, IEnumerable<ViewerDocument> documents)
+    {
+        ReceiptId = string.Empty;
+        _documentBytes = null;
+        _documentFileName = string.Empty;
+        CanDelete = false;
+        LoadingMessage = "Loading document...";
+        EmptyMessage = "Document preview not available";
+        Title = title;
+        IsFullscreen = false;
+        ReceiptPages.Clear();
+
+        Documents.Clear();
+        foreach (ViewerDocument document in documents)
+        {
+            Documents.Add(document);
+        }
+
+        OnPropertyChanged(nameof(HasDocumentSet));
+
+        IsOpen = true;
+
+        // Assigning this renders it, through OnSelectedDocumentChanged.
+        SelectedDocument = Documents.FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Renders one document from the set.
+    ///
+    /// The render token is taken before the bytes are produced, not after, so a slow render for
+    /// someone the user has already clicked away from cannot paint its pages over the newer
+    /// selection.
+    /// </summary>
+    private async Task ShowSelectedDocumentAsync(ViewerDocument document)
+    {
+        int token = ++_renderToken;
+
+        _pageOrder.Clear();
+        ReceiptPages.Clear();
+        IsLoadingPages = true;
+
+        try
+        {
+            byte[] bytes = await document.LoadAsync();
+
+            if (token != _renderToken)
+            {
+                return;
+            }
+
+            // Held so the download button saves this document rather than a rendered page.
+            _documentBytes = bytes;
+            _documentFileName = document.FileName;
+
+            var progress = new Progress<(int Index, string Path)>(page =>
+            {
+                if (token != _renderToken)
+                    return;
+                InsertPageOrdered(page.Index, page.Path);
+            });
+
+            await ReceiptPageRenderer.GetPagePathsAsync(document.FileName, bytes, progress);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Viewer.ShowDocument");
+        }
+        finally
+        {
+            if (token == _renderToken)
+                IsLoadingPages = false;
+        }
+    }
+
+    private async Task LoadDocumentPagesAsync(byte[] pdfBytes, string fileName)
+    {
+        var token = ++_renderToken;
+        _pageOrder.Clear();
+
+        IsLoadingPages = true;
+        try
+        {
+            var progress = new Progress<(int Index, string Path)>(page =>
+            {
+                if (token != _renderToken)
+                    return;
+                InsertPageOrdered(page.Index, page.Path);
+            });
+
+            await ReceiptPageRenderer.GetPagePathsAsync(fileName, pdfBytes, progress);
+        }
+        finally
+        {
+            if (token == _renderToken)
+                IsLoadingPages = false;
+        }
     }
 
     private async Task LoadPagesAsync(string receiptId)
@@ -214,6 +406,39 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         }
     }
 
+    /// <summary>Saves the generated PDF itself, not a rendered page image.</summary>
+    private async Task DownloadDocumentAsync()
+    {
+        byte[]? bytes = _documentBytes;
+        if (bytes == null) return;
+
+        try
+        {
+            var topLevel = Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                ? desktop.MainWindow
+                : null;
+
+            if (topLevel?.StorageProvider == null) return;
+
+            var result = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = "Save".Translate(),
+                SuggestedFileName = _documentFileName,
+                DefaultExtension = "pdf",
+                FileTypeChoices = [new FilePickerFileType("PDF") { Patterns = ["*.pdf"] }]
+            });
+
+            if (result == null) return;
+
+            await File.WriteAllBytesAsync(result.Path.LocalPath, bytes);
+            App.AddNotification("Success", "Saved successfully", NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "ReceiptViewer.DownloadDocument");
+        }
+    }
+
     [RelayCommand]
     private void Close()
     {
@@ -225,6 +450,27 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         _pageOrder.Clear();
         ReceiptId = string.Empty;
         Title = string.Empty;
+        _documentBytes = null;
+        _documentFileName = string.Empty;
+        CanDelete = true;
+        ClearDocumentSet();
+    }
+
+    /// <summary>
+    /// Drops the set without re-rendering. The selection is cleared first and silently, because
+    /// the change handler would otherwise try to render whatever it landed on next.
+    /// </summary>
+    private void ClearDocumentSet()
+    {
+        if (Documents.Count == 0 && SelectedDocument == null)
+        {
+            return;
+        }
+
+        _renderToken++;
+        SelectedDocument = null;
+        Documents.Clear();
+        OnPropertyChanged(nameof(HasDocumentSet));
     }
 
     [RelayCommand]
@@ -236,6 +482,12 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task Download()
     {
+        if (_documentBytes != null)
+        {
+            await DownloadDocumentAsync();
+            return;
+        }
+
         if (string.IsNullOrEmpty(ReceiptId)) return;
 
         try

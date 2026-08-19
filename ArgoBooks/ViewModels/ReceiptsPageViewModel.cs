@@ -38,6 +38,20 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
     [ObservableProperty]
     private int _aiScannedReceipts;
 
+    /// <summary>
+    /// This month's scan allowance, as "3 of 10 scans used".
+    ///
+    /// Distinct from the AI Scanned stat card, which counts receipts in this company file that
+    /// were scanned at any time. This is the monthly allowance the server meters, which is what
+    /// actually decides whether the next scan works, and until now the only place it appeared was
+    /// inside the bulk scan modal after the file picker.
+    ///
+    /// Empty rather than "0 of 0" while it is unknown, and the label hides itself: an offline
+    /// moment showing zero remaining would read as an exhausted allowance.
+    /// </summary>
+    [ObservableProperty]
+    private string _scanUsage = string.Empty;
+
     #endregion
 
     #region Plan Status
@@ -478,6 +492,51 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
         ExpenseReceipts = _allReceipts.Count(r => r.TransactionType == "Expense");
         RevenueReceipts = _allReceipts.Count(r => r.TransactionType == "Revenue");
         AiScannedReceipts = _allReceipts.Count(r => r.IsAiScanned);
+
+        _ = RefreshScanUsageAsync();
+    }
+
+    /// <summary>
+    /// Reads this month's allowance from the server.
+    ///
+    /// Deliberately not awaited by the caller: the receipt list must not wait on a network call
+    /// to render, and the card fills in a moment later. A failure leaves the dash rather than
+    /// reporting a number nobody can trust.
+    /// </summary>
+    private async Task RefreshScanUsageAsync()
+    {
+        try
+        {
+            // Disposed each time: this constructor builds its own HttpClient and owns it, so a
+            // fresh one per refresh with no dispose leaks a socket handle per page load.
+            using var usageService = new ReceiptUsageService(App.LicenseService, App.ErrorLogger);
+            var usage = await usageService.CheckUsageAsync();
+
+            if (usage.MonthlyLimit > 0)
+            {
+                ScanUsage = "{0} of {1} scans used".TranslateFormat(usage.ScanCount, usage.MonthlyLimit);
+                return;
+            }
+
+            ScanUsage = string.Empty;
+
+            // Every failure path in CheckUsageAsync returns a zero limit, so a hidden label and a
+            // genuine "no allowance configured" look identical from here. Recorded rather than
+            // swallowed, because a label that silently never appears is the same trap the receipt
+            // scanner's "No response from the AI service" was.
+            App.ErrorLogger?.LogWarning(
+                $"Scan usage unavailable: {usage.ErrorMessage ?? "no limit returned"}",
+                "ReceiptsPageViewModel.RefreshScanUsageAsync",
+                Core.Models.Telemetry.ErrorCategory.Api,
+                "ScanUsageUnavailable");
+        }
+        catch (Exception ex)
+        {
+            // Not worth an error dialog on a page the user opened to look at receipts, but it
+            // must not vanish either.
+            ScanUsage = string.Empty;
+            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Api, "Scan usage lookup");
+        }
     }
 
     [RelayCommand]
@@ -1255,7 +1314,6 @@ public partial class ReceiptDisplayItem : ObservableObject
     // Computed properties for display
     public string DateFormatted => Date.ToString("MMM d, yyyy");
     public string AmountFormatted => CurrencyService.Format(Amount);
-    public string FileSizeFormatted => FormatFileSize(FileSize);
 
     public bool IsExpense => TransactionType == "Expense";
     public bool IsRevenue => TransactionType == "Revenue";
@@ -1270,10 +1328,6 @@ public partial class ReceiptDisplayItem : ObservableObject
                          FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
 
     public bool HasImage => !string.IsNullOrEmpty(ImagePath);
-
-    public string TypeBadgeText => TransactionType;
-
-    public string SourceBadgeText => IsAiScanned ? "AI Scanned" : "Manual";
 
     private static string FormatFileSize(long bytes)
     {

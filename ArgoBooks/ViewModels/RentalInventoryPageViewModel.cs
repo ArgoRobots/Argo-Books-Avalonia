@@ -558,6 +558,5 @@ public partial class RentalItemDisplayItem : ObservableObject
 
     public string DailyRateFormatted => CurrencyService.Format(DailyRate);
     public string WeeklyRateFormatted => CurrencyService.Format(WeeklyRate);
-    public string MonthlyRateFormatted => CurrencyService.Format(MonthlyRate);
     public string DepositFormatted => CurrencyService.Format(SecurityDeposit);
 }

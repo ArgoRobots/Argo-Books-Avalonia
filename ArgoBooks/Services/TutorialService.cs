@@ -170,12 +170,6 @@ public class TutorialService
     public bool HasCompletedAppTour => Settings.HasCompletedAppTour;
 
     /// <summary>
-    /// Gets whether the setup checklist should be shown.
-    /// </summary>
-    public bool ShouldShowSetupChecklist =>
-        Settings.ShowSetupChecklist && !AreAllChecklistItemsCompleted();
-
-    /// <summary>
     /// Gets whether the user has manually dismissed the setup checklist.
     /// </summary>
     public bool IsSetupChecklistDismissed => !Settings.ShowSetupChecklist;
@@ -425,14 +419,6 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Gets the count of completed checklist items.
-    /// </summary>
-    public int GetCompletedChecklistCount()
-    {
-        return Settings.CompletedChecklistItems.Count;
-    }
-
-    /// <summary>
     /// Gets the total count of checklist items.
     /// </summary>
     public int GetTotalChecklistCount()
@@ -529,21 +515,6 @@ public class TutorialService
         }
     }
 
-
-    /// <summary>
-    /// Resets the setup checklist progress.
-    /// </summary>
-    public void ResetSetupChecklist()
-    {
-        var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null)
-        {
-            settings.Tutorial.CompletedChecklistItems.Clear();
-            settings.Tutorial.ShowSetupChecklist = true;
-            SaveSettings();
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
-        }
-    }
 
     /// <summary>
     /// Gets the first-visit hint text for a page.

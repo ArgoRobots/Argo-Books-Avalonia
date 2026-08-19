@@ -80,13 +80,15 @@
             <StackPanel Margin="24" Spacing="24">
                 <!-- Page Header -->
                 <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                    <StackPanel Grid.Column="0" Spacing="4">
+                    <!-- Right margin keeps the wrapped subtitle off the Edit Dashboard button. -->
+                    <StackPanel Grid.Column="0" Spacing="4" Margin="0,0,16,0">
                         <TextBlock Text="{loc:Loc Dashboard}"
                                    FontSize="24"
                                    FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                         <TextBlock Text="{Binding WelcomeSubtitle}"
                                    FontSize="14"
+                                   TextWrapping="Wrap"
                                    Foreground="{DynamicResource TextSecondaryBrush}" />
                     </StackPanel>
 

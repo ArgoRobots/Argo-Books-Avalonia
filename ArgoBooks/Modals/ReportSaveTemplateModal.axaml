@@ -49,7 +49,7 @@
                            TextWrapping="Wrap" />
 
                 <StackPanel Spacing="8">
-                    <TextBlock Text="{loc:Loc 'Template Name'}"
+                    <TextBlock Text="{loc:Loc 'Template name'}"
                                FontSize="14"
                                FontWeight="Medium"
                                Foreground="{DynamicResource TextSecondaryBrush}" />

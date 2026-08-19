@@ -20,7 +20,9 @@ public class TelemetryStorageService : ITelemetryStorageService
 
     private List<TelemetryEventWrapper> _events = [];
     private UploadState _uploadState = new();
-    private bool _isLoaded;
+
+    // 0 until this store has reported a failure of its own. See ReportStorageFailure.
+    private int _storageFailureReported;
 
     /// <summary>
     /// Initializes a new instance of the TelemetryStorageService.
@@ -41,11 +43,8 @@ public class TelemetryStorageService : ITelemetryStorageService
     /// <inheritdoc />
     public async Task RecordEventAsync(TelemetryEvent telemetryEvent, CancellationToken cancellationToken = default)
     {
-        await _lock.WaitAsync(cancellationToken);
-        try
+        await WithFreshStateAsync<bool>(async () =>
         {
-            await EnsureLoadedAsync(cancellationToken);
-
             var wrapper = new TelemetryEventWrapper
             {
                 DataType = telemetryEvent.DataType,
@@ -71,66 +70,61 @@ public class TelemetryStorageService : ITelemetryStorageService
             }
 
             await SaveEventsAsync(cancellationToken);
-        }
-        finally
-        {
-            _lock.Release();
-        }
+            return true;
+        }, fallback: false, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<TelemetryEvent>> GetPendingEventsAsync(CancellationToken cancellationToken = default)
     {
-        await _lock.WaitAsync(cancellationToken);
-        try
+        return await WithFreshStateAsync<IReadOnlyList<TelemetryEvent>>(() =>
         {
-            await EnsureLoadedAsync(cancellationToken);
-            return _events
+            IReadOnlyList<TelemetryEvent> pending = _events
                 .Where(e => !e.Event.IsUploaded)
                 .Select(e => e.Event)
                 .OrderBy(e => e.Timestamp)
                 .ToList();
-        }
-        finally
-        {
-            _lock.Release();
-        }
+
+            return Task.FromResult(pending);
+        }, fallback: [], cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task MarkEventsUploadedAsync(IEnumerable<string> dataIds, CancellationToken cancellationToken = default)
     {
-        await _lock.WaitAsync(cancellationToken);
-        try
-        {
-            await EnsureLoadedAsync(cancellationToken);
+        var idSet = dataIds.ToHashSet();
 
-            var idSet = dataIds.ToHashSet();
+        await WithFreshStateAsync<bool>(async () =>
+        {
+            // Counted from what this call actually flipped, not from the id set. A sibling
+            // instance may have uploaded some of these already, and adding the whole set
+            // regardless is how the running total drifted above the real one.
+            var newlyMarked = 0;
             foreach (var wrapper in _events.Where(e => idSet.Contains(e.Event.DataId)))
             {
+                if (wrapper.Event.IsUploaded)
+                {
+                    continue;
+                }
+
                 wrapper.Event.IsUploaded = true;
+                newlyMarked++;
             }
 
             _uploadState.LastUploadTime = DateTime.UtcNow;
-            _uploadState.TotalEventsUploaded += idSet.Count;
+            _uploadState.TotalEventsUploaded += newlyMarked;
 
             await SaveEventsAsync(cancellationToken);
             await SaveUploadStateAsync(cancellationToken);
-        }
-        finally
-        {
-            _lock.Release();
-        }
+            return true;
+        }, fallback: false, cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task<string> ExportToJsonAsync(CancellationToken cancellationToken = default)
     {
-        await _lock.WaitAsync(cancellationToken);
-        try
+        return await WithFreshStateAsync(() =>
         {
-            await EnsureLoadedAsync(cancellationToken);
-
             var exportData = new TelemetryExport
             {
                 ExportTime = DateTime.UtcNow,
@@ -138,12 +132,8 @@ public class TelemetryStorageService : ITelemetryStorageService
                 Events = _events.Select(e => e.Event).OrderByDescending(e => e.Timestamp).ToList()
             };
 
-            return JsonSerializer.Serialize(exportData, _jsonOptions);
-        }
-        finally
-        {
-            _lock.Release();
-        }
+            return Task.FromResult(JsonSerializer.Serialize(exportData, _jsonOptions));
+        }, fallback: string.Empty, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -152,6 +142,12 @@ public class TelemetryStorageService : ITelemetryStorageService
         await _lock.WaitAsync(cancellationToken);
         try
         {
+            // Held across the delete so a sibling instance cannot be mid-write and put the
+            // file straight back. This is the user asking us to erase their data from
+            // Settings, so it has to actually stick.
+            using var fileLock = await TelemetryFileLock.AcquireAsync(
+                GetTelemetryDirectory(), _errorLogger, cancellationToken);
+
             _events.Clear();
             _uploadState = new UploadState();
 
@@ -173,12 +169,9 @@ public class TelemetryStorageService : ITelemetryStorageService
     /// <inheritdoc />
     public async Task<TelemetryStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
     {
-        await _lock.WaitAsync(cancellationToken);
-        try
+        return await WithFreshStateAsync(() =>
         {
-            await EnsureLoadedAsync(cancellationToken);
-
-            return new TelemetryStatistics
+            return Task.FromResult(new TelemetryStatistics
             {
                 TotalEvents = _events.Count,
                 PendingEvents = _events.Count(e => !e.Event.IsUploaded),
@@ -190,7 +183,57 @@ public class TelemetryStorageService : ITelemetryStorageService
                 NewestEventTime = _events.MaxBy(e => e.Event.Timestamp)?.Event.Timestamp,
                 LastUploadTime = _uploadState.LastUploadTime,
                 TotalEventsEverUploaded = _uploadState.TotalEventsUploaded
-            };
+            });
+        }, fallback: new TelemetryStatistics(), cancellationToken);
+    }
+
+    /// <summary>
+    /// Runs <paramref name="operation"/> with the in-process lock and the cross-instance
+    /// lock both held, and with <see cref="_events"/> and <see cref="_uploadState"/> read
+    /// fresh from disk first.
+    ///
+    /// <para>
+    /// The re-read is not belt-and-braces, it is the point. These files are device-global
+    /// and every running instance writes them, so a copy cached at startup goes stale the
+    /// moment a sibling instance saves. Writing that stale copy back is what used to
+    /// resurrect events whose "uploaded" flag another instance had just recorded, and the
+    /// server stores whatever arrives, so those events were uploaded and counted a second
+    /// time. Reading inside the lock means the version we modify is the version on disk.
+    /// </para>
+    ///
+    /// <para>
+    /// If the cross-instance lock cannot be taken we continue anyway: telemetry must never
+    /// be the reason an action fails. That degrades to the old racy behaviour for one
+    /// operation rather than losing the event.
+    /// </para>
+    /// </summary>
+    /// <param name="fallback">
+    /// Returned when the events file exists but cannot be read, so callers get a harmless
+    /// value rather than null. Never a success value: <see cref="GetPendingEventsAsync"/>
+    /// passes an empty list, which correctly reads as "nothing to upload right now".
+    /// </param>
+    private async Task<T> WithFreshStateAsync<T>(
+        Func<Task<T>> operation,
+        T fallback,
+        CancellationToken cancellationToken)
+    {
+        await _lock.WaitAsync(cancellationToken);
+        try
+        {
+            using var fileLock = await TelemetryFileLock.AcquireAsync(
+                GetTelemetryDirectory(), _errorLogger, cancellationToken);
+
+            if (!await LoadEventsAsync(cancellationToken))
+            {
+                // Unreadable rather than absent. Skipping costs at most this one event;
+                // continuing would write an empty list over everything still pending.
+                // LoadEventsAsync has already logged the reason.
+                return fallback;
+            }
+
+            await LoadUploadStateAsync(cancellationToken);
+
+            return await operation();
         }
         finally
         {
@@ -198,23 +241,24 @@ public class TelemetryStorageService : ITelemetryStorageService
         }
     }
 
-    private async Task EnsureLoadedAsync(CancellationToken cancellationToken)
-    {
-        if (_isLoaded)
-            return;
-
-        await LoadEventsAsync(cancellationToken);
-        await LoadUploadStateAsync(cancellationToken);
-        _isLoaded = true;
-    }
-
-    private async Task LoadEventsAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Reads the events file into <see cref="_events"/>. Returns false if the file is
+    /// there but could not be read, which the caller must treat as "do not write".
+    ///
+    /// <para>
+    /// Every operation re-reads now, so falling back to an empty list on a read failure
+    /// would no longer just lose this instance's view: the very next save would write
+    /// that empty list over a file still holding everyone's pending events. A missing
+    /// file is a genuine empty list and is not a failure.
+    /// </para>
+    /// </summary>
+    private async Task<bool> LoadEventsAsync(CancellationToken cancellationToken)
     {
         var path = GetEventsFilePath();
         if (!File.Exists(path))
         {
             _events = [];
-            return;
+            return true;
         }
 
         try
@@ -222,12 +266,38 @@ public class TelemetryStorageService : ITelemetryStorageService
             await using var stream = File.OpenRead(path);
             var loaded = await JsonSerializer.DeserializeAsync<List<TelemetryEventWrapper>>(stream, _jsonOptions, cancellationToken);
             _events = loaded ?? [];
+            return true;
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to load telemetry events");
+            ReportStorageFailure(ex, "Failed to load telemetry events");
             _events = [];
+            return false;
         }
+    }
+
+    /// <summary>
+    /// Reports a failure of the telemetry store itself, exactly once per run.
+    ///
+    /// <para>
+    /// This layer cannot report its own failures the usual way, because the usual way runs
+    /// through it. <see cref="IErrorLogger.LogError(Exception, ErrorCategory, string?)"/>
+    /// hands the entry to the telemetry manager, which records it as an event, which comes
+    /// straight back here and fails again for the same reason it failed the first time. The
+    /// result is a loop that queues a fresh task per iteration and only ends when the disk
+    /// problem does. Reporting once gives us the diagnosis and then falls back to
+    /// <see cref="IErrorLogger.LogDebug"/>, which stays local and cannot re-enter.
+    /// </para>
+    /// </summary>
+    private void ReportStorageFailure(Exception exception, string context)
+    {
+        if (Interlocked.Exchange(ref _storageFailureReported, 1) == 0)
+        {
+            _errorLogger?.LogError(exception, ErrorCategory.FileSystem, context);
+            return;
+        }
+
+        _errorLogger?.LogDebug($"{context}: {exception.Message}");
     }
 
     private async Task SaveEventsAsync(CancellationToken cancellationToken)
@@ -235,10 +305,9 @@ public class TelemetryStorageService : ITelemetryStorageService
         var path = GetEventsFilePath();
         EnsureDirectoryExists(path);
 
-        // The events file is device-global: every running instance writes it, and the
-        // SemaphoreSlim above only serialises callers inside this process. Write to a
-        // per-process scratch file and swap it in, so concurrent instances never contend
-        // on the same handle.
+        // Callers reach here holding the cross-instance lock, so no sibling is writing at
+        // the same time. The per-process scratch name stays regardless: it keeps the swap
+        // atomic against antivirus and indexers, which do not honour our lock.
         var tempPath = AtomicFile.TempPathFor(path);
         try
         {
@@ -252,7 +321,9 @@ public class TelemetryStorageService : ITelemetryStorageService
         catch (Exception ex)
         {
             AtomicFile.TryDeleteTemp(tempPath);
-            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save telemetry events");
+            // Same re-entry trap as the load path, and worse: a save that keeps failing
+            // used to log an error, which recorded an event, which saved, which failed.
+            ReportStorageFailure(ex, "Failed to save telemetry events");
         }
     }
 
@@ -273,7 +344,7 @@ public class TelemetryStorageService : ITelemetryStorageService
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to load upload state");
+            ReportStorageFailure(ex, "Failed to load upload state");
             _uploadState = new UploadState();
         }
     }
@@ -297,7 +368,7 @@ public class TelemetryStorageService : ITelemetryStorageService
         catch (Exception ex)
         {
             AtomicFile.TryDeleteTemp(tempPath);
-            _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save upload state");
+            ReportStorageFailure(ex, "Failed to save upload state");
         }
     }
 
@@ -317,6 +388,17 @@ public class TelemetryStorageService : ITelemetryStorageService
             UploadStateFileName);
     }
 
+    /// <summary>
+    /// The folder holding every file this service owns. Also where the cross-instance
+    /// lock lives, so the lock always sits on the same volume as the data it guards.
+    /// </summary>
+    private string GetTelemetryDirectory()
+    {
+        return _platformService.CombinePaths(
+            _platformService.GetAppDataPath(),
+            TelemetryDirectory);
+    }
+
     private void EnsureDirectoryExists(string filePath)
     {
         var directory = Path.GetDirectoryName(filePath);
@@ -329,11 +411,8 @@ public class TelemetryStorageService : ITelemetryStorageService
     /// <inheritdoc />
     public async Task<string?> SaveBackupFileAsync(CancellationToken cancellationToken = default)
     {
-        await _lock.WaitAsync(cancellationToken);
-        try
+        return await WithFreshStateAsync<string?>(async () =>
         {
-            await EnsureLoadedAsync(cancellationToken);
-
             var pendingEvents = _events
                 .Where(e => !e.Event.IsUploaded)
                 .Select(e => e.Event)
@@ -364,14 +443,10 @@ public class TelemetryStorageService : ITelemetryStorageService
             }
             catch (Exception ex)
             {
-                _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to save telemetry backup file");
+                ReportStorageFailure(ex, "Failed to save telemetry backup file");
                 return null;
             }
-        }
-        finally
-        {
-            _lock.Release();
-        }
+        }, fallback: null, cancellationToken);
     }
 
     private string GetBackupFilePath()
@@ -439,6 +514,8 @@ public class TelemetryStorageService : ITelemetryStorageService
                 TelemetryDataType.ApiUsage => JsonSerializer.Deserialize<ApiUsageEvent>(json, options),
                 TelemetryDataType.Error => JsonSerializer.Deserialize<ErrorEvent>(json, options),
                 TelemetryDataType.FeatureUsage => JsonSerializer.Deserialize<FeatureUsageEvent>(json, options),
+                TelemetryDataType.CompanyProfile => JsonSerializer.Deserialize<CompanyProfileEvent>(json, options),
+                TelemetryDataType.Startup => JsonSerializer.Deserialize<StartupEvent>(json, options),
                 _ => null
             };
         }

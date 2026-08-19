@@ -124,7 +124,7 @@ public static class InvoiceHtmlTemplates
                                 </tr>
                                 {{#ShowTaxRow}}
                                 <tr>
-                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{TaxLabel}}<span data-out="taxRateLabel">{{TaxRateLabel}}</span></td>
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                 </tr>
                                 {{/ShowTaxRow}}
@@ -152,37 +152,27 @@ public static class InvoiceHtmlTemplates
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                 </tr>
                                 {{/ShowDiscount}}
+                                <tr>
+                                    <td colspan="2" style="border-top: 2px solid {{SecondaryColor}}; padding-top: 12px;"></td>
+                                </tr>
+                                {{#AmountPaid}}
+                                <tr>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{AccentColor}};">Amount Paid</td>
+                                    <td style="padding: 8px 0; font-size: 14px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
+                                </tr>
+                                {{/AmountPaid}}
                                 {{#ShowProcessingFee}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
                                     <td style="padding: 8px 0; font-size: 14px; color: {{TextColor}}; text-align: right;"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                 </tr>
                                 {{/ShowProcessingFee}}
-                                <tr>
-                                    <td colspan="2" style="border-top: 2px solid {{SecondaryColor}}; padding-top: 12px;"></td>
-                                </tr>
                                 {{#ShowAmountToPay}}
                                 <tr>
                                     <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
                                     <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                 </tr>
                                 {{/ShowAmountToPay}}
-                                {{^ShowAmountToPay}}
-                                <tr>
-                                    <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{TextColor}};">Total</td>
-                                    <td style="padding: 8px 0; font-size: 18px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="total">{{Total}}</span></td>
-                                </tr>
-                                {{/ShowAmountToPay}}
-                                {{#AmountPaid}}
-                                <tr>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{AccentColor}};">Amount Paid</td>
-                                    <td style="padding: 8px 0; font-size: 14px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">Balance Due</td>
-                                    <td style="padding: 8px 0; font-size: 16px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="balance">{{Balance}}</span></td>
-                                </tr>
-                                {{/AmountPaid}}
                             </table>
                         </td>
                     </tr>
@@ -375,7 +365,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}<span data-out="taxRateLabel">{{TaxRateLabel}}</span></td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
                                             {{/ShowTaxRow}}
@@ -403,37 +393,27 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
+                                            <tr>
+                                                <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
+                                            </tr>
+                                            {{#AmountPaid}}
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}};">Paid</td>
+                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
+                                            </tr>
+                                            {{/AmountPaid}}
                                             {{#ShowProcessingFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowProcessingFee}}
-                                            <tr>
-                                                <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
-                                            </tr>
                                             {{#ShowAmountToPay}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 16px; font-weight: 700; color: {{TextColor}};">Amount to Pay</td>
                                                 <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
-                                            {{^ShowAmountToPay}}
-                                            <tr>
-                                                <td style="padding: 8px 0; font-size: 16px; font-weight: 700; color: {{TextColor}};">Total</td>
-                                                <td style="padding: 8px 0; font-size: 20px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="total">{{Total}}</span></td>
-                                            </tr>
-                                            {{/ShowAmountToPay}}
-                                            {{#AmountPaid}}
-                                            <tr>
-                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}};">Paid</td>
-                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{TextColor}};">Balance Due</td>
-                                                <td style="padding: 6px 0; font-size: 17px; font-weight: 700; color: {{HeaderColor}}; text-align: right;"><span data-out="balance">{{Balance}}</span></td>
-                                            </tr>
-                                            {{/AmountPaid}}
                                         </table>
                                     </td>
                                 </tr>
@@ -589,7 +569,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{TaxLabel}}<span data-out="taxRateLabel">{{TaxRateLabel}}</span></td>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
                                             {{/ShowTaxRow}}
@@ -617,6 +597,12 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 10px 15px; font-size: 13px; color: {{TextColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
+                                            {{#AmountPaid}}
+                                            <tr>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{AccentColor}}; border-bottom: 1px solid {{SecondaryColor}};">Amount Paid</td>
+                                                <td style="padding: 10px 15px; font-size: 13px; color: {{AccentColor}}; text-align: right; border-bottom: 1px solid {{SecondaryColor}};">-{{AmountPaid}}</td>
+                                            </tr>
+                                            {{/AmountPaid}}
                                             {{#ShowProcessingFee}}
                                             <tr>
                                                 <td style="padding: 10px 15px; font-size: 13px; color: #666666; border-bottom: 1px solid {{SecondaryColor}};">{{ProcessingFeeLabel}}</td>
@@ -627,12 +613,6 @@ public static class InvoiceHtmlTemplates
                                             <tr style="background-color: {{PrimaryColor}};">
                                                 <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">AMOUNT TO PAY</td>
                                                 <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
-                                            </tr>
-                                            {{/ShowAmountToPay}}
-                                            {{^ShowAmountToPay}}
-                                            <tr style="background-color: {{PrimaryColor}};">
-                                                <td style="padding: 12px 15px; font-size: 14px; font-weight: bold; color: #ffffff;">TOTAL</td>
-                                                <td style="padding: 12px 15px; font-size: 16px; font-weight: bold; color: #ffffff; text-align: right;"><span data-out="total">{{Total}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
                                         </table>
@@ -794,7 +774,7 @@ public static class InvoiceHtmlTemplates
                                             </tr>
                                             {{#ShowTaxRow}}
                                             <tr>
-                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}{{TaxRateLabel}}</td>
+                                                <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{TaxLabel}}<span data-out="taxRateLabel">{{TaxRateLabel}}</span></td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></td>
                                             </tr>
                                             {{/ShowTaxRow}}
@@ -822,37 +802,27 @@ public static class InvoiceHtmlTemplates
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></td>
                                             </tr>
                                             {{/ShowDiscount}}
+                                            <tr>
+                                                <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
+                                            </tr>
+                                            {{#AmountPaid}}
+                                            <tr>
+                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}};">Paid</td>
+                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
+                                            </tr>
+                                            {{/AmountPaid}}
                                             {{#ShowProcessingFee}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 13px; color: #6b7280;">{{ProcessingFeeLabel}}</td>
                                                 <td style="padding: 8px 0; font-size: 13px; color: {{TextColor}}; text-align: right;"><span data-out="processingFee">{{ProcessingFeeAmount}}</span></td>
                                             </tr>
                                             {{/ShowProcessingFee}}
-                                            <tr>
-                                                <td colspan="2" style="padding-top: 12px; border-top: 2px solid {{PrimaryColor}};"></td>
-                                            </tr>
                                             {{#ShowAmountToPay}}
                                             <tr>
                                                 <td style="padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Amount to Pay</td>
                                                 <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="amountToPay">{{AmountToPay}}</span></td>
                                             </tr>
                                             {{/ShowAmountToPay}}
-                                            {{^ShowAmountToPay}}
-                                            <tr>
-                                                <td style="padding: 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #9ca3af; font-weight: 500;">Total Due</td>
-                                                <td style="padding: 8px 0; font-size: 22px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="total">{{Total}}</span></td>
-                                            </tr>
-                                            {{/ShowAmountToPay}}
-                                            {{#AmountPaid}}
-                                            <tr>
-                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}};">Paid</td>
-                                                <td style="padding: 6px 0; font-size: 13px; color: {{AccentColor}}; text-align: right;">-{{AmountPaid}}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{TextColor}};">Balance</td>
-                                                <td style="padding: 6px 0; font-size: 15px; font-weight: 600; color: {{HeaderColor}}; text-align: right;"><span data-out="balance">{{Balance}}</span></td>
-                                            </tr>
-                                            {{/AmountPaid}}
                                         </table>
                                     </td>
                                 </tr>
@@ -1045,7 +1015,7 @@ public static class InvoiceHtmlTemplates
                     </div>
                     {{#ShowTaxRow}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
-                        <span>{{TaxLabel}}{{TaxRateLabel}}</span>
+                        <span>{{TaxLabel}}<span data-out="taxRateLabel">{{TaxRateLabel}}</span></span>
                         <span><span data-total="tax" data-total-raw="{{TaxRateRaw}}" data-total-mode="{{TaxModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{TaxAmount}}</span></span>
                     </div>
                     {{/ShowTaxRow}}
@@ -1073,6 +1043,12 @@ public static class InvoiceHtmlTemplates
                         <span><span data-total="discount" data-total-raw="{{DiscountRaw}}" data-total-mode="{{DiscountModeRaw}}" data-total-symbol="{{CurrencySymbol}}">{{DiscountAmount}}</span></span>
                     </div>
                     {{/ShowDiscount}}
+                    {{#AmountPaid}}
+                    <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: {{AccentColor}};">
+                        <span>Amount Paid</span>
+                        <span>-{{AmountPaid}}</span>
+                    </div>
+                    {{/AmountPaid}}
                     {{#ShowProcessingFee}}
                     <div style="display: flex; justify-content: space-between; padding: 10px 0; font-size: 14px; color: {{TextColor}};">
                         <span>{{ProcessingFeeLabel}}</span>
@@ -1085,22 +1061,6 @@ public static class InvoiceHtmlTemplates
                         <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;"><span data-out="amountToPay">{{AmountToPay}}</span></span>
                     </div>
                     {{/ShowAmountToPay}}
-                    {{^ShowAmountToPay}}
-                    <div style="display: flex; justify-content: space-between; padding: 15px 0 8px 0; font-size: 14px; border-top: 2px solid {{HeaderColor}}; margin-top: 10px;">
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 16px; text-transform: uppercase;">Total</span>
-                        <span style="font-weight: bold; color: {{HeaderColor}}; font-size: 22px;"><span data-out="total">{{Total}}</span></span>
-                    </div>
-                    {{/ShowAmountToPay}}
-                    {{#AmountPaid}}
-                    <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; color: {{AccentColor}};">
-                        <span>Amount Paid</span>
-                        <span>-{{AmountPaid}}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 16px; font-weight: 600; color: {{TextColor}};">
-                        <span>Balance Due</span>
-                        <span style="color: {{HeaderColor}};"><span data-out="balance">{{Balance}}</span></span>
-                    </div>
-                    {{/AmountPaid}}
                 </div>
             </div>
 

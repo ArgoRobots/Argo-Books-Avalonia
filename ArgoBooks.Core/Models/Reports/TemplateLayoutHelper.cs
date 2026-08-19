@@ -215,35 +215,6 @@ public static class TemplateLayoutHelper
     }
 
     /// <summary>
-    /// Creates a horizontal stack layout with proportional widths.
-    /// </summary>
-    /// <param name="context">The layout context with page dimensions.</param>
-    /// <param name="widthRatios">Proportional width ratios for each element (should sum to 1.0).</param>
-    /// <returns>An array of rectangles representing the horizontally arranged elements.</returns>
-    public static LayoutRect[] CreateHorizontalStack(LayoutContext context, params double[] widthRatios)
-    {
-        // ContentTop already accounts for date range area
-        var startY = context.ContentTop;
-        var availableHeight = context.ContentHeight;
-        var availableWidth = context.ContentWidth;
-
-        // Remove spacing from available width
-        availableWidth -= context.ElementSpacing * (widthRatios.Length - 1);
-
-        var stack = new LayoutRect[widthRatios.Length];
-        var currentX = context.Margin;
-
-        for (int i = 0; i < widthRatios.Length; i++)
-        {
-            var width = availableWidth * widthRatios[i];
-            stack[i] = new LayoutRect(currentX, startY, width, availableHeight);
-            currentX += width + context.ElementSpacing;
-        }
-
-        return stack;
-    }
-
-    /// <summary>
     /// Gets the bounds for a date range element positioned at the top of the content area.
     /// </summary>
     /// <param name="context">The layout context with page dimensions.</param>
@@ -253,34 +224,6 @@ public static class TemplateLayoutHelper
         const double dateRangeWidth = 200;
         var centeredX = context.Margin + (context.ContentWidth - dateRangeWidth) / 2;
         return new LayoutRect(centeredX, context.DateRangeTop, dateRangeWidth, context.DateRangeHeight);
-    }
-
-    /// <summary>
-    /// Splits a layout rectangle into a grid of smaller rectangles.
-    /// </summary>
-    /// <param name="area">The area to split.</param>
-    /// <param name="rows">Number of rows.</param>
-    /// <param name="columns">Number of columns.</param>
-    /// <param name="spacing">Spacing between cells.</param>
-    /// <returns>A 2D array of rectangles representing the grid cells.</returns>
-    public static LayoutRect[,] SplitIntoGrid(LayoutRect area, int rows, int columns, double spacing = 10)
-    {
-        var cellWidth = (area.Width - (spacing * (columns - 1))) / columns;
-        var cellHeight = (area.Height - (spacing * (rows - 1))) / rows;
-
-        var grid = new LayoutRect[rows, columns];
-
-        for (int row = 0; row < rows; row++)
-        {
-            for (int col = 0; col < columns; col++)
-            {
-                var x = area.X + (col * (cellWidth + spacing));
-                var y = area.Y + (row * (cellHeight + spacing));
-                grid[row, col] = new LayoutRect(x, y, cellWidth, cellHeight);
-            }
-        }
-
-        return grid;
     }
 
     /// <summary>
@@ -306,26 +249,4 @@ public static class TemplateLayoutHelper
         return columns;
     }
 
-    /// <summary>
-    /// Splits a layout rectangle into vertical rows.
-    /// </summary>
-    /// <param name="area">The area to split.</param>
-    /// <param name="heightRatios">Proportional height ratios for each row (should sum to 1.0).</param>
-    /// <param name="spacing">Spacing between rows.</param>
-    /// <returns>An array of rectangles representing the rows.</returns>
-    public static LayoutRect[] SplitVertically(LayoutRect area, double[] heightRatios, double spacing = 10)
-    {
-        var availableHeight = area.Height - (spacing * (heightRatios.Length - 1));
-        var rows = new LayoutRect[heightRatios.Length];
-        var currentY = area.Y;
-
-        for (int i = 0; i < heightRatios.Length; i++)
-        {
-            var height = availableHeight * heightRatios[i];
-            rows[i] = new LayoutRect(area.X, currentY, area.Width, height);
-            currentY += height + spacing;
-        }
-
-        return rows;
-    }
 }

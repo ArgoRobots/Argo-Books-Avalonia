@@ -206,7 +206,7 @@
                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                             <Button Grid.Column="1"
                                     Classes="text-link"
-                                    Content="{loc:Loc 'Clear All'}"
+                                    Content="{loc:Loc 'Clear all'}"
                                     Command="{Binding ClearRecentCommand}" />
                         </Grid>
 

@@ -25,7 +25,16 @@ public class GeminiReceiptScannerService(
     Action<double, double, long, double?>? onTimingRecorded = null)
     : IReceiptScannerService, IDisposable
 {
-    private readonly HttpClient _httpClient = httpClient ?? new HttpClient();
+    /// <summary>
+    /// Receipt extraction is the slowest call the app makes: a vision model reading a full
+    /// photo, occasionally followed by a second verification pass. Observed successful scans
+    /// reach 85 seconds, so HttpClient's 100-second default sat barely above the working
+    /// range and gave up on calls that would have completed. Every other client in the app
+    /// picks its own timeout; this one was the last inheriting the default by accident.
+    /// </summary>
+    private static readonly TimeSpan ScanTimeout = TimeSpan.FromSeconds(180);
+
+    private readonly HttpClient _httpClient = httpClient ?? new HttpClient { Timeout = ScanTimeout };
     private readonly bool _ownsHttpClient = httpClient is null;
 
     private const string DefaultModel = "gemini-2.5-flash";
@@ -119,12 +128,43 @@ Rules:
                 mimeType,
                 cancellationToken);
 
-            if (string.IsNullOrEmpty(response))
+            if (string.IsNullOrEmpty(response.Content))
             {
-                return ReceiptScanResult.Failed("No response from the AI service. Please try again.");
+                // The server's own words when it gave any. It names the monthly allowance, the
+                // reset date, and which limit was hit, none of which the caller could work out.
+                return ReceiptScanResult.Failed(
+                    response.Message ?? "No response from the AI service. Please try again.",
+                    response.Code);
             }
 
-            var result = ParseResponse(response);
+            var result = ParseResponse(response.Content);
+
+            // A scan can come back unusable without anything throwing, which is why these
+            // report themselves. Until now every one of them looked identical on the
+            // dashboard: a single success=false with no reason attached, indistinguishable
+            // from a timeout or a dead upstream.
+            if (!result.IsSuccess)
+            {
+                // Covers both "the model says this is not a receipt" and "the response would
+                // not parse". The code groups them; the message says which, since it carries
+                // the model's own words.
+                errorLogger?.LogWarning(
+                    $"Receipt scan returned no usable data: {result.ErrorMessage}",
+                    "GeminiReceiptScannerService.ScanReceiptAsync",
+                    ErrorCategory.Api,
+                    "ReceiptScanRejected");
+            }
+            else if (result.LineItems.Count == 0)
+            {
+                // Parsed cleanly and found nothing. Usually a blurred or cropped photo, but
+                // a run of these is how a prompt or model regression would first show up.
+                errorLogger?.LogWarning(
+                    "Receipt scan parsed but extracted no line items",
+                    "GeminiReceiptScannerService.ScanReceiptAsync",
+                    ErrorCategory.Api,
+                    "ReceiptScanNoLineItems");
+            }
+
             if (result.IsSuccess && result.LineItems.Count > 0)
             {
                 // The verification pass is a second full-image round-trip (~15-30s),
@@ -140,7 +180,20 @@ Rules:
         }
         catch (TaskCanceledException)
         {
-            return ReceiptScanResult.Failed("Scan operation was cancelled or timed out.");
+            // One exception type, two very different events. A user who pressed Cancel is
+            // not a failure and must not be reported as one; only the client giving up on
+            // its own is worth knowing about, and that one used to vanish silently.
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return ReceiptScanResult.Failed("Scan cancelled.");
+            }
+
+            errorLogger?.LogWarning(
+                $"Receipt scan timed out after {stopwatch.ElapsedMilliseconds} ms",
+                "GeminiReceiptScannerService.ScanReceiptAsync",
+                ErrorCategory.Api,
+                "ReceiptScanTimeout");
+            return ReceiptScanResult.Failed("The scan took too long to complete. Please try again.");
         }
         catch (HttpRequestException ex)
         {
@@ -249,17 +302,26 @@ If nothing was missed, return: {{""missingItems"": []}}";
 
             var prompt = string.Format(VerificationPrompt, itemList);
 
+            // Sent as receipt_verify, NOT receipt_scan. The user asked for one scan; this is the
+            // app choosing to look again because the arithmetic did not reconcile, and billing
+            // them a second time for that decision meant ten receipts could quietly cost twelve
+            // and the last one be refused. The server meters on the operation name, so this is
+            // what stops the double charge.
             var verifyResponse = await SendVisionRequestAsync(
                 "You are a receipt verification system. Check if any line items were missed. Return JSON only.",
                 prompt,
                 base64Image,
                 mimeType,
-                cancellationToken);
+                cancellationToken,
+                operation: "receipt_verify");
 
-            if (string.IsNullOrEmpty(verifyResponse))
+            // Deliberately keeps the first pass's result rather than failing the scan. A refused
+            // or failed verification means the extra look did not happen, not that the receipt
+            // is unusable.
+            if (string.IsNullOrEmpty(verifyResponse.Content))
                 return result;
 
-            var cleaned = JsonResponseHelper.StripMarkdownCodeBlock(verifyResponse);
+            var cleaned = JsonResponseHelper.StripMarkdownCodeBlock(verifyResponse.Content);
             cleaned = JsonResponseHelper.SanitizeJsonNumbers(cleaned);
             using var doc = JsonDocument.Parse(cleaned);
             var root = doc.RootElement;
@@ -328,8 +390,9 @@ If nothing was missed, return: {{""missingItems"": []}}";
     /// <c>GeminiService</c> (which also carries bank-categorization/supplier-suggestion features
     /// this scanner doesn't need), so Shared stays free of that larger surface.
     /// </summary>
-    private async Task<string?> SendVisionRequestAsync(
-        string systemPrompt, string userPrompt, string base64Image, string mimeType, CancellationToken cancellationToken)
+    private async Task<VisionResponse> SendVisionRequestAsync(
+        string systemPrompt, string userPrompt, string base64Image, string mimeType,
+        CancellationToken cancellationToken, string operation = "receipt_scan")
     {
         var wallClock = Stopwatch.StartNew();
         long uploadBytes = (long)(base64Image.Length * 0.75);
@@ -344,7 +407,7 @@ If nothing was missed, return: {{""missingItems"": []}}";
             temperature = 0.0,
             base64Image,
             mimeType,
-            operation = "receipt_scan",
+            operation,
             sizeFeature = uploadBytes,
             platform = PlatformTag
         };
@@ -357,14 +420,25 @@ If nothing was missed, return: {{""missingItems"": []}}";
         apiAuth?.AddAuthHeaders(request);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
 
+        // Read the body on the failure path too. The server explains itself there, in as many
+        // words ("Monthly scan limit reached (10 of 10 used). Your limit resets on ..."), and
+        // throwing it away turned every distinct failure into one indistinguishable message
+        // with a Retry button that could not help. Diagnosing a single refused scan then meant
+        // reading telemetry and querying the database.
         if (!response.IsSuccessStatusCode)
         {
-            errorLogger?.LogError($"AI proxy error {response.StatusCode}", ErrorCategory.Api, "Receipt scan completion");
-            return null;
+            (string? serverMessage, string? serverCode) = ReadServerError(responseBody);
+
+            errorLogger?.LogError(
+                $"AI proxy error {response.StatusCode} ({serverCode ?? "no code"}): {serverMessage ?? "no message"}",
+                ErrorCategory.Api,
+                "Receipt scan completion");
+
+            return new VisionResponse(null, serverMessage, serverCode);
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
         wallClock.Stop();
         using var doc = JsonDocument.Parse(responseBody);
         var root = doc.RootElement;
@@ -382,11 +456,59 @@ If nothing was missed, return: {{""missingItems"": []}}";
         if (root.TryGetProperty("success", out var successProp) && successProp.GetBoolean()
             && root.TryGetProperty("content", out var contentProp))
         {
-            return contentProp.GetString();
+            return new VisionResponse(contentProp.GetString(), null, null);
         }
 
-        return null;
+        // A 200 that still says no. This used to return null without logging anything at all,
+        // so the one failure mode with no HTTP status to point at was also the only one that
+        // left no trace.
+        (string? message, string? code) = ReadServerError(responseBody);
+
+        errorLogger?.LogError(
+            $"AI proxy returned success=false ({code ?? "no code"}): {message ?? "no message"}",
+            ErrorCategory.Api,
+            "Receipt scan completion");
+
+        return new VisionResponse(null, message, code);
     }
+
+    /// <summary>
+    /// The server's message and error code, from a body that may not be JSON at all.
+    ///
+    /// A proxy or host error page arrives as HTML with an HTTP status, so this has to survive
+    /// being handed something that is not JSON rather than throwing inside the error path.
+    /// </summary>
+    private static (string? Message, string? Code) ReadServerError(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return (null, null);
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            string? message = root.TryGetProperty("message", out var m) ? m.GetString() : null;
+            string? code = root.TryGetProperty("errorCode", out var c) ? c.GetString() : null;
+
+            return (string.IsNullOrWhiteSpace(message) ? null : message, code);
+        }
+        catch (JsonException)
+        {
+            return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// What the proxy said: the content on success, or the reason it refused.
+    ///
+    /// A plain string cannot carry a refusal, which is how the server's explanation was being
+    /// lost. <see cref="Code"/> is separate from <see cref="Message"/> because the caller shows
+    /// one and branches on the other.
+    /// </summary>
+    private sealed record VisionResponse(string? Content, string? Message, string? Code);
 
     /// <summary>Platform tag sent with each AI call for the server-side timing records.</summary>
     private static readonly string PlatformTag =

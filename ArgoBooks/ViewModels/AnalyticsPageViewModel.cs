@@ -1419,17 +1419,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         }
     }
 
-    /// <summary>
-    /// Gets the legend text paint based on the current theme.
-    /// </summary>
-    public SolidColorPaint LegendTextPaint => ChartLoaderService.GetLegendTextPaint();
-
-    /// <summary>
-    /// Gets the draw margin for pie charts to center them better when legend is on the right.
-    /// Adds margins to shift pie toward center and leave space for the legend.
-    /// </summary>
-    public Margin PieChartDrawMargin => new(0, 40, 120, 0);
-
     #endregion
 
     #region Chart Context Menu Overrides
@@ -2580,8 +2569,15 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var revenues = data.Revenues.Where(r => r.Date >= StartDate && r.Date <= EndDate).ToList();
         var expenses = data.Expenses.Where(e => e.Date >= StartDate && e.Date <= EndDate).ToList();
 
-        var taxCollectedUSD = revenues.Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
-        var taxPaidUSD = expenses.Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
+        // EffectiveTaxAmountUSD, not a hand-rolled "USD if we have it, native otherwise".
+        // docs/Calculations.md §3 forbids summing native fields into a USD total, and the two
+        // differ in exactly the cases that matter: a foreign row whose TaxAmountUSD was never
+        // written contributed its EURO tax to a dollar sum, and a pending-conversion row (which
+        // has no rate at all) did the same. The Effective property derives the missing figure
+        // from the row's own Total/TotalUSD ratio and yields 0 when there is nothing to derive
+        // it from, so a rate that never arrived reads as nothing rather than as dollars.
+        var taxCollectedUSD = revenues.Sum(r => r.EffectiveTaxAmountUSD);
+        var taxPaidUSD = expenses.Sum(e => e.EffectiveTaxAmountUSD);
         var netLiability = taxCollectedUSD - taxPaidUSD;
 
         // Calculate effective tax rate (weighted average across all transactions)
@@ -2599,8 +2595,8 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var prevRevenues = data.Revenues.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).ToList();
         var prevExpenses = data.Expenses.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).ToList();
 
-        var prevTaxCollected = prevRevenues.Sum(r => r.TaxAmountUSD > 0 ? r.TaxAmountUSD : r.TaxAmount);
-        var prevTaxPaid = prevExpenses.Sum(e => e.TaxAmountUSD > 0 ? e.TaxAmountUSD : e.TaxAmount);
+        var prevTaxCollected = prevRevenues.Sum(r => r.EffectiveTaxAmountUSD);
+        var prevTaxPaid = prevExpenses.Sum(e => e.EffectiveTaxAmountUSD);
         var prevNetLiability = prevTaxCollected - prevTaxPaid;
         var prevTotalPreTax = prevRevenues.Sum(r => r.EffectiveSubtotalUSD) + prevExpenses.Sum(e => e.EffectiveSubtotalUSD);
         var prevTotalTax = prevTaxCollected + prevTaxPaid;
@@ -2616,9 +2612,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         // Convert each transaction's tax at its OWN date (Calculations.md §3a). The per-row
         // USD selector mirrors taxCollectedUSD/taxPaidUSD above so USD display is identity.
         var collectedComplete = CurrencyService.TrySumDisplayFromUSD(
-            revenues, r => r.TaxAmount, r => r.OriginalCurrency, r => r.TaxAmountUSD, r => r.Date, out var taxCollectedDisplay);
+            revenues, r => r.TaxAmount, r => r.OriginalCurrency, r => r.EffectiveTaxAmountUSD, r => r.Date, out var taxCollectedDisplay);
         var paidComplete = CurrencyService.TrySumDisplayFromUSD(
-            expenses, e => e.TaxAmount, e => e.OriginalCurrency, e => e.TaxAmountUSD, e => e.Date, out var taxPaidDisplay);
+            expenses, e => e.TaxAmount, e => e.OriginalCurrency, e => e.EffectiveTaxAmountUSD, e => e.Date, out var taxPaidDisplay);
         var netLiabilityDisplay = taxCollectedDisplay - taxPaidDisplay;
 
         // Show Pending while any component is still awaiting its exact-date rate.

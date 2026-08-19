@@ -967,11 +967,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
         CloseDeleteConfirm();
     }
 
-    /// <summary>
-    /// Gets the name of the product being deleted (for display in confirmation).
-    /// </summary>
-    public string DeletingProductName => _deletingProduct?.Name ?? string.Empty;
-
     #endregion
 
     #region Filter Modal
@@ -1126,16 +1121,6 @@ public partial class ProductDisplayItem : ObservableObject
 
     [ObservableProperty]
     private bool _trackInventory;
-
-    /// <summary>
-    /// Whether this is a service (no inventory tracking).
-    /// </summary>
-    public bool IsService => ItemType == "Service";
-
-    /// <summary>
-    /// CSS-like badge class for item type.
-    /// </summary>
-    public string TypeBadgeClass => ItemType == "Product" ? "info" : "secondary";
 
     [ObservableProperty]
     private bool _isHighlighted;

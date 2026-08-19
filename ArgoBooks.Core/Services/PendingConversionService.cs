@@ -66,14 +66,6 @@ public class PendingConversionService
     public bool HasPendingConversions => PendingCount > 0;
 
     /// <summary>
-    /// Checks if a specific transaction is pending conversion.
-    /// </summary>
-    public bool IsTransactionPending(string transactionId)
-    {
-        lock (_lock) return _queue.Any(p => p.TransactionId == transactionId);
-    }
-
-    /// <summary>
     /// Adds a pending conversion entry and immediately persists to disk.
     /// </summary>
     public async Task AddPendingConversionAsync(PendingConversion entry)

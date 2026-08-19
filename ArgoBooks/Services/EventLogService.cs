@@ -283,16 +283,6 @@ public class EventLogService
     }
 
     /// <summary>
-    /// Gets the total number of events.
-    /// </summary>
-    public int EventCount => _events.Count;
-
-    /// <summary>
-    /// Gets the number of saved (persisted) events.
-    /// </summary>
-    public int SavedEventCount => _events.Count(e => e.IsSaved);
-
-    /// <summary>
     /// Commits pending (unsaved) events by checking which ones correspond to actions
     /// still in the undo stack. Pending events whose actions have been undone (no longer
     /// in the undo stack) are removed. Remaining pending events are marked as saved.

@@ -65,7 +65,7 @@ many unlock paths exist. Adding a path later costs a footer field and never requ
 re-encrypting user data, and changing a password becomes a rewrap rather than a full rewrite.
 
 This is what makes support-side recovery possible without the password ever being recoverable.
-See [Password recovery](Password%20recovery.md).
+See [Password recovery](../tools/ArgoBooks.Recovery/README.md).
 
 **Format version 1 files** still open on their original code path, where the password-derived
 key decrypts the archive directly. They gain a recovery path the next time they are saved.

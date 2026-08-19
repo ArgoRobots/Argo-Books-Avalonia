@@ -98,7 +98,7 @@
                                                             ShowAddNew="True"
                                                             AddNewText="{loc:Loc 'Create new customer'}"
                                                             AddNewCommand="{Binding OpenCreateCustomerCommand}"
-                                                            EmptyMessage="{loc:Loc 'No customers found.'}"
+                                                            EmptyMessage="{loc:Loc 'No customers found'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
                             </StackPanel>
@@ -167,7 +167,7 @@
                                                              AddNewText="{loc:Loc 'Create new product'}"
                                                              AddNewCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              AddNewCommandParameter="{Binding}"
-                                                             EmptyMessage="{loc:Loc 'No products found.'}"
+                                                             EmptyMessage="{loc:Loc 'No products found'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding $parent[ItemsControl].((vm:RevenueModalsViewModel)DataContext).OpenCreateProductCommand}"
                                                              EmptyCreateCommandParameter="{Binding}"
@@ -234,8 +234,7 @@
                             <Grid ColumnDefinitions="*,16,*,16,*,16,*">
                                 <!-- Tax -->
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Text="{loc:Loc 'Tax ($)'}" />
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Tax'}" /><Run Text=" ($)" /></TextBlock>
                                     <TextBox Text="{Binding ModalTaxAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
@@ -557,7 +556,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                             <Button Grid.Column="0"
                                     Classes="secondary-button"
-                                    Content="{loc:Loc 'Clear Filters'}"
+                                    Content="{loc:Loc 'Clear filters'}"
                                     Command="{Binding ClearFiltersCommand}" />
                             <Button Grid.Column="2"
                                     Classes="secondary-button"

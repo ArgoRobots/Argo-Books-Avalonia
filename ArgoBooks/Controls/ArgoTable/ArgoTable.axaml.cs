@@ -27,6 +27,16 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<object?> RowsContentProperty =
         AvaloniaProperty.Register<ArgoTable, object?>(nameof(RowsContent));
 
+    /// <summary>
+    /// A slot in the header's middle column, right-aligned so it reads as belonging beside the
+    /// search box rather than trailing the title.
+    ///
+    /// For a status a page wants visible without it becoming a control: a count, an allowance, a
+    /// last-synced time. The column already existed and was empty, so this costs no layout.
+    /// </summary>
+    public static readonly StyledProperty<object?> HeaderInfoContentProperty =
+        AvaloniaProperty.Register<ArgoTable, object?>(nameof(HeaderInfoContent));
+
     public static readonly StyledProperty<bool> ShowColumnHeadersProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowColumnHeaders), true);
 
@@ -165,6 +175,13 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     {
         get => GetValue(HeaderContentProperty);
         set => SetValue(HeaderContentProperty, value);
+    }
+
+    /// <summary>Content slot beside the search box, for a status the page wants on show.</summary>
+    public object? HeaderInfoContent
+    {
+        get => GetValue(HeaderInfoContentProperty);
+        set => SetValue(HeaderInfoContentProperty, value);
     }
 
     /// <summary>
@@ -533,8 +550,8 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
 
     public ArgoTable()
     {
-        InitializeComponent();
         ClearSearchCommand = new RelayCommand(() => SearchQuery = null);
+        InitializeComponent();
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

@@ -230,6 +230,8 @@ public partial class SettingsModalViewModel : ViewModelBase
     #region Security Settings
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanEditPaymentReminders))]
+    [NotifyPropertyChangedFor(nameof(ShowConnectRequirementsHint))]
     private bool _isSampleCompany;
 
     [ObservableProperty]
@@ -700,6 +702,139 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Whether the server emails the owner when a customer pays. Separate from
+    /// <see cref="PortalNotifyOnPayment"/>, which is only the in-app popup.
+    /// </summary>
+    [ObservableProperty]
+    private bool _portalEmailOwnerOnPayment = true;
+
+    /// <summary>
+    /// Whether the server chases unpaid invoices at 3, 7 and 14 days past due.
+    /// Opt-in: turning this on emails real customers.
+    /// </summary>
+    [ObservableProperty]
+    private bool _portalSendPaymentReminders;
+
+    /// <summary>
+    /// Whether the owner's email is verified server-side. The server refuses to
+    /// send payment notifications without it, so the toggle is disabled and
+    /// explained rather than silently doing nothing.
+    /// </summary>
+    [ObservableProperty]
+    private bool _portalOwnerEmailVerified;
+
+    /// <summary>
+    /// When reminders were switched on. Only invoices due after this are ever
+    /// chased, which the UI explains so nobody expects old invoices to go out.
+    /// </summary>
+    [ObservableProperty]
+    private DateTime? _portalRemindersEnabledAt;
+
+    partial void OnPortalEmailOwnerOnPaymentChanged(bool value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (HasPassword && !_isPortalAuthenticated)
+        {
+            _ = RevertAndAuthPortalEmailOwnerAsync(value);
+            return;
+        }
+
+        // Nothing is pushed here on purpose. These sit among the other
+        // Notifications toggles, which all apply on Save, so pushing on toggle
+        // would make Close-without-saving silently keep the change and skip the
+        // unsaved-changes prompt. SaveAsync sends them.
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
+    private async Task RevertAndAuthPortalEmailOwnerAsync(bool attemptedValue)
+    {
+        _isLoadingPortalSettings = true;
+        PortalEmailOwnerOnPayment = !attemptedValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalEmailOwnerOnPayment = attemptedValue;
+            _isLoadingPortalSettings = false;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+        }
+    }
+
+    partial void OnPortalSendPaymentRemindersChanged(bool value)
+    {
+        if (_isLoadingPortalSettings) return;
+        if (HasPassword && !_isPortalAuthenticated)
+        {
+            _ = RevertAndAuthPortalRemindersAsync(value);
+            return;
+        }
+
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
+    private async Task RevertAndAuthPortalRemindersAsync(bool attemptedValue)
+    {
+        _isLoadingPortalSettings = true;
+        PortalSendPaymentReminders = !attemptedValue;
+        _isLoadingPortalSettings = false;
+
+        if (await EnsurePortalAuthenticatedAsync())
+        {
+            _isLoadingPortalSettings = true;
+            PortalSendPaymentReminders = attemptedValue;
+            _isLoadingPortalSettings = false;
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+        }
+    }
+
+    /// <summary>
+    /// Sends both preference toggles to the server and adopts whatever it echoes
+    /// back, which includes the reminder cutoff it just armed. Called from Save.
+    /// </summary>
+    private async Task PushPortalPreferencesAsync()
+    {
+        var portalService = App.PaymentPortalService;
+        if (portalService == null || !PortalSettings.IsConfigured) return;
+
+        try
+        {
+            var result = await portalService.UpdatePreferencesAsync(
+                PortalSendPaymentReminders, PortalEmailOwnerOnPayment);
+            if (result.Success && result.Preferences != null)
+            {
+                ApplyPortalPreferences(result.Preferences);
+                SavePortalSettings();
+            }
+        }
+        catch
+        {
+            // Best-effort. RefreshProviderStatusAsync reconciles against the
+            // server on the next open, so a dropped push self-heals.
+        }
+    }
+
+    /// <summary>
+    /// Copies server-reported preferences onto the ViewModel. Fenced with
+    /// <c>_isLoadingPortalSettings</c> so adopting them does not re-trigger the
+    /// change handlers. Also re-baselines the originals, since state that came
+    /// from the server is by definition not an unsaved local edit.
+    /// </summary>
+    private void ApplyPortalPreferences(PortalPreferences preferences)
+    {
+        _isLoadingPortalSettings = true;
+        PortalSendPaymentReminders = preferences.SendPaymentReminders;
+        PortalEmailOwnerOnPayment = preferences.EmailOwnerOnPayment;
+        PortalRemindersEnabledAt = preferences.RemindersEnabledAt;
+        PortalOwnerEmailVerified = preferences.OwnerEmailVerified;
+        _isLoadingPortalSettings = false;
+
+        _originalPortalSendPaymentReminders = PortalSendPaymentReminders;
+        _originalPortalEmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsSyncIntervalNumeric))]
     private string _portalSyncInterval = "5";
@@ -765,15 +900,33 @@ public partial class SettingsModalViewModel : ViewModelBase
     private string? _squareEmail;
 
     /// <summary>
+    /// Whether at least one payment provider is connected.
+    /// </summary>
+    public bool IsAnyPaymentProviderConnected => StripeConnected || PaypalConnected || SquareConnected;
+
+    /// <summary>
     /// The portal company name is required while a payment provider is connected.
     /// </summary>
-    public bool IsPortalCompanyNameRequired => StripeConnected || PaypalConnected || SquareConnected;
+    public bool IsPortalCompanyNameRequired => IsAnyPaymentProviderConnected;
 
-    partial void OnStripeConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+    /// <summary>
+    /// Whether the overdue reminders toggle can be used. Needs a connected provider,
+    /// since the reminder sends the customer to the portal to pay.
+    /// </summary>
+    public bool CanEditPaymentReminders => IsAnyPaymentProviderConnected && !IsSampleCompany;
 
-    partial void OnPaypalConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+    private void NotifyProviderConnectionChanged()
+    {
+        OnPropertyChanged(nameof(IsAnyPaymentProviderConnected));
+        OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+        OnPropertyChanged(nameof(CanEditPaymentReminders));
+    }
 
-    partial void OnSquareConnectedChanged(bool value) => OnPropertyChanged(nameof(IsPortalCompanyNameRequired));
+    partial void OnStripeConnectedChanged(bool value) => NotifyProviderConnectionChanged();
+
+    partial void OnPaypalConnectedChanged(bool value) => NotifyProviderConnectionChanged();
+
+    partial void OnSquareConnectedChanged(bool value) => NotifyProviderConnectionChanged();
 
     /// <summary>True once the customer-facing company name has been entered.</summary>
     public bool HasPortalCompanyName => !string.IsNullOrWhiteSpace(PortalCompanyName);
@@ -789,8 +942,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     public bool CanConnectProvider => HasPortalCompanyName && HasCompanyEmail && !IsConnectingProvider;
 
-    /// <summary>Prompt the user to finish the required fields while either is still missing.</summary>
-    public bool ShowConnectRequirementsHint => !HasPortalCompanyName || !HasCompanyEmail;
+    /// <summary>
+    /// Prompt the user to finish the required fields while either is still missing. Never
+    /// shown for the sample company, where the fields it points at are disabled anyway.
+    /// </summary>
+    public bool ShowConnectRequirementsHint =>
+        !IsSampleCompany && (!HasPortalCompanyName || !HasCompanyEmail);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanConnectProvider))]
@@ -1227,6 +1384,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         _isLoadingPortalSettings = true;
         PortalCompanyName = string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
+        // Cached values only. RefreshProviderStatusAsync below overwrites these
+        // from the server, which is authoritative because the reminder cron and
+        // the payment webhooks read its copy while this app is closed.
+        PortalEmailOwnerOnPayment = settings.EmailOwnerOnPayment;
+        PortalSendPaymentReminders = settings.SendPaymentReminders;
+        PortalRemindersEnabledAt = settings.RemindersEnabledAt;
+        PortalOwnerEmailVerified = false;
         PortalSyncInterval = settings.AutoSyncIntervalMinutes == 0
             ? "Manual"
             : settings.AutoSyncIntervalMinutes.ToString();
@@ -1286,6 +1450,17 @@ public partial class SettingsModalViewModel : ViewModelBase
             // Load portal company name and logo from server
             if (status.Success)
             {
+                // Server wins for the email preferences: it is what the cron and
+                // the webhooks actually read. This is also what restores them
+                // after a reinstall or on a second machine. Null when talking to
+                // a server that predates the preferences block, in which case
+                // the cached local values stand.
+                if (status.Preferences != null)
+                {
+                    ApplyPortalPreferences(status.Preferences);
+                    SavePortalSettings();
+                }
+
                 // Mirror the authoritative owner email onto this device so a
                 // server-side change (e.g. the revert link) is reflected here.
                 await ReconcilePortalEmailFromStatusAsync(status);
@@ -1375,6 +1550,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (settings == null) return;
 
         settings.NotifyOnPayment = PortalNotifyOnPayment;
+        settings.EmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+        settings.SendPaymentReminders = PortalSendPaymentReminders;
+        settings.RemindersEnabledAt = PortalRemindersEnabledAt;
         settings.AutoSyncIntervalMinutes = PortalSyncInterval == "Manual"
             ? 0
             : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;
@@ -1741,6 +1919,23 @@ public partial class SettingsModalViewModel : ViewModelBase
     internal const int MobileAppTabIndex = (int)SettingsTab.MobileApp;
 
     /// <summary>
+    /// Whether the "Mobile app" tab is shown at all. The mobile app is not released yet, and the
+    /// tab offers a QR code to pair a phone with, so in a shipped build it invites customers to
+    /// open an app they cannot install. Debug builds keep it so it can still be worked on.
+    ///
+    /// Hiding rather than removing the tab keeps every later tab at the index
+    /// <see cref="SettingsTab"/> gives it, so <see cref="MobileAppTabIndex"/> stays correct.
+    ///
+    /// Delete this and its binding in SettingsModal.axaml when the mobile app ships.
+    /// </summary>
+    public bool IsMobileAppTabVisible =>
+#if DEBUG
+        true;
+#else
+        false;
+#endif
+
+    /// <summary>
     /// Cancellation source for the background loop polling the sync server for the phone to
     /// claim the pairing token. Cancelled as soon as the pairing screen stops being visible (tab
     /// change, modal close, or a fresh "Connect a phone" click), so the encrypted sync key is
@@ -1989,9 +2184,9 @@ public partial class SettingsModalViewModel : ViewModelBase
 
                 // Push the first snapshot immediately. The phone polls /snapshot and shows
                 // "Waiting for your desktop to sync" until one exists, and the only other uploader
-                // (App.AutoMobileSyncAsync) is triggered by desktop navigation to the Payments or
-                // Receipts page. Without this, a successful pairing leaves the phone stuck on that
-                // placeholder until the user happens to open one of those two pages.
+                // (App.AutoMobileSyncAsync) is triggered by desktop navigation to the Receipts
+                // page. Without this, a successful pairing leaves the phone stuck on that
+                // placeholder until the user happens to open that page.
                 await App.AutoMobileSyncAsync();
                 return;
             }
@@ -2115,7 +2310,15 @@ public partial class SettingsModalViewModel : ViewModelBase
         RentalOverdue != _originalRentalOverdue ||
         UnsavedChangesReminder != _originalUnsavedChangesReminder ||
         UnsavedChangesReminderMinutes != _originalUnsavedChangesReminderMinutes ||
+        PortalSendPaymentReminders != _originalPortalSendPaymentReminders ||
+        PortalEmailOwnerOnPayment != _originalPortalEmailOwnerOnPayment ||
         ComputeBankRulesSignature() != _originalBankRulesSignature;
+
+    // Baselines for the two server-side email preferences. They live among the
+    // Notifications toggles, so they take part in the same unsaved-changes
+    // prompt rather than applying the instant they are flipped.
+    private bool _originalPortalSendPaymentReminders;
+    private bool _originalPortalEmailOwnerOnPayment = true;
 
     // Snapshot of the bank import rules taken when the modal opens, so editing a rule's pattern or
     // category (or adding/removing a row) counts as an unsaved change and triggers the discard prompt.
@@ -2226,6 +2429,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalRentalOverdue = RentalOverdue;
         _originalUnsavedChangesReminder = UnsavedChangesReminder;
         _originalUnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
+        _originalPortalSendPaymentReminders = PortalSendPaymentReminders;
+        _originalPortalEmailOwnerOnPayment = PortalEmailOwnerOnPayment;
         SelectedTabIndex = tabIndex;
         IsOpen = true;
     }
@@ -2395,6 +2600,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         _originalRentalOverdue = RentalOverdue;
         _originalUnsavedChangesReminder = UnsavedChangesReminder;
         _originalUnsavedChangesReminderMinutes = UnsavedChangesReminderMinutes;
+        _originalPortalSendPaymentReminders = PortalSendPaymentReminders;
+        _originalPortalEmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+
+        // The server owns these two, so Save is what actually applies them.
+        // Fire-and-forget: the reconcile on next open corrects a dropped push,
+        // and blocking Save on a network round trip would be worse.
+        _ = PushPortalPreferencesAsync();
 
         // Save language, date format and currency to company settings
         var settings = App.CompanyManager?.CompanyData?.Settings;
@@ -3156,10 +3368,6 @@ public class PasswordChangeEventArgs(string? newPassword, string? currentPasswor
 /// </summary>
 public class AutoLockSettingsEventArgs(string timeoutString) : EventArgs
 {
-    /// <summary>
-    /// The selected auto-lock timeout string (e.g., "5 minutes", "Never").
-    /// </summary>
-    public string TimeoutString { get; } = timeoutString;
 
     /// <summary>
     /// The timeout in minutes (0 for "Never").

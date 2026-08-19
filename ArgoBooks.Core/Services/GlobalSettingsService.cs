@@ -301,47 +301,6 @@ public class GlobalSettingsService : IGlobalSettingsService
     }
 
     /// <summary>
-    /// Removes recent companies that no longer exist on disk and deduplicates entries.
-    /// </summary>
-    /// <returns>Number of entries removed.</returns>
-    public int CleanupRecentCompanies()
-    {
-        if (!_platformService.SupportsFileSystem)
-            return 0;
-
-        var recentCompanies = GlobalSettings.RecentCompanies;
-        var originalCount = recentCompanies.Count;
-
-        // Remove entries where file doesn't exist
-        var toRemove = recentCompanies
-            .Where(path => !File.Exists(path))
-            .ToList();
-
-        foreach (var path in toRemove)
-        {
-            recentCompanies.Remove(path);
-        }
-
-        // Remove case-insensitive duplicates (keep first occurrence)
-        var seen = new HashSet<string>(_platformService.PathComparer);
-        var duplicateIndices = new List<int>();
-        for (var i = 0; i < recentCompanies.Count; i++)
-        {
-            if (!seen.Add(recentCompanies[i]))
-            {
-                duplicateIndices.Add(i);
-            }
-        }
-        // Remove in reverse order to preserve indices
-        for (var i = duplicateIndices.Count - 1; i >= 0; i--)
-        {
-            recentCompanies.RemoveAt(duplicateIndices[i]);
-        }
-
-        return originalCount - recentCompanies.Count;
-    }
-
-    /// <summary>
     /// Creates a new company settings instance for a new company.
     /// </summary>
     /// <param name="companyName">Name of the company.</param>
@@ -356,15 +315,6 @@ public class GlobalSettingsService : IGlobalSettingsService
             }
         };
         return CompanySettings;
-    }
-
-    /// <summary>
-    /// Sets the company settings directly (used when loading existing company).
-    /// </summary>
-    /// <param name="settings">Company settings to use.</param>
-    public void SetCompanySettings(CompanySettings settings)
-    {
-        CompanySettings = settings ?? throw new ArgumentNullException(nameof(settings));
     }
 
     private string GetGlobalSettingsPath()
