@@ -69,13 +69,6 @@ of the codebase.
 | [Azure Setup](docs/setup/AzureSetup.md) | Setting up Azure from scratch for builds and signing |
 | [Advanced Installer project setup](docs/Advanced%20Installer%20project%20setup.md) | Rebuilding or repairing the Windows installer project |
 
-### Operations
-
-| Document | Read it when |
-|---|---|
-| [Publishing](docs/Publishing.md) | Building and packaging a release for Windows, Linux or macOS, and signing it |
-| [Password recovery](tools/ArgoBooks.Recovery/README.md) | A customer has lost their company file password. Internal, not for customers |
-
 ### Sub-projects
 
 | Document | Read it when |
