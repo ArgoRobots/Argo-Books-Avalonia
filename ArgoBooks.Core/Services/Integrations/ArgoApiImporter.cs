@@ -31,8 +31,18 @@ public class ArgoApiImporter
     private string? _apiRevenueCategoryId;
     private string? _apiExpenseCategoryId;
 
+    /// <summary>
+    /// References to objects imported on an earlier occasion, resolved by the
+    /// sync service. Without these, anything pointing at a customer, supplier or
+    /// product from a previous batch would import with that link missing.
+    /// </summary>
+    private IReadOnlyDictionary<string, ArgoExternalRef> _external =
+        new Dictionary<string, ArgoExternalRef>();
+
     public void Import(CompanyData data, ArgoApiSyncPreview preview, ArgoApiImportCreation creation)
     {
+        _external = preview.ExternalRefs;
+
         foreach (var c in preview.Categories) ImportCategory(data, c, creation);
         foreach (var c in preview.Customers) ImportCustomer(data, c, creation);
         foreach (var s in preview.Suppliers) ImportSupplier(data, s, creation);
@@ -45,6 +55,45 @@ public class ArgoApiImporter
     }
 
     // -----------------------------------------------------------------------
+
+    /// <summary>
+    /// Resolve an API id to a local record id.
+    ///
+    /// Three chances, in order: something imported in this batch, something
+    /// imported earlier (via the id the server remembered for it), and finally a
+    /// match on the natural key in case the local record was created by hand.
+    /// Null means genuinely unknown, and the caller leaves the link empty.
+    /// </summary>
+    private string? ResolveRef(
+        CompanyData data,
+        Dictionary<string, string> inBatch,
+        string? apiId,
+        Func<CompanyData, ArgoExternalRef, string?> byNaturalKey)
+    {
+        if (string.IsNullOrEmpty(apiId)) return null;
+        if (inBatch.TryGetValue(apiId!, out var local)) return local;
+        if (!_external.TryGetValue(apiId!, out var ext)) return null;
+        if (!string.IsNullOrEmpty(ext.LocalRef)) return ext.LocalRef;
+        return byNaturalKey(data, ext);
+    }
+
+    private static string? MatchCustomer(CompanyData data, ArgoExternalRef r) =>
+        (!string.IsNullOrWhiteSpace(r.Email)
+            ? data.Customers.FirstOrDefault(c => string.Equals(c.Email, r.Email, StringComparison.OrdinalIgnoreCase))
+            : data.Customers.FirstOrDefault(c => string.Equals(c.Name, r.Name, StringComparison.OrdinalIgnoreCase)))?.Id;
+
+    private static string? MatchSupplier(CompanyData data, ArgoExternalRef r) =>
+        (!string.IsNullOrWhiteSpace(r.Email)
+            ? data.Suppliers.FirstOrDefault(x => string.Equals(x.Email, r.Email, StringComparison.OrdinalIgnoreCase))
+            : data.Suppliers.FirstOrDefault(x => string.Equals(x.Name, r.Name, StringComparison.OrdinalIgnoreCase)))?.Id;
+
+    private static string? MatchProduct(CompanyData data, ArgoExternalRef r) =>
+        data.Products.FirstOrDefault(p => string.Equals(p.Name, r.Name, StringComparison.OrdinalIgnoreCase))?.Id;
+
+    private static string? MatchCategory(CompanyData data, ArgoExternalRef r) =>
+        data.Categories.FirstOrDefault(c => string.Equals(c.Name, r.Name, StringComparison.OrdinalIgnoreCase))?.Id;
+
+    private static string? MatchRevenue(CompanyData data, ArgoExternalRef r) => null;
 
     private void ImportCategory(CompanyData data, ArgoCategory api, ArgoApiImportCreation creation)
     {
@@ -138,9 +187,8 @@ public class ArgoApiImporter
             return;
         }
 
-        var categoryId = api.Category != null && _categories.TryGetValue(api.Category, out var mapped)
-            ? mapped
-            : ResolveFallbackCategory(data, CategoryType.Revenue, creation);
+        var categoryId = ResolveRef(data, _categories, api.Category, MatchCategory)
+            ?? ResolveFallbackCategory(data, CategoryType.Revenue, creation);
 
         // Take the product's type from the category it landed in rather than
         // assuming revenue: a product under an expense category is a thing you
@@ -176,7 +224,7 @@ public class ArgoApiImporter
             Id = $"PUR-{date:yyyy}-{data.IdCounters.Expense:D5}",
             Date = date,
             Description = api.Description,
-            SupplierId = api.Supplier != null && _suppliers.TryGetValue(api.Supplier, out var sup) ? sup : null,
+            SupplierId = ResolveRef(data, _suppliers, api.Supplier, MatchSupplier),
             Quantity = 1,
             UnitPrice = subtotal,
             Amount = subtotal,
@@ -188,7 +236,7 @@ public class ArgoApiImporter
             ReferenceNumber = string.IsNullOrWhiteSpace(api.Reference) ? api.Id : api.Reference!,
             Notes = BuildNotes(api.Notes, api.Id),
             OriginalCurrency = currency,
-            LineItems = BuildLineItems(api.LineItems, currency, api.Description, subtotal, tax)
+            LineItems = BuildLineItems(data, api.LineItems, currency, api.Description, subtotal, tax)
         };
         expense.TotalUSD = expense.Total;
         expense.UnitPriceUSD = expense.UnitPrice;
@@ -215,7 +263,7 @@ public class ArgoApiImporter
             Id = $"REV-{date:yyyy}-{data.IdCounters.Revenue:D5}",
             Date = date,
             Description = api.Description,
-            CustomerId = api.Customer != null && _customers.TryGetValue(api.Customer, out var cust) ? cust : string.Empty,
+            CustomerId = ResolveRef(data, _customers, api.Customer, MatchCustomer) ?? string.Empty,
             Quantity = 1,
             UnitPrice = subtotal,
             Amount = subtotal,
@@ -228,7 +276,7 @@ public class ArgoApiImporter
             Notes = BuildNotes(api.Notes, api.Id),
             OriginalCurrency = currency,
             PaymentStatus = RevenuePaymentStatus.Paid,
-            LineItems = BuildLineItems(api.LineItems, currency, api.Description, subtotal, tax)
+            LineItems = BuildLineItems(data, api.LineItems, currency, api.Description, subtotal, tax)
         };
         revenue.TotalUSD = revenue.Total;
         revenue.UnitPriceUSD = revenue.UnitPrice;
@@ -273,9 +321,12 @@ public class ArgoApiImporter
 
         // The parent sale is normally in this same import, but it may have been
         // imported weeks ago, so fall back to searching the books by reference.
-        var localRevenueId = _revenues.TryGetValue(api.Revenue, out var mapped)
-            ? mapped
-            : data.Revenues.FirstOrDefault(r => r.ReferenceNumber == api.Revenue)?.Id;
+        // ReferenceNumber holds the developer's own reference when they set one,
+        // and only falls back to the API id when they did not, so searching it
+        // for an API id finds nothing in the common case. The resolver above is
+        // what actually links a refund to a sale imported weeks ago.
+        var localRevenueId = ResolveRef(data, _revenues, api.Revenue, MatchRevenue)
+            ?? data.Revenues.FirstOrDefault(r => r.ReferenceNumber == api.Revenue)?.Id;
 
         if (localRevenueId == null)
         {
@@ -331,7 +382,8 @@ public class ArgoApiImporter
     /// books look the same however the data arrived.
     /// </summary>
     private List<LineItem> BuildLineItems(
-        List<ArgoLineItem>? items, string currency, string fallbackDescription, decimal subtotal, decimal tax)
+        CompanyData data, List<ArgoLineItem>? items, string currency, string fallbackDescription,
+        decimal subtotal, decimal tax)
     {
         if (items == null || items.Count == 0)
         {
@@ -354,7 +406,7 @@ public class ArgoApiImporter
             var lineSubtotal = unit * i.Quantity;
             return new LineItem
             {
-                ProductId = i.Product != null && _products.TryGetValue(i.Product, out var p) ? p : null,
+                ProductId = ResolveRef(data, _products, i.Product, MatchProduct),
                 Description = i.Description,
                 Quantity = i.Quantity,
                 UnitPrice = unit,

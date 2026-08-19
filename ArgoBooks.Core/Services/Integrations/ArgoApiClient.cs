@@ -146,6 +146,48 @@ public class ArgoApiClient
     }
 
     /// <summary>
+    /// Retrieve one object by id, whatever its type, as raw JSON.
+    ///
+    /// Used to resolve a reference to something imported in an earlier batch.
+    /// Such an object is no longer pending, so it is absent from the preview,
+    /// and without this the link from the new record to it would be lost.
+    /// Returns null when the object cannot be read.
+    /// </summary>
+    public async Task<JsonElement?> GetRawObjectAsync(
+        string key, string resource, string id, CancellationToken ct = default)
+    {
+        try
+        {
+            var doc = await SendV1Async<JsonElement>(HttpMethod.Get, $"/{resource}/{id}", key, null, null, ct);
+            return doc;
+        }
+        catch (ArgoApiException)
+        {
+            // A reference we cannot read is not worth failing the whole import
+            // over. The caller falls back to matching on the natural key.
+            return null;
+        }
+    }
+
+    /// <summary>The URL segment an id belongs to, or null if the prefix is unknown.</summary>
+    public static string? ResourceForId(string id)
+    {
+        // Ordered longest-first: "rev_" has to be tested before "re_", or every
+        // revenue id would be mistaken for a refund.
+        foreach (var (prefix, resource) in new[]
+                 {
+                     ("cus_", "customers"), ("sup_", "suppliers"), ("cat_", "categories"),
+                     ("prd_", "products"), ("exp_", "expenses"), ("rev_", "revenue"),
+                     ("re_", "refunds"),
+                 })
+        {
+            if (id.StartsWith(prefix, StringComparison.Ordinal))
+                return resource;
+        }
+        return null;
+    }
+
+    /// <summary>
     /// Claim the listed objects as imported, in one server-side transaction.
     /// <paramref name="localRefs"/> maps an API id to the id this company gave the
     /// object locally, so a developer can see where their data ended up.

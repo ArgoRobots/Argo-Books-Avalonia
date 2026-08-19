@@ -3,6 +3,13 @@ using ArgoBooks.Core.Data;
 namespace ArgoBooks.Core.Services.Integrations;
 
 /// <summary>
+/// An object referenced by something in this preview but imported on an earlier
+/// occasion, so no longer pending and therefore absent from the preview itself.
+/// <see cref="LocalRef"/> is the id the desktop gave it at that time.
+/// </summary>
+public record ArgoExternalRef(string Id, string? LocalRef, string? Name, string? Email);
+
+/// <summary>
 /// Everything currently waiting in the merchant's Argo Books API queue.
 /// Read-only: building a preview never changes the books or the server.
 /// </summary>
@@ -13,7 +20,8 @@ public record ArgoApiSyncPreview(
     IReadOnlyList<ArgoProduct> Products,
     IReadOnlyList<ArgoExpense> Expenses,
     IReadOnlyList<ArgoRevenue> Revenue,
-    IReadOnlyList<ArgoRefund> Refunds)
+    IReadOnlyList<ArgoRefund> Refunds,
+    IReadOnlyDictionary<string, ArgoExternalRef> ExternalRefs)
 {
     public int TotalObjects =>
         Customers.Count + Suppliers.Count + Categories.Count +
@@ -27,7 +35,8 @@ public record ArgoApiSyncPreview(
     /// <summary>Total expenses waiting, likewise.</summary>
     public decimal TotalExpenses => Expenses.Sum(e => ArgoMoney.ToDecimal(e.Amount, e.Currency));
 
-    public static ArgoApiSyncPreview Empty() => new([], [], [], [], [], [], []);
+    public static ArgoApiSyncPreview Empty() =>
+        new([], [], [], [], [], [], [], new Dictionary<string, ArgoExternalRef>());
 }
 
 /// <summary>
@@ -65,7 +74,82 @@ public class ArgoApiSyncService
         var revenue = await _client.ListPendingAsync<ArgoRevenue>(key, "revenue", expandLineItems: true, ct: ct);
         var refunds = await _client.ListPendingAsync<ArgoRefund>(key, "refunds", ct: ct);
 
-        return new ArgoApiSyncPreview(customers, suppliers, categories, products, expenses, revenue, refunds);
+        var preview = new ArgoApiSyncPreview(
+            customers, suppliers, categories, products, expenses, revenue, refunds,
+            new Dictionary<string, ArgoExternalRef>());
+
+        var external = await ResolveExternalRefsAsync(key, preview, ct);
+        return preview with { ExternalRefs = external };
+    }
+
+    /// <summary>
+    /// Look up every referenced object that is not itself in this preview.
+    ///
+    /// A developer creates a customer once and then points a year of orders at
+    /// it. That customer is imported with the first batch and is no longer
+    /// pending, so nothing after the first batch would find it, and every later
+    /// order would import with no customer attached and no error to show for it.
+    ///
+    /// Only distinct missing ids are fetched, so this is a handful of requests
+    /// per import rather than one per row.
+    /// </summary>
+    private async Task<Dictionary<string, ArgoExternalRef>> ResolveExternalRefsAsync(
+        string key, ArgoApiSyncPreview preview, CancellationToken ct)
+    {
+        var known = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var c in preview.Customers) known.Add(c.Id);
+        foreach (var x in preview.Suppliers) known.Add(x.Id);
+        foreach (var x in preview.Categories) known.Add(x.Id);
+        foreach (var x in preview.Products) known.Add(x.Id);
+        foreach (var x in preview.Revenue) known.Add(x.Id);
+
+        var wanted = new HashSet<string>(StringComparer.Ordinal);
+        void Want(string? id)
+        {
+            if (!string.IsNullOrEmpty(id) && !known.Contains(id!)) wanted.Add(id!);
+        }
+
+        foreach (var p in preview.Products) Want(p.Category);
+        foreach (var e in preview.Expenses)
+        {
+            Want(e.Supplier);
+            Want(e.Category);
+            foreach (var li in e.LineItems ?? []) Want(li.Product);
+        }
+        foreach (var r in preview.Revenue)
+        {
+            Want(r.Customer);
+            Want(r.Category);
+            foreach (var li in r.LineItems ?? []) Want(li.Product);
+        }
+        foreach (var r in preview.Refunds) Want(r.Revenue);
+
+        var resolved = new Dictionary<string, ArgoExternalRef>(StringComparer.Ordinal);
+        foreach (var id in wanted)
+        {
+            var resource = ArgoApiClient.ResourceForId(id);
+            if (resource == null) continue;
+
+            var obj = await _client.GetRawObjectAsync(key, resource, id, ct);
+            if (obj == null) continue;
+
+            string? Read(string prop) =>
+                obj.Value.TryGetProperty(prop, out var v) && v.ValueKind == JsonValueKind.String
+                    ? v.GetString()
+                    : null;
+
+            string? localRef = null;
+            if (obj.Value.TryGetProperty("import", out var imp)
+                && imp.TryGetProperty("local_ref", out var lr)
+                && lr.ValueKind == JsonValueKind.String)
+            {
+                localRef = lr.GetString();
+            }
+
+            resolved[id] = new ArgoExternalRef(id, localRef, Read("name"), Read("email"));
+        }
+
+        return resolved;
     }
 
     /// <summary>

@@ -2026,7 +2026,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = $"{ApiConfig.BaseUrl}/documentation/api",
+                // The real served path. Documentation pages link their assets
+                // relatively, so a shallower alias URL loads them unstyled.
+                FileName = $"{ApiConfig.BaseUrl}/documentation/pages/api/overview.php",
                 UseShellExecute = true
             });
         }
