@@ -115,17 +115,15 @@ Translations are generated using the `TranslationGenerator` class and the **Azur
 
 ### Running the Translation Tool
 
-In **JetBrains Rider**, set the startup project to `ArgoBooks.Translations`, then run it.
-
-Or use the command line:
-
+First, set up the environment variables:
 ```powershell
-# Set environment variables
 $env:AZURE_TRANSLATOR_REGION = "canadacentral"
 $env:AZURE_TRANSLATOR_KEY = "your-api-key"
 
 cd tools/ArgoBooks.Translations
 ```
+
+Then you can run the following commands:
 
 | Command | Description |
 |---------|-------------|
