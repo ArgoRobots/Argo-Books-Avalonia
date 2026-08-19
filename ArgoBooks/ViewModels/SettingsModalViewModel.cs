@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Text.Json;
 using ArgoBooks.Core;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -1409,6 +1410,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         CompanyEmail = App.CompanyManager?.CompanyData?.Settings.Company.Email;
 
         LoadStripeIntegrationState();
+        LoadArgoApiState();
 
         // Fetch fresh provider status from the server in the background
         _ = RefreshProviderStatusAsync();
@@ -1746,6 +1748,382 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     private void RefreshStripeLastSynced(StripeIntegrationSettings stripe)
         => StripeLastSyncedDisplay = stripe.LastSyncTime is { } t ? "Last synced {0}".TranslateFormat(t.ToString("MMM d, yyyy h:mm tt")) : null;
+
+    #endregion
+
+    #region Argo Books API
+
+    [ObservableProperty]
+    private bool _argoApiEnabled;
+
+    [ObservableProperty]
+    private bool _isEnablingArgoApi;
+
+    [ObservableProperty]
+    private bool _isSyncingArgoApi;
+
+    [ObservableProperty]
+    private string? _argoApiError;
+
+    [ObservableProperty]
+    private string? _argoApiLastSyncedDisplay;
+
+    [ObservableProperty]
+    private string? _argoApiPendingSummary;
+
+    [ObservableProperty]
+    private string _newArgoApiKeyLabel = string.Empty;
+
+    /// <summary>
+    /// The secret from the most recent key creation, shown once in a read-only box
+    /// for the merchant to copy. Only the hash is stored server-side, so once this
+    /// is cleared the value is gone for good, which is the point.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNewArgoApiKeySecret))]
+    private string? _newArgoApiKeySecret;
+
+    public bool HasNewArgoApiKeySecret => !string.IsNullOrEmpty(NewArgoApiKeySecret);
+
+    /// <summary>The base URL a developer points their integration at.</summary>
+    public string ArgoApiBaseUrl => $"{ApiConfig.BaseUrl}/v1";
+
+    public ObservableCollection<ArgoApiKeyRow> ArgoApiKeys { get; } = [];
+
+    /// <summary>Reads display state from company settings. Called on the settings-load path.</summary>
+    private void LoadArgoApiState()
+    {
+        var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
+        ArgoApiEnabled = api?.Enabled ?? false;
+        ArgoApiError = null;
+        NewArgoApiKeySecret = null;
+        NewArgoApiKeyLabel = string.Empty;
+        ArgoApiPendingSummary = null;
+        ArgoApiKeys.Clear();
+
+        RefreshArgoApiLastSynced(api);
+
+        if (ArgoApiEnabled)
+            _ = RefreshArgoApiKeysAsync();
+    }
+
+    /// <summary>
+    /// Turn the API on for this company and mint the key the desktop uses itself.
+    ///
+    /// The desktop's key is separate from any key handed to a developer, so
+    /// revoking a developer never locks the app out of its own review queue.
+    /// </summary>
+    [RelayCommand]
+    private async Task EnableArgoApiAsync()
+    {
+        if (IsEnablingArgoApi) return;
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null || App.SharedHttpClient == null) return;
+
+        IsEnablingArgoApi = true;
+        ArgoApiError = null;
+        try
+        {
+            var api = data.Settings.Integrations.ArgoApi;
+
+            // Reuse the mobile sync identifier when there is one, so both features
+            // name the same company on the server rather than inventing two.
+            api.CompanyUid ??= data.Settings.MobileSync.CompanyUid ?? Guid.NewGuid().ToString("N");
+
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            var (accountId, desktopKey) = await client.EnableAsync(
+                api.CompanyUid!,
+                data.Settings.Company.Name,
+                LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+
+            api.Enabled = true;
+            api.AccountId = accountId;
+            api.DesktopKey = desktopKey;
+
+            ArgoApiEnabled = true;
+            App.CompanyManager?.MarkAsChanged();
+            await RefreshArgoApiKeysAsync();
+        }
+        catch (Exception ex)
+        {
+            ArgoApiError = ex.Message;
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Enabling the Argo Books API failed");
+        }
+        finally
+        {
+            IsEnablingArgoApi = false;
+        }
+    }
+
+    /// <summary>
+    /// Stop the API for this company: revoke every key, then forget it locally.
+    ///
+    /// Objects already pushed stay on the server. Deleting them would destroy a
+    /// developer's data on a click the merchant may have meant as "pause", and
+    /// re-enabling brings the queue back exactly as it was.
+    /// </summary>
+    [RelayCommand]
+    private async Task DisableArgoApiAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var api = data?.Settings.Integrations.ArgoApi;
+        if (data == null || api == null || App.SharedHttpClient == null) return;
+
+        if (App.ConfirmationDialog != null)
+        {
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Turn off the Argo Books API".Translate(),
+                Message = "Every key will stop working immediately and any integration using them will fail. Data already sent stays on the server and comes back if you turn this on again.".Translate(),
+                PrimaryButtonText = "Turn off".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+        }
+
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            foreach (var row in ArgoApiKeys.Where(k => !k.IsRevoked).ToList())
+            {
+                await client.RevokeKeyAsync(
+                    api.CompanyUid ?? string.Empty, row.Id,
+                    LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                    LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Local state is still cleared below: the merchant asked to turn it
+            // off, and leaving it half-on because the network hiccuped is worse
+            // than a key that outlives the setting. Surfaced so they can retry.
+            ArgoApiError = "Some keys could not be revoked: {0}".TranslateFormat(ex.Message);
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Revoking Argo Books API keys failed");
+        }
+
+        api.Enabled = false;
+        api.DesktopKey = null;
+
+        ArgoApiEnabled = false;
+        ArgoApiKeys.Clear();
+        NewArgoApiKeySecret = null;
+        ArgoApiPendingSummary = null;
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private async Task RefreshArgoApiKeysAsync()
+    {
+        var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
+        if (api?.CompanyUid == null || App.SharedHttpClient == null) return;
+
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            using var doc = await client.ListKeysAsync(
+                api.CompanyUid,
+                LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+
+            ArgoApiKeys.Clear();
+            if (!doc.RootElement.TryGetProperty("keys", out var keys)) return;
+
+            foreach (var k in keys.EnumerateArray())
+            {
+                var lastUsed = k.GetProperty("last_used_at").GetString();
+                ArgoApiKeys.Add(new ArgoApiKeyRow
+                {
+                    Id = k.GetProperty("id").GetString() ?? string.Empty,
+                    Hint = k.GetProperty("hint").GetString() ?? string.Empty,
+                    Label = k.GetProperty("label").GetString() ?? string.Empty,
+                    Scopes = string.Join(", ", k.GetProperty("scopes").EnumerateArray().Select(s => s.GetString())),
+                    LastUsedDisplay = lastUsed == null
+                        ? "Never used".Translate()
+                        : "Last used {0}".TranslateFormat(lastUsed),
+                    IsRevoked = k.GetProperty("revoked_at").ValueKind != JsonValueKind.Null
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            ArgoApiError = ex.Message;
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Listing Argo Books API keys failed");
+        }
+    }
+
+    [RelayCommand]
+    private async Task CreateArgoApiKeyAsync()
+    {
+        var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
+        if (api?.CompanyUid == null || App.SharedHttpClient == null) return;
+
+        ArgoApiError = null;
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            var (secret, _) = await client.CreateDeveloperKeyAsync(
+                api.CompanyUid,
+                string.IsNullOrWhiteSpace(NewArgoApiKeyLabel) ? "Untitled key" : NewArgoApiKeyLabel.Trim(),
+                allowWrite: true,
+                LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+
+            NewArgoApiKeySecret = secret;
+            NewArgoApiKeyLabel = string.Empty;
+            await RefreshArgoApiKeysAsync();
+        }
+        catch (Exception ex)
+        {
+            ArgoApiError = ex.Message;
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Creating an Argo Books API key failed");
+        }
+    }
+
+    [RelayCommand]
+    private async Task RevokeArgoApiKeyAsync(ArgoApiKeyRow? row)
+    {
+        var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
+        if (row == null || api?.CompanyUid == null || App.SharedHttpClient == null) return;
+
+        if (App.ConfirmationDialog != null)
+        {
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Revoke this key".Translate(),
+                Message = "{0} will stop working immediately. Anything using it will start failing.".TranslateFormat(row.DisplayName),
+                PrimaryButtonText = "Revoke".Translate(),
+                CancelButtonText = "Cancel".Translate(),
+                IsPrimaryDestructive = true
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+        }
+
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            await client.RevokeKeyAsync(
+                api.CompanyUid, row.Id,
+                LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+            row.IsRevoked = true;
+        }
+        catch (Exception ex)
+        {
+            ArgoApiError = ex.Message;
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Revoking an Argo Books API key failed");
+        }
+    }
+
+    [RelayCommand]
+    private void DismissNewArgoApiKeySecret() => NewArgoApiKeySecret = null;
+
+    [RelayCommand]
+    private void OpenArgoApiDocs()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = $"{ApiConfig.BaseUrl}/documentation/api",
+                UseShellExecute = true
+            });
+        }
+        catch { /* best-effort: opening the browser is non-critical */ }
+    }
+
+    /// <summary>
+    /// Pull what developers have pushed, show the merchant what it adds up to, and
+    /// import on approval as one undoable action.
+    ///
+    /// The undo also tells the server to release the batch, otherwise the queue
+    /// would keep reporting data as imported that is no longer in anyone's books.
+    /// </summary>
+    [RelayCommand]
+    private async Task SyncArgoApiAsync()
+    {
+        if (IsSyncingArgoApi) return;
+        var data = App.CompanyManager?.CompanyData;
+        var api = data?.Settings.Integrations.ArgoApi;
+        if (data == null || api == null || !api.Enabled || App.SharedHttpClient == null) return;
+
+        IsSyncingArgoApi = true;
+        ArgoApiError = null;
+        try
+        {
+            var svc = new ArgoApiSyncService(new ArgoApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+
+            if (!preview.HasActivity)
+            {
+                ArgoApiPendingSummary = null;
+                App.AddNotification("Argo Books API".Translate(), "Nothing is waiting to be imported.".Translate());
+                return;
+            }
+
+            ArgoApiPendingSummary = "{0} items waiting".TranslateFormat(preview.TotalObjects);
+
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from the Argo Books API".Translate(),
+                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?"
+                    .TranslateFormat(
+                        preview.TotalObjects,
+                        preview.TotalRevenue.ToString("C2"),
+                        preview.TotalExpenses.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            var creation = await svc.ImportPreviewAsync(data, preview);
+
+            if (creation.AnyCreated)
+            {
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from the Argo Books API".Translate(),
+                    () =>
+                    {
+                        creation.Undo(data);
+                        if (creation.BatchId != null)
+                            _ = svc.TryReleaseBatchAsync(data, creation.BatchId);
+                        App.CompanyManager?.MarkAsChanged();
+                    },
+                    () =>
+                    {
+                        creation.Redo(data);
+                        App.CompanyManager?.MarkAsChanged();
+                    }));
+            }
+
+            App.CompanyManager?.MarkAsChanged();
+            ArgoApiPendingSummary = null;
+            RefreshArgoApiLastSynced(api);
+
+            App.AddNotification("Argo Books API".Translate(),
+                "Imported {0} sales and {1} expense entries.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
+                NotificationType.Success);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Argo Books API sync failed");
+            ArgoApiError = ex.Message;
+            App.AddNotification("Argo Books API".Translate(),
+                "Import failed: {0}".TranslateFormat(ex.Message),
+                NotificationType.Warning);
+        }
+        finally
+        {
+            IsSyncingArgoApi = false;
+        }
+    }
+
+    private void RefreshArgoApiLastSynced(ArgoApiIntegrationSettings? api)
+        => ArgoApiLastSyncedDisplay = api?.LastSyncTime is { } t
+            ? "Last imported {0}".TranslateFormat(t.ToString("MMM d, yyyy h:mm tt"))
+            : null;
 
     #endregion
 

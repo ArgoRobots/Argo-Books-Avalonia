@@ -1523,6 +1523,149 @@
                                     </Border>
                                 </StackPanel>
 
+                                <Separator Background="{DynamicResource BorderBrush}" Height="1" Margin="0,8" />
+
+                                <!-- Argo Books API: data pushed in by apps the user has connected -->
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="{loc:Loc 'Argo Books API'}" FontSize="14" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{loc:Loc 'Let other apps send sales, expenses, customers and suppliers straight into this company. Nothing they send reaches your books until you review and import it.'}"
+                                               FontSize="12" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                    <!-- Off state -->
+                                    <StackPanel Spacing="8" IsVisible="{Binding !ArgoApiEnabled}">
+                                        <Button Content="{loc:Loc 'Turn on'}"
+                                                Classes="primary-button"
+                                                HorizontalAlignment="Left"
+                                                IsEnabled="{Binding !IsSampleCompany}"
+                                                Command="{Binding EnableArgoApiCommand}"
+                                                Padding="12,6" MinHeight="0" />
+                                    </StackPanel>
+
+                                    <!-- On state -->
+                                    <StackPanel Spacing="12" IsVisible="{Binding ArgoApiEnabled}"
+                                                IsEnabled="{Binding !IsSampleCompany}">
+
+                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
+                                            <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                    <TextBlock Text="{loc:Loc 'On'}" FontSize="12"
+                                                               Foreground="{DynamicResource SuccessBrush}" />
+                                                    <TextBlock Text="{Binding ArgoApiBaseUrl}" FontSize="13"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding ArgoApiPendingSummary}" FontSize="11"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               IsVisible="{Binding ArgoApiPendingSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding ArgoApiLastSyncedDisplay}" FontSize="11"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding ArgoApiLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                    <Button Classes="primary-button" Content="{loc:Loc 'Review and import'}"
+                                                            Command="{Binding SyncArgoApiCommand}"
+                                                            IsEnabled="{Binding !IsSyncingArgoApi}"
+                                                            Padding="12,6" MinHeight="0" />
+                                                    <Button Classes="danger-outline-button" Content="{loc:Loc 'Turn off'}"
+                                                            Command="{Binding DisableArgoApiCommand}"
+                                                            Padding="12,6" MinHeight="0" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Newly minted secret. Shown once, because only its hash is kept. -->
+                                        <Border Background="{DynamicResource WarningLightBrush}"
+                                                BorderBrush="{DynamicResource WarningBrush}"
+                                                BorderThickness="1" CornerRadius="8" Padding="14,12"
+                                                IsVisible="{Binding HasNewArgoApiKeySecret}">
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Text="{loc:Loc 'Copy this key now. It is stored only as a fingerprint and cannot be shown again.'}"
+                                                           FontSize="12" TextWrapping="Wrap" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource WarningTextBrush}" />
+                                                <TextBox Text="{Binding NewArgoApiKeySecret, Mode=OneWay}"
+                                                         Classes="form-input"
+                                                         IsReadOnly="True"
+                                                         FontFamily="Consolas,monospace"
+                                                         TextWrapping="Wrap" />
+                                                <Button Content="{loc:Loc 'I have copied it'}"
+                                                        Classes="secondary-button"
+                                                        HorizontalAlignment="Left"
+                                                        Command="{Binding DismissNewArgoApiKeySecretCommand}"
+                                                        Padding="12,6" MinHeight="0" />
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Key list -->
+                                        <StackPanel Spacing="8">
+                                            <TextBlock Text="{loc:Loc 'Keys'}" FontSize="13" FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Give each app its own key so you can switch one off without affecting the others.'}"
+                                                       FontSize="12" TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                            <ItemsControl ItemsSource="{Binding ArgoApiKeys}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:ArgoApiKeyRow">
+                                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
+                                                                Padding="12" Margin="0,0,0,6">
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <StackPanel Grid.Column="0" Spacing="2">
+                                                                    <TextBlock Text="{Binding DisplayName}" FontSize="13"
+                                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                    <TextBlock Text="{Binding Hint}" FontSize="11"
+                                                                               FontFamily="Consolas,monospace"
+                                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                    <TextBlock Text="{Binding LastUsedDisplay}" FontSize="11"
+                                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                </StackPanel>
+                                                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                            Spacing="8" VerticalAlignment="Center">
+                                                                    <TextBlock Text="{loc:Loc 'Revoked'}" FontSize="11"
+                                                                               VerticalAlignment="Center"
+                                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                               IsVisible="{Binding IsRevoked}" />
+                                                                    <Button Classes="danger-outline-button"
+                                                                            Content="{loc:Loc 'Revoke'}"
+                                                                            IsVisible="{Binding CanRevoke}"
+                                                                            Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).RevokeArgoApiKeyCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Padding="10,5" MinHeight="0" />
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                                <TextBox Grid.Column="0"
+                                                         Text="{Binding NewArgoApiKeyLabel, Mode=TwoWay}"
+                                                         Classes="form-input"
+                                                         PlaceholderText="{loc:Loc 'Name this key, for example: Shopify store'}" />
+                                                <Button Grid.Column="1"
+                                                        Content="{loc:Loc 'Create key'}"
+                                                        Classes="secondary-button"
+                                                        Command="{Binding CreateArgoApiKeyCommand}"
+                                                        Padding="12,6" MinHeight="0" />
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <TextBlock Text="{loc:Loc 'Developer documentation: '}" FontSize="12"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <Button Classes="link" Content="argorobots.com/documentation/api"
+                                                    FontSize="12" Padding="0" MinHeight="0"
+                                                    Command="{Binding OpenArgoApiDocsCommand}" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <TextBlock Text="{Binding ArgoApiError}" Foreground="#dc2626" FontSize="12"
+                                               TextWrapping="Wrap"
+                                               IsVisible="{Binding ArgoApiError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
