@@ -54,11 +54,9 @@ Developer tools live in `tools/`, separate from the app. Each has a README expla
 | **ArgoBooks.Recovery** | Opens a company file when the password is lost |
 | **ArgoBooks.UnusedCode** | Reports members that nothing references |
 
-Only Translations is in `ArgoBooks.sln`. The other two are deliberately left out and built on demand with `dotnet build tools/<name>`: Recovery must never ship with the app because it opens files without the password, and UnusedCode is only a diagnostic.
-
 ### Data Storage
 
-File-based, not database. Company data lives in encrypted `.argo` files (AES-256). `CompanyManager` orchestrates file lifecycle: load, save, auto-save, encryption, temp directory management. All data is held in memory for performance.
+File-based, not database. Company data lives in encrypted `.argo` files (AES-256). `CompanyManager` orchestrates file lifecycle: load, save, auto-save, encryption, temp directory management. All data is held in memory for performance and security.
 
 ### Key Patterns
 
