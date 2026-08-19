@@ -1651,6 +1651,13 @@ public partial class App : Application
                     // No internet or server unreachable, allow offline use
                     return;
 
+                case LicenseValidationStatus.RateLimited:
+                    // The check could not be completed, which is not a verdict on the licence. Allow offline use.
+                    ErrorLogger?.LogWarning(
+                        "Startup license validation was rate limited; keeping the stored license.",
+                        category: ErrorCategory.License);
+                    return;
+
                 case LicenseValidationStatus.InvalidKey:
                     await LicenseService.ClearLicenseAsync();
                     _appShellViewModel.SetPlanStatus(false);
