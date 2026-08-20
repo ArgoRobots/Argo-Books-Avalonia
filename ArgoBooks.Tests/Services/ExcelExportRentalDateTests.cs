@@ -46,7 +46,7 @@ public class ExcelExportRentalDateTests
             Assert.NotNull(returnCol);
 
             // The single data row's Return Date cell must be empty, not a bogus 0001/1899 date.
-            var cell = ws.Cell(2, returnCol!.Address.ColumnNumber);
+            var cell = ws.Cell(2, returnCol.Address.ColumnNumber);
             Assert.True(cell.IsEmpty(), $"Return Date cell should be blank but was '{cell.GetString()}'");
         }
         finally

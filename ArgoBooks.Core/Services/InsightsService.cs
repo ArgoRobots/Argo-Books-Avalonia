@@ -987,7 +987,7 @@ public class InsightsService(
         // rescan all Inventory for each product (matches the previous FirstOrDefault semantics).
         var inventoryByProductId = companyData.Inventory
             .Where(i => !string.IsNullOrEmpty(i.ProductId))
-            .GroupBy(i => i.ProductId!)
+            .GroupBy(i => i.ProductId)
             .ToDictionary(g => g.Key, g => g.First());
 
         foreach (var item in recentSales.Where(x => x.DailyVelocity > 0))

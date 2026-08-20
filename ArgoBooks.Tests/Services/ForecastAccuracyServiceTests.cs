@@ -297,12 +297,12 @@ public class ForecastAccuracyServiceTests
     {
         var companyData = new CompanyData();
         // Add only 2 months of data (minimum is 4)
-        companyData.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue
+        companyData.Revenues.Add(new Revenue
         {
             Date = new DateTime(2025, 1, 15),
             Total = 1000m
         });
-        companyData.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue
+        companyData.Revenues.Add(new Revenue
         {
             Date = new DateTime(2025, 2, 15),
             Total = 2000m
@@ -321,7 +321,7 @@ public class ForecastAccuracyServiceTests
         // Add 5 months of data
         for (int i = 0; i < 5; i++)
         {
-            companyData.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue
+            companyData.Revenues.Add(new Revenue
             {
                 Date = new DateTime(2025, 1 + i, 15),
                 Total = 1000m * (i + 1)

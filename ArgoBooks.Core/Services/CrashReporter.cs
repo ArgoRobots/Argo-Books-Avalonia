@@ -273,7 +273,7 @@ public static class CrashReporter
     {
         try
         {
-            string appData = ArgoBooks.Core.Platform.PlatformServiceFactory.GetPlatformService().GetAppDataPath();
+            string appData = Platform.PlatformServiceFactory.GetPlatformService().GetAppDataPath();
             return Path.Combine(appData, CrashFolderName);
         }
         catch

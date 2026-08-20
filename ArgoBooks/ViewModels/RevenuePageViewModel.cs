@@ -467,11 +467,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var paymentsForRefunds = companyData?.Payments ?? new List<Payment>();
         var refundedByInvoiceId = paymentsForRefunds
             .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.InvoiceId))
-            .GroupBy(p => p.InvoiceId!)
+            .GroupBy(p => p.InvoiceId)
             .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.Amount)));
         var onlinePaymentInvoiceIds = paymentsForRefunds
             .Where(p => p.Source == PaymentSource.Online && !string.IsNullOrEmpty(p.InvoiceId))
-            .Select(p => p.InvoiceId!)
+            .Select(p => p.InvoiceId)
             .ToHashSet();
 
         decimal RefundedForRevenue(Revenue r) =>

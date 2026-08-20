@@ -103,7 +103,7 @@ public class AccountingReportCurrencyTests
             // would give 100*1.30 + 200*1.30 = 390 CAD, so this asserts the §3a per-date behavior.
             var totalRow = report.Rows.Find(r => r.Label == "Total Revenue");
             Assert.NotNull(totalRow);
-            Assert.Equal(400m, ParseAmount(totalRow!.Values[0]));
+            Assert.Equal(400m, ParseAmount(totalRow.Values[0]));
 
             // The total equals the sum of each transaction converted at its OWN date.
             var perDateSum = Math.Round(100m * RateDate1, 2) + Math.Round(200m * RateDate2, 2);
@@ -137,7 +137,7 @@ public class AccountingReportCurrencyTests
             // Totals are the raw USD figures (100 + 200 = 300), not converted to CAD.
             var totalRow = report.Rows.Find(r => r.Label == "Total Revenue");
             Assert.NotNull(totalRow);
-            Assert.Equal(300m, ParseAmount(totalRow!.Values[0]));
+            Assert.Equal(300m, ParseAmount(totalRow.Values[0]));
         }
         finally
         {
@@ -164,7 +164,7 @@ public class AccountingReportCurrencyTests
             Assert.Equal("Amounts in USD", report.Subtitle);
             var totalRow = report.Rows.Find(r => r.Label == "Total Revenue");
             Assert.NotNull(totalRow);
-            Assert.Equal(300m, ParseAmount(totalRow!.Values[0]));
+            Assert.Equal(300m, ParseAmount(totalRow.Values[0]));
         }
         finally
         {

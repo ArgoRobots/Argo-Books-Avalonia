@@ -267,7 +267,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Revenue.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Revenue.OpenDeleteConfirm");
         }
     }
 
@@ -738,7 +738,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             }
             catch (Exception ex)
             {
-                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to read receipt file");
+                App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to read receipt file");
                 App.AddNotification("Warning".Translate(), "Could not attach receipt file: {0}".TranslateFormat(ex.Message), NotificationType.Warning);
             }
         }

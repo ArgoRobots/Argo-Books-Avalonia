@@ -63,7 +63,7 @@ public class ProductsTableColumnWidthsTests
             + widths.SupplierColumnWidth + widths.ActionsColumnWidth + Padding;
 
         // The shown columns now fill the table (within a few px of rounding).
-        Assert.True(System.Math.Abs(TableWidth - shownTotal) < 5,
+        Assert.True(Math.Abs(TableWidth - shownTotal) < 5,
             $"Expected shown columns to fill the table width, gap was {TableWidth - shownTotal:F0}");
     }
 
@@ -91,7 +91,7 @@ public class ProductsTableColumnWidthsTests
             + $"scroll={widths.NeedsHorizontalScroll}";
 
         Assert.False(widths.NeedsHorizontalScroll, $"Unexpected scroll. {detail}");
-        Assert.True(System.Math.Abs(TableWidth - shownTotal) < 5, detail);
+        Assert.True(Math.Abs(TableWidth - shownTotal) < 5, detail);
     }
 
     /// <summary>
@@ -120,6 +120,6 @@ public class ProductsTableColumnWidthsTests
             + $"scroll={widths.NeedsHorizontalScroll}";
 
         Assert.False(widths.NeedsHorizontalScroll, $"Columns did not re-fit after narrowing. {detail}");
-        Assert.True(System.Math.Abs(TableWidth - shownTotal) < 5, detail);
+        Assert.True(Math.Abs(TableWidth - shownTotal) < 5, detail);
     }
 }

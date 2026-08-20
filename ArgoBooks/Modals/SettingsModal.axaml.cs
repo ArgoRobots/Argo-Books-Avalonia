@@ -57,7 +57,7 @@ public partial class SettingsModal : UserControl
         if (sender is Button { Content: PathIcon icon })
         {
             var original = icon.Data;
-            icon.Data = Geometry.Parse(ArgoBooks.Icons.Check);
+            icon.Data = Geometry.Parse(Icons.Check);
             try
             {
                 await Task.Delay(1200);

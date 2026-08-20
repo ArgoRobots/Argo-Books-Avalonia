@@ -455,7 +455,7 @@ public partial class App : Application
                 // sync can't quietly commit the user's in-progress edits.
                 if (!CompanyManager!.HasUnsavedChanges)
                 {
-                    try { await CompanyManager!.SavePaymentSyncAsync(); }
+                    try { await CompanyManager.SavePaymentSyncAsync(); }
                     catch (Exception ex)
                     {
                         ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
@@ -1104,7 +1104,7 @@ public partial class App : Application
             //
             // Wrapped defensively: the splash is a nicety and must never be able to stop the
             // app from starting.
-            SplashWindow? splash = null;
+            SplashWindow? splash;
             try
             {
                 splash = new SplashWindow();
@@ -2332,7 +2332,7 @@ public partial class App : Application
         // p50/p90, asymptoting near the ceiling and completing when the call returns) instead of the
         // old fake timer that crawled to 95% and stalled. The service reports only the status detail.
         var analysisDetail = "Reading file...".Translate();
-        using var analysisTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+        using var analysisTicker = new EstimatedProgressTicker(
             OperationKind.SpreadsheetAnalysis,
             pct => _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), analysisDetail, pct, analysisCts, ConfirmCancelAsync));
         var analysisProgress = new Progress<(string detail, double percent)>(p => analysisDetail = p.detail);
@@ -3244,7 +3244,7 @@ public partial class App : Application
                     // Sample company cannot be saved directly - redirect to Save As.
                     if (CompanyManager.IsSampleCompany)
                     {
-                        var desktop = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+                        var desktop = Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
                         if (desktop == null) return;
                         var saved = await SaveCompanyAsDialogAsync(desktop);
                         if (!saved) return; // user cancelled Save As, abort the new-company action

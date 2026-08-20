@@ -63,7 +63,7 @@ public class PendingScanOutboxTests
         var next = await outbox.PeekNextAsync();
 
         Assert.NotNull(next);
-        Assert.Equal([1, 2, 3], next!.Image);
+        Assert.Equal([1, 2, 3], next.Image);
         Assert.False(string.IsNullOrEmpty(next.Id));
     }
 
@@ -88,7 +88,7 @@ public class PendingScanOutboxTests
 
         Assert.NotNull(first);
         Assert.NotNull(second);
-        Assert.Equal(first!.Id, second!.Id);
+        Assert.Equal(first.Id, second.Id);
         Assert.Equal(1, await outbox.GetPendingCountAsync());
     }
 

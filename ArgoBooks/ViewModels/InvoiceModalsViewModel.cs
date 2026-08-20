@@ -1480,7 +1480,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Invoice.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Invoice.OpenDeleteConfirm");
         }
     }
 

@@ -19,6 +19,6 @@ public static class CompanySwitchDecision
             return false;
         }
 
-        return !string.Equals(currentActiveCompanyUid, targetCompanyUid, System.StringComparison.Ordinal);
+        return !string.Equals(currentActiveCompanyUid, targetCompanyUid, StringComparison.Ordinal);
     }
 }

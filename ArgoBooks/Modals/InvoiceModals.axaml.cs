@@ -39,7 +39,7 @@ public partial class InvoiceModals : UserControl
     // which rebuilds the WebView from the model; without flushing first, a value still sitting in the
     // DOM within the ~150ms input debounce (e.g. a rate typed right before clicking "+add line") would
     // be dropped. Same guard the Preview/Save/info-button handlers already use.
-    private async System.Threading.Tasks.Task CommitPaperEditsAsync()
+    private async Task CommitPaperEditsAsync()
     {
         var editorPreview = this.FindControl<InvoicePreviewControl>("EditorPreview");
         if (editorPreview != null)

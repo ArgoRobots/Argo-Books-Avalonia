@@ -41,9 +41,6 @@ public enum FeatureName
     RentalRecordCreated,
 
     // Charts
-    // Destination is a separate value rather than one ChartExported with a context
-    // string, because FeatureUsageEvent.context is on the upload allowlist's forbidden
-    // list and never leaves the machine. Only featureName survives the wire.
     ChartExportedToGoogleSheets,
     ChartExportedToExcel,
 

@@ -13,7 +13,7 @@ public class ImportRescueTests
     {
         var data = new LlmProcessedData { EntityType = SpreadsheetSheetType.Expenses };
         for (int i = 0; i < entities; i++)
-            data.Entities.Add(System.Text.Json.JsonDocument.Parse("{}").RootElement.Clone());
+            data.Entities.Add(JsonDocument.Parse("{}").RootElement.Clone());
         return new RescueSheetResult { SheetName = sheet, ProcessedData = { data } };
     }
 
@@ -81,7 +81,7 @@ public class ImportRescueTests
 
     private static RescueClassification InvokeParse(string response)
     {
-        var method = typeof(ArgoBooks.Core.Services.SpreadsheetAnalysisService).GetMethod(
+        var method = typeof(SpreadsheetAnalysisService).GetMethod(
             "ParseRescueClassification",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
         return (RescueClassification)method.Invoke(null, [response])!;
@@ -187,7 +187,7 @@ public class ImportRescueTests
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
         while (dir != null && !File.Exists(Path.Combine(dir.FullName, "ArgoBooks.sln"))) dir = dir.Parent;
         Assert.NotNull(dir);
-        return dir!.FullName;
+        return dir.FullName;
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public class ImportRescueTests
 
     private static List<MixedRowMarker> InvokeParseOutline(string response)
     {
-        var m = typeof(ArgoBooks.Core.Services.SpreadsheetAnalysisService).GetMethod(
+        var m = typeof(SpreadsheetAnalysisService).GetMethod(
             "ParseMixedOutline",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
         return (List<MixedRowMarker>)m.Invoke(null, [response])!;
@@ -310,7 +310,7 @@ public class ImportRescueTests
     private static Dictionary<(SpreadsheetSheetType, string), List<int>> InvokeBucket(
         int rowCount, List<MixedRowMarker> markers)
     {
-        var m = typeof(ArgoBooks.Core.Services.SpreadsheetAnalysisService).GetMethod(
+        var m = typeof(SpreadsheetAnalysisService).GetMethod(
             "BucketMixedRows",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
         return (Dictionary<(SpreadsheetSheetType, string), List<int>>)m.Invoke(null, [rowCount, markers])!;

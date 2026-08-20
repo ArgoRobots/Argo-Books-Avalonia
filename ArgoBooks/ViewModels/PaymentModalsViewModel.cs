@@ -742,7 +742,7 @@ public partial class PaymentModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Payment.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Payment.OpenDeleteConfirm");
         }
     }
 

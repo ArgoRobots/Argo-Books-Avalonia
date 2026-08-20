@@ -336,7 +336,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
             // Continue the one bar from where the read phase left off (0 for CSV/Excel, 60 for PDF).
             var floor = _categorizeProgressFloor;
             CategorizeProgress = floor;
-            using var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
+            using var ticker = new EstimatedProgressTicker(
                 OperationKind.BankCategorize, pct => CategorizeProgress = floor + pct * (100 - floor) / 100, sizeFeature: pending.Count);
             ticker.Start();
             var suggestions = await Task.Run(() =>
@@ -915,7 +915,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         List<BankStatementLine> extracted;
         // Reading fills the first 60% of the bar; the categorize phase fills the rest, so the whole
         // import reads as one continuous bar.
-        using (var ticker = new ArgoBooks.Services.EstimatedProgressTicker(
+        using (var ticker = new EstimatedProgressTicker(
             OperationKind.BankPdfExtract, pct => CategorizeProgress = pct * 0.6, uploadBytes: bytes.Length))
         {
             ticker.Start();

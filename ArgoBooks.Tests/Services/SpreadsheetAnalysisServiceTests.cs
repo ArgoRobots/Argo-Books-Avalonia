@@ -89,10 +89,10 @@ public class SpreadsheetAnalysisServiceTests
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
 
         Assert.NotNull(method);
-        var result = method!.Invoke(null, [json]) as SpreadsheetAnalysisResult;
+        var result = method.Invoke(null, [json]) as SpreadsheetAnalysisResult;
 
         Assert.NotNull(result);
-        Assert.Single(result!.Sheets);
+        Assert.Single(result.Sheets);
         Assert.Equal("Sheet1", result.Sheets[0].SourceSheetName);
         Assert.Equal(SpreadsheetSheetType.Customers, result.Sheets[0].DetectedType);
         Assert.Equal(0.95, result.Sheets[0].Confidence);
@@ -131,7 +131,7 @@ public class SpreadsheetAnalysisServiceTests
         var result = method!.Invoke(null, [wrappedJson]) as SpreadsheetAnalysisResult;
 
         Assert.NotNull(result);
-        Assert.Single(result!.Sheets);
+        Assert.Single(result.Sheets);
         Assert.Equal("Data", result.Sheets[0].SourceSheetName);
     }
 
@@ -267,6 +267,6 @@ public class SpreadsheetAnalysisServiceTests
         var result = (SpreadsheetAnalysisResult?)method.Invoke(null, [json]);
 
         Assert.NotNull(result);
-        Assert.Contains(result!.Sheets, s => s.SourceSheetName == "Good");
+        Assert.Contains(result.Sheets, s => s.SourceSheetName == "Good");
     }
 }

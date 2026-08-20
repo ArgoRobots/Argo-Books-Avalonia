@@ -17,7 +17,7 @@ public class CategoryRuleServiceTests
         };
         var match = CategoryRuleService.Match(rules, "AMZN MKTP US*2H8KL");
         Assert.NotNull(match);
-        Assert.Equal("CAT-PUR-001", match!.CategoryId);
+        Assert.Equal("CAT-PUR-001", match.CategoryId);
     }
 
     [Fact]
@@ -66,6 +66,6 @@ public class CategoryRuleServiceTests
         // "SHELL" normalizes to "shell": both rules match.
         var match = CategoryRuleService.Match(rules, "SHELL");
         Assert.NotNull(match);
-        Assert.Equal("CAT-EXACT", match!.CategoryId);
+        Assert.Equal("CAT-EXACT", match.CategoryId);
     }
 }

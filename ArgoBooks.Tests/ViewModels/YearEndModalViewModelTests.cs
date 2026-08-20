@@ -310,7 +310,7 @@ public class YearEndModalViewModelTests : ModalViewModelTestBase
     {
         YearEndModalViewModel vm = Filable();
 
-        Core.Models.Payroll.T4Return filing = vm.BuildFilingReturn()!;
+        T4Return filing = vm.BuildFilingReturn()!;
 
         Assert.Equal("pat@example.com", filing.ContactEmail);
 
@@ -335,7 +335,7 @@ public class YearEndModalViewModelTests : ModalViewModelTestBase
         vm.AmendmentNote = "Corrected box 14";
         vm.Rows[0].IsSelected = true;
 
-        Core.Models.Payroll.T4Return filing = vm.BuildFilingReturn()!;
+        T4Return filing = vm.BuildFilingReturn()!;
 
         Assert.Equal(2026, filing.TaxYear);
         Assert.Equal("123456789RP0001", filing.PayrollAccountNumber);

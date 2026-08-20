@@ -1108,7 +1108,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     (result.Message ?? "Failed to remove logo.").Translate());
             }
         }
-        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or System.Threading.Tasks.TaskCanceledException or System.TimeoutException or System.Net.Sockets.SocketException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or System.Net.Sockets.SocketException)
         {
             await App.ShowConnectivityErrorAsync();
         }
@@ -1342,7 +1342,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     (response.Message ?? "Failed to disconnect provider. Please try again.").Translate());
             }
         }
-        catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or System.Threading.Tasks.TaskCanceledException or System.TimeoutException or System.Net.Sockets.SocketException)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or System.Net.Sockets.SocketException)
         {
             await App.ShowConnectivityErrorAsync();
         }
@@ -2277,7 +2277,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>
     /// Phones currently paired with this company for mobile sync.
     /// </summary>
-    public ObservableCollection<ArgoBooks.Core.Models.Tracking.PairedDevice> PairedDevices { get; } = [];
+    public ObservableCollection<Core.Models.Tracking.PairedDevice> PairedDevices { get; } = [];
 
     /// <summary>
     /// True while a pairing token is being requested from the sync server.
@@ -2406,7 +2406,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             App.ErrorLogger?.LogError(
                 new InvalidOperationException("Mobile sync is not initialized (CompanyManager, CompanyData, or SyncService is null)."),
-                ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                ErrorCategory.Api,
                 "Sync.ConnectPhone.NotReady");
             await ShowErrorDialogAsync(
                 "Couldn't Connect a Phone".Translate(),
@@ -2431,8 +2431,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         try
         {
             var mobileSync = companyData.Settings.MobileSync;
-            mobileSync.CompanyUid ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateCompanyUid();
-            mobileSync.SyncKeyBase64 ??= ArgoBooks.Core.Services.Sync.SyncCrypto.GenerateSyncKey();
+            mobileSync.CompanyUid ??= SyncCrypto.GenerateCompanyUid();
+            mobileSync.SyncKeyBase64 ??= SyncCrypto.GenerateSyncKey();
             mobileSync.Enabled = true;
             await companyManager.SaveSettingsOnlyAsync();
 
@@ -2446,7 +2446,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 // Server responded but without a token (unexpected) - log it so the failure isn't invisible.
                 App.ErrorLogger?.LogError(
                     new InvalidOperationException("Sync server returned no pairing_token."),
-                    ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api,
+                    ErrorCategory.Api,
                     "Sync.ConnectPhone.NoToken");
                 QrImage = null;
                 ShortCodeDisplay = string.Empty;
@@ -2469,7 +2469,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             }
 
             var token = pairing.Token;
-            var payload = ArgoBooks.Core.Services.Sync.SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
+            var payload = SyncCrypto.BuildQrPayload(token, mobileSync.CompanyUid, companyLabel, mobileSync.SyncKeyBase64);
             QrImage = new QrImageService().RenderBitmap(payload);
             ShortCodeDisplay = PairingCode.Format(pairing.ShortCode);
             IsShortCodeRevealed = false;
@@ -2487,11 +2487,11 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             // Log to telemetry and tell the user, instead of failing silently.
-            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.ConnectPhone");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Sync.ConnectPhone");
             QrImage = null;
             ShortCodeDisplay = string.Empty;
 
-            var message = ex is System.Net.Http.HttpRequestException
+            var message = ex is HttpRequestException
                 ? "We couldn't reach the sync server. Check your internet connection and try again.".Translate()
                 : "Something went wrong while connecting a phone. Please try again.".Translate();
             await ShowErrorDialogAsync("Couldn't Connect a Phone".Translate(), message);
@@ -2527,7 +2527,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 {
                     status = await syncService.GetPairingStatusAsync(pairingToken, ct);
                 }
-                catch (System.Net.Http.HttpRequestException) when (!ct.IsCancellationRequested)
+                catch (HttpRequestException) when (!ct.IsCancellationRequested)
                 {
                     // Transient network hiccup while polling; try again on the next tick.
                     continue;
@@ -2578,7 +2578,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, ArgoBooks.Core.Models.Telemetry.ErrorCategory.Api, "Sync.PollPairing");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Sync.PollPairing");
         }
     }
 
@@ -2599,7 +2599,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             PairedDevices.Clear();
             foreach (var d in list)
             {
-                PairedDevices.Add(new ArgoBooks.Core.Models.Tracking.PairedDevice
+                PairedDevices.Add(new Core.Models.Tracking.PairedDevice
                 {
                     Id = $"PDV-{d.Id}",
                     ServerDeviceId = d.Id,
@@ -2630,7 +2630,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// Revokes a paired phone's access, then refreshes the device list.
     /// </summary>
     [RelayCommand]
-    private async Task RevokeDeviceAsync(ArgoBooks.Core.Models.Tracking.PairedDevice? device)
+    private async Task RevokeDeviceAsync(Core.Models.Tracking.PairedDevice? device)
     {
         if (device == null) return;
 
@@ -3345,7 +3345,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to open telemetry folder");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to open telemetry folder");
             await ShowErrorDialogAsync("Error".Translate(), "Failed to open folder: {0}".TranslateFormat(ex.Message));
         }
     }
@@ -3384,7 +3384,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Failed to delete telemetry data");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to delete telemetry data");
             await ShowErrorDialogAsync("Error".Translate(), "Failed to delete telemetry data: {0}".TranslateFormat(ex.Message));
         }
         finally

@@ -164,7 +164,7 @@ public class BankStatementImportService(IErrorLogger? errorLogger = null)
     /// mapped headers yield a Date plus a money column, so metadata/preamble rows above the real
     /// header don't get mistaken for it. Falls back to the generic first-non-empty-row heuristic.
     /// </summary>
-    private static int FindExcelHeaderRow(ClosedXML.Excel.IXLWorksheet worksheet, Action<List<string>> normalize)
+    private static int FindExcelHeaderRow(IXLWorksheet worksheet, Action<List<string>> normalize)
     {
         var lastRow = Math.Min(worksheet.LastRowUsed()?.RowNumber() ?? 1, 10);
         for (int rowNum = 1; rowNum <= lastRow; rowNum++)

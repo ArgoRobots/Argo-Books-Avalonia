@@ -132,7 +132,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             // An update check is an HTTP fetch of the appcast, so a failure is almost
             // always a connectivity problem. Show a clear message instead of the raw
             // exception text (the probe also covers the server-down case).
-            LastError = await Core.Services.ConnectivityMessage.ResolveAsync();
+            LastError = await ConnectivityMessage.ResolveAsync();
             SetState(UpdateState.Error);
             return null;
         }
@@ -241,7 +241,7 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
             var isNetwork = ex is HttpRequestException or TaskCanceledException
                 || ex.InnerException is HttpRequestException or System.Net.Sockets.SocketException;
             LastError = isNetwork
-                ? await Core.Services.ConnectivityMessage.ResolveAsync()
+                ? await ConnectivityMessage.ResolveAsync()
                 : ex.Message;
             SetState(UpdateState.Error);
             throw;

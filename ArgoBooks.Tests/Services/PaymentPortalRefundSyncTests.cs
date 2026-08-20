@@ -172,7 +172,7 @@ public class PaymentPortalRefundSyncTests
 
         var refundEntry = invoice.History.SingleOrDefault(h => h.Action == "Refund Issued");
         Assert.NotNull(refundEntry);
-        Assert.Contains("60", refundEntry!.Details);
+        Assert.Contains("60", refundEntry.Details);
         Assert.Contains("Wrong color", refundEntry.Details);
     }
 

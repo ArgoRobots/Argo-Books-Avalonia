@@ -387,7 +387,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
 
     public ReceiptsPageViewModel()
     {
-        Helpers.ColumnVisibilityHelper.SyncToManager(this);
+        ColumnVisibilityHelper.SyncToManager(this);
         LoadReceipts();
         CheckScannerConfiguration();
 

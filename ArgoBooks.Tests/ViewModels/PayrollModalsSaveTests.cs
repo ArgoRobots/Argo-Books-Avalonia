@@ -474,7 +474,7 @@ public class PayrollModalsSaveTests : ModalViewModelTestBase
 
     private sealed class NoEditionsRateService : ArgoBooks.Core.Services.PayrollRateService
     {
-        public override ArgoBooks.Core.Models.Payroll.PayrollRateTable? GetForDate(DateTime payDate) => null;
+        public override PayrollRateTable? GetForDate(DateTime payDate) => null;
     }
 
     #endregion

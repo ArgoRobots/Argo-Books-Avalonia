@@ -1507,7 +1507,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
             // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
-            await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(transactionDate);
+            await CurrencyService.WarmRateForDateAsync(transactionDate);
             var isRevenue = item.IsRevenueOverride ?? false;
             var notes = item.Notes ?? string.Empty;
             var paymentMethod = scanResult.PaymentMethod ?? "Cash";
@@ -2081,7 +2081,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             // Image is already preprocessed in OpenScanModalWithDataAsync, so skip it here.
             var imageData = _currentImageData;
             var fileName = _currentFileName;
-            using var scanTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+            using var scanTicker = new EstimatedProgressTicker(
                 OperationKind.ReceiptScan, pct => ScanProgress = pct,
                 sizeFeature: imageData.Length, uploadBytes: imageData.Length);
             scanTicker.Start();
@@ -2220,7 +2220,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "PopulateScanResults");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "PopulateScanResults");
         }
     }
 
@@ -2444,7 +2444,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Fetch the receipt-date rate up front (like manual entry) so the saved row shows its amount
         // immediately instead of a momentary "Pending".
-        await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now);
+        await CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now);
 
         if (IsRevenue)
         {
@@ -2480,9 +2480,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// marked pending and queued for the self-heal, which fills the USD values once the rate is available.
     /// </summary>
     private static void ApplyDisplayCurrency(
-        Core.Data.CompanyData companyData, Core.Models.Transactions.Transaction txn, string transactionType)
+        CompanyData companyData, Transaction txn, string transactionType)
     {
-        var currency = ArgoBooks.Services.CurrencyService.CurrentCurrencyCode;
+        var currency = CurrencyService.CurrentCurrencyCode;
         txn.OriginalCurrency = currency;
 
         if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
@@ -2497,7 +2497,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
         }
 
-        var rates = Core.Services.ExchangeRateService.Instance;
+        var rates = ExchangeRateService.Instance;
         if (rates != null && rates.TryConvertToUsdBase(txn.Total, currency, txn.Date, out var totalUsd))
         {
             // Convert every amount, not just the total: UnitPriceUSD/DiscountUSD/etc. feed USD-based
@@ -2521,7 +2521,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Exact-date rate not cached: the display is already correct (original currency == display
         // currency); defer all the USD amounts to the self-heal queue, exactly like the normal save.
         txn.IsPendingConversion = true;
-        var entry = new Core.Models.Common.PendingConversion
+        var entry = new PendingConversion
         {
             TransactionId = txn.Id,
             TransactionType = transactionType,
@@ -2535,7 +2535,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             UnitPrice = txn.UnitPrice
         };
         companyData.PendingConversions.Add(entry);
-        _ = Core.Services.PendingConversionService.Instance?.AddPendingConversionAsync(entry);
+        _ = PendingConversionService.Instance?.AddPendingConversionAsync(entry);
     }
 
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
@@ -2954,7 +2954,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Api, "AI suggestion failed");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "AI suggestion failed");
             TryBasicSupplierMatch(result.SupplierName);
         }
         finally

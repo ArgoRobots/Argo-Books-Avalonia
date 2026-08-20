@@ -42,7 +42,7 @@ public class TelemetryManager : ITelemetryManager
     private bool _isInitialized;
 
     private SessionSentinel? _sentinel;
-    private System.Threading.Timer? _heartbeatTimer;
+    private Timer? _heartbeatTimer;
     private int _heartbeatTicks;
     private int _uploadInFlight;
 
@@ -205,7 +205,7 @@ public class TelemetryManager : ITelemetryManager
     private void StartHeartbeat()
     {
         var period = TimeSpan.FromSeconds(HeartbeatIntervalSeconds);
-        _heartbeatTimer = new System.Threading.Timer(OnHeartbeat, null, period, period);
+        _heartbeatTimer = new Timer(OnHeartbeat, null, period, period);
     }
 
     private void StopHeartbeat()

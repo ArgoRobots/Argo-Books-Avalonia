@@ -20,7 +20,7 @@ public class SyncCryptoTests
     public void Decrypt_with_wrong_key_fails()
     {
         var payload = SyncCrypto.Encrypt(Encoding.UTF8.GetBytes("x"), SyncCrypto.GenerateSyncKey());
-        Assert.ThrowsAny<System.Exception>(() => SyncCrypto.Decrypt(payload, SyncCrypto.GenerateSyncKey()));
+        Assert.ThrowsAny<Exception>(() => SyncCrypto.Decrypt(payload, SyncCrypto.GenerateSyncKey()));
     }
 
     [Fact]

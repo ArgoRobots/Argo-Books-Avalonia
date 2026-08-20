@@ -34,8 +34,8 @@ public static class ColumnVisibilityHelper
             var name = prop.Name;
             // Match the Show{Column}Column convention; the middle is the manager's column key.
             if (name.Length <= 10 ||
-                !name.StartsWith("Show", System.StringComparison.Ordinal) ||
-                !name.EndsWith("Column", System.StringComparison.Ordinal))
+                !name.StartsWith("Show", StringComparison.Ordinal) ||
+                !name.EndsWith("Column", StringComparison.Ordinal))
                 continue;
 
             if (prop.GetValue(viewModel) is bool isVisible)

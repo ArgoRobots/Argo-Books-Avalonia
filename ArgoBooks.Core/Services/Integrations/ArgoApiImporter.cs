@@ -71,8 +71,8 @@ public class ArgoApiImporter
         Func<CompanyData, ArgoExternalRef, string?> byNaturalKey)
     {
         if (string.IsNullOrEmpty(apiId)) return null;
-        if (inBatch.TryGetValue(apiId!, out var local)) return local;
-        if (!_external.TryGetValue(apiId!, out var ext)) return null;
+        if (inBatch.TryGetValue(apiId, out var local)) return local;
+        if (!_external.TryGetValue(apiId, out var ext)) return null;
         if (!string.IsNullOrEmpty(ext.LocalRef)) return ext.LocalRef;
         return byNaturalKey(data, ext);
     }

@@ -153,12 +153,12 @@ public partial class App
                     // CheckAndSendNotifications below is gated separately.
                     if (CompanyManager.CompanyData != null && !CompanyManager.IsSampleCompany)
                     {
-                        var generatedRecurring = ArgoBooks.Core.Services.RecurringInvoiceService
+                        var generatedRecurring = RecurringInvoiceService
                             .GenerateDueInvoices(CompanyManager.CompanyData, DateTime.UtcNow);
                         if (generatedRecurring.Count > 0)
                         {
                             await CompanyManager.SaveCompanyAsync();
-                            ArgoBooks.Core.Services.RecurringInvoiceService.RaiseGenerated(generatedRecurring.Count);
+                            RecurringInvoiceService.RaiseGenerated(generatedRecurring.Count);
                             var recurringCount = generatedRecurring.Count;
                             AddNotification(
                                 "Recurring invoices",

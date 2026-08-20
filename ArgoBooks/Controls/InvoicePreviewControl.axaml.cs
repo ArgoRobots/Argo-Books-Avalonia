@@ -780,7 +780,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             }
             else if (messageType == "addLine")
             {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => AddLineRequested?.Invoke(this, System.EventArgs.Empty));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => AddLineRequested?.Invoke(this, EventArgs.Empty));
             }
             else if (messageType == "removeLine")
             {
@@ -800,7 +800,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             }
             else if (messageType == "createCustomer")
             {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => CreateCustomerRequested?.Invoke(this, System.EventArgs.Empty));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => CreateCustomerRequested?.Invoke(this, EventArgs.Empty));
             }
             else if (messageType == "dateEdit")
             {
@@ -811,11 +811,11 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             }
             else if (messageType == "pickLogo")
             {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => PickLogoRequested?.Invoke(this, System.EventArgs.Empty));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => PickLogoRequested?.Invoke(this, EventArgs.Empty));
             }
             else if (messageType == "deleteLogo")
             {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() => DeleteLogoRequested?.Invoke(this, System.EventArgs.Empty));
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => DeleteLogoRequested?.Invoke(this, EventArgs.Empty));
             }
             else if (messageType == "totalsToggle")
             {
@@ -1283,7 +1283,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     /// user just typed (still only in the live DOM, not yet posted by the debounced input handler)
     /// isn't lost when the paper re-renders.
     /// </summary>
-    public async System.Threading.Tasks.Task CommitPendingEditsAsync()
+    public async Task CommitPendingEditsAsync()
     {
         if (_webView == null || !_webViewReady || !IsEditable)
             return;
@@ -1379,7 +1379,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
 /// A single edit made directly on the invoice paper. <see cref="Index"/> is the line-item index for
 /// per-row fields (description/quantity/rate), or null for document-level fields (e.g. notes).
 /// </summary>
-public sealed class InvoiceEditEventArgs(string field, int? index, string value) : System.EventArgs
+public sealed class InvoiceEditEventArgs(string field, int? index, string value) : EventArgs
 {
     public string Field { get; } = field;
     public int? Index { get; } = index;
@@ -1387,7 +1387,7 @@ public sealed class InvoiceEditEventArgs(string field, int? index, string value)
 }
 
 /// <summary>A product chosen from a line item's dropdown on the invoice paper.</summary>
-public sealed class ProductPickEventArgs(int index, string productId) : System.EventArgs
+public sealed class ProductPickEventArgs(int index, string productId) : EventArgs
 {
     public int Index { get; } = index;
     public string ProductId { get; } = productId;

@@ -68,7 +68,7 @@ public class CapturedTransactionJsonTests
         var back = JsonSerializer.Deserialize<CapturedTransaction>(json, options);
 
         Assert.NotNull(back);
-        Assert.Equal(original.Type, back!.Type);
+        Assert.Equal(original.Type, back.Type);
         Assert.Equal(original.SupplierOrCustomer, back.SupplierOrCustomer);
         Assert.Equal(original.Date, back.Date);
         Assert.Equal(original.Total, back.Total);
@@ -107,7 +107,7 @@ public class CapturedTransactionJsonTests
         var tx = JsonSerializer.Deserialize<CapturedTransaction>(json, options);
 
         Assert.NotNull(tx);
-        Assert.Equal(CapturedTransactionType.Revenue, tx!.Type);
+        Assert.Equal(CapturedTransactionType.Revenue, tx.Type);
         Assert.Equal("Acme Corp", tx.SupplierOrCustomer);
         Assert.Equal(220.00m, tx.Total);
         Assert.Equal("22222222-2222-2222-2222-222222222222", tx.ScanUid);

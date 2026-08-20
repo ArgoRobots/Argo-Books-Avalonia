@@ -147,7 +147,7 @@ public class SpreadsheetLayoutServiceTests
         var descriptor = await service.GetLayoutDescriptorAsync(grid);
 
         Assert.NotNull(descriptor);
-        var region = Assert.Single(descriptor!.Tables);
+        var region = Assert.Single(descriptor.Tables);
         Assert.Equal(4, region.FirstDataRow);
         Assert.Equal(6, region.LastDataRow);
         Assert.Equal(0, region.FirstCol);
@@ -192,7 +192,7 @@ public class SpreadsheetLayoutServiceTests
         var descriptor = await service.GetLayoutDescriptorAsync(grid);
 
         Assert.NotNull(descriptor);
-        var region = Assert.Single(descriptor!.Tables);
+        var region = Assert.Single(descriptor.Tables);
         Assert.Equal("wide", region.Orientation);
         Assert.NotNull(region.KeyColumns);
         Assert.Equal(new[] { 0 }, region.KeyColumns!);

@@ -106,7 +106,7 @@ public class ArgoApiSyncService
         var wanted = new HashSet<string>(StringComparer.Ordinal);
         void Want(string? id)
         {
-            if (!string.IsNullOrEmpty(id) && !known.Contains(id!)) wanted.Add(id!);
+            if (!string.IsNullOrEmpty(id) && !known.Contains(id)) wanted.Add(id);
         }
 
         foreach (var p in preview.Products) Want(p.Category);
