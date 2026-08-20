@@ -422,6 +422,21 @@ public partial class UpgradeModalViewModel : ViewModelBase
         IsVerificationSuccess = true;
     }
 
+    /// <summary>
+    /// Dismisses the email request without sending one. The licence is already active by
+    /// the time this step appears, so declining costs the user nothing and must not look
+    /// like it might. Goes to the success panel rather than closing outright, so someone
+    /// who skips still gets told the activation worked.
+    /// </summary>
+    [RelayCommand]
+    private void SkipEmailCapture()
+    {
+        CustomerEmail = string.Empty;
+        EmailError = null;
+        IsEmailCaptureStep = false;
+        IsVerificationSuccess = true;
+    }
+
     private async Task CaptureEmailAsync(string premiumKey, string email)
     {
         var deviceId = App.LicenseService?.GetDeviceId() ?? "";
@@ -479,6 +494,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         // Don't allow closing during success animation - user must click Continue
         if (IsVerificationSuccess)
+            return;
+
+        // The email step comes after the licence is already active, so a click on the
+        // backdrop must not be treated as abandoning the key entry. LicenseKey is still
+        // populated at this point, so without this guard the click fell through to the
+        // discard-changes prompt and asked the user to confirm throwing away a purchase
+        // they had already completed. Dismissing here is the X button's job.
+        if (IsEmailCaptureStep)
             return;
 
         // If no data was entered, just close
