@@ -7,6 +7,8 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using System.ComponentModel;
+using System.Linq;
+using Avalonia.VisualTree;
 
 namespace ArgoBooks.Views;
 
@@ -76,6 +78,67 @@ public partial class MainWindow : Window
         WindowState = WindowState.Minimized;
     }
 
+    /// <summary>
+    /// What to return to when leaving fullscreen. Maximized rather than Normal by
+    /// default: dropping out of fullscreen into a small floating window reads as the
+    /// app having resized itself.
+    /// </summary>
+    private WindowState _preFullScreenState = WindowState.Maximized;
+
+    /// <summary>
+    /// F11 toggles fullscreen; Escape leaves it, but only when nothing else wanted the
+    /// key first.
+    ///
+    /// The window draws its own chrome, so fullscreen is the only way to get the app
+    /// edge to edge with nothing above it.
+    ///
+    /// Escape is shared with every modal and with the expanded-chart overlay, which both
+    /// close on it. Two guards keep this from stealing it: the event is ignored once
+    /// something has marked it handled, and any open <see cref="ModalOverlay"/> blocks it
+    /// outright. The second guard matters because a modal only sees the key while it
+    /// holds focus, so focus sitting elsewhere would otherwise let Escape drop the
+    /// window out of fullscreen with a dialog still on screen.
+    /// </summary>
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.Key == Key.F11)
+        {
+            ToggleFullScreen();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.Escape
+                 && !e.Handled
+                 && WindowState == WindowState.FullScreen
+                 && !IsAnyModalOpen())
+        {
+            ToggleFullScreen();
+            e.Handled = true;
+        }
+
+        base.OnKeyDown(e);
+    }
+
+    private bool IsAnyModalOpen() =>
+        this.GetVisualDescendants().OfType<ModalOverlay>().Any(m => m.IsOpen);
+
+    private void ToggleFullScreen()
+    {
+        if (WindowState == WindowState.FullScreen)
+        {
+            WindowState = _preFullScreenState;
+        }
+        else
+        {
+            // Minimized is never worth returning to, so it falls back to Maximized.
+            _preFullScreenState = WindowState == WindowState.Minimized
+                ? WindowState.Maximized
+                : WindowState;
+            WindowState = WindowState.FullScreen;
+        }
+
+        UpdateMaximizeIcon();
+    }
+
     private void MaximizeButton_Click(object? sender, RoutedEventArgs e)
     {
         WindowState = WindowState == WindowState.Maximized
@@ -90,9 +153,12 @@ public partial class MainWindow : Window
         var restoreIcon = this.FindControl<Canvas>("RestoreIcon");
         if (maximizeRect == null || restoreIcon == null) return;
 
-        var isMaximized = WindowState == WindowState.Maximized;
-        maximizeRect.IsVisible = !isMaximized;
-        restoreIcon.IsVisible = isMaximized;
+        // FullScreen counts as filling the screen, so the chrome shows "restore" there
+        // too. Clicking it then lands on Maximized, which is a sensible way out for
+        // anyone who got into fullscreen and does not know the shortcut.
+        var fillsScreen = WindowState is WindowState.Maximized or WindowState.FullScreen;
+        maximizeRect.IsVisible = !fillsScreen;
+        restoreIcon.IsVisible = fillsScreen;
     }
 
     private void CloseButton_Click(object? sender, RoutedEventArgs e)
