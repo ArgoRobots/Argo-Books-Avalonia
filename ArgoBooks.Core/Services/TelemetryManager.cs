@@ -285,7 +285,6 @@ public class TelemetryManager : ITelemetryManager
         string? country,
         string? currency,
         string? language,
-        bool isSample,
         CancellationToken cancellationToken = default)
     {
         try
@@ -299,7 +298,7 @@ public class TelemetryManager : ITelemetryManager
             // in the settings screen whose exit re-fires this. Keyed without it we would
             // only ever record the language they opened with, which is the opposite of the
             // question the field exists to answer.
-            var key = $"{companyName}|{country}|{currency}|{language}|{isSample}";
+            var key = $"{companyName}|{country}|{currency}|{language}";
             lock (_profileGate)
             {
                 if (!_reportedCompanyProfiles.Add(key))
@@ -315,7 +314,6 @@ public class TelemetryManager : ITelemetryManager
             profileEvent.Country = country;
             profileEvent.Currency = currency;
             profileEvent.Language = language;
-            profileEvent.IsSample = isSample;
             await _storageService.RecordEventAsync(profileEvent, cancellationToken);
         }
         catch (Exception ex)

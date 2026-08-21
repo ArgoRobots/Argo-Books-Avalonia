@@ -76,14 +76,21 @@ public partial class App
                 // Hooked here rather than at the create-company screen so it also covers
                 // companies made before this shipped, and companies opened on a second
                 // machine. TrackCompanyProfileAsync ignores repeats within a session.
-                _ = TelemetryManager?.TrackCompanyProfileAsync(
-                    companySettings.Company.Name,
-                    companySettings.Company.BusinessType,
-                    companySettings.Company.Industry,
-                    companySettings.Company.Country,
-                    companySettings.Localization.Currency,
-                    companySettings.Localization.Language,
-                    CompanyManager.IsSampleCompany);
+                //
+                // The sample company is skipped outright: its name, industry, country and
+                // currency ship with the demo file and are identical on every install, so
+                // reporting them says nothing about this user, and every reader downstream
+                // would otherwise have to know to throw them away.
+                if (!CompanyManager.IsSampleCompany)
+                {
+                    _ = TelemetryManager?.TrackCompanyProfileAsync(
+                        companySettings.Company.Name,
+                        companySettings.Company.BusinessType,
+                        companySettings.Company.Industry,
+                        companySettings.Company.Country,
+                        companySettings.Localization.Currency,
+                        companySettings.Localization.Language);
+                }
 
                 var language = companySettings.Localization.Language;
                 if (!string.IsNullOrEmpty(language))

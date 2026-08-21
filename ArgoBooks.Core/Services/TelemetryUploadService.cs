@@ -319,7 +319,6 @@ public class TelemetryUploadService : ITelemetryUploadService
             country = profile.Country,
             currency = profile.Currency,
             language = profile.Language,
-            isSample = profile.IsSample,
         },
         StartupEvent startup => new
         {
