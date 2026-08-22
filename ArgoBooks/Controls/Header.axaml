@@ -157,7 +157,7 @@
                 <!-- Upgrade Button (blue circle with up arrow) - hidden when user has Premium -->
                 <Button Classes="header-icon"
                         Command="{Binding OpenUpgradeCommand}"
-                        ToolTip.Tip="{loc:Loc Upgrades}"
+                        ToolTip.Tip="{loc:Loc Upgrade}"
                         IsVisible="{Binding ShowUpgrade}">
                     <Panel Width="24" Height="24">
                         <Ellipse Fill="{DynamicResource PrimaryBrush}" Width="24" Height="24" />
