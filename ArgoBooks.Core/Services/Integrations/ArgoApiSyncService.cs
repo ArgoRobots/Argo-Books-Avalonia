@@ -179,9 +179,9 @@ public class ArgoApiSyncService
         // cache does not already hold shows "Pending" in place of its amount and
         // never recovers, because nothing refetches rates for rows already saved.
         await IntegrationRates.EnsureAsync(
-            preview.Expenses.Select(e => ArgoApiImporter.ParseDate(e.OccurredOn))
-                .Concat(preview.Revenue.Select(r => ArgoApiImporter.ParseDate(r.OccurredOn)))
-                .Concat(preview.Refunds.Select(r => ArgoApiImporter.ParseDate(r.OccurredOn))),
+            preview.Expenses.Select(e => (ArgoApiImporter.ParseDate(e.OccurredOn), e.Currency))
+                .Concat(preview.Revenue.Select(r => (ArgoApiImporter.ParseDate(r.OccurredOn), r.Currency)))
+                .Concat(preview.Refunds.Select(r => (ArgoApiImporter.ParseDate(r.OccurredOn), r.Currency))),
             data.Settings.Localization.Currency,
             ct: ct);
 

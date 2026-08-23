@@ -69,10 +69,7 @@ public class StripeDetailImporter
                     }
                 ]
             };
-            rev.TotalUSD = rev.Total;
-            rev.UnitPriceUSD = rev.UnitPrice;
-            rev.TaxAmountUSD = rev.TaxAmount;
-            rev.DiscountUSD = rev.Discount;
+            IntegrationRates.ApplyUsdAmounts(rev, currency, data);
             data.Revenues.Add(rev);
             revs++;
 
@@ -94,8 +91,7 @@ public class StripeDetailImporter
                     Notes = $"Processing fee for Stripe sale {ch.ChargeId}",
                     OriginalCurrency = currency
                 };
-                fee.TotalUSD = fee.Total;
-                fee.UnitPriceUSD = fee.UnitPrice;
+                IntegrationRates.ApplyUsdAmounts(fee, currency, data);
                 data.Expenses.Add(fee);
                 exps++;
             }
@@ -202,8 +198,7 @@ public class StripeDetailImporter
                     Notes = "Imported from Stripe",
                     OriginalCurrency = currency
                 };
-                exp.TotalUSD = exp.Total;
-                exp.UnitPriceUSD = exp.UnitPrice;
+                IntegrationRates.ApplyUsdAmounts(exp, currency, data);
                 data.Expenses.Add(exp);
                 made++;
             }

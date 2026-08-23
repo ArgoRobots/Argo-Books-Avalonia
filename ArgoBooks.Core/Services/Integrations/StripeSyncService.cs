@@ -69,7 +69,8 @@ public class StripeSyncService
         CompanyData data, StripeSyncPreview preview, CancellationToken ct = default)
     {
         await IntegrationRates.EnsureAsync(
-            preview.Charges.Select(c => DateTimeOffset.FromUnixTimeSeconds(c.CreatedUnix).LocalDateTime),
+            preview.Charges.Select(c =>
+                (DateTimeOffset.FromUnixTimeSeconds(c.CreatedUnix).LocalDateTime, c.Currency)),
             data.Settings.Localization.Currency,
             ct: ct);
 

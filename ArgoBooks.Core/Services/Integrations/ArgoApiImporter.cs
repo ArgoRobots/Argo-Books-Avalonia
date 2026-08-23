@@ -238,9 +238,7 @@ public class ArgoApiImporter
             OriginalCurrency = currency,
             LineItems = BuildLineItems(data, api.LineItems, currency, api.Description, subtotal, tax)
         };
-        expense.TotalUSD = expense.Total;
-        expense.UnitPriceUSD = expense.UnitPrice;
-        expense.TaxAmountUSD = expense.TaxAmount;
+        IntegrationRates.ApplyUsdAmounts(expense, currency, data);
 
         data.Expenses.Add(expense);
         creation.Expenses.Add(expense);
@@ -278,10 +276,7 @@ public class ArgoApiImporter
             PaymentStatus = RevenuePaymentStatus.Paid,
             LineItems = BuildLineItems(data, api.LineItems, currency, api.Description, subtotal, tax)
         };
-        revenue.TotalUSD = revenue.Total;
-        revenue.UnitPriceUSD = revenue.UnitPrice;
-        revenue.TaxAmountUSD = revenue.TaxAmount;
-        revenue.DiscountUSD = revenue.Discount;
+        IntegrationRates.ApplyUsdAmounts(revenue, currency, data);
 
         data.Revenues.Add(revenue);
         creation.Revenues.Add(revenue);
@@ -307,8 +302,7 @@ public class ArgoApiImporter
                 Notes = $"Processing fee for {revenue.Id} (Argo Books API {api.Id})",
                 OriginalCurrency = currency
             };
-            feeExpense.TotalUSD = feeExpense.Total;
-            feeExpense.UnitPriceUSD = feeExpense.UnitPrice;
+            IntegrationRates.ApplyUsdAmounts(feeExpense, currency, data);
             data.Expenses.Add(feeExpense);
             creation.Expenses.Add(feeExpense);
         }
@@ -347,8 +341,7 @@ public class ArgoApiImporter
                 Notes = $"Refund imported from the Argo Books API for {api.Revenue}, with no matching sale in this company.",
                 OriginalCurrency = currency
             };
-            expense.TotalUSD = expense.Total;
-            expense.UnitPriceUSD = expense.UnitPrice;
+            IntegrationRates.ApplyUsdAmounts(expense, currency, data);
             data.Expenses.Add(expense);
             creation.Expenses.Add(expense);
             Claim(creation, api.Id, expense.Id);
