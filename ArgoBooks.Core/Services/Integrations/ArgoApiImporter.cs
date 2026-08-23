@@ -472,7 +472,13 @@ public class ArgoApiImporter
     /// server validated the format, so a failure here means something unexpected,
     /// and losing the whole import over one date would be the worse outcome.
     /// </summary>
-    private static DateTime ParseDate(string value)
+    /// <summary>
+    /// Internal so the sync service can preload exchange rates for exactly the
+    /// dates this will store. Two separate parsers would eventually disagree,
+    /// and the rows that fell through the gap would be the ones showing
+    /// "Pending" instead of an amount.
+    /// </summary>
+    internal static DateTime ParseDate(string value)
         => DateTime.TryParseExact(value, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var d)
             ? d
             : DateTime.Today;

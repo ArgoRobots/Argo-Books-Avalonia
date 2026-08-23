@@ -59,9 +59,30 @@ public class StripeSyncService
     }
 
     /// <summary>
+    /// Imports the preview, first caching the exchange rates for the dates it is about to write.
+    ///
+    /// Without that step every row landing on a day the rate cache does not already hold shows
+    /// "Pending" in place of its amount, and stays that way, because nothing refetches rates for
+    /// rows already in the books. Fetching is best-effort; see <see cref="IntegrationRates"/>.
+    /// </summary>
+    public async Task<StripeImportCreation> ImportPreviewAsync(
+        CompanyData data, StripeSyncPreview preview, CancellationToken ct = default)
+    {
+        await IntegrationRates.EnsureAsync(
+            preview.Charges.Select(c => DateTimeOffset.FromUnixTimeSeconds(c.CreatedUnix).LocalDateTime),
+            data.Settings.Localization.Currency,
+            ct: ct);
+
+        return ImportPreview(data, preview);
+    }
+
+    /// <summary>
     /// Imports the preview and returns a record of everything created, so the caller can register
     /// a single undo/redo for the whole sync. Import only appends, so the created items are the
     /// tail of each collection past the pre-import counts.
+    ///
+    /// Prefer <see cref="ImportPreviewAsync"/>: this overload writes rows without making sure the
+    /// rates to display them exist.
     /// </summary>
     public StripeImportCreation ImportPreview(CompanyData data, StripeSyncPreview preview)
     {

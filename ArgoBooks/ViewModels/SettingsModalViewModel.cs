@@ -1726,7 +1726,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             }) == ConfirmationResult.Primary;
             if (!confirmed) return;
 
-            var creation = svc.ImportPreview(data, preview);
+            var creation = await svc.ImportPreviewAsync(data, preview);
             if (creation.AnyCreated)
                 App.UndoRedoManager.RecordAction(new DelegateAction(
                     "Import from Stripe".Translate(),
