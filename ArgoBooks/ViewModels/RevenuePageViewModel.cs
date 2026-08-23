@@ -310,6 +310,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
 
         _ = CheckStripePendingAsync();
+        _ = CheckArgoApiPendingAsync();
     }
 
     private void OnRevenueSaved(object? sender, EventArgs e)
@@ -867,6 +868,144 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     [RelayCommand]
     private void DismissStripeBanner() => StripeBannerVisible = false;
+
+    #endregion
+
+    #region Argo Books API sync banner
+
+    [ObservableProperty]
+    private bool _argoApiBannerVisible;
+
+    [ObservableProperty]
+    private int _argoApiPendingCount;
+
+    public string ArgoApiBannerText =>
+        "Argo Books API: {0} items are waiting to be imported.".TranslateFormat(ArgoApiPendingCount);
+
+    partial void OnArgoApiPendingCountChanged(int value) => OnPropertyChanged(nameof(ArgoApiBannerText));
+
+    private int _lastNotifiedArgoApiPending;
+
+    /// <summary>
+    /// Checks whether a connected app has sent anything that is still waiting,
+    /// and shows the Revenue-page banner if so. Called on every navigation here,
+    /// which matters more for this than it does for Stripe: a developer pushes on
+    /// their own schedule, so without a banner nothing would tell the merchant
+    /// anything had arrived at all.
+    ///
+    /// GET /v1/account returns per-type counts in a single call, so this is a much
+    /// lighter check than the Stripe one, which fetches every charge to count them.
+    ///
+    /// Errors are swallowed. A server the merchant does not control being briefly
+    /// unreachable must never stop the Revenue page loading.
+    /// </summary>
+    private async Task CheckArgoApiPendingAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var api = data?.Settings.Integrations.ArgoApi;
+        if (data == null || api == null || !api.Enabled
+            || string.IsNullOrWhiteSpace(api.DesktopKey) || App.SharedHttpClient == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            var account = await client.GetAccountAsync(api.DesktopKey!);
+            // Pending is absent rather than empty if the server ever omits it.
+            var count = account?.Pending?.Values.Sum() ?? 0;
+
+            ArgoApiPendingCount = count;
+            ArgoApiBannerVisible = count > 0;
+
+            if (count > 0 && count != _lastNotifiedArgoApiPending)
+            {
+                _lastNotifiedArgoApiPending = count;
+                App.AddNotification(
+                    "Argo Books API".Translate(),
+                    "New data is waiting to be imported.".Translate(),
+                    NotificationType.Info,
+                    () => App.NavigationService?.NavigateTo(PageNames.Revenue));
+            }
+            else if (count == 0)
+            {
+                _lastNotifiedArgoApiPending = 0;
+            }
+        }
+        catch
+        {
+            // Unreachable or the key was revoked: leave the banner hidden rather
+            // than raise connectivity errors on a page that is not about that.
+        }
+    }
+
+    [RelayCommand]
+    private async Task SyncArgoApiFromBannerAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var api = data?.Settings.Integrations.ArgoApi;
+        if (data == null || api == null || !api.Enabled || App.SharedHttpClient == null) return;
+
+        try
+        {
+            var svc = new ArgoApiSyncService(new ArgoApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            if (!preview.HasActivity)
+            {
+                App.AddNotification("Argo Books API".Translate(), "You're already up to date.".Translate());
+                await CheckArgoApiPendingAsync();
+                return;
+            }
+
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from the Argo Books API".Translate(),
+                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?"
+                    .TranslateFormat(
+                        preview.TotalObjects,
+                        preview.TotalRevenue.ToString("C2"),
+                        preview.TotalExpenses.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            var creation = await svc.ImportPreviewAsync(data, preview);
+            if (creation.AnyCreated)
+            {
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from the Argo Books API".Translate(),
+                    () =>
+                    {
+                        creation.Undo(data);
+                        // Also hand the objects back on the server, or the queue
+                        // keeps reporting as imported what is no longer in the books.
+                        if (creation.BatchId != null)
+                            _ = svc.TryReleaseBatchAsync(data, creation.BatchId);
+                        App.CompanyManager?.MarkAsChanged();
+                        LoadRevenue();
+                    },
+                    () => { creation.Redo(data); App.CompanyManager?.MarkAsChanged(); LoadRevenue(); }));
+            }
+
+            App.CompanyManager?.MarkAsChanged();
+            LoadRevenue();
+            App.AddNotification("Argo Books API".Translate(),
+                "Imported {0} sales and {1} expense entries.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
+                NotificationType.Success);
+
+            await CheckArgoApiPendingAsync();
+        }
+        catch
+        {
+            // Leave the banner as-is; the user can retry from here or from Settings.
+        }
+    }
+
+    [RelayCommand]
+    private void DismissArgoApiBanner() => ArgoApiBannerVisible = false;
 
     #endregion
 }

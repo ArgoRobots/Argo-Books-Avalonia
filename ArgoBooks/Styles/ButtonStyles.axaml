@@ -504,11 +504,19 @@
         <Setter Property="MinWidth" Value="0" />
         <Setter Property="Cursor" Value="Hand" />
     </Style>
+    <!-- Foreground and Background are restated here, not just the underline.
+         Without them the base Button hover style wins, which paints the text
+         with the theme's ButtonForegroundPointerOver. In dark mode that is
+         white, and a link sitting on a pale info panel became invisible on
+         hover. Button.link-button below already does this correctly. -->
     <Style Selector="Button.link:pointerover /template/ ContentPresenter">
         <Setter Property="TextBlock.TextDecorations" Value="Underline" />
+        <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
     </Style>
     <Style Selector="Button.link:pressed /template/ ContentPresenter">
         <Setter Property="TextBlock.Foreground" Value="{DynamicResource PrimaryDarkBrush}" />
+        <Setter Property="Background" Value="Transparent" />
     </Style>
 
     <!-- Compact Primary Button (icon-only, reduced padding and size) -->

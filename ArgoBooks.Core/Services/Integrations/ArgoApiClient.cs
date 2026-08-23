@@ -36,14 +36,18 @@ public class ArgoApiClient
     // Control plane
     // -----------------------------------------------------------------------
 
+    /// <summary>The label this app gives its own key, and how it recognises one later.</summary>
+    public const string DesktopKeyLabel = "Argo Books desktop";
+
     /// <summary>
-    /// Turn the API on for a company and mint the desktop's own key.
-    /// Idempotent server-side, so calling it twice returns the same account, but
-    /// a second call mints a second key, which is why the caller should only do
-    /// this when <see cref="Models.Integrations.ArgoApiIntegrationSettings.DesktopKey"/>
-    /// is empty.
+    /// Register the company and return its account id.
+    ///
+    /// Idempotent: calling it again returns the same account rather than making
+    /// a second one. Deliberately does NOT mint a key, because minting is the
+    /// one part that is not idempotent and callers were previously getting a
+    /// spare key every time somebody pressed the button twice.
     /// </summary>
-    public async Task<(string AccountId, string DesktopKey)> EnableAsync(
+    public async Task<string> EnsureAccountAsync(
         string companyUid,
         string displayName,
         string licenseKey,
@@ -56,19 +60,31 @@ public class ArgoApiClient
             new { company_uid = companyUid, display_name = displayName },
             licenseKey, deviceId, ct);
 
-        var accountId = account.RootElement.GetProperty("account_id").GetString()
-                        ?? throw new ArgoApiException("no_account", "The server did not return an account id.");
+        return account.RootElement.GetProperty("account_id").GetString()
+               ?? throw new ArgoApiException("no_account", "The server did not return an account id.");
+    }
 
+    /// <summary>
+    /// Mint the key this app uses for itself, separate from any key the merchant
+    /// hands to a developer, so revoking a developer never locks the app out of
+    /// its own review queue.
+    ///
+    /// Call only when no desktop key is stored. Every call creates another one.
+    /// </summary>
+    public async Task<string> CreateDesktopKeyAsync(
+        string companyUid,
+        string licenseKey,
+        string deviceId,
+        CancellationToken ct = default)
+    {
         var key = await SendControlAsync(
             HttpMethod.Post,
             "/keys",
-            new { company_uid = companyUid, label = "Argo Books desktop", scopes = new[] { "read", "write" } },
+            new { company_uid = companyUid, label = DesktopKeyLabel, scopes = new[] { "read", "write" } },
             licenseKey, deviceId, ct);
 
-        var secret = key.RootElement.GetProperty("secret").GetString()
-                     ?? throw new ArgoApiException("no_secret", "The server did not return a key.");
-
-        return (accountId, secret);
+        return key.RootElement.GetProperty("secret").GetString()
+               ?? throw new ArgoApiException("no_secret", "The server did not return a key.");
     }
 
     /// <summary>Mint a key for a developer. The secret is returned once and never again.</summary>

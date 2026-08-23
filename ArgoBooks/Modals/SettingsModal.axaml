@@ -1409,11 +1409,19 @@
 
                     <!-- Integrations Tab (kept last so it's the bottom-most tab) -->
                     <TabItem Header="{loc:Loc 'Integrations'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
-                            <StackPanel Spacing="16">
+                        <Grid RowDefinitions="Auto,*" Margin="24,20,16,20">
 
-                                <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
+                            <controls:SampleCompanyNotice Grid.Row="0"
+                                                          IsVisible="{Binding IsSampleCompany}"
+                                                          Margin="0,0,0,14" />
 
+                            <!-- One tab per integration. They share no state, and each is long
+                                 enough that stacking them meant scrolling past the whole of one
+                                 to reach the other. -->
+                            <TabControl Grid.Row="1" Classes="sub-tabs">
+
+                                <TabItem Header="Stripe">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,8,0">
                                 <!-- IsEnabled sits on the inputs below, not here, so the sample
                                      company keeps a clickable "Full guide" link. -->
                                 <StackPanel Spacing="8">
@@ -1465,7 +1473,7 @@
                                                     <TextBlock Text="{loc:Loc 'Full guide: '}" FontSize="12"
                                                                VerticalAlignment="Center"
                                                                Foreground="{DynamicResource InfoTextBrush}" />
-                                                    <Button Classes="link" Content="argorobots.com/integrations/stripe"
+                                                    <Button Classes="link" Content="{loc:Loc 'Open the Stripe guide'}"
                                                             FontSize="12" Padding="0" MinHeight="0"
                                                             Command="{Binding OpenStripeGuideCommand}" />
                                                 </StackPanel>
@@ -1522,9 +1530,11 @@
                                         </Grid>
                                     </Border>
                                 </StackPanel>
+                                    </ScrollViewer>
+                                </TabItem>
 
-                                <Separator Background="{DynamicResource BorderBrush}" Height="1" Margin="0,8" />
-
+                                <TabItem Header="{loc:Loc 'Argo Books API'}">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,8,0">
                                 <!-- Argo Books API: data pushed in by apps the user has connected -->
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="{loc:Loc 'Argo Books API'}" FontSize="14" FontWeight="Medium"
@@ -1535,7 +1545,7 @@
 
                                     <!-- Off state -->
                                     <StackPanel Spacing="8" IsVisible="{Binding !ArgoApiEnabled}">
-                                        <Button Content="{loc:Loc 'Turn on'}"
+                                        <Button Content="{loc:Loc Connect}"
                                                 Classes="primary-button"
                                                 HorizontalAlignment="Left"
                                                 IsEnabled="{Binding !IsSampleCompany}"
@@ -1563,11 +1573,11 @@
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                VerticalAlignment="Center"
                                                                IsVisible="{Binding ArgoApiLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                                                    <Button Classes="primary-button" Content="{loc:Loc 'Review and import'}"
+                                                    <Button Classes="primary-button" Content="{loc:Loc 'Sync now'}"
                                                             Command="{Binding SyncArgoApiCommand}"
                                                             IsEnabled="{Binding !IsSyncingArgoApi}"
                                                             Padding="12,6" MinHeight="0" />
-                                                    <Button Classes="danger-outline-button" Content="{loc:Loc 'Turn off'}"
+                                                    <Button Classes="danger-outline-button" Content="{loc:Loc Disconnect}"
                                                             Command="{Binding DisableArgoApiCommand}"
                                                             Padding="12,6" MinHeight="0" />
                                                 </StackPanel>
@@ -1600,9 +1610,19 @@
                                         <StackPanel Spacing="8">
                                             <TextBlock Text="{loc:Loc 'Keys'}" FontSize="13" FontWeight="Medium"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Give each app its own key so you can switch one off without affecting the others.'}"
+                                            <TextBlock Text="{loc:Loc 'Give each app its own key so you can switch one off without affecting the others. Argo Books keeps a separate key of its own, which is not listed here and does not need managing.'}"
                                                        FontSize="12" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                            <!-- Without this the list is simply empty on first open, which
+                                                 reads as something having gone wrong rather than as nothing
+                                                 having been created yet. -->
+                                            <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
+                                                    Padding="14,12" IsVisible="{Binding HasNoArgoApiKeys}">
+                                                <TextBlock Text="{loc:Loc 'No keys yet. Create one below and give it to the app or developer that needs to send data in.'}"
+                                                           FontSize="12" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </Border>
 
                                             <ItemsControl ItemsSource="{Binding ArgoApiKeys}">
                                                 <ItemsControl.ItemTemplate>
@@ -1621,13 +1641,8 @@
                                                                 </StackPanel>
                                                                 <StackPanel Grid.Column="1" Orientation="Horizontal"
                                                                             Spacing="8" VerticalAlignment="Center">
-                                                                    <TextBlock Text="{loc:Loc 'Revoked'}" FontSize="11"
-                                                                               VerticalAlignment="Center"
-                                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                               IsVisible="{Binding IsRevoked}" />
                                                                     <Button Classes="danger-outline-button"
                                                                             Content="{loc:Loc 'Revoke'}"
-                                                                            IsVisible="{Binding CanRevoke}"
                                                                             Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).RevokeArgoApiKeyCommand}"
                                                                             CommandParameter="{Binding}"
                                                                             Padding="10,5" MinHeight="0" />
@@ -1655,7 +1670,7 @@
                                             <TextBlock Text="{loc:Loc 'Developer documentation: '}" FontSize="12"
                                                        VerticalAlignment="Center"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <Button Classes="link" Content="argorobots.com/documentation/api"
+                                            <Button Classes="link" Content="{loc:Loc 'Open the API docs'}"
                                                     FontSize="12" Padding="0" MinHeight="0"
                                                     Command="{Binding OpenArgoApiDocsCommand}" />
                                         </StackPanel>
@@ -1665,9 +1680,11 @@
                                                TextWrapping="Wrap"
                                                IsVisible="{Binding ArgoApiError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
+                                    </ScrollViewer>
+                                </TabItem>
 
-                            </StackPanel>
-                        </ScrollViewer>
+                            </TabControl>
+                        </Grid>
                     </TabItem>
 
                 </TabControl>
@@ -2115,6 +2132,28 @@
         <Style Selector="TabItem:selected:pointerover">
             <Setter Property="Background" Value="{DynamicResource PrimaryIconBgBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+        </Style>
+
+        <!-- Sub-tabs inside a settings panel (Integrations).
+             The rules above are all built for the left-hand rail: a fixed 190px
+             strip, full-width pill rows, and a divider down the left edge of the
+             content. A nested strip inherits every one of them and comes out as
+             stretched pills in a narrow column, so each has to be undone here
+             rather than simply added to. -->
+        <Style Selector="TabControl.sub-tabs /template/ ItemsPresenter#PART_ItemsPresenter">
+            <!-- NaN is how a fixed Width is released back to auto. -->
+            <Setter Property="Width" Value="NaN" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style Selector="TabControl.sub-tabs /template/ ContentPresenter#PART_SelectedContentHost">
+            <!-- Rule under the strip instead of down the side of the content. -->
+            <Setter Property="BorderThickness" Value="0,1,0,0" />
+        </Style>
+        <Style Selector="TabControl.sub-tabs > TabItem">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="Margin" Value="0,0,4,6" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="CornerRadius" Value="7" />
         </Style>
 
         <!-- Animated Checkbox -->

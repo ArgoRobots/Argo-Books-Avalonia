@@ -1671,7 +1671,10 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://argorobots.com/integrations/stripe",
+                // The documentation page, not the marketing page. Someone who has
+                // already opened Settings has decided to connect it and wants the
+                // steps, not the pitch.
+                FileName = "https://argorobots.com/documentation/pages/integrations/stripe-integration.php",
                 UseShellExecute = true
             });
         }
@@ -1705,7 +1708,10 @@ public partial class SettingsModalViewModel : ViewModelBase
             var preview = await svc.PreviewAsync(data);
             if (!preview.HasActivity)
             {
-                App.AddNotification("Stripe".Translate(), "You're already up to date.".Translate());
+                // A message box rather than a notification: this runs from the
+                // settings modal, which sits on top of where notifications
+                // appear, so the user would never see it.
+                await App.ShowInfoMessageBoxAsync("Stripe".Translate(), "You're already up to date.".Translate());
                 return;
             }
 
@@ -1728,17 +1734,15 @@ public partial class SettingsModalViewModel : ViewModelBase
                     () => { creation.Redo(data); App.CompanyManager?.MarkAsChanged(); }));
             App.CompanyManager?.MarkAsChanged();
             RefreshStripeLastSynced(stripe);
-            App.AddNotification("Stripe".Translate(),
-                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
-                NotificationType.Success);
+            await App.ShowInfoMessageBoxAsync("Stripe".Translate(),
+                "Imported {0} sales and {1} expense entries from Stripe.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated));
         }
         catch (Exception ex)
         {
             // Never let a Stripe/network error crash the app; surface it instead.
             App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Stripe sync failed");
-            App.AddNotification("Stripe".Translate(),
-                "Sync failed: {0}".TranslateFormat(ex.Message),
-                NotificationType.Warning);
+            await App.ShowWarningMessageBoxAsync("Stripe".Translate(),
+                "Sync failed: {0}".TranslateFormat(ex.Message));
         }
         finally
         {
@@ -1790,6 +1794,10 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     public ObservableCollection<ArgoApiKeyRow> ArgoApiKeys { get; } = [];
 
+    /// <summary>True when the merchant has not created a key for anyone yet.</summary>
+    [ObservableProperty]
+    private bool _hasNoArgoApiKeys = true;
+
     /// <summary>Reads display state from company settings. Called on the settings-load path.</summary>
     private void LoadArgoApiState()
     {
@@ -1800,6 +1808,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         NewArgoApiKeyLabel = string.Empty;
         ArgoApiPendingSummary = null;
         ArgoApiKeys.Clear();
+        HasNoArgoApiKeys = true;
 
         RefreshArgoApiLastSynced(api);
 
@@ -1831,15 +1840,21 @@ public partial class SettingsModalViewModel : ViewModelBase
             api.CompanyUid ??= data.Settings.MobileSync.CompanyUid ?? Guid.NewGuid().ToString("N");
 
             var client = new ArgoApiClient(App.SharedHttpClient);
-            var (accountId, desktopKey) = await client.EnableAsync(
-                api.CompanyUid!,
-                data.Settings.Company.Name,
-                LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
-                LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+            var licenseKey = LicenseAuthHelper.GetLicenseKey() ?? string.Empty;
+            var deviceId = LicenseAuthHelper.GetDeviceId() ?? string.Empty;
+
+            // Registering the company is idempotent; minting a key is not.
+            // Turning the feature on twice used to leave a spare key behind on
+            // every press, so the key is only made when there is not one already.
+            api.AccountId = await client.EnsureAccountAsync(
+                api.CompanyUid!, data.Settings.Company.Name, licenseKey, deviceId);
+
+            if (string.IsNullOrEmpty(api.DesktopKey))
+            {
+                api.DesktopKey = await client.CreateDesktopKeyAsync(api.CompanyUid!, licenseKey, deviceId);
+            }
 
             api.Enabled = true;
-            api.AccountId = accountId;
-            api.DesktopKey = desktopKey;
 
             ArgoApiEnabled = true;
             App.CompanyManager?.MarkAsChanged();
@@ -1908,6 +1923,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
         ArgoApiEnabled = false;
         ArgoApiKeys.Clear();
+        HasNoArgoApiKeys = true;
         NewArgoApiKeySecret = null;
         ArgoApiPendingSummary = null;
         App.CompanyManager?.MarkAsChanged();
@@ -1930,13 +1946,43 @@ public partial class SettingsModalViewModel : ViewModelBase
             ArgoApiKeys.Clear();
             if (!doc.RootElement.TryGetProperty("keys", out var keys)) return;
 
+            // The key this app minted for itself is not one the merchant hands
+            // out, and revoking it would cut the app off from its own review
+            // queue with no obvious way back.
+            var ownHint = ArgoApiKeyHint(api.DesktopKey);
+            var strays = new List<string>();
+
             foreach (var k in keys.EnumerateArray())
             {
+                var hint = k.GetProperty("hint").GetString() ?? string.Empty;
+                var label = k.GetProperty("label").GetString() ?? string.Empty;
+                var revoked = k.GetProperty("revoked_at").ValueKind != JsonValueKind.Null;
+
+                // A revoked key can never be used again, so listing it is
+                // clutter that reads like something still needing attention.
+                if (revoked)
+                {
+                    continue;
+                }
+
+                if (label == ArgoApiClient.DesktopKeyLabel)
+                {
+                    // Ours. Anything with our label that is NOT the key we hold
+                    // is a leftover from the days when enabling twice minted a
+                    // spare. Nothing can use it, and it occupies one of the ten
+                    // key slots, so retire it.
+                    if (ownHint == null || hint != ownHint)
+                    {
+                        strays.Add(k.GetProperty("id").GetString() ?? string.Empty);
+                    }
+                    continue;
+                }
+
                 var lastUsed = k.GetProperty("last_used_at").GetString();
                 ArgoApiKeys.Add(new ArgoApiKeyRow
                 {
                     Id = k.GetProperty("id").GetString() ?? string.Empty,
-                    Hint = k.GetProperty("hint").GetString() ?? string.Empty,
+                    Hint = hint,
                     Label = k.GetProperty("label").GetString() ?? string.Empty,
                     Scopes = string.Join(", ", k.GetProperty("scopes").EnumerateArray().Select(s => s.GetString())),
                     LastUsedDisplay = lastUsed == null
@@ -1945,6 +1991,25 @@ public partial class SettingsModalViewModel : ViewModelBase
                     IsRevoked = k.GetProperty("revoked_at").ValueKind != JsonValueKind.Null
                 });
             }
+
+            HasNoArgoApiKeys = ArgoApiKeys.Count == 0;
+
+            foreach (var strayId in strays.Where(id => !string.IsNullOrEmpty(id)))
+            {
+                try
+                {
+                    await client.RevokeKeyAsync(
+                        api.CompanyUid,
+                        strayId,
+                        LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                        LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+                }
+                catch (Exception ex)
+                {
+                    // Tidying is not worth surfacing or failing the panel over.
+                    App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Retiring a leftover desktop key failed");
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -1952,6 +2017,16 @@ public partial class SettingsModalViewModel : ViewModelBase
             App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Listing Argo Books API keys failed");
         }
     }
+
+    /// <summary>
+    /// The display hint the server stores for a secret: first seven characters,
+    /// an ellipsis, last four. Mirrors api_key_hint() on the server, and is the
+    /// only way to recognise our own key in a list that never returns secrets.
+    /// </summary>
+    private static string? ArgoApiKeyHint(string? secret)
+        => string.IsNullOrEmpty(secret) || secret!.Length < 11
+            ? null
+            : secret[..7] + "..." + secret[^4..];
 
     [RelayCommand]
     private async Task CreateArgoApiKeyAsync()
@@ -2007,7 +2082,12 @@ public partial class SettingsModalViewModel : ViewModelBase
                 api.CompanyUid, row.Id,
                 LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
                 LicenseAuthHelper.GetDeviceId() ?? string.Empty);
-            row.IsRevoked = true;
+
+            // Gone rather than greyed out. A revoked key can never work again,
+            // so leaving it on screen only invites the question of why it is
+            // still there.
+            ArgoApiKeys.Remove(row);
+            HasNoArgoApiKeys = ArgoApiKeys.Count == 0;
         }
         catch (Exception ex)
         {
@@ -2026,7 +2106,13 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             Process.Start(new ProcessStartInfo
             {
-                // The real served path. Documentation pages link their assets
+                // BaseUrl, not a hardcoded host: these pages only exist wherever
+                // the API itself has shipped. A debug build points at dev, which
+                // has them; a release build points at production, which will have
+                // them by the time one is cut. Hardcoding production would 404
+                // for as long as the API is only on dev.
+                //
+                // The path is the real served one. These pages link their assets
                 // relatively, so a shallower alias URL loads them unstyled.
                 FileName = $"{ApiConfig.BaseUrl}/documentation/pages/api/overview.php",
                 UseShellExecute = true
@@ -2060,7 +2146,8 @@ public partial class SettingsModalViewModel : ViewModelBase
             if (!preview.HasActivity)
             {
                 ArgoApiPendingSummary = null;
-                App.AddNotification("Argo Books API".Translate(), "Nothing is waiting to be imported.".Translate());
+                await App.ShowInfoMessageBoxAsync("Argo Books API".Translate(),
+                    "Nothing is waiting to be imported.".Translate());
                 return;
             }
 
@@ -2104,17 +2191,15 @@ public partial class SettingsModalViewModel : ViewModelBase
             ArgoApiPendingSummary = null;
             RefreshArgoApiLastSynced(api);
 
-            App.AddNotification("Argo Books API".Translate(),
-                "Imported {0} sales and {1} expense entries.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
-                NotificationType.Success);
+            await App.ShowInfoMessageBoxAsync("Argo Books API".Translate(),
+                "Imported {0} sales and {1} expense entries.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated));
         }
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Argo Books API sync failed");
             ArgoApiError = ex.Message;
-            App.AddNotification("Argo Books API".Translate(),
-                "Import failed: {0}".TranslateFormat(ex.Message),
-                NotificationType.Warning);
+            await App.ShowWarningMessageBoxAsync("Argo Books API".Translate(),
+                "Import failed: {0}".TranslateFormat(ex.Message));
         }
         finally
         {

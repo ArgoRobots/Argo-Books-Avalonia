@@ -75,6 +75,8 @@
 
                 <!-- Info Banners (Stripe ready-to-sync) -->
                 <table:ArgoTable.InfoBannerContent>
+                    <StackPanel Spacing="6">
+
                     <Border HorizontalAlignment="Center"
                             Background="{DynamicResource SurfaceAltBrush}"
                             BorderBrush="{DynamicResource PrimaryBrush}"
@@ -107,6 +109,44 @@
                                     Command="{Binding DismissStripeBannerCommand}" />
                         </Grid>
                     </Border>
+
+                    <!-- Same shape as the Stripe banner above. This one matters
+                         more: a connected app pushes on its own schedule, so
+                         without it nothing tells the merchant data has arrived. -->
+                    <Border HorizontalAlignment="Center"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource PrimaryBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14,10"
+                            Margin="0,8,0,4"
+                            IsVisible="{Binding ArgoApiBannerVisible}">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <PathIcon Grid.Column="0"
+                                      Data="{x:Static icons:Icons.Download}"
+                                      Width="16" Height="16"
+                                      Foreground="{DynamicResource PrimaryBrush}"
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,10,0" />
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding ArgoApiBannerText}"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="2"
+                                    Classes="primary-button"
+                                    Padding="10,4"
+                                    Content="{loc:Loc 'Sync now'}"
+                                    Command="{Binding SyncArgoApiFromBannerCommand}"
+                                    Margin="8,0,6,0" />
+                            <Button Grid.Column="3"
+                                    Classes="secondary-button"
+                                    Padding="10,4"
+                                    Content="{loc:Loc Dismiss}"
+                                    Command="{Binding DismissArgoApiBannerCommand}" />
+                        </Grid>
+                    </Border>
+
+                    </StackPanel>
                 </table:ArgoTable.InfoBannerContent>
 
                 <!-- Extra Buttons (Import menu) -->
