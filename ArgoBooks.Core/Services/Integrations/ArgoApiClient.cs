@@ -117,6 +117,17 @@ public class ArgoApiClient
         string companyUid, string keyId, string licenseKey, string deviceId, CancellationToken ct = default)
         => await SendControlAsync(HttpMethod.Post, "/keys/revoke", new { company_uid = companyUid, key_id = keyId }, licenseKey, deviceId, ct);
 
+    /// <summary>
+    /// Rename a key. Only the label changes: the secret already handed to an
+    /// integration keeps working, so this is safe to do at any time.
+    /// </summary>
+    public async Task RenameKeyAsync(
+        string companyUid, string keyId, string label, string licenseKey, string deviceId, CancellationToken ct = default)
+        => await SendControlAsync(
+            HttpMethod.Post, "/keys/rename",
+            new { company_uid = companyUid, key_id = keyId, label },
+            licenseKey, deviceId, ct);
+
     // -----------------------------------------------------------------------
     // Public API
     // -----------------------------------------------------------------------

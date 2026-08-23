@@ -1425,7 +1425,7 @@
                                 <!-- IsEnabled sits on the inputs below, not here, so the sample
                                      company keeps a clickable "Full guide" link. -->
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="Stripe" FontSize="14" FontWeight="Medium"
+                                    <TextBlock Text="Stripe" FontSize="18" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Import your Stripe payouts, charges, fees and refunds into your books.'}"
                                                FontSize="12" TextWrapping="Wrap"
@@ -1537,7 +1537,7 @@
                                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,8,0">
                                 <!-- Argo Books API: data pushed in by apps the user has connected -->
                                 <StackPanel Spacing="8">
-                                    <TextBlock Text="{loc:Loc 'Argo Books API'}" FontSize="14" FontWeight="Medium"
+                                    <TextBlock Text="{loc:Loc 'Argo Books API'}" FontSize="18" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                     <TextBlock Text="{loc:Loc 'Let other apps send sales, expenses, customers and suppliers straight into this company. Nothing they send reaches your books until you review and import it.'}"
                                                FontSize="12" TextWrapping="Wrap"
@@ -1608,51 +1608,16 @@
 
                                         <!-- Key list -->
                                         <StackPanel Spacing="8">
-                                            <TextBlock Text="{loc:Loc 'Keys'}" FontSize="13" FontWeight="Medium"
+                                            <TextBlock Text="{loc:Loc 'Keys'}" FontSize="15" FontWeight="SemiBold"
+                                                       Margin="0,4,0,0"
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <TextBlock Text="{loc:Loc 'Give each app its own key so you can switch one off without affecting the others. Argo Books keeps a separate key of its own, which is not listed here and does not need managing.'}"
                                                        FontSize="12" TextWrapping="Wrap"
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
 
-                                            <!-- Without this the list is simply empty on first open, which
-                                                 reads as something having gone wrong rather than as nothing
-                                                 having been created yet. -->
-                                            <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
-                                                    Padding="14,12" IsVisible="{Binding HasNoArgoApiKeys}">
-                                                <TextBlock Text="{loc:Loc 'No keys yet. Create one below and give it to the app or developer that needs to send data in.'}"
-                                                           FontSize="12" TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </Border>
-
-                                            <ItemsControl ItemsSource="{Binding ArgoApiKeys}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate x:DataType="vm:ArgoApiKeyRow">
-                                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
-                                                                Padding="12" Margin="0,0,0,6">
-                                                            <Grid ColumnDefinitions="*,Auto">
-                                                                <StackPanel Grid.Column="0" Spacing="2">
-                                                                    <TextBlock Text="{Binding DisplayName}" FontSize="13"
-                                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                                    <TextBlock Text="{Binding Hint}" FontSize="11"
-                                                                               FontFamily="Consolas,monospace"
-                                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                                    <TextBlock Text="{Binding LastUsedDisplay}" FontSize="11"
-                                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                                </StackPanel>
-                                                                <StackPanel Grid.Column="1" Orientation="Horizontal"
-                                                                            Spacing="8" VerticalAlignment="Center">
-                                                                    <Button Classes="danger-outline-button"
-                                                                            Content="{loc:Loc 'Revoke'}"
-                                                                            Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).RevokeArgoApiKeyCommand}"
-                                                                            CommandParameter="{Binding}"
-                                                                            Padding="10,5" MinHeight="0" />
-                                                                </StackPanel>
-                                                            </Grid>
-                                                        </Border>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-
+                                            <!-- Above the list, not below it. Creating a key is what someone
+                                                 opens this panel to do, and once there are several keys the
+                                                 controls were scrolled off the bottom. -->
                                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                                 <TextBox Grid.Column="0"
                                                          Text="{Binding NewArgoApiKeyLabel, Mode=TwoWay}"
@@ -1664,6 +1629,86 @@
                                                         Command="{Binding CreateArgoApiKeyCommand}"
                                                         Padding="12,6" MinHeight="0" />
                                             </Grid>
+
+                                            <!-- Without this the list is simply empty on first open, which
+                                                 reads as something having gone wrong rather than as nothing
+                                                 having been created yet. -->
+                                            <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
+                                                    Padding="14,12" IsVisible="{Binding HasNoArgoApiKeys}">
+                                                <TextBlock Text="{loc:Loc 'No keys yet. Name one above and create it, then give it to the app or developer that needs to send data in.'}"
+                                                           FontSize="12" TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </Border>
+
+                                            <ItemsControl ItemsSource="{Binding ArgoApiKeys}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:ArgoApiKeyRow">
+                                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
+                                                                Padding="12" Margin="0,0,0,6">
+                                                            <Grid>
+                                                                <!-- Display state -->
+                                                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsNotEditing}">
+                                                                    <StackPanel Grid.Column="0" Spacing="2">
+                                                                        <TextBlock Text="{Binding DisplayName}" FontSize="13"
+                                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                        <TextBlock Text="{Binding Hint}" FontSize="11"
+                                                                                   FontFamily="Consolas,monospace"
+                                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                        <TextBlock Text="{Binding LastUsedDisplay}" FontSize="11"
+                                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                                    </StackPanel>
+                                                                    <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                                Spacing="8" VerticalAlignment="Center">
+                                                                        <Button Classes="secondary-button"
+                                                                                Content="{loc:Loc 'Rename'}"
+                                                                                Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).BeginRenameArgoApiKeyCommand}"
+                                                                                CommandParameter="{Binding}"
+                                                                                Padding="10,5" MinHeight="0" />
+                                                                        <Button Classes="danger-outline-button"
+                                                                                Content="{loc:Loc 'Delete'}"
+                                                                                Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).DeleteArgoApiKeyCommand}"
+                                                                                CommandParameter="{Binding}"
+                                                                                Padding="10,5" MinHeight="0" />
+                                                                    </StackPanel>
+                                                                </Grid>
+
+                                                                <!-- Rename state. Only the name is editable: the
+                                                                     secret cannot be shown again and the scopes
+                                                                     decide what the key may do. -->
+                                                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8"
+                                                                      IsVisible="{Binding IsEditing}">
+                                                                    <TextBox Grid.Column="0"
+                                                                             Text="{Binding EditLabel, Mode=TwoWay}"
+                                                                             Classes="form-input"
+                                                                             VerticalAlignment="Center"
+                                                                             PlaceholderText="{loc:Loc 'Name this key'}">
+                                                                        <TextBox.KeyBindings>
+                                                                            <KeyBinding Gesture="Enter"
+                                                                                        Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).SaveArgoApiKeyNameCommand}"
+                                                                                        CommandParameter="{Binding}" />
+                                                                            <KeyBinding Gesture="Escape"
+                                                                                        Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).CancelRenameArgoApiKeyCommand}"
+                                                                                        CommandParameter="{Binding}" />
+                                                                        </TextBox.KeyBindings>
+                                                                    </TextBox>
+                                                                    <Button Grid.Column="1" Classes="primary-button"
+                                                                            Content="{loc:Loc Save}"
+                                                                            VerticalAlignment="Center"
+                                                                            Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).SaveArgoApiKeyNameCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Padding="10,5" MinHeight="0" />
+                                                                    <Button Grid.Column="2" Classes="secondary-button"
+                                                                            Content="{loc:Loc Cancel}"
+                                                                            VerticalAlignment="Center"
+                                                                            Command="{Binding $parent[ItemsControl].((vm:SettingsModalViewModel)DataContext).CancelRenameArgoApiKeyCommand}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Padding="10,5" MinHeight="0" />
+                                                                </Grid>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
 
                                         <StackPanel Orientation="Horizontal" Spacing="4">

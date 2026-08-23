@@ -2056,8 +2056,14 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Called "delete" throughout the UI, because from the merchant's side that
+    /// is what happens: the key stops working and leaves the list. The server
+    /// still only stamps it revoked, so its history survives for anyone looking
+    /// into why an integration stopped working.
+    /// </summary>
     [RelayCommand]
-    private async Task RevokeArgoApiKeyAsync(ArgoApiKeyRow? row)
+    private async Task DeleteArgoApiKeyAsync(ArgoApiKeyRow? row)
     {
         var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
         if (row == null || api?.CompanyUid == null || App.SharedHttpClient == null) return;
@@ -2066,9 +2072,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         {
             var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
             {
-                Title = "Revoke this key".Translate(),
+                Title = "Delete this key".Translate(),
                 Message = "{0} will stop working immediately. Anything using it will start failing.".TranslateFormat(row.DisplayName),
-                PrimaryButtonText = "Revoke".Translate(),
+                PrimaryButtonText = "Delete".Translate(),
                 CancelButtonText = "Cancel".Translate(),
                 IsPrimaryDestructive = true
             }) == ConfirmationResult.Primary;
@@ -2083,7 +2089,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
                 LicenseAuthHelper.GetDeviceId() ?? string.Empty);
 
-            // Gone rather than greyed out. A revoked key can never work again,
+            // Gone rather than greyed out. A deleted key can never work again,
             // so leaving it on screen only invites the question of why it is
             // still there.
             ArgoApiKeys.Remove(row);
@@ -2092,7 +2098,67 @@ public partial class SettingsModalViewModel : ViewModelBase
         catch (Exception ex)
         {
             ArgoApiError = ex.Message;
-            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Revoking an Argo Books API key failed");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Deleting an Argo Books API key failed");
+        }
+    }
+
+    /// <summary>Put one row into its rename form, seeded with the current name.</summary>
+    [RelayCommand]
+    private void BeginRenameArgoApiKey(ArgoApiKeyRow? row)
+    {
+        if (row == null) return;
+
+        // One at a time. Two open editors invite typing into the wrong one and
+        // then wondering which key just got the name.
+        foreach (var other in ArgoApiKeys.Where(k => k.IsEditing && k != row))
+            other.IsEditing = false;
+
+        row.EditLabel = row.Label;
+        row.IsEditing = true;
+    }
+
+    [RelayCommand]
+    private void CancelRenameArgoApiKey(ArgoApiKeyRow? row)
+    {
+        if (row == null) return;
+        row.IsEditing = false;
+        row.EditLabel = string.Empty;
+    }
+
+    [RelayCommand]
+    private async Task SaveArgoApiKeyNameAsync(ArgoApiKeyRow? row)
+    {
+        var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
+        if (row == null || api?.CompanyUid == null || App.SharedHttpClient == null) return;
+
+        var label = row.EditLabel.Trim();
+
+        // Nothing to send. Closing the editor rather than erroring matches what
+        // pressing Enter on an unchanged field is asking for.
+        if (label.Length == 0 || label == row.Label)
+        {
+            row.IsEditing = false;
+            return;
+        }
+
+        ArgoApiError = null;
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            await client.RenameKeyAsync(
+                api.CompanyUid, row.Id, label,
+                LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
+                LicenseAuthHelper.GetDeviceId() ?? string.Empty);
+
+            // Edit the row in place. Reloading the list would work, but it also
+            // collapses any other open editor and jumps the scroll position.
+            row.Label = label;
+            row.IsEditing = false;
+        }
+        catch (Exception ex)
+        {
+            ArgoApiError = ex.Message;
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Api, "Renaming an Argo Books API key failed");
         }
     }
 

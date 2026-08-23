@@ -15,7 +15,14 @@ public partial class ArgoApiKeyRow : ObservableObject
 
     public string Hint { get; init; } = string.Empty;
 
-    public string Label { get; init; } = string.Empty;
+    /// <summary>
+    /// The name the merchant gave this key. Settable rather than init-only
+    /// because renaming edits the row in place instead of reloading the list,
+    /// which would otherwise scroll them back to the top mid-edit.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DisplayName))]
+    private string _label = string.Empty;
 
     public string Scopes { get; init; } = string.Empty;
 
@@ -24,6 +31,20 @@ public partial class ArgoApiKeyRow : ObservableObject
 
     [ObservableProperty]
     private bool _isRevoked;
+
+    /// <summary>Swaps the row between its display and its rename form.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsNotEditing))]
+    private bool _isEditing;
+
+    public bool IsNotEditing => !IsEditing;
+
+    /// <summary>
+    /// The in-progress name, kept apart from <see cref="Label"/> so cancelling
+    /// leaves the row exactly as it was rather than half-renamed.
+    /// </summary>
+    [ObservableProperty]
+    private string _editLabel = string.Empty;
 
     /// <summary>What the row shows when it has a name, falling back to the hint.</summary>
     public string DisplayName => string.IsNullOrWhiteSpace(Label) ? Hint : Label;
