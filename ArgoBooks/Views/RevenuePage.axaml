@@ -101,12 +101,33 @@
                                     Padding="10,4"
                                     Content="{loc:Loc 'Sync now'}"
                                     Command="{Binding SyncFromBannerCommand}"
+                                    IsVisible="{Binding !IsSyncingStripe}"
                                     Margin="8,0,6,0" />
                             <Button Grid.Column="3"
                                     Classes="secondary-button"
                                     Padding="10,4"
                                     Content="{loc:Loc Dismiss}"
-                                    Command="{Binding DismissStripeBannerCommand}" />
+                                    Command="{Binding DismissStripeBannerCommand}"
+                                    IsVisible="{Binding !IsSyncingStripe}" />
+
+                            <!-- Replaces both buttons while the sync runs. Dismissing
+                                 mid-import would hide the only thing reporting it, and
+                                 a greyed-out button on its own said nothing about the
+                                 fifteen seconds of rate fetching this can spend. -->
+                            <StackPanel Grid.Column="2" Grid.ColumnSpan="2"
+                                        Orientation="Horizontal" Spacing="8"
+                                        VerticalAlignment="Center"
+                                        Margin="8,0,0,0"
+                                        IsVisible="{Binding IsSyncingStripe}">
+                                <controls:LoadingSpinner SizePreset="Small"
+                                                         IsSpinning="{Binding IsSyncingStripe}"
+                                                         SpinnerBrush="{DynamicResource PrimaryBrush}"
+                                                         VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding StripeSyncStatus}"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
 
@@ -137,12 +158,33 @@
                                     Padding="10,4"
                                     Content="{loc:Loc 'Sync now'}"
                                     Command="{Binding SyncArgoApiFromBannerCommand}"
+                                    IsVisible="{Binding !IsSyncingArgoApi}"
                                     Margin="8,0,6,0" />
                             <Button Grid.Column="3"
                                     Classes="secondary-button"
                                     Padding="10,4"
                                     Content="{loc:Loc Dismiss}"
-                                    Command="{Binding DismissArgoApiBannerCommand}" />
+                                    Command="{Binding DismissArgoApiBannerCommand}"
+                                    IsVisible="{Binding !IsSyncingArgoApi}" />
+
+                            <!-- Replaces both buttons while the sync runs. Dismissing
+                                 mid-import would hide the only thing reporting it, and
+                                 a greyed-out button on its own said nothing about the
+                                 fifteen seconds of rate fetching this can spend. -->
+                            <StackPanel Grid.Column="2" Grid.ColumnSpan="2"
+                                        Orientation="Horizontal" Spacing="8"
+                                        VerticalAlignment="Center"
+                                        Margin="8,0,0,0"
+                                        IsVisible="{Binding IsSyncingArgoApi}">
+                                <controls:LoadingSpinner SizePreset="Small"
+                                                         IsSpinning="{Binding IsSyncingArgoApi}"
+                                                         SpinnerBrush="{DynamicResource PrimaryBrush}"
+                                                         VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding ArgoApiSyncStatus}"
+                                           FontSize="12"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                            </StackPanel>
                         </Grid>
                     </Border>
 

@@ -1595,6 +1595,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     private bool _isSyncingStripe;
 
     [ObservableProperty]
+    private string _stripeSyncStatus = string.Empty;
+
+    [ObservableProperty]
     private string? _stripeLastSyncedDisplay;
 
     public bool CanConnectStripeIntegration
@@ -1702,6 +1705,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null) return;
 
         IsSyncingStripe = true;
+        StripeSyncStatus = "Checking Stripe for new activity...".Translate();
         try
         {
             var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
@@ -1726,7 +1730,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             }) == ConfirmationResult.Primary;
             if (!confirmed) return;
 
-            var creation = await svc.ImportPreviewAsync(data, preview);
+            var creation = await svc.ImportPreviewAsync(data, preview, SyncProgress(v => StripeSyncStatus = v));
             if (creation.AnyCreated)
                 App.UndoRedoManager.RecordAction(new DelegateAction(
                     "Import from Stripe".Translate(),
@@ -1747,6 +1751,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         finally
         {
             IsSyncingStripe = false;
+            StripeSyncStatus = string.Empty;
         }
     }
 
@@ -1765,6 +1770,14 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isSyncingArgoApi;
+
+    /// <summary>
+    /// What the sync is doing, shown beside the button. A disabled button was the
+    /// only sign anything was happening, and an import can spend fifteen seconds
+    /// fetching exchange rates before it writes a row.
+    /// </summary>
+    [ObservableProperty]
+    private string _argoApiSyncStatus = string.Empty;
 
     [ObservableProperty]
     private string? _argoApiError;
@@ -2162,6 +2175,14 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Turns the rate fetch's 0-100 into the line shown beside the button. Only the
+    /// fetch reports a percentage, so the wording names that phase rather than the
+    /// import as a whole, which would sit at 100% while it writes the rows.
+    /// </summary>
+    private static IProgress<int> SyncProgress(Action<string> set)
+        => new Progress<int>(pct => set("Fetching exchange rates... {0}%".TranslateFormat(pct)));
+
     [RelayCommand]
     private void DismissNewArgoApiKeySecret() => NewArgoApiKeySecret = null;
 
@@ -2233,7 +2254,7 @@ public partial class SettingsModalViewModel : ViewModelBase
             }) == ConfirmationResult.Primary;
             if (!confirmed) return;
 
-            var creation = await svc.ImportPreviewAsync(data, preview);
+            var creation = await svc.ImportPreviewAsync(data, preview, SyncProgress(v => ArgoApiSyncStatus = v));
 
             if (creation.AnyCreated)
             {
@@ -2270,6 +2291,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         finally
         {
             IsSyncingArgoApi = false;
+            ArgoApiSyncStatus = string.Empty;
         }
     }
 

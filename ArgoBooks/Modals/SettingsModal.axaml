@@ -1519,6 +1519,17 @@
                                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                                            VerticalAlignment="Center"
                                                            IsVisible="{Binding StripeLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding IsSyncingStripe}">
+                                                        <controls:LoadingSpinner SizePreset="Small"
+                                                                                 IsSpinning="{Binding IsSyncingStripe}"
+                                                                                 SpinnerBrush="{DynamicResource PrimaryBrush}"
+                                                                                 VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding StripeSyncStatus}" FontSize="11"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
                                                 <Button Classes="primary-button" Content="{loc:Loc 'Sync now'}"
                                                         Command="{Binding SyncStripeIntegrationCommand}"
                                                         IsEnabled="{Binding !IsSyncingStripe}"
@@ -1573,6 +1584,17 @@
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                VerticalAlignment="Center"
                                                                IsVisible="{Binding ArgoApiLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                                                VerticalAlignment="Center"
+                                                                IsVisible="{Binding IsSyncingArgoApi}">
+                                                        <controls:LoadingSpinner SizePreset="Small"
+                                                                                 IsSpinning="{Binding IsSyncingArgoApi}"
+                                                                                 SpinnerBrush="{DynamicResource PrimaryBrush}"
+                                                                                 VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding ArgoApiSyncStatus}" FontSize="11"
+                                                                   VerticalAlignment="Center"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </StackPanel>
                                                     <Button Classes="primary-button" Content="{loc:Loc 'Sync now'}"
                                                             Command="{Binding SyncArgoApiCommand}"
                                                             IsEnabled="{Binding !IsSyncingArgoApi}"

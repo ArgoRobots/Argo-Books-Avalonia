@@ -160,7 +160,8 @@ public class ArgoApiSyncService
     /// rethrown, so the merchant is never left with books the server disagrees with.
     /// </summary>
     public async Task<ArgoApiImportCreation> ImportPreviewAsync(
-        CompanyData data, ArgoApiSyncPreview preview, CancellationToken ct = default)
+        CompanyData data, ArgoApiSyncPreview preview,
+        IProgress<int>? rateProgress = null, CancellationToken ct = default)
     {
         var api = data.Settings.Integrations.ArgoApi;
         var creation = new ArgoApiImportCreation
@@ -183,6 +184,7 @@ public class ArgoApiSyncService
                 .Concat(preview.Revenue.Select(r => (ArgoApiImporter.ParseDate(r.OccurredOn), r.Currency)))
                 .Concat(preview.Refunds.Select(r => (ArgoApiImporter.ParseDate(r.OccurredOn), r.Currency))),
             data.Settings.Localization.Currency,
+            rateProgress,
             ct: ct);
 
         new ArgoApiImporter().Import(data, preview, creation);
@@ -220,6 +222,43 @@ public class ArgoApiSyncService
     /// not be blocked by the network. The batch id stays in the company file, so a
     /// later sync can notice the disagreement and retry.
     /// </summary>
+    /// <summary>
+    /// Claim the import's objects again after a redo.
+    ///
+    /// Undo hands them back to the queue, so without this a redo leaves the books
+    /// holding rows the server still reports as pending, and the next sync imports
+    /// every one of them a second time.
+    ///
+    /// There is no "unrevert" on the server, so this is a fresh batch under a new
+    /// id, and the old id is dropped from everywhere it was recorded.
+    /// </summary>
+    public async Task<bool> TryReclaimBatchAsync(
+        CompanyData data, ArgoApiImportCreation creation, CancellationToken ct = default)
+    {
+        var api = data.Settings.Integrations.ArgoApi;
+        if (string.IsNullOrWhiteSpace(api.DesktopKey) || creation.ClaimedObjectIds.Count == 0)
+            return false;
+
+        try
+        {
+            var batch = await _client.CreateImportBatchAsync(
+                api.DesktopKey!, creation.ClaimedObjectIds, creation.LocalRefs, ct);
+
+            if (batch?.Id == null) return false;
+
+            if (creation.BatchId != null) api.ImportedBatches.Remove(creation.BatchId);
+            creation.BatchId = batch.Id;
+            if (!api.ImportedBatches.Contains(batch.Id)) api.ImportedBatches.Add(batch.Id);
+
+            data.MarkAsModified();
+            return true;
+        }
+        catch (ArgoApiException)
+        {
+            return false;
+        }
+    }
+
     public async Task<bool> TryReleaseBatchAsync(CompanyData data, string batchId, CancellationToken ct = default)
     {
         var api = data.Settings.Integrations.ArgoApi;

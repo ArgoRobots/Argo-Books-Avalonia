@@ -29,9 +29,15 @@ public static class IntegrationRates
     /// needs one. Only when neither holds is the date free, which is why the currencies
     /// are passed rather than the dates alone.
     /// </summary>
+    /// <param name="progress">
+    /// Reports 0-100 across the fetch. Worth wiring up: on a busy Stripe account this
+    /// is a 15-second network call in the middle of an import that otherwise shows
+    /// nothing, which reads as the app having hung.
+    /// </param>
     public static async Task EnsureAsync(
         IEnumerable<(DateTime Date, string Currency)> rows,
         string? displayCurrency,
+        IProgress<int>? progress = null,
         IErrorLogger? errorLogger = null,
         CancellationToken ct = default)
     {
@@ -57,7 +63,7 @@ public static class IntegrationRates
 
         try
         {
-            await rates.PreloadRatesAsync(needed, null, ct);
+            await rates.PreloadRatesAsync(needed, progress, ct);
         }
         catch (OperationCanceledException) { throw; }
         catch (Exception ex)

@@ -66,12 +66,14 @@ public class StripeSyncService
     /// rows already in the books. Fetching is best-effort; see <see cref="IntegrationRates"/>.
     /// </summary>
     public async Task<StripeImportCreation> ImportPreviewAsync(
-        CompanyData data, StripeSyncPreview preview, CancellationToken ct = default)
+        CompanyData data, StripeSyncPreview preview,
+        IProgress<int>? rateProgress = null, CancellationToken ct = default)
     {
         await IntegrationRates.EnsureAsync(
             preview.Charges.Select(c =>
                 (DateTimeOffset.FromUnixTimeSeconds(c.CreatedUnix).LocalDateTime, c.Currency)),
             data.Settings.Localization.Currency,
+            rateProgress,
             ct: ct);
 
         return ImportPreview(data, preview);
