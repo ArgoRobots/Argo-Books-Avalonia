@@ -57,6 +57,12 @@ public class ArgoApiImportCreation
         }
         foreach (var ret in Returns) data.Returns.Remove(ret);
 
+
+        // The rows are gone, so their queued currency conversions have nothing left
+        // to convert. Nothing else prunes those: the reconcile pass only drops an
+        // entry whose record exists and is already converted, so one whose record has
+        // been removed would be retried on every pass forever.
+        ForgetPendingConversions(data);
         var api = data.Settings.Integrations.ArgoApi;
         if (BatchId != null) api.ImportedBatches.Remove(BatchId);
         api.LastSyncTime = PreviousSyncTime;
@@ -105,5 +111,26 @@ public class ArgoApiImportCreation
             c.Category = Category;
             c.Return = Return;
         }
+    }
+
+    /// <summary>
+    /// Withdraw the currency-conversion entries this import queued, from the company
+    /// file and from the shared queue behind it. Both, because the service merges its
+    /// own copy back into whichever company is open, so clearing one alone lets the
+    /// other put it straight back.
+    /// </summary>
+    private void ForgetPendingConversions(CompanyData data)
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var r in Revenues) ids.Add(r.Id);
+        foreach (var e in Expenses) ids.Add(e.Id);
+        if (ids.Count == 0) return;
+
+        data.PendingConversions.RemoveAll(p => ids.Contains(p.TransactionId));
+
+        // Fire and forget: it only writes a cache file, and failing to prune it must
+        // never block an undo the user has already seen happen.
+        if (PendingConversionService.Instance is { } svc)
+            _ = svc.ForgetAsync(ids);
     }
 }

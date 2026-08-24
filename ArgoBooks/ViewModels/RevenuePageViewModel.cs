@@ -1074,9 +1074,35 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         await CheckArgoApiPendingAsync();
     }
 
+    /// <summary>
+    /// Claim the objects again after a redo, and say so if that fails.
+    ///
+    /// Failure is not cosmetic: the rows are back in the books while the server still
+    /// lists the objects as waiting, so the next sync would offer them again and
+    /// importing would duplicate them. It cannot be fixed from here, since the reason
+    /// it failed is usually that something else already took them, so the honest move
+    /// is to say what happened rather than fail quietly and let the duplicate arrive
+    /// later with no explanation.
+    /// </summary>
     private async Task ReclaimThenRefreshAsync(ArgoApiSyncService svc, CompanyData data, ArgoApiImportCreation creation)
     {
-        await svc.TryReclaimBatchAsync(data, creation);
+        var reclaimed = await svc.TryReclaimBatchAsync(data, creation);
+
+        // Redo re-recorded the old batch id. If the claim did not land, that id names a
+        // batch the server has reverted, so leaving it recorded is worse than nothing.
+        if (!reclaimed && creation.BatchId != null)
+        {
+            data.Settings.Integrations.ArgoApi.ImportedBatches.Remove(creation.BatchId);
+            creation.BatchId = null;
+            App.CompanyManager?.MarkAsChanged();
+
+            await App.ShowWarningMessageBoxAsync(
+                "Argo Books API".Translate(),
+                ("The restored items are back in your books, but the server could not be told they were taken. " +
+                 "They may still show as waiting on your next sync. Importing them again would create duplicates, " +
+                 "so check before you do.").Translate());
+        }
+
         await CheckArgoApiPendingAsync();
     }
 
