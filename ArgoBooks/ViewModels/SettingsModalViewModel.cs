@@ -1791,17 +1791,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _newArgoApiKeyLabel = string.Empty;
 
-    /// <summary>
-    /// The secret from the most recent key creation, shown once in a read-only box
-    /// for the merchant to copy. Only the hash is stored server-side, so once this
-    /// is cleared the value is gone for good, which is the point.
-    /// </summary>
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasNewArgoApiKeySecret))]
-    private string? _newArgoApiKeySecret;
-
-    public bool HasNewArgoApiKeySecret => !string.IsNullOrEmpty(NewArgoApiKeySecret);
-
     /// <summary>The base URL a developer points their integration at.</summary>
     public string ArgoApiBaseUrl => $"{ApiConfig.BaseUrl}/v1";
 
@@ -1817,7 +1806,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
         ArgoApiEnabled = api?.Enabled ?? false;
         ArgoApiError = null;
-        NewArgoApiKeySecret = null;
         NewArgoApiKeyLabel = string.Empty;
         ArgoApiPendingSummary = null;
         ArgoApiKeys.Clear();
@@ -1937,7 +1925,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         ArgoApiEnabled = false;
         ArgoApiKeys.Clear();
         HasNoArgoApiKeys = true;
-        NewArgoApiKeySecret = null;
         ArgoApiPendingSummary = null;
         App.CompanyManager?.MarkAsChanged();
     }
@@ -2041,11 +2028,31 @@ public partial class SettingsModalViewModel : ViewModelBase
             ? null
             : secret[..7] + "..." + secret[^4..];
 
+    /// <summary>
+    /// True when another key already answers to this name.
+    ///
+    /// The name is the only thing telling two keys apart in this list; the secret is
+    /// never shown again and the hint is a dozen characters of hex. Two keys called
+    /// "Shopify" and one of them needing to be deleted is a coin flip.
+    /// </summary>
+    private bool ArgoApiKeyNameTaken(string label, string? exceptId = null)
+        => ArgoApiKeys.Any(k => k.Id != exceptId
+                                && string.Equals(k.Label.Trim(), label, StringComparison.OrdinalIgnoreCase));
+
     [RelayCommand]
     private async Task CreateArgoApiKeyAsync()
     {
         var api = App.CompanyManager?.CompanyData?.Settings.Integrations.ArgoApi;
         if (api?.CompanyUid == null || App.SharedHttpClient == null) return;
+
+        var label = string.IsNullOrWhiteSpace(NewArgoApiKeyLabel) ? "Untitled key" : NewArgoApiKeyLabel.Trim();
+
+        if (ArgoApiKeyNameTaken(label))
+        {
+            await App.ShowWarningMessageBoxAsync("Argo Books API".Translate(),
+                "There is already a key called \"{0}\". Give this one a different name.".TranslateFormat(label));
+            return;
+        }
 
         ArgoApiError = null;
         try
@@ -2053,14 +2060,25 @@ public partial class SettingsModalViewModel : ViewModelBase
             var client = new ArgoApiClient(App.SharedHttpClient);
             var (secret, _) = await client.CreateDeveloperKeyAsync(
                 api.CompanyUid,
-                string.IsNullOrWhiteSpace(NewArgoApiKeyLabel) ? "Untitled key" : NewArgoApiKeyLabel.Trim(),
+                label,
                 allowWrite: true,
                 LicenseAuthHelper.GetLicenseKey() ?? string.Empty,
                 LicenseAuthHelper.GetDeviceId() ?? string.Empty);
 
-            NewArgoApiKeySecret = secret;
             NewArgoApiKeyLabel = string.Empty;
             await RefreshArgoApiKeysAsync();
+
+            // Straight onto the clipboard, then shown. This is the only moment the
+            // secret exists outside the server's hash of it, and a message box is not
+            // selectable, so telling someone to retype it would not be a plan.
+            var copied = await App.CopyToClipboardAsync(secret);
+            var advice = copied
+                ? "Copied to your clipboard. This is the only time it can be shown, so paste it somewhere safe before closing this.".Translate()
+                : "This is the only time it can be shown, so copy it somewhere safe before closing this.".Translate();
+
+            await App.ShowInfoMessageBoxAsync(
+                "Your new API key".Translate(),
+                secret + Environment.NewLine + Environment.NewLine + advice);
         }
         catch (Exception ex)
         {
@@ -2154,6 +2172,13 @@ public partial class SettingsModalViewModel : ViewModelBase
             return;
         }
 
+        if (ArgoApiKeyNameTaken(label, row.Id))
+        {
+            await App.ShowWarningMessageBoxAsync("Argo Books API".Translate(),
+                "There is already a key called \"{0}\". Give this one a different name.".TranslateFormat(label));
+            return; // editor stays open, with what they typed still in it
+        }
+
         ArgoApiError = null;
         try
         {
@@ -2182,9 +2207,6 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     private static IProgress<int> SyncProgress(Action<string> set)
         => new Progress<int>(pct => set("Fetching exchange rates... {0}%".TranslateFormat(pct)));
-
-    [RelayCommand]
-    private void DismissNewArgoApiKeySecret() => NewArgoApiKeySecret = null;
 
     [RelayCommand]
     private void OpenArgoApiDocs()
@@ -3591,7 +3613,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private void UpgradeNow()
     {
-        IsOpen = false;
+        // Settings stays open behind it. Closing it meant coming back from the
+        // upgrade prompt dropped you at the dashboard, having lost the tab you were
+        // on and any unsaved change you had made there.
         UpgradeRequested?.Invoke(this, EventArgs.Empty);
     }
 

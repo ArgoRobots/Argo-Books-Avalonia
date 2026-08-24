@@ -66,7 +66,7 @@
                     </TabControl.ItemsPanel>
                     <!-- General Tab -->
                     <TabItem Header="{loc:Loc General}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
                             <StackPanel Spacing="20">
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
@@ -154,9 +154,7 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16">
+                                    <Border Classes="settings-row last">
                                         <StackPanel Spacing="12">
                                             <StackPanel Spacing="2">
                                                 <TextBlock Text="{loc:Loc 'Usage Data'}"
@@ -197,8 +195,8 @@
                         <!-- Horizontal scrolling disabled so the viewport width is finite. Left on
                              the default, cards get infinite width during measure and TextWrapping
                              never kicks in, so longer descriptions run past the toggle. -->
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
-                            <StackPanel Spacing="4">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                            <StackPanel Spacing="0">
                                 <!-- Extra bottom margin: this StackPanel uses Spacing="4". -->
                                 <controls:SampleCompanyNotice Margin="0,0,0,12"
                                                               IsVisible="{Binding IsSampleCompany}" />
@@ -207,11 +205,14 @@
                                            Foreground="{DynamicResource TextTertiaryBrush}"
                                            Margin="0,0,0,16" />
 
+                                <!-- One container, hairline-separated. Seven cards made
+                                     seven switches look like seven separate objects. -->
+                                <Border Classes="settings-group">
+                                  <StackPanel>
+
                                 <!-- Low Stock Alert -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Low Stock Alert'}"
@@ -229,10 +230,8 @@
                                 </Border>
 
                                 <!-- Out of Stock Alert -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Out of Stock Alert'}"
@@ -250,10 +249,8 @@
                                 </Border>
 
                                 <!-- Invoice Overdue -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Invoice Overdue'}"
@@ -271,10 +268,8 @@
                                 </Border>
 
                                 <!-- Rental Overdue -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Rental Overdue'}"
@@ -292,10 +287,8 @@
                                 </Border>
 
                                 <!-- Payment Notifications -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Payment Received'}"
@@ -313,10 +306,8 @@
                                 </Border>
 
                                 <!-- Payment Emails (sent by the server, so they arrive with the app closed) -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
@@ -353,10 +344,8 @@
                                 </Border>
 
                                 <!-- Unsaved Changes Reminder -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Border Classes="settings-row last"
+                                            IsEnabled="{Binding !IsSampleCompany}">
                                     <StackPanel Spacing="12">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
@@ -389,13 +378,15 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </Border>
+                                  </StackPanel>
+                                </Border>
                             </StackPanel>
                         </ScrollViewer>
                     </TabItem>
 
                     <!-- Appearance Tab -->
                     <TabItem Header="{loc:Loc Appearance}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
                             <StackPanel Spacing="24" HorizontalAlignment="Center">
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
@@ -645,14 +636,12 @@
 
                     <!-- Security Tab -->
                     <TabItem Header="{loc:Loc Security}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
                             <StackPanel Spacing="16">
                                 <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
 
                                 <!-- Password - No password set -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
+                                <Border Classes="status-panel"
                                         IsVisible="{Binding !HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto">
@@ -675,9 +664,7 @@
                                 </Border>
 
                                 <!-- Password - Has password set -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
+                                <Border Classes="status-panel on"
                                         IsVisible="{Binding HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto">
@@ -704,10 +691,7 @@
                                 </Border>
 
                                 <!-- Biometric Login -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        IsEnabled="{Binding !IsSampleCompany}">
+                                <Border Classes="settings-row last">
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc 'Biometric Login'}"
@@ -779,7 +763,7 @@
 
                     <!-- Payment Portal Tab -->
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
                             <StackPanel Spacing="16">
                                 <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
                                 <!-- Portal Company Name -->
@@ -916,9 +900,7 @@
                                                IsVisible="{Binding ShowConnectRequirementsHint}" />
 
                                     <!-- Stripe -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16">
+                                    <Border Classes="status-panel" Classes.on="{Binding StripeConnected}">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="Stripe"
@@ -963,9 +945,7 @@
                                         ConnectPaypalCommand / DisconnectPaypalCommand for parity with the server
                                         response shape, but they're not bound to any UI.
 
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16">
+                                    <Border Classes="status-panel" Classes.on="{Binding PaypalConnected}">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="PayPal"
@@ -1003,9 +983,7 @@
                                     -->
 
                                     <!-- Square -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16">
+                                    <Border Classes="status-panel" Classes.on="{Binding SquareConnected}">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="Square"
@@ -1043,10 +1021,7 @@
                                 </StackPanel>
 
                                 <!-- Automatic overdue reminders, sent by the server. -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
-                                        Margin="0,8,0,0">
+                                <Border Classes="settings-row last">
                                     <StackPanel Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
@@ -1103,7 +1078,7 @@
 
                     <!-- Bank Import Rules Tab -->
                     <TabItem Header="{loc:Loc 'Bank import rules'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
                             <StackPanel Spacing="16">
 
                                 <!-- Header row: description + Add rule button -->
@@ -1123,8 +1098,10 @@
                                             VerticalAlignment="Center" />
                                 </Grid>
 
-                                <!-- Column headers (columns mirror the rule rows below) -->
-                                <Grid ColumnDefinitions="1.6*,12,*,8,40" Margin="0,0,0,-8">
+                                <!-- Column headers (columns mirror the rule rows below). Hidden
+                                     with the list: headings over nothing read as a broken table. -->
+                                <Grid ColumnDefinitions="1.6*,12,*,8,40" Margin="0,0,0,-8"
+                                      IsVisible="{Binding BankCategoryRules.Count, Converter={x:Static local:IntConverters.IsPositive}}">
                                     <TextBlock Grid.Column="0"
                                                Text="{loc:Loc Pattern}"
                                                FontSize="12"
@@ -1201,9 +1178,7 @@
                                 </ItemsControl>
 
                                 <!-- Empty state -->
-                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                        CornerRadius="8"
-                                        Padding="16"
+                                <Border Classes="empty-state"
                                         IsVisible="{Binding BankCategoryRules.Count, Converter={x:Static local:IntConverters.IsZero}}">
                                     <TextBlock Text="{loc:Loc 'No rules yet. Click ''Add rule'' to create one.'}"
                                                FontSize="13"
@@ -1223,7 +1198,7 @@
                          reordered, update that constant too. -->
                     <TabItem Header="{loc:Loc 'Mobile app'}"
                              IsVisible="{Binding IsMobileAppTabVisible}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,8,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
                             <StackPanel Spacing="16">
 
                                 <TextBlock Text="{loc:Loc 'Capture receipts and rentals from your phone, then bring them into Argo Books here.'}"
@@ -1237,9 +1212,7 @@
                                                FontSize="13"
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16">
+                                    <Border Classes="status-panel">
                                         <Panel>
                                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16"
                                                   IsVisible="{Binding !IsPhoneJustPaired}">
@@ -1363,10 +1336,7 @@
                                     <ItemsControl ItemsSource="{Binding PairedDevices}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="tracking:PairedDevice">
-                                                <Border Background="{DynamicResource SurfaceAltBrush}"
-                                                        CornerRadius="8"
-                                                        Padding="16"
-                                                        Margin="0,0,0,4">
+                                                <Border Classes="item-card" Padding="16" Margin="0,0,0,4">
                                                     <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Label}"
@@ -1392,9 +1362,7 @@
                                     </ItemsControl>
 
                                     <!-- Empty state -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            Padding="16"
+                                    <Border Classes="empty-state"
                                             IsVisible="{Binding PairedDevices.Count, Converter={x:Static local:IntConverters.IsZero}}">
                                         <TextBlock Text="{loc:Loc 'No phones paired yet.'}"
                                                    FontSize="13"
@@ -1421,7 +1389,7 @@
                             <TabControl Grid.Row="1" Classes="sub-tabs">
 
                                 <TabItem Header="Stripe">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,8,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,20,0">
                                 <!-- IsEnabled sits on the inputs below, not here, so the sample
                                      company keeps a clickable "Full guide" link. -->
                                 <StackPanel Spacing="8">
@@ -1504,7 +1472,7 @@
                                     </StackPanel>
 
                                     <!-- Connected state -->
-                                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16"
+                                    <Border Classes="status-panel on"
                                             IsVisible="{Binding StripeIntegrationConnected}"
                                             IsEnabled="{Binding !IsSampleCompany}">
                                         <Grid ColumnDefinitions="*,Auto" MinHeight="40">
@@ -1512,13 +1480,15 @@
                                                 <TextBlock Text="{loc:Loc 'Connected'}" FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}" />
                                                 <TextBlock Text="{Binding StripeIntegrationAccountLabel}" FontSize="13"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           ToolTip.Tip="{Binding StripeIntegrationAccountLabel}"
                                                            Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding StripeLastSyncedDisplay}" FontSize="11"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}"
+                                                           IsVisible="{Binding StripeLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding StripeLastSyncedDisplay}" FontSize="11"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}"
-                                                           VerticalAlignment="Center"
-                                                           IsVisible="{Binding StripeLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                                     <StackPanel Orientation="Horizontal" Spacing="6"
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding IsSyncingStripe}">
@@ -1545,7 +1515,7 @@
                                 </TabItem>
 
                                 <TabItem Header="{loc:Loc 'Argo Books API'}">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,8,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,20,0">
                                 <!-- Argo Books API: data pushed in by apps the user has connected -->
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="{loc:Loc 'Argo Books API'}" FontSize="18" FontWeight="SemiBold"
@@ -1568,22 +1538,28 @@
                                     <StackPanel Spacing="12" IsVisible="{Binding ArgoApiEnabled}"
                                                 IsEnabled="{Binding !IsSampleCompany}">
 
-                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8" Padding="16">
+                                        <Border Classes="status-panel on">
                                             <Grid ColumnDefinitions="*,Auto" MinHeight="40">
                                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                     <TextBlock Text="{loc:Loc 'On'}" FontSize="12"
                                                                Foreground="{DynamicResource SuccessBrush}" />
+                                                    <!-- Trimmed, not clipped: the base URL is the widest
+                                                         thing here and the buttons take their width first. -->
                                                     <TextBlock Text="{Binding ArgoApiBaseUrl}" FontSize="13"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               ToolTip.Tip="{Binding ArgoApiBaseUrl}"
                                                                Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <!-- Under the URL rather than beside the buttons, where it
+                                                         was stealing the width the URL needed. -->
+                                                    <TextBlock Text="{Binding ArgoApiLastSyncedDisplay}" FontSize="11"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                                               IsVisible="{Binding ArgoApiLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                                     <TextBlock Text="{Binding ArgoApiPendingSummary}" FontSize="11"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                IsVisible="{Binding ArgoApiPendingSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding ArgoApiLastSyncedDisplay}" FontSize="11"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}"
-                                                               VerticalAlignment="Center"
-                                                               IsVisible="{Binding ArgoApiLastSyncedDisplay, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                                     <StackPanel Orientation="Horizontal" Spacing="6"
                                                                 VerticalAlignment="Center"
                                                                 IsVisible="{Binding IsSyncingArgoApi}">
@@ -1604,28 +1580,6 @@
                                                             Padding="12,6" MinHeight="0" />
                                                 </StackPanel>
                                             </Grid>
-                                        </Border>
-
-                                        <!-- Newly minted secret. Shown once, because only its hash is kept. -->
-                                        <Border Background="{DynamicResource WarningLightBrush}"
-                                                BorderBrush="{DynamicResource WarningBrush}"
-                                                BorderThickness="1" CornerRadius="8" Padding="14,12"
-                                                IsVisible="{Binding HasNewArgoApiKeySecret}">
-                                            <StackPanel Spacing="8">
-                                                <TextBlock Text="{loc:Loc 'Copy this key now. It is stored only as a fingerprint and cannot be shown again.'}"
-                                                           FontSize="12" TextWrapping="Wrap" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource WarningTextBrush}" />
-                                                <TextBox Text="{Binding NewArgoApiKeySecret, Mode=OneWay}"
-                                                         Classes="form-input"
-                                                         IsReadOnly="True"
-                                                         FontFamily="Consolas,monospace"
-                                                         TextWrapping="Wrap" />
-                                                <Button Content="{loc:Loc 'I have copied it'}"
-                                                        Classes="secondary-button"
-                                                        HorizontalAlignment="Left"
-                                                        Command="{Binding DismissNewArgoApiKeySecretCommand}"
-                                                        Padding="12,6" MinHeight="0" />
-                                            </StackPanel>
                                         </Border>
 
                                         <!-- Key list -->
@@ -1655,8 +1609,8 @@
                                             <!-- Without this the list is simply empty on first open, which
                                                  reads as something having gone wrong rather than as nothing
                                                  having been created yet. -->
-                                            <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
-                                                    Padding="14,12" IsVisible="{Binding HasNoArgoApiKeys}">
+                                            <Border Classes="empty-state"
+                                                    IsVisible="{Binding HasNoArgoApiKeys}">
                                                 <TextBlock Text="{loc:Loc 'No keys yet. Name one above and create it, then give it to the app or developer that needs to send data in.'}"
                                                            FontSize="12" TextWrapping="Wrap"
                                                            Foreground="{DynamicResource TextTertiaryBrush}" />
@@ -1665,8 +1619,7 @@
                                             <ItemsControl ItemsSource="{Binding ArgoApiKeys}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate x:DataType="vm:ArgoApiKeyRow">
-                                                        <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="8"
-                                                                Padding="12" Margin="0,0,0,6">
+                                                        <Border Classes="item-card" Margin="0,0,0,6">
                                                             <Grid>
                                                                 <!-- Display state -->
                                                                 <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsNotEditing}">

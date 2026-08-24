@@ -219,13 +219,15 @@
         <!-- Chart Expand Overlay (full-window modal for expanded chart viewing) -->
         <controls:ChartExpandOverlay />
 
-        <!-- Upgrade Modal -->
-        <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
-
         <!-- Note: CreateCompanyWizard is now at MainWindow level for full-screen overlay -->
 
         <!-- Settings Modal -->
         <modals:SettingsModal DataContext="{Binding SettingsModalViewModel}" />
+
+        <!-- Upgrade Modal. Declared after Settings so it draws on top of it: the
+             Premium prompts inside Settings used to close Settings before opening
+             this, which threw away where the user was for the sake of z-order. -->
+        <modals:UpgradeModal DataContext="{Binding UpgradeModalViewModel}" />
 
         <!-- Check for Update Modal -->
         <modals:CheckForUpdateModal DataContext="{Binding CheckForUpdateModalViewModel}" />

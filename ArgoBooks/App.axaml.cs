@@ -1,6 +1,8 @@
 using System.Reflection;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -364,6 +366,33 @@ public partial class App : Application
         {
             await messageBoxService.ShowInfoAsync(title, message);
         }
+    }
+
+    /// <summary>
+    /// Puts text on the clipboard from the main window's top level.
+    ///
+    /// Used for values a message box shows but the user cannot select out of it, an
+    /// API secret above all: it is shown exactly once and never recoverable, so
+    /// telling someone to retype it from a dialog is not an option.
+    /// </summary>
+    internal static async Task<bool> CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                && desktop.MainWindow is { } window
+                && TopLevel.GetTopLevel(window)?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(text);
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Copying to the clipboard failed: {ex.Message}", "Clipboard");
+        }
+
+        return false;
     }
 
     /// <summary>
