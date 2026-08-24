@@ -85,7 +85,7 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
-        <Setter Property="Padding" Value="0,14" />
+        <Setter Property="Padding" Value="0,16,16,16" />
     </Style>
 
     <!-- The last row in a group has nothing under it to be separated from. -->

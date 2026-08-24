@@ -66,7 +66,7 @@
                     </TabControl.ItemsPanel>
                     <!-- General Tab -->
                     <TabItem Header="{loc:Loc General}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="20">
                                 <!-- Language -->
                                 <StackPanel Spacing="6">
@@ -195,7 +195,7 @@
                         <!-- Horizontal scrolling disabled so the viewport width is finite. Left on
                              the default, cards get infinite width during measure and TextWrapping
                              never kicks in, so longer descriptions run past the toggle. -->
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="0">
                                 <!-- Extra bottom margin: this StackPanel uses Spacing="4". -->
                                 <controls:SampleCompanyNotice Margin="0,0,0,12"
@@ -213,7 +213,7 @@
                                 <!-- Low Stock Alert -->
                                     <Border Classes="settings-row"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Low Stock Alert'}"
                                                        FontSize="14"
@@ -232,7 +232,7 @@
                                 <!-- Out of Stock Alert -->
                                     <Border Classes="settings-row"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Out of Stock Alert'}"
                                                        FontSize="14"
@@ -251,7 +251,7 @@
                                 <!-- Invoice Overdue -->
                                     <Border Classes="settings-row"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Invoice Overdue'}"
                                                        FontSize="14"
@@ -270,7 +270,7 @@
                                 <!-- Rental Overdue -->
                                     <Border Classes="settings-row"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Rental Overdue'}"
                                                        FontSize="14"
@@ -289,7 +289,7 @@
                                 <!-- Payment Notifications -->
                                     <Border Classes="settings-row"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Payment Received'}"
                                                        FontSize="14"
@@ -308,7 +308,7 @@
                                 <!-- Payment Emails (sent by the server, so they arrive with the app closed) -->
                                     <Border Classes="settings-row"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                             <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
                                                        FontSize="14"
@@ -347,7 +347,7 @@
                                     <Border Classes="settings-row last"
                                             IsEnabled="{Binding !IsSampleCompany}">
                                     <StackPanel Spacing="12">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{loc:Loc 'Unsaved Changes Reminder'}"
                                                            FontSize="14"
@@ -386,7 +386,7 @@
 
                     <!-- Appearance Tab -->
                     <TabItem Header="{loc:Loc Appearance}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="24" HorizontalAlignment="Center">
                                 <!-- Theme -->
                                 <StackPanel Spacing="12">
@@ -636,7 +636,7 @@
 
                     <!-- Security Tab -->
                     <TabItem Header="{loc:Loc Security}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
 
@@ -644,7 +644,7 @@
                                 <Border Classes="status-panel"
                                         IsVisible="{Binding !HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc Password}"
                                                        FontSize="14"
@@ -667,7 +667,7 @@
                                 <Border Classes="status-panel on"
                                         IsVisible="{Binding HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc Password}"
                                                        FontSize="14"
@@ -692,7 +692,7 @@
 
                                 <!-- Biometric Login -->
                                 <Border Classes="settings-row last">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                         <StackPanel Grid.Column="0" Spacing="2">
                                             <TextBlock Text="{loc:Loc 'Biometric Login'}"
                                                        FontSize="14"
@@ -763,7 +763,7 @@
 
                     <!-- Payment Portal Tab -->
                     <TabItem Header="{loc:Loc 'Payment Portal'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
                                 <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
                                 <!-- Portal Company Name -->
@@ -901,7 +901,7 @@
 
                                     <!-- Stripe -->
                                     <Border Classes="status-panel" Classes.on="{Binding StripeConnected}">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="Stripe"
                                                            FontSize="14"
@@ -946,7 +946,7 @@
                                         response shape, but they're not bound to any UI.
 
                                     <Border Classes="status-panel" Classes.on="{Binding PaypalConnected}">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="PayPal"
                                                            FontSize="14"
@@ -984,7 +984,7 @@
 
                                     <!-- Square -->
                                     <Border Classes="status-panel" Classes.on="{Binding SquareConnected}">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="Square"
                                                            FontSize="14"
@@ -1023,7 +1023,7 @@
                                 <!-- Automatic overdue reminders, sent by the server. -->
                                 <Border Classes="settings-row last">
                                     <StackPanel Spacing="8">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{loc:Loc 'Automatic payment reminders'}"
                                                            FontSize="14"
@@ -1078,7 +1078,7 @@
 
                     <!-- Bank Import Rules Tab -->
                     <TabItem Header="{loc:Loc 'Bank import rules'}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
                                 <!-- Header row: description + Add rule button -->
@@ -1198,7 +1198,7 @@
                          reordered, update that constant too. -->
                     <TabItem Header="{loc:Loc 'Mobile app'}"
                              IsVisible="{Binding IsMobileAppTabVisible}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="24,20,16,20" Padding="0,0,20,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Margin="24,20,16,20" Padding="0,0,8,0">
                             <StackPanel Spacing="16">
 
                                 <TextBlock Text="{loc:Loc 'Capture receipts and rentals from your phone, then bring them into Argo Books here.'}"
@@ -1317,7 +1317,7 @@
 
                                 <!-- Paired devices -->
                                 <StackPanel Spacing="8">
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                                         <TextBlock Grid.Column="0"
                                                    Text="{loc:Loc 'Paired devices'}"
                                                    FontSize="13"
@@ -1337,7 +1337,7 @@
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="tracking:PairedDevice">
                                                 <Border Classes="item-card" Padding="16" Margin="0,0,0,4">
-                                                    <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                                         <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                             <TextBlock Text="{Binding Label}"
                                                                        FontSize="14"
@@ -1389,7 +1389,7 @@
                             <TabControl Grid.Row="1" Classes="sub-tabs">
 
                                 <TabItem Header="Stripe">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,20,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Padding="0,14,8,0">
                                 <!-- IsEnabled sits on the inputs below, not here, so the sample
                                      company keeps a clickable "Full guide" link. -->
                                 <StackPanel Spacing="8">
@@ -1475,7 +1475,7 @@
                                     <Border Classes="status-panel on"
                                             IsVisible="{Binding StripeIntegrationConnected}"
                                             IsEnabled="{Binding !IsSampleCompany}">
-                                        <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{loc:Loc 'Connected'}" FontSize="12"
                                                            Foreground="{DynamicResource SuccessBrush}" />
@@ -1515,7 +1515,7 @@
                                 </TabItem>
 
                                 <TabItem Header="{loc:Loc 'Argo Books API'}">
-                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,14,20,0">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" AllowAutoHide="False" Padding="0,14,8,0">
                                 <!-- Argo Books API: data pushed in by apps the user has connected -->
                                 <StackPanel Spacing="8">
                                     <TextBlock Text="{loc:Loc 'Argo Books API'}" FontSize="18" FontWeight="SemiBold"
@@ -1539,7 +1539,7 @@
                                                 IsEnabled="{Binding !IsSampleCompany}">
 
                                         <Border Classes="status-panel on">
-                                            <Grid ColumnDefinitions="*,Auto" MinHeight="40">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
                                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
                                                     <TextBlock Text="{loc:Loc 'On'}" FontSize="12"
                                                                Foreground="{DynamicResource SuccessBrush}" />
