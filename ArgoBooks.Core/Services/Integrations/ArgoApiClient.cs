@@ -219,14 +219,20 @@ public class ArgoApiClient
     /// <paramref name="localRefs"/> maps an API id to the id this company gave the
     /// object locally, so a developer can see where their data ended up.
     /// </summary>
+    /// <param name="idempotencyKey">
+    /// Must be stable for retries of the SAME logical claim and different for a
+    /// deliberately new one. A fresh random key per call defeated the server's replay
+    /// cache entirely, which is the whole reason the header exists.
+    /// </param>
     public async Task<ArgoBatch?> CreateImportBatchAsync(
         string key,
         IReadOnlyList<string> objectIds,
         IReadOnlyDictionary<string, string> localRefs,
+        string idempotencyKey,
         CancellationToken ct = default)
     {
         var body = new { objects = objectIds, local_refs = localRefs };
-        return await SendV1Async<ArgoBatch>(HttpMethod.Post, "/import_batches", key, body, Guid.NewGuid().ToString("N"), ct);
+        return await SendV1Async<ArgoBatch>(HttpMethod.Post, "/import_batches", key, body, idempotencyKey, ct);
     }
 
     /// <summary>

@@ -192,19 +192,36 @@ public class ArgoApiSyncService
         try
         {
             var batch = await _client.CreateImportBatchAsync(
-                api.DesktopKey!, creation.ClaimedObjectIds, creation.LocalRefs, ct);
+                api.DesktopKey!, creation.ClaimedObjectIds, creation.LocalRefs,
+                ClaimKey("claim", creation.ClaimedObjectIds), ct);
 
             creation.BatchId = batch?.Id;
         }
         catch
         {
+            // The claim may well have committed and only the response been lost.
+            // Rolling back on that would leave the objects imported on the server
+            // with nothing in the books, and the next sync would not even list
+            // them, because they are no longer pending. Silent loss. So ask the
+            // server what actually happened before throwing the work away.
+            if (await TryAdoptCommittedClaimAsync(data, creation, ct))
+                return await FinishImportAsync(data, creation);
+
             // Undo restores the id counters too, so a retry produces the same ids
             // rather than leaving a gap in the sequence.
             creation.Undo(data);
             throw;
         }
 
-        if (creation.BatchId != null)
+        return await FinishImportAsync(data, creation);
+    }
+
+    /// <summary>Record the claim and stamp the sync. Shared by the normal path and the recovery one.</summary>
+    private static Task<ArgoApiImportCreation> FinishImportAsync(CompanyData data, ArgoApiImportCreation creation)
+    {
+        var api = data.Settings.Integrations.ArgoApi;
+
+        if (creation.BatchId != null && !api.ImportedBatches.Contains(creation.BatchId))
             api.ImportedBatches.Add(creation.BatchId);
 
         api.LastSyncTime = DateTime.Now;
@@ -212,7 +229,72 @@ public class ArgoApiSyncService
         creation.Post = ArgoApiImportCreation.CounterSnapshot.From(data.IdCounters);
         data.MarkAsModified();
 
-        return creation;
+        return Task.FromResult(creation);
+    }
+
+    /// <summary>
+    /// An idempotency key that is the same for every retry of one logical claim and
+    /// different for a deliberately new one.
+    ///
+    /// It used to be a fresh Guid per call, which meant the server's replay cache
+    /// could never fire: a retry looked like a brand new request, found the objects
+    /// no longer pending, and failed with object_not_claimable.
+    /// </summary>
+    private static string ClaimKey(string purpose, IReadOnlyList<string> objectIds)
+    {
+        // Sorted, so the same set of objects in a different order is the same claim.
+        var ordered = objectIds.OrderBy(id => id, StringComparer.Ordinal);
+        var material = purpose + "|" + string.Join(",", ordered);
+        var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(material));
+
+        return Convert.ToHexString(hash)[..32].ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Did the claim actually land before the response went missing?
+    ///
+    /// Asked only after the claim threw. If the objects are imported and carry a
+    /// batch, the server did the work and only the answer was lost, so the local
+    /// rows are correct and keeping them is right. Undoing instead would strand the
+    /// developer's data: imported on the server, absent from the books, and invisible
+    /// to the next sync because it is no longer pending.
+    ///
+    /// Any doubt at all reports false, so the caller rolls back as before. A wrong
+    /// "yes" would leave books the server disagrees with, which is the worse error.
+    /// </summary>
+    private async Task<bool> TryAdoptCommittedClaimAsync(
+        CompanyData data, ArgoApiImportCreation creation, CancellationToken ct)
+    {
+        var api = data.Settings.Integrations.ArgoApi;
+        if (string.IsNullOrWhiteSpace(api.DesktopKey) || creation.ClaimedObjectIds.Count == 0)
+            return false;
+
+        try
+        {
+            var probe = creation.ClaimedObjectIds[0];
+            var resource = ArgoApiClient.ResourceForId(probe);
+            if (resource == null) return false;
+
+            var obj = await _client.GetRawObjectAsync(api.DesktopKey!, resource, probe, ct);
+            if (obj == null || !obj.Value.TryGetProperty("import", out var import))
+                return false;
+
+            var status = import.TryGetProperty("status", out var st) ? st.GetString() : null;
+            var batch = import.TryGetProperty("batch", out var b) && b.ValueKind == JsonValueKind.String
+                ? b.GetString()
+                : null;
+
+            if (status != "imported" || string.IsNullOrEmpty(batch))
+                return false;
+
+            creation.BatchId = batch;
+            return true;
+        }
+        catch
+        {
+            // Still unreachable. Roll back, which is the safe direction.
+            return false;
+        }
     }
 
     /// <summary>
@@ -242,7 +324,8 @@ public class ArgoApiSyncService
         try
         {
             var batch = await _client.CreateImportBatchAsync(
-                api.DesktopKey!, creation.ClaimedObjectIds, creation.LocalRefs, ct);
+                api.DesktopKey!, creation.ClaimedObjectIds, creation.LocalRefs,
+                ClaimKey("reclaim-" + (creation.BatchId ?? "none"), creation.ClaimedObjectIds), ct);
 
             if (batch?.Id == null) return false;
 
