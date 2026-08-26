@@ -214,7 +214,7 @@ public class CompanyData
     /// Phones paired to this company for mobile sync.
     /// </summary>
     [JsonPropertyName("pairedDevices")]
-    public List<Models.Tracking.PairedDevice> PairedDevices { get; init; } = [];
+    public List<PairedDevice> PairedDevices { get; init; } = [];
 
     /// <summary>
     /// ScanUids of phone-captured transactions already ingested via <c>CaptureIngestService</c>. Lets

@@ -86,7 +86,7 @@ public class AccountingReportDataServiceTests
 
         var totalRevenue = result.Rows.Find(r => r.Label == "Total Revenue");
         Assert.NotNull(totalRevenue);
-        Assert.Contains("100", totalRevenue!.Values[0]);
+        Assert.Contains("100", totalRevenue.Values[0]);
     }
 
     #endregion
@@ -129,7 +129,7 @@ public class AccountingReportDataServiceTests
         var totalCurrentAssetsRow = result.Rows.Find(r => r.Label == "Total Current Assets");
         Assert.NotNull(totalCurrentAssetsRow);
         // Cash and AR are zero, so the subtotal must equal the inventory value.
-        Assert.Equal(inventoryRow!.Values[0], totalCurrentAssetsRow!.Values[0]);
+        Assert.Equal(inventoryRow.Values[0], totalCurrentAssetsRow.Values[0]);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class AccountingReportDataServiceTests
 
         var totalRow = result.Rows.Find(r => r.Label == "TOTAL");
         Assert.NotNull(totalRow);
-        var grandTotal = totalRow!.Values[^1];
+        var grandTotal = totalRow.Values[^1];
         Assert.Contains("100", grandTotal);       // only INV-A counts
         Assert.DoesNotContain("600", grandTotal); // INV-B (issued after the end date) excluded
     }
@@ -238,7 +238,7 @@ public class AccountingReportDataServiceTests
         // The refund's ledger row is keyed by its payment id in the Reference column (Values[1]).
         var refundRow = result.Rows.Find(r => r.Values.Count >= 4 && r.Values[1] == "PMT-2");
         Assert.NotNull(refundRow);
-        var debit = refundRow!.Values[2];
+        var debit = refundRow.Values[2];
         var credit = refundRow.Values[3];
         Assert.True(
             debit.Contains("50") || credit.Contains("50"),

@@ -84,6 +84,31 @@ public class PendingConversionService
     }
 
     /// <summary>
+    /// Drops queued entries for records that no longer exist, and persists.
+    ///
+    /// Needed because undoing an import removes the rows it created while their queue
+    /// entries stay behind, and nothing else prunes them: the reconcile pass only drops
+    /// entries whose record exists AND is already converted, so one whose record is gone
+    /// is kept forever and retried on every pass.
+    ///
+    /// Takes the ids to forget rather than scanning a CompanyData for orphans, because
+    /// this queue is shared across companies and anything missing from the open one may
+    /// simply belong to another.
+    /// </summary>
+    public async Task ForgetAsync(IEnumerable<string> transactionIds)
+    {
+        var ids = new HashSet<string>(transactionIds, StringComparer.Ordinal);
+        if (ids.Count == 0) return;
+
+        lock (_lock)
+        {
+            _queue.RemoveAll(p => ids.Contains(p.TransactionId));
+        }
+
+        await SaveToDiskAsync();
+    }
+
+    /// <summary>
     /// Loads the queue from the app-data directory file.
     /// </summary>
     public async Task LoadAsync()

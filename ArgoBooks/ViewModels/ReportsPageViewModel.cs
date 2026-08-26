@@ -1609,7 +1609,7 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to generate report preview");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to generate report preview");
             foreach (var bmp in PreviewPageImages)
                 bmp.Dispose();
             PreviewPageImages.Clear();
@@ -1719,7 +1719,7 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
                     }
                     catch (Exception ex)
                     {
-                        App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Unknown, "Failed to auto-dismiss export message");
+                        App.ErrorLogger?.LogError(ex, ErrorCategory.Unknown, "Failed to auto-dismiss export message");
                     }
                 });
 

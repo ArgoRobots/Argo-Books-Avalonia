@@ -4236,7 +4236,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
         // Prefer an explicit category (e.g. from a report's grouping); otherwise fall back to the
         // product name so no product is left uncategorized.
-        var categoryLabel = !string.IsNullOrWhiteSpace(categoryName) ? categoryName! : name;
+        var categoryLabel = !string.IsNullOrWhiteSpace(categoryName) ? categoryName : name;
         var category = FindOrCreateCategory(data, categoryLabel, type);
         product.CategoryId = category.Id;
 

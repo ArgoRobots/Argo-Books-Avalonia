@@ -12,10 +12,10 @@ public class BankStatementSchemaTests
         var schema = ImportSchemaDefinition.GetSchemaForType(SpreadsheetSheetType.BankStatement);
 
         Assert.NotNull(schema);
-        Assert.Contains(schema!, c => c.Name == "Date" && c.Required);
-        Assert.Contains(schema!, c => c.Name == "Description" && c.Required);
-        Assert.Contains(schema!, c => c.Name == "Amount");
-        Assert.Contains(schema!, c => c.Name == "Debit");
-        Assert.Contains(schema!, c => c.Name == "Credit");
+        Assert.Contains(schema, c => c.Name == "Date" && c.Required);
+        Assert.Contains(schema, c => c.Name == "Description" && c.Required);
+        Assert.Contains(schema, c => c.Name == "Amount");
+        Assert.Contains(schema, c => c.Name == "Debit");
+        Assert.Contains(schema, c => c.Name == "Credit");
     }
 }

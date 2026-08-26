@@ -683,7 +683,7 @@ public partial class PayrollModalsViewModel : ViewModelBase
     {
         SupportedProvinces.Clear();
 
-        Core.Models.Payroll.PayrollRateTable? table = _rates.GetForDate(DateTime.Today);
+        PayrollRateTable? table = _rates.GetForDate(DateTime.Today);
 
         if (table == null)
         {

@@ -1,6 +1,8 @@
 using System.Reflection;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
@@ -367,6 +369,33 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Puts text on the clipboard from the main window's top level.
+    ///
+    /// Used for values a message box shows but the user cannot select out of it, an
+    /// API secret above all: it is shown exactly once and never recoverable, so
+    /// telling someone to retype it from a dialog is not an option.
+    /// </summary>
+    internal static async Task<bool> CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                && desktop.MainWindow is { } window
+                && TopLevel.GetTopLevel(window)?.Clipboard is { } clipboard)
+            {
+                await clipboard.SetTextAsync(text);
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Copying to the clipboard failed: {ex.Message}", "Clipboard");
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Shows a modal warning message box.
     /// </summary>
     public static async Task ShowWarningMessageBoxAsync(string title, string message)
@@ -455,7 +484,7 @@ public partial class App : Application
                 // sync can't quietly commit the user's in-progress edits.
                 if (!CompanyManager!.HasUnsavedChanges)
                 {
-                    try { await CompanyManager!.SavePaymentSyncAsync(); }
+                    try { await CompanyManager.SavePaymentSyncAsync(); }
                     catch (Exception ex)
                     {
                         ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
@@ -1104,7 +1133,7 @@ public partial class App : Application
             //
             // Wrapped defensively: the splash is a nicety and must never be able to stop the
             // app from starting.
-            SplashWindow? splash = null;
+            SplashWindow? splash;
             try
             {
                 splash = new SplashWindow();
@@ -1649,6 +1678,13 @@ public partial class App : Application
 
                 case LicenseValidationStatus.NetworkError:
                     // No internet or server unreachable, allow offline use
+                    return;
+
+                case LicenseValidationStatus.RateLimited:
+                    // The check could not be completed, which is not a verdict on the licence. Allow offline use.
+                    ErrorLogger?.LogWarning(
+                        "Startup license validation was rate limited; keeping the stored license.",
+                        category: ErrorCategory.License);
                     return;
 
                 case LicenseValidationStatus.InvalidKey:
@@ -2325,7 +2361,7 @@ public partial class App : Application
         // p50/p90, asymptoting near the ceiling and completing when the call returns) instead of the
         // old fake timer that crawled to 95% and stalled. The service reports only the status detail.
         var analysisDetail = "Reading file...".Translate();
-        using var analysisTicker = new ArgoBooks.Services.EstimatedProgressTicker(
+        using var analysisTicker = new EstimatedProgressTicker(
             OperationKind.SpreadsheetAnalysis,
             pct => _mainWindowViewModel?.ShowLoading("Analyzing spreadsheet structure...".Translate(), analysisDetail, pct, analysisCts, ConfirmCancelAsync));
         var analysisProgress = new Progress<(string detail, double percent)>(p => analysisDetail = p.detail);
@@ -3237,7 +3273,7 @@ public partial class App : Application
                     // Sample company cannot be saved directly - redirect to Save As.
                     if (CompanyManager.IsSampleCompany)
                     {
-                        var desktop = Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+                        var desktop = Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
                         if (desktop == null) return;
                         var saved = await SaveCompanyAsDialogAsync(desktop);
                         if (!saved) return; // user cancelled Save As, abort the new-company action

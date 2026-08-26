@@ -186,13 +186,13 @@ public class StripeApiClient
             {
                 var first = ld[0];
                 var desc = NullableStr(first, "description");
-                if (!string.IsNullOrWhiteSpace(desc)) product = desc!;
+                if (!string.IsNullOrWhiteSpace(desc)) product = desc;
             }
         }
         if (product == "Stripe sale")
         {
             var chargeDesc = NullableStr(el, "description");
-            if (!string.IsNullOrWhiteSpace(chargeDesc)) product = chargeDesc!;
+            if (!string.IsNullOrWhiteSpace(chargeDesc)) product = chargeDesc;
         }
 
         return new StripeChargeDetail(

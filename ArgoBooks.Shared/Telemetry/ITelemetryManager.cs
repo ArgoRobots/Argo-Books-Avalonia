@@ -41,7 +41,8 @@ public interface ITelemetryManager
     /// Records the business behind the company that is open. Personal data, unlike every
     /// other call here: see <see cref="CompanyProfileEvent"/>. Ignores repeat calls for the
     /// same company within a session, so callers can fire it on every open without
-    /// producing duplicates.
+    /// producing duplicates. Not called for the sample company: its details are the demo
+    /// file's, not the user's.
     /// </summary>
     Task TrackCompanyProfileAsync(
         string? companyName,
@@ -50,7 +51,6 @@ public interface ITelemetryManager
         string? country,
         string? currency,
         string? language,
-        bool isSample,
         CancellationToken cancellationToken = default);
 
     /// <summary>

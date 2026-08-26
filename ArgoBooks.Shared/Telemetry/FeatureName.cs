@@ -40,6 +40,10 @@ public enum FeatureName
     RentalItemCreated,
     RentalRecordCreated,
 
+    // Charts
+    ChartExportedToGoogleSheets,
+    ChartExportedToExcel,
+
     // Settings
     ThemeChanged,
     LanguageChanged,

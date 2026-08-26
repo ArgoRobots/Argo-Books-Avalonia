@@ -192,7 +192,7 @@ public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
 
     public LostDamagedPageViewModel()
     {
-        Helpers.ColumnVisibilityHelper.SyncToManager(this);
+        ColumnVisibilityHelper.SyncToManager(this);
         LoadItems();
 
         // Subscribe to undo/redo state changes to refresh UI

@@ -75,7 +75,7 @@ public class FileServiceEnvelopeTests : IDisposable
         var footer = await _footerService.ReadFooterAsync(filePath);
 
         Assert.NotNull(footer);
-        Assert.Equal(FileFormatConstants.FormatVersion, footer!.FormatVersion);
+        Assert.Equal(FileFormatConstants.FormatVersion, footer.FormatVersion);
         Assert.True(footer.IsEncrypted);
         Assert.False(string.IsNullOrEmpty(footer.WrappedKey));
         Assert.False(string.IsNullOrEmpty(footer.KeyWrapNonce));
@@ -89,7 +89,7 @@ public class FileServiceEnvelopeTests : IDisposable
         var footer = await _footerService.ReadFooterAsync(filePath);
 
         Assert.NotNull(footer);
-        Assert.False(footer!.IsEncrypted);
+        Assert.False(footer.IsEncrypted);
         Assert.Null(footer.WrappedKey);
         Assert.Null(footer.KeyWrapNonce);
         Assert.Null(footer.RecoveryBlob);
@@ -145,7 +145,7 @@ public class FileServiceEnvelopeTests : IDisposable
 
         var footer = await _footerService.ReadFooterAsync(filePath);
         Assert.NotNull(footer);
-        Assert.False(string.IsNullOrEmpty(footer!.RecoveryBlob));
+        Assert.False(string.IsNullOrEmpty(footer.RecoveryBlob));
         Assert.Equal(RecoveryKeyProvider.CurrentKeyId, footer.RecoveryKeyId);
 
         // Recover the data key with the private half, then decrypt the archive with it.
@@ -293,7 +293,7 @@ public class FileServiceEnvelopeTests : IDisposable
             legacyJson, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
 
         Assert.NotNull(footer);
-        Assert.Equal(1, footer!.FormatVersion);
+        Assert.Equal(1, footer.FormatVersion);
     }
 
     [Fact]

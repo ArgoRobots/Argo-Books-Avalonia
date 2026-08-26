@@ -375,9 +375,9 @@ public partial class UpgradeModalViewModel : ViewModelBase
 
 
     /// <summary>
-    /// Records the address, then moves on to the success panel.
+    /// Records the address, then closes the modal.
     ///
-    /// A server failure still advances. The licence is active either way, and stopping someone
+    /// A server failure still closes. The licence is active either way, and stopping someone
     /// on a dead-end screen over a contact detail is precisely the support ticket this whole
     /// flow is meant to avoid.
     /// </summary>
@@ -419,7 +419,29 @@ public partial class UpgradeModalViewModel : ViewModelBase
         }
 
         IsEmailCaptureStep = false;
-        IsVerificationSuccess = true;
+
+        // Same exit as declining: this step already told them premium is active, so the
+        // success panel would only repeat it.
+        ContinueAfterSuccess();
+    }
+
+    /// <summary>
+    /// Dismisses the email request without sending one. The licence is already active by
+    /// the time this step appears, so declining costs the user nothing and must not look
+    /// like it might. Closes the modal rather than going on to the success panel: this step
+    /// already leads with "Premium is active", so that panel would be the same news twice.
+    /// </summary>
+    [RelayCommand]
+    private void SkipEmailCapture()
+    {
+        CustomerEmail = string.Empty;
+        EmailError = null;
+        IsEmailCaptureStep = false;
+
+        // Out through the success panel's own exit, because that is what raises KeyVerified
+        // and turns premium on in the running app. Closing any other way leaves the customer
+        // on the free tier until they restart.
+        ContinueAfterSuccess();
     }
 
     private async Task CaptureEmailAsync(string premiumKey, string email)
@@ -479,6 +501,14 @@ public partial class UpgradeModalViewModel : ViewModelBase
     {
         // Don't allow closing during success animation - user must click Continue
         if (IsVerificationSuccess)
+            return;
+
+        // The email step comes after the licence is already active, so a click on the
+        // backdrop must not be treated as abandoning the key entry. LicenseKey is still
+        // populated at this point, so without this guard the click fell through to the
+        // discard-changes prompt and asked the user to confirm throwing away a purchase
+        // they had already completed. Dismissing here is the X button's job.
+        if (IsEmailCaptureStep)
             return;
 
         // If no data was entered, just close

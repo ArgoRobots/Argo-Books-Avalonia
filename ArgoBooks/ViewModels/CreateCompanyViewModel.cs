@@ -250,7 +250,7 @@ public partial class CreateCompanyViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.UI, "CreateCompany.RequestClose");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.UI, "CreateCompany.RequestClose");
         }
     }
 

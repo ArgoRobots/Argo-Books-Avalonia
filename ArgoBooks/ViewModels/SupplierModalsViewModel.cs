@@ -511,7 +511,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Supplier.ApplyAvatarChange");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Supplier.ApplyAvatarChange");
         }
     }
 
@@ -731,7 +731,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Supplier.ChangeId");
+                App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Supplier.ChangeId");
                 ModalIdError = ex.Message;
                 HasValidationMessage = true;
                 return;
@@ -856,7 +856,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Supplier.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Supplier.OpenDeleteConfirm");
         }
     }
 

@@ -20,6 +20,6 @@ public class UnimportedRowsTests
         };
         var result = svc.ImportProcessedEntities(data, [chunk], "Customers");
         Assert.Single(result.UnimportedRows);
-        Assert.Contains("ID", result.UnimportedRows[0].Reason, System.StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ID", result.UnimportedRows[0].Reason, StringComparison.OrdinalIgnoreCase);
     }
 }

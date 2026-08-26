@@ -1,5 +1,6 @@
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -310,6 +311,7 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
 
         _ = CheckStripePendingAsync();
+        _ = CheckArgoApiPendingAsync();
     }
 
     private void OnRevenueSaved(object? sender, EventArgs e)
@@ -467,11 +469,11 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var paymentsForRefunds = companyData?.Payments ?? new List<Payment>();
         var refundedByInvoiceId = paymentsForRefunds
             .Where(p => p.IsRefund && !string.IsNullOrEmpty(p.InvoiceId))
-            .GroupBy(p => p.InvoiceId!)
+            .GroupBy(p => p.InvoiceId)
             .ToDictionary(g => g.Key, g => g.Sum(p => Math.Abs(p.Amount)));
         var onlinePaymentInvoiceIds = paymentsForRefunds
             .Where(p => p.Source == PaymentSource.Online && !string.IsNullOrEmpty(p.InvoiceId))
-            .Select(p => p.InvoiceId!)
+            .Select(p => p.InvoiceId)
             .ToHashSet();
 
         decimal RefundedForRevenue(Revenue r) =>
@@ -816,6 +818,19 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         }
     }
 
+    /// <summary>
+    /// True while a sync is running, so the banner can say so.
+    ///
+    /// A disabled button was the only sign anything was happening, and on a busy
+    /// account the import spends fifteen seconds fetching exchange rates before it
+    /// writes a single row. That reads as the app having hung.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isSyncingStripe;
+
+    [ObservableProperty]
+    private string _stripeSyncStatus = string.Empty;
+
     [RelayCommand]
     private async Task SyncFromBannerAsync()
     {
@@ -823,6 +838,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         var stripe = data?.Settings.Integrations.Stripe;
         if (data == null || stripe == null || !stripe.Connected || App.SharedHttpClient == null) return;
 
+        IsSyncingStripe = true;
+        StripeSyncStatus = "Checking Stripe for new activity...".Translate();
         try
         {
             var svc = new StripeSyncService(new StripeApiClient(App.SharedHttpClient));
@@ -845,7 +862,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             }) == ConfirmationResult.Primary;
             if (!confirmed) return;
 
-            var creation = svc.ImportPreview(data, preview);
+            StripeSyncStatus = "Importing...".Translate();
+            var creation = await svc.ImportPreviewAsync(data, preview, RateProgress(v => StripeSyncStatus = v));
             if (creation.AnyCreated)
                 App.UndoRedoManager.RecordAction(new DelegateAction(
                     "Import from Stripe".Translate(),
@@ -863,10 +881,233 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         {
             // Leave the banner as-is; the user can retry the sync manually.
         }
+        finally
+        {
+            IsSyncingStripe = false;
+            StripeSyncStatus = string.Empty;
+        }
     }
+
+    /// <summary>
+    /// Turns the rate fetch's 0-100 into the line the banner shows. Only the fetch
+    /// reports a percentage, so the wording names that phase rather than the import
+    /// as a whole, which would sit at 100% for the part that actually writes rows.
+    /// </summary>
+    private static IProgress<int> RateProgress(Action<string> set)
+        => new Progress<int>(pct => set("Fetching exchange rates... {0}%".TranslateFormat(pct)));
 
     [RelayCommand]
     private void DismissStripeBanner() => StripeBannerVisible = false;
+
+    #endregion
+
+    #region Argo Books API sync banner
+
+    [ObservableProperty]
+    private bool _argoApiBannerVisible;
+
+    [ObservableProperty]
+    private int _argoApiPendingCount;
+
+    public string ArgoApiBannerText =>
+        "Argo Books API: {0} items are waiting to be imported.".TranslateFormat(ArgoApiPendingCount);
+
+    partial void OnArgoApiPendingCountChanged(int value) => OnPropertyChanged(nameof(ArgoApiBannerText));
+
+    private int _lastNotifiedArgoApiPending;
+
+    /// <summary>
+    /// Checks whether a connected app has sent anything that is still waiting,
+    /// and shows the Revenue-page banner if so. Called on every navigation here,
+    /// which matters more for this than it does for Stripe: a developer pushes on
+    /// their own schedule, so without a banner nothing would tell the merchant
+    /// anything had arrived at all.
+    ///
+    /// GET /v1/account returns per-type counts in a single call, so this is a much
+    /// lighter check than the Stripe one, which fetches every charge to count them.
+    ///
+    /// Errors are swallowed. A server the merchant does not control being briefly
+    /// unreachable must never stop the Revenue page loading.
+    /// </summary>
+    private async Task CheckArgoApiPendingAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var api = data?.Settings.Integrations.ArgoApi;
+        if (data == null || api == null || !api.Enabled
+            || string.IsNullOrWhiteSpace(api.DesktopKey) || App.SharedHttpClient == null)
+        {
+            return;
+        }
+
+        try
+        {
+            var client = new ArgoApiClient(App.SharedHttpClient);
+            var account = await client.GetAccountAsync(api.DesktopKey!);
+            // Pending is absent rather than empty if the server ever omits it.
+            var count = account?.Pending?.Values.Sum() ?? 0;
+
+            ArgoApiPendingCount = count;
+            ArgoApiBannerVisible = count > 0;
+
+            if (count > 0 && count != _lastNotifiedArgoApiPending)
+            {
+                _lastNotifiedArgoApiPending = count;
+                App.AddNotification(
+                    "Argo Books API".Translate(),
+                    "New data is waiting to be imported.".Translate(),
+                    NotificationType.Info,
+                    () => App.NavigationService?.NavigateTo(PageNames.Revenue));
+            }
+            else if (count == 0)
+            {
+                _lastNotifiedArgoApiPending = 0;
+            }
+        }
+        catch
+        {
+            // Unreachable or the key was revoked: leave the banner hidden rather
+            // than raise connectivity errors on a page that is not about that.
+        }
+    }
+
+    [ObservableProperty]
+    private bool _isSyncingArgoApi;
+
+    [ObservableProperty]
+    private string _argoApiSyncStatus = string.Empty;
+
+    [RelayCommand]
+    private async Task SyncArgoApiFromBannerAsync()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        var api = data?.Settings.Integrations.ArgoApi;
+        if (data == null || api == null || !api.Enabled || App.SharedHttpClient == null) return;
+
+        IsSyncingArgoApi = true;
+        ArgoApiSyncStatus = "Checking for new data...".Translate();
+        try
+        {
+            var svc = new ArgoApiSyncService(new ArgoApiClient(App.SharedHttpClient));
+            var preview = await svc.PreviewAsync(data);
+            if (!preview.HasActivity)
+            {
+                App.AddNotification("Argo Books API".Translate(), "You're already up to date.".Translate());
+                await CheckArgoApiPendingAsync();
+                return;
+            }
+
+            if (App.ConfirmationDialog == null) return; // never import without a review step
+            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+            {
+                Title = "Import from the Argo Books API".Translate(),
+                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?"
+                    .TranslateFormat(
+                        preview.TotalObjects,
+                        preview.TotalRevenue.ToString("C2"),
+                        preview.TotalExpenses.ToString("C2")),
+                PrimaryButtonText = "Import".Translate(),
+                CancelButtonText = "Cancel".Translate()
+            }) == ConfirmationResult.Primary;
+            if (!confirmed) return;
+
+            ArgoApiSyncStatus = "Importing...".Translate();
+            var creation = await svc.ImportPreviewAsync(data, preview, RateProgress(v => ArgoApiSyncStatus = v));
+            if (creation.AnyCreated)
+            {
+                App.UndoRedoManager.RecordAction(new DelegateAction(
+                    "Import from the Argo Books API".Translate(),
+                    () =>
+                    {
+                        creation.Undo(data);
+                        App.CompanyManager?.MarkAsChanged();
+                        LoadRevenue();
+                        // Hand the objects back on the server too, or the queue keeps
+                        // reporting as imported what is no longer in the books. The
+                        // banner is refreshed afterwards rather than before, so it
+                        // reflects the queue as it is once the release has landed.
+                        _ = ReleaseThenRefreshAsync(svc, data, creation.BatchId);
+                    },
+                    () =>
+                    {
+                        creation.Redo(data);
+                        App.CompanyManager?.MarkAsChanged();
+                        LoadRevenue();
+                        // Undo gave the objects back. Without claiming them again the
+                        // books hold rows the server still calls pending, and the next
+                        // sync imports every one of them a second time.
+                        _ = ReclaimThenRefreshAsync(svc, data, creation);
+                    }));
+            }
+
+            App.CompanyManager?.MarkAsChanged();
+            LoadRevenue();
+            App.AddNotification("Argo Books API".Translate(),
+                "Imported {0} sales and {1} expense entries.".TranslateFormat(creation.RevenuesCreated, creation.ExpensesCreated),
+                NotificationType.Success);
+
+            await CheckArgoApiPendingAsync();
+        }
+        catch
+        {
+            // Leave the banner as-is; the user can retry from here or from Settings.
+        }
+        finally
+        {
+            IsSyncingArgoApi = false;
+            ArgoApiSyncStatus = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Release the batch after an undo, then re-read the queue so the banner comes
+    /// back on its own. Without the refresh the merchant has to leave the page and
+    /// return before anything tells them the data is waiting again.
+    /// </summary>
+    private async Task ReleaseThenRefreshAsync(ArgoApiSyncService svc, CompanyData data, string? batchId)
+    {
+        if (batchId != null)
+            await svc.TryReleaseBatchAsync(data, batchId);
+
+        // The count is about to return to what it was before the import, so without
+        // this the "new data is waiting" notice would be suppressed as a repeat.
+        _lastNotifiedArgoApiPending = 0;
+        await CheckArgoApiPendingAsync();
+    }
+
+    /// <summary>
+    /// Claim the objects again after a redo, and say so if that fails.
+    ///
+    /// Failure is not cosmetic: the rows are back in the books while the server still
+    /// lists the objects as waiting, so the next sync would offer them again and
+    /// importing would duplicate them. It cannot be fixed from here, since the reason
+    /// it failed is usually that something else already took them, so the honest move
+    /// is to say what happened rather than fail quietly and let the duplicate arrive
+    /// later with no explanation.
+    /// </summary>
+    private async Task ReclaimThenRefreshAsync(ArgoApiSyncService svc, CompanyData data, ArgoApiImportCreation creation)
+    {
+        var reclaimed = await svc.TryReclaimBatchAsync(data, creation);
+
+        // Redo re-recorded the old batch id. If the claim did not land, that id names a
+        // batch the server has reverted, so leaving it recorded is worse than nothing.
+        if (!reclaimed && creation.BatchId != null)
+        {
+            data.Settings.Integrations.ArgoApi.ImportedBatches.Remove(creation.BatchId);
+            creation.BatchId = null;
+            App.CompanyManager?.MarkAsChanged();
+
+            await App.ShowWarningMessageBoxAsync(
+                "Argo Books API".Translate(),
+                ("The restored items are back in your books, but the server could not be told they were taken. " +
+                 "They may still show as waiting on your next sync. Importing them again would create duplicates, " +
+                 "so check before you do.").Translate());
+        }
+
+        await CheckArgoApiPendingAsync();
+    }
+
+    [RelayCommand]
+    private void DismissArgoApiBanner() => ArgoApiBannerVisible = false;
 
     #endregion
 }

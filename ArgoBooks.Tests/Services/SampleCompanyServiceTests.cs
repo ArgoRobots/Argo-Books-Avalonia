@@ -410,7 +410,7 @@ public class SampleCompanyServiceTests
 
         Assert.All(
             data.PayRuns.SelectMany(r => r.Lines).Where(l => l.EmployeeId == hourly.Id),
-            line => Assert.Equal(75m * hourly.PayRate, line.BasePay));
+            line => Assert.Equal(40m * hourly.PayRate, line.BasePay));
     }
 
     /// <summary>

@@ -596,7 +596,7 @@ public partial class ProductModalsViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Product.ChangeId");
+                App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Product.ChangeId");
                 ModalIdError = ex.Message;
                 return;
             }
@@ -744,7 +744,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Product.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Product.OpenDeleteConfirm");
         }
     }
 

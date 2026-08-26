@@ -177,7 +177,7 @@ public partial class ImportResultDialogViewModel : ViewModelBase
         }
         return sb.ToString();
 
-        static string CsvQuote(string field) => Core.Services.CsvWriter.QuoteField(field);
+        static string CsvQuote(string field) => CsvWriter.QuoteField(field);
     }
 
     [RelayCommand]

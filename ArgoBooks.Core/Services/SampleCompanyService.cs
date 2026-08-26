@@ -20,14 +20,12 @@ public class SampleCompanyService
     /// <summary>
     /// How many biweekly pay runs the sample company gets.
     ///
-    /// Kept low on purpose. The sample's Employees sheet lists eight people on roughly $560,000
-    /// of combined annual salary, against revenue of about $166,000, so the staff list and the
-    /// financials in that workbook were never reconciled with each other. Every pay run adds its
-    /// wages to the books as real expenses, so a full quarter of payroll would roughly double the
-    /// sample's costs and leave the company deeply unprofitable on the dashboard.
+    /// Kept low on purpose. Every run posts its wages to the books as real expenses, and they all
+    /// land in the newest month, which is the month the dashboard opens on. Two is enough to show
+    /// a history, a year-to-date figure that accumulates, and a remittance due.
     ///
-    /// Two periods is enough to show a history, a year-to-date figure that accumulates, and a
-    /// remittance due, without rewriting the story the rest of the sample tells.
+    /// The Employees sheet is sized to match: three part-time staff, because the sample sells
+    /// about $166,000 a year and no larger payroll fits inside that.
     /// </summary>
     private const int SamplePayPeriods = 2;
 
@@ -517,15 +515,15 @@ public class SampleCompanyService
             [
                 SampleEmployee("EMP-001", "Sarah Chen", "111111118", "ON", hired,
                     "118 Bay Street", "Toronto", "M5J2N8",
-                    PayType.Salary, 78000m),
+                    PayType.Salary, 30000m),
 
                 SampleEmployee("EMP-002", "Marcus Bell", "222222226", "ON", hired.AddMonths(7),
                     "47 King Street East", "Hamilton", "L8N1A9",
-                    PayType.Hourly, 32.50m),
+                    PayType.Hourly, 24.00m),
 
                 SampleEmployee("EMP-003", "Priya Raman", "333333334", "BC", hired.AddMonths(14),
                     "900 Granville Street", "Vancouver", "V6Z1K3",
-                    PayType.Salary, 92000m),
+                    PayType.Salary, 32000m),
             ]);
         }
         else
@@ -554,9 +552,10 @@ public class SampleCompanyService
             {
                 Employee? employee = data.Employees.FirstOrDefault(e => e.Id == line.EmployeeId);
 
+                // Part-time, matching what the Employees sheet says they are.
                 if (employee?.PayType == PayType.Hourly)
                 {
-                    line.HoursWorked = 75m;
+                    line.HoursWorked = 40m;
                 }
             }
 

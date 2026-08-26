@@ -519,7 +519,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
 
         // Fetch the order-date rate up front (like manual entry) so the saved order shows its amount
         // immediately instead of a momentary "Pending".
-        await ArgoBooks.Services.CurrencyService.WarmRateForDateAsync(OrderDate?.DateTime ?? DateTime.Today);
+        await CurrencyService.WarmRateForDateAsync(OrderDate?.DateTime ?? DateTime.Today);
 
         return IsEditMode && !string.IsNullOrEmpty(EditingOrderId)
             ? SaveEditedOrder(companyData, shipping)
@@ -595,7 +595,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
     /// </summary>
     private static void ApplyDisplayCurrency(CompanyData companyData, PurchaseOrder order)
     {
-        var currency = ArgoBooks.Services.CurrencyService.CurrentCurrencyCode;
+        var currency = CurrencyService.CurrentCurrencyCode;
         order.OriginalCurrency = currency;
 
         if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
@@ -1054,7 +1054,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "PurchaseOrder.OpenDeleteConfirm");
         }
     }
 
@@ -1284,7 +1284,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.DownloadPdf");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "PurchaseOrder.DownloadPdf");
             SendError = "Could not save the PDF: {0}".TranslateFormat(ex.Message);
         }
     }
@@ -1354,7 +1354,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.RenderPdf");
+                App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "PurchaseOrder.RenderPdf");
                 SendError = "Could not generate the PDF: {0}".TranslateFormat(ex.Message);
                 return;
             }
@@ -1440,7 +1440,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.Send");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "PurchaseOrder.Send");
             SendError = "Failed to send: {0}".TranslateFormat(ex.Message);
         }
         finally
@@ -1475,7 +1475,7 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "PurchaseOrder.GenerateSendPreview");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "PurchaseOrder.GenerateSendPreview");
         }
     }
 

@@ -252,7 +252,8 @@ public class LicenseService
                 "invalid_key" => LicenseValidationStatus.InvalidKey,
                 "expired" => LicenseValidationStatus.ExpiredSubscription,
                 "wrong_device" => LicenseValidationStatus.WrongDevice,
-                _ => LicenseValidationStatus.InvalidKey
+                "rate_limited" => LicenseValidationStatus.RateLimited,
+                _ => LicenseValidationStatus.NetworkError
             };
 
             return new LicenseValidationResult
@@ -343,7 +344,8 @@ public enum LicenseValidationStatus
     InvalidKey,
     ExpiredSubscription,
     WrongDevice,
-    NetworkError
+    NetworkError,
+    RateLimited
 }
 
 /// <summary>

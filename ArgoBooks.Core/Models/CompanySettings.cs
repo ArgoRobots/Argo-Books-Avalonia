@@ -153,7 +153,7 @@ public class CompanyInfo
     /// before this setting existed.
     /// </summary>
     [JsonPropertyName("remitterType")]
-    public Models.Payroll.RemitterType RemitterType { get; set; } = Models.Payroll.RemitterType.Regular;
+    public Payroll.RemitterType RemitterType { get; set; } = Payroll.RemitterType.Regular;
 }
 
 public class LocalizationSettings

@@ -44,7 +44,7 @@ public class CurrencyAmbiguityDialogViewModelTests
 
         // Change the selection to CAD, then confirm.
         var choice = vm.Symbols[0];
-        choice.SelectedOption = System.Linq.Enumerable.First(choice.Options, o => o.Code == "CAD");
+        choice.SelectedOption = Enumerable.First(choice.Options, o => o.Code == "CAD");
         vm.ConfirmCommand.Execute(null);
 
         Assert.Equal(new Dictionary<string, string> { ["$"] = "CAD" }, vm.Resolution);

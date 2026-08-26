@@ -411,9 +411,9 @@ public class GeminiReceiptScannerServiceTests
         const string json = """{"transactionDate":"02/03/2023"}""";
 
         ReceiptScanResult result = null!;
-        var thread = new System.Threading.Thread(() =>
+        var thread = new Thread(() =>
         {
-            System.Threading.Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-GB");
+            Thread.CurrentThread.CurrentCulture = new System.Globalization.CultureInfo("en-GB");
             result = GeminiReceiptScannerService.ParseResponse(json);
         });
         thread.Start();

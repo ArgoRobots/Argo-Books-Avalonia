@@ -16,11 +16,6 @@ public enum ApiName
     OpenExchangeRates,
 
     /// <summary>
-    /// Google Sheets API for spreadsheet export.
-    /// </summary>
-    GoogleSheets,
-
-    /// <summary>
     /// Server proxy for receipt scanning.
     /// </summary>
     ReceiptScanProxy

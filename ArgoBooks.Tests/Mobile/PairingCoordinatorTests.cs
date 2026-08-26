@@ -170,7 +170,7 @@ public class PairingCoordinatorTests
 
         var active = await store.GetActiveAsync();
         Assert.NotNull(active);
-        Assert.Equal("company-uid-456", active!.CompanyUid);
+        Assert.Equal("company-uid-456", active.CompanyUid);
     }
 
     [Fact]
@@ -344,7 +344,7 @@ public class PairingCoordinatorTests
 
         var active = await store.GetActiveAsync();
         Assert.NotNull(active);
-        Assert.Equal("company-uid-999", active!.CompanyUid);
+        Assert.Equal("company-uid-999", active.CompanyUid);
     }
 
     [Fact]

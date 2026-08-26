@@ -999,7 +999,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// Returns true when either money is still refundable OR a past refund
     /// exists (so the user can open the modal to view refund history).
     /// </summary>
-    private static bool ComputeCanRefund(Invoice invoice, ArgoBooks.Core.Data.CompanyData? companyData)
+    private static bool ComputeCanRefund(Invoice invoice, CompanyData? companyData)
     {
         if (companyData == null) return false;
         if (invoice.Status == InvoiceStatus.Draft || invoice.Status == InvoiceStatus.Cancelled)

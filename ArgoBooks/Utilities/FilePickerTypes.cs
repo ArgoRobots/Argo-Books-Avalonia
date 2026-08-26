@@ -20,8 +20,8 @@ public static class FilePickerTypes
     {
         if (string.IsNullOrEmpty(path))
             return false;
-        var extension = System.IO.Path.GetExtension(path).ToLowerInvariant();
-        return System.Array.IndexOf(SupportedReceiptExtensions, extension) >= 0;
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        return Array.IndexOf(SupportedReceiptExtensions, extension) >= 0;
     }
 
 

@@ -27,7 +27,7 @@ public class SyncServiceTests
         var svc = new SyncService(new HttpClient(handler));
         var pairing = await svc.CreatePairingAsync("uid-1", "Acme", CancellationToken.None);
         Assert.NotNull(pairing);
-        Assert.Equal("abc123", pairing!.Token);
+        Assert.Equal("abc123", pairing.Token);
         Assert.Equal("483920", pairing.ShortCode);
         Assert.EndsWith("/pair/create", handler.Last!.RequestUri!.AbsolutePath);
     }
@@ -48,7 +48,7 @@ public class SyncServiceTests
         var svc = new SyncService(new HttpClient(handler));
         var status = await svc.GetPairingStatusAsync("abc123", CancellationToken.None);
         Assert.NotNull(status);
-        Assert.Equal("delivered", status!.Status);
+        Assert.Equal("delivered", status.Status);
         Assert.Equal("PUBKEY", status.PhonePublicKey);
         Assert.EndsWith("/pair/status", handler.Last!.RequestUri!.AbsolutePath);
     }
@@ -60,7 +60,7 @@ public class SyncServiceTests
         var svc = new SyncService(new HttpClient(handler));
         var status = await svc.GetPairingStatusAsync("abc123", CancellationToken.None);
         Assert.NotNull(status);
-        Assert.Equal("pending", status!.Status);
+        Assert.Equal("pending", status.Status);
         Assert.Null(status.PhonePublicKey);
     }
 

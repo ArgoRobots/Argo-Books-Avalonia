@@ -45,7 +45,7 @@ The Linux distribution is packaged as an [AppImage](https://appimage.org/). The 
 1. Make sure the version branch with your changes is pushed to GitHub.
 2. Go to the repo's **Actions** tab on github.com and select **Build Linux AppImage** in the left sidebar.
 3. Click **Run workflow**, choose the branch to build from, and click the green **Run workflow** button.
-4. Wait for the run to finish (about 5 minutes), then open the run's **Summary** page (not the job log) and scroll to the **Artifacts** section at the bottom. The artifact is a `.zip`; download then extract it to get `ArgoBooks-X.X.X-linux-x64.AppImage`.
+4. Wait for the run to finish (about 5 minutes), then open the run's **Summary** page (not the job log) and scroll to the **Artifacts** section at the bottom. You may have to refresh the page. The artifact is a `.zip`; download then extract it to get `ArgoBooks-X.X.X-linux-x64.AppImage`.
 5. To test it on a Linux VM, first make it executable:
 
    ```bash

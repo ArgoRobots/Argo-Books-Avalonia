@@ -1244,7 +1244,7 @@ Choose EXTRACT only when you are confident real per-row records are present. Whe
             if (currentType is not { } type) continue; // before any section
 
             var category = !string.IsNullOrWhiteSpace(currentCategory)
-                ? currentCategory!
+                ? currentCategory
                 : (currentSection ?? "Uncategorized");
 
             var key = (type, category);

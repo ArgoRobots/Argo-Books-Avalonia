@@ -8,4 +8,12 @@ public class IntegrationsSettings
 {
     [JsonPropertyName("stripe")]
     public StripeIntegrationSettings Stripe { get; set; } = new();
+
+    /// <summary>
+    /// The Argo Books public API: data pushed in by developers the merchant has
+    /// issued a key to. Inbound rather than fetched, but it imports through the
+    /// same preview-then-single-undo flow as Stripe.
+    /// </summary>
+    [JsonPropertyName("argoApi")]
+    public ArgoApiIntegrationSettings ArgoApi { get; set; } = new();
 }

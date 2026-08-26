@@ -46,10 +46,4 @@ public class CompanyProfileEvent : TelemetryEvent
     /// translations are actually being used rather than merely available.
     /// </summary>
     public string? Language { get; set; }
-
-    /// <summary>
-    /// True for the built-in demo company. Its details are ours, not the user's, so every
-    /// read site has to be able to exclude them before counting industries or currencies.
-    /// </summary>
-    public bool IsSample { get; set; }
 }

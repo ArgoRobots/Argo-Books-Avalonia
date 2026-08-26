@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Telemetry;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -110,6 +111,10 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     private void ExportToGoogleSheets()
     {
         IsChartContextMenuOpen = false;
+        // Tracked here rather than in each override: every chart on every page routes
+        // through this command, so one call covers them all and a new chart type gets
+        // the tracking for free.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ChartExportedToGoogleSheets);
         OnExportToGoogleSheets();
     }
 
@@ -120,6 +125,7 @@ public abstract partial class ChartContextMenuViewModelBase : ViewModelBase
     private void ExportToExcel()
     {
         IsChartContextMenuOpen = false;
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ChartExportedToExcel);
         OnExportToExcel();
     }
 

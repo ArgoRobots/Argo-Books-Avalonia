@@ -520,7 +520,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.ApplyAvatarChange");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Customer.ApplyAvatarChange");
         }
     }
 
@@ -763,7 +763,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
             }
             catch (Exception ex)
             {
-                App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.ChangeId");
+                App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Customer.ChangeId");
                 ModalIdError = ex.Message;
                 HasValidationMessage = true;
                 return;
@@ -925,7 +925,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         }
         catch (Exception ex)
         {
-            App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Customer.OpenDeleteConfirm");
+            App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Customer.OpenDeleteConfirm");
         }
     }
 

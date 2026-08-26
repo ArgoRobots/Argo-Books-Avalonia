@@ -42,6 +42,6 @@ public class InsightsTopProductRevenueTests
 
         Assert.NotNull(top);
         // Gross revenue for the single product is the full $110, not the $100 pre-tax subtotal.
-        Assert.Equal(110m, top!.MetricValue);
+        Assert.Equal(110m, top.MetricValue);
     }
 }

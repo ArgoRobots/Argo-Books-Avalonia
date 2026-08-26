@@ -143,11 +143,11 @@ public class CapturePushCoordinatorTests
         var ciphertext = doc.RootElement.GetProperty("ciphertext").GetString();
         Assert.False(string.IsNullOrEmpty(ciphertext));
 
-        var plaintext = SyncCrypto.Decrypt(ciphertext!, SyncKeyBase64);
+        var plaintext = SyncCrypto.Decrypt(ciphertext, SyncKeyBase64);
         var decrypted = JsonSerializer.Deserialize<CapturedTransaction>(plaintext);
 
         Assert.NotNull(decrypted);
-        Assert.Equal(original.Type, decrypted!.Type);
+        Assert.Equal(original.Type, decrypted.Type);
         Assert.Equal(original.SupplierOrCustomer, decrypted.SupplierOrCustomer);
         Assert.Equal(original.Date, decrypted.Date);
         Assert.Equal(original.Total, decrypted.Total);
