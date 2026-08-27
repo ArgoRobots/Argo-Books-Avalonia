@@ -1794,6 +1794,17 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// <summary>The base URL a developer points their integration at.</summary>
     public string ArgoApiBaseUrl => $"{ApiConfig.BaseUrl}/v1";
 
+    /// <summary>
+    /// True on a debug build, which points at dev.argorobots.com.
+    ///
+    /// Accounts and keys are scoped to one environment, so a key minted from a
+    /// release build simply is not there when the same company is opened in a debug
+    /// one: the panel shows no keys and the server says the API is not enabled, with
+    /// nothing on screen explaining why. Surfacing the build is cheaper than
+    /// rediscovering that each time.
+    /// </summary>
+    public bool IsSandboxBuild => ApiConfig.IsSandbox;
+
     public ObservableCollection<ArgoApiKeyRow> ArgoApiKeys { get; } = [];
 
     /// <summary>True when the merchant has not created a key for anyone yet.</summary>
