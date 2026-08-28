@@ -1524,22 +1524,6 @@
                                                FontSize="12" TextWrapping="Wrap"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
 
-                                    <!-- Debug builds talk to dev.argorobots.com. Sits outside the on and
-                                         off states because either one can be the confusing screen: keys
-                                         made in a release build are invisible here, and enabling from
-                                         here creates a second account the release build cannot see.
-                                         Not a loc: string, deliberately. It never ships to a user, so
-                                         putting it through the translation generator would be waste. -->
-                                    <Border IsVisible="{Binding IsSandboxBuild}"
-                                            Background="{DynamicResource WarningLightBrush}"
-                                            BorderBrush="{DynamicResource WarningBrush}"
-                                            BorderThickness="1" CornerRadius="6"
-                                            Padding="10,8" Margin="0,4,0,0">
-                                        <TextBlock TextWrapping="Wrap" FontSize="12"
-                                                   Foreground="{DynamicResource WarningTextBrush}"
-                                                   Text="Debug build, so this is the sandbox environment. Accounts and keys belong to one environment only: anything set up in the release build is not visible here, and anything created here is invisible to it." />
-                                    </Border>
-
                                     <!-- Off state -->
                                     <StackPanel Spacing="8" IsVisible="{Binding !ArgoApiEnabled}">
                                         <Button Content="{loc:Loc Connect}"
