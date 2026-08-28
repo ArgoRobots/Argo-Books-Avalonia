@@ -76,6 +76,12 @@
     <Color x:Key="WarningIconBgColor">#FEF3C7</Color>
     <Color x:Key="InfoIconBgColor">#CFFAFE</Color>
 
+    <!-- Warning notice pill. Unchanged from the old cream fill; only the dark
+         variant needed fixing. Amber-900 text rather than black so the pill reads
+         as one amber object instead of black-on-cream. -->
+    <Color x:Key="WarningNoticeBgColor">#FEF3C7</Color>
+    <Color x:Key="WarningNoticeTextColor">#78350F</Color>
+
     <!-- Brushes -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
     <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}" />
@@ -129,6 +135,8 @@
     <SolidColorBrush x:Key="SuccessIconBgBrush" Color="{StaticResource SuccessIconBgColor}" />
     <SolidColorBrush x:Key="DangerIconBgBrush" Color="{StaticResource DangerIconBgColor}" />
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
+    <SolidColorBrush x:Key="WarningNoticeBgBrush" Color="{StaticResource WarningNoticeBgColor}" />
+    <SolidColorBrush x:Key="WarningNoticeTextBrush" Color="{StaticResource WarningNoticeTextColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
     <!-- AI Accent (used by AI import badges) -->

@@ -147,13 +147,9 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Privacy Section -->
+                                <!-- Privacy Section. No group heading: it holds a single setting,
+                                     and a heading over one row reads as a section that lost its rest. -->
                                 <StackPanel Spacing="8" Margin="0,8,0,0">
-                                    <TextBlock Text="{loc:Loc Privacy}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-
                                     <Border Classes="settings-row last">
                                         <StackPanel Spacing="12">
                                             <StackPanel Spacing="2">
@@ -320,11 +316,11 @@
                                                        Foreground="{DynamicResource TextTertiaryBrush}" />
                                             <!-- Amber-on-amber pill rather than amber text: the plain
                                                  WarningBrush (#F59E0B) has poor contrast against the
-                                                 light-theme SurfaceAlt (#E9ECEF), and the Warning
-                                                 brushes are theme-invariant so no single foreground
-                                                 reads well on both. Matches the sample-company notice
-                                                 at the top of this tab. -->
-                                            <Border Background="{DynamicResource WarningLightBrush}"
+                                                 light-theme SurfaceAlt (#E9ECEF). WarningNotice* is the
+                                                 theme-aware pair; the plain Warning* brushes are
+                                                 theme-invariant and glare in dark mode. Matches the
+                                                 sample-company notice at the top of this tab. -->
+                                            <Border Background="{DynamicResource WarningNoticeBgBrush}"
                                                     CornerRadius="6"
                                                     Padding="8,6"
                                                     Margin="0,4,0,0"
@@ -333,7 +329,7 @@
                                                 <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
                                                            FontSize="12"
                                                            TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource WarningTextBrush}" />
+                                                           Foreground="{DynamicResource WarningNoticeTextBrush}" />
                                             </Border>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1"
@@ -640,8 +636,10 @@
                             <StackPanel Spacing="16">
                                 <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
 
-                                <!-- Password - No password set -->
-                                <Border Classes="status-panel"
+                                <!-- Password - No password set. Plain row, not a status-panel: it sits
+                                     above Biometric Login and Auto-Lock, which are plain, and the one
+                                     boxed setting in the tab read as the odd one out. -->
+                                <Border Classes="settings-row last"
                                         IsVisible="{Binding !HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -664,7 +662,7 @@
                                 </Border>
 
                                 <!-- Password - Has password set -->
-                                <Border Classes="status-panel on"
+                                <Border Classes="settings-row last"
                                         IsVisible="{Binding HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -892,12 +890,19 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                    <!-- Gate: a provider can't be connected until both the company name and owner email are set. -->
-                                    <TextBlock Text="{loc:Loc 'Set your company name and owner email above before connecting a payment provider.'}"
-                                               FontSize="12"
-                                               TextWrapping="Wrap"
-                                               Foreground="{DynamicResource ErrorBrush}"
-                                               IsVisible="{Binding ShowConnectRequirementsHint}" />
+                                    <!-- Gate: a provider can't be connected until both the company name and owner
+                                         email are set. Amber pill, not red text: nothing has gone wrong, there is
+                                         a step still to do. Matches the verify-email prompt in Notifications. -->
+                                    <Border Background="{DynamicResource WarningNoticeBgBrush}"
+                                            CornerRadius="6"
+                                            Padding="8,6"
+                                            HorizontalAlignment="Left"
+                                            IsVisible="{Binding ShowConnectRequirementsHint}">
+                                        <TextBlock Text="{loc:Loc 'Set your company name and owner email above before connecting a payment provider.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource WarningNoticeTextBrush}" />
+                                    </Border>
 
                                     <!-- Stripe -->
                                     <Border Classes="status-panel" Classes.on="{Binding StripeConnected}">
