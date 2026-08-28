@@ -1972,6 +1972,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Tracked separately from real scans via the context, so sample runs can be counted
         // (or filtered out) without polluting genuine scan numbers.
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, "sample");
+        App.MainWindowViewModel?.NoteSampleReceiptScan();
 
         PopulateScanResults(BuildSampleScanResult());
 

@@ -18,6 +18,13 @@ public interface ITelemetryManager
     Task EndSessionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Note that the user just did something. Called from the window's input handlers, so
+    /// it has to stay cheap and synchronous: it runs on the UI thread ahead of every key
+    /// press and click.
+    /// </summary>
+    void MarkActivity();
+
+    /// <summary>
     /// Tracks a feature usage event.
     /// </summary>
     Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default);
@@ -58,6 +65,8 @@ public interface ITelemetryManager
     /// </summary>
     Task TrackStartupAsync(
         long? toFirstPaintMs,
+        long? toServicesReadyMs,
+        long? toViewModelsReadyMs,
         long? toReadyMs,
         bool coldStart,
         CancellationToken cancellationToken = default);

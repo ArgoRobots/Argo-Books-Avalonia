@@ -941,6 +941,13 @@ public partial class App : Application
 
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
+
+    /// <summary>
+    /// Read-only view of the main window's view model, for the handful of call sites that
+    /// need to nudge window-level state from deeper in the app. Kept internal and
+    /// get-only so nothing outside can swap it out.
+    /// </summary>
+    internal static MainWindowViewModel? MainWindowViewModel => _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
@@ -1208,6 +1215,9 @@ public partial class App : Application
             // Create navigation service
             NavigationService = new NavigationService();
 
+            // Everything above is the service graph; everything below builds view models.
+            StartupTimeline.MarkServicesReady();
+
             _mainWindowViewModel = new MainWindowViewModel();
             ConfirmationDialog = new ConfirmationDialogViewModel();
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
@@ -1405,6 +1415,7 @@ public partial class App : Application
             // Final reset of unsaved changes before window is shown - ensures clean startup state
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+            SyncSampleCompanyState();
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
             var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
@@ -1412,6 +1423,8 @@ public partial class App : Application
             {
                 _appShellViewModel.SidebarViewModel.IsCollapsed = true;
             }
+
+            StartupTimeline.MarkViewModelsReady();
 
             desktop.MainWindow = new MainWindow
             {
@@ -1448,6 +1461,8 @@ public partial class App : Application
 
                 _ = TelemetryManager?.TrackStartupAsync(
                     StartupTimeline.ToFirstPaintMs,
+                    StartupTimeline.ToServicesReadyMs,
+                    StartupTimeline.ToViewModelsReadyMs,
                     StartupTimeline.ToReadyMs(),
                     StartupTimeline.IsColdStart);
             };
@@ -2137,6 +2152,7 @@ public partial class App : Application
                     // Reset unsaved changes since time-shift is automatic
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                    SyncSampleCompanyState();
 
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
@@ -3258,6 +3274,29 @@ public partial class App : Application
     /// create-company wizard, so making a new company can't silently discard pending edits.
     /// The welcome screen's "Create New Company" path skips this (no company is open there).
     /// </summary>
+    /// <summary>
+    /// Points the sample-company banner at whichever company is now open.
+    ///
+    /// Leaving the demo resets the scan count and the dismissal, so opening it again later
+    /// starts clean rather than showing a stale tally or staying silent because it was
+    /// dismissed weeks ago.
+    /// </summary>
+    private static void SyncSampleCompanyState()
+    {
+        if (_mainWindowViewModel == null || CompanyManager == null)
+        {
+            return;
+        }
+
+        var isSample = CompanyManager.IsSampleCompany;
+        if (!isSample && _mainWindowViewModel.IsSampleCompany)
+        {
+            _mainWindowViewModel.SampleReceiptScans = 0;
+            _mainWindowViewModel.SampleBannerDismissed = false;
+        }
+        _mainWindowViewModel.IsSampleCompany = isSample;
+    }
+
     internal static async Task RequestCreateNewCompanyAsync()
     {
         if (_appShellViewModel == null) return;
@@ -3328,6 +3367,7 @@ public partial class App : Application
                     CompanyManager.CompanyData.MarkAsSaved();
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                    SyncSampleCompanyState();
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
 

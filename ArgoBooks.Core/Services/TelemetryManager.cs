@@ -36,7 +36,43 @@ public class TelemetryManager : ITelemetryManager
     private readonly string _platform;
     private readonly string _userAgent;
 
+    /// <inheritdoc />
+    public void MarkActivity()
+    {
+        var now = DateTime.UtcNow;
+
+        lock (_activityLock)
+        {
+            if (!_isInitialized)
+            {
+                return;
+            }
+
+            // Credit the gap since the previous input, but only if it is short enough to
+            // have been someone reading the screen rather than someone who walked away.
+            // A longer gap contributes nothing at all, which is the whole point: it is why
+            // an app left open overnight cannot inflate the figure.
+            var gap = now - _lastActivityUtc;
+            if (gap > TimeSpan.Zero && gap <= IdleThreshold)
+            {
+                _activeSeconds += (long)gap.TotalSeconds;
+            }
+
+            _lastActivityUtc = now;
+        }
+    }
+
+    /// <summary>
+    /// How long a gap between inputs before the user is treated as away. Long enough that
+    /// reading a report on screen still counts, short enough that a window left open over
+    /// lunch does not.
+    /// </summary>
+    private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(5);
+
     private readonly SemaphoreSlim _initLock = new(1, 1);
+    private readonly object _activityLock = new();
+    private DateTime _lastActivityUtc;
+    private long _activeSeconds;
     private DateTime _sessionStartTime;
     private GeoLocationData? _cachedGeoLocation;
     private bool _isInitialized;
@@ -93,6 +129,8 @@ public class TelemetryManager : ITelemetryManager
                 return;
 
             _sessionStartTime = DateTime.UtcNow;
+            _lastActivityUtc = _sessionStartTime;
+            _activeSeconds = 0;
             _isInitialized = true;
 
             try
@@ -148,9 +186,16 @@ public class TelemetryManager : ITelemetryManager
         {
             var duration = (long)(DateTime.UtcNow - _sessionStartTime).TotalSeconds;
 
+            long activeSeconds;
+            lock (_activityLock)
+            {
+                activeSeconds = _activeSeconds;
+            }
+
             var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
             sessionEvent.Action = SessionAction.SessionEnd;
             sessionEvent.DurationSeconds = duration;
+            sessionEvent.ActiveSeconds = activeSeconds;
             sessionEvent.Clean = true;
             await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
 
@@ -325,6 +370,8 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackStartupAsync(
         long? toFirstPaintMs,
+        long? toServicesReadyMs,
+        long? toViewModelsReadyMs,
         long? toReadyMs,
         bool coldStart,
         CancellationToken cancellationToken = default)
@@ -334,6 +381,8 @@ public class TelemetryManager : ITelemetryManager
             var startupEvent = await CreateEventAsync<StartupEvent>(cancellationToken);
             startupEvent.ToFirstPaintMs = toFirstPaintMs;
             startupEvent.ToReadyMs = toReadyMs;
+            startupEvent.ToServicesReadyMs = toServicesReadyMs;
+            startupEvent.ToViewModelsReadyMs = toViewModelsReadyMs;
             startupEvent.ColdStart = coldStart;
             await _storageService.RecordEventAsync(startupEvent, cancellationToken);
         }

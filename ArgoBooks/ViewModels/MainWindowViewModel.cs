@@ -1,8 +1,10 @@
 using ArgoBooks.Core.Models;
 using Avalonia.Controls;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Threading.Tasks;
 
 namespace ArgoBooks.ViewModels;
 
@@ -33,6 +35,60 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _windowTitle = "Argo Books";
+
+    #endregion
+
+    #region Sample Company Banner
+
+    /// <summary>
+    /// The demo has always been reachable and always been leavable, through File. What it
+    /// never had was anything that asked at the moment the answer might be yes, which is
+    /// why the sample gets opened far more often than a real company gets created. This
+    /// banner is that ask: always on screen while the demo is open, never a modal, and
+    /// dismissible so it cannot become nagging.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSampleBanner))]
+    [NotifyPropertyChangedFor(nameof(SampleBannerText))]
+    private bool _isSampleCompany;
+
+    /// <summary>
+    /// Receipts scanned in this demo session. Someone who has scanned a few has just
+    /// watched the thing work and is as convinced as they will ever be, so the message
+    /// stops being a general notice and starts naming what they are about to throw away.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SampleBannerText))]
+    private int _sampleReceiptScans;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowSampleBanner))]
+    private bool _sampleBannerDismissed;
+
+    public bool ShowSampleBanner => IsSampleCompany && !SampleBannerDismissed;
+
+    public string SampleBannerText => SampleReceiptScans >= 3
+        ? string.Format(
+            "You have scanned {0} receipts in the demo. None of them are being kept."
+                .Translate(),
+            SampleReceiptScans)
+        : "You are in the demo company. Nothing you do here is saved to your own books."
+            .Translate();
+
+    /// <summary>Counts a scan and is a no-op outside the demo.</summary>
+    public void NoteSampleReceiptScan()
+    {
+        if (IsSampleCompany)
+        {
+            SampleReceiptScans++;
+        }
+    }
+
+    [RelayCommand]
+    private void DismissSampleBanner() => SampleBannerDismissed = true;
+
+    [RelayCommand]
+    private static async Task CreateMyCompanyAsync() => await App.RequestCreateNewCompanyAsync();
 
     #endregion
 

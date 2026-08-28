@@ -31,6 +31,20 @@ public class StartupEvent : TelemetryEvent
     public long? ToReadyMs { get; set; }
 
     /// <summary>
+    /// Milliseconds from process start to the service graph being built, before any view
+    /// model exists. Sits between <see cref="ToFirstPaintMs"/> and
+    /// <see cref="ToViewModelsReadyMs"/>; like every mark here it is measured from process
+    /// start, so the segments are differences rather than sums.
+    /// </summary>
+    public long? ToServicesReadyMs { get; set; }
+
+    /// <summary>
+    /// Milliseconds from process start to the view models being built, immediately before
+    /// the main window is constructed.
+    /// </summary>
+    public long? ToViewModelsReadyMs { get; set; }
+
+    /// <summary>
     /// True when no other instance was already running. A second instance starting while the
     /// first is live reads its files from the OS cache and is not comparable to a cold launch,
     /// so mixing the two would flatter the average exactly when we are investigating relaunches.

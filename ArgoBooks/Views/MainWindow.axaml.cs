@@ -21,6 +21,13 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // Count input for the session's active time. Tunnelling, so a click or key press
+        // still registers when a child control handles it and the event never bubbles
+        // back up here. Only presses and key downs: pointer movement would fire
+        // constantly and would count a cursor drifting over the window as work.
+        AddHandler(InputElement.KeyDownEvent, OnAnyInput, RoutingStrategies.Tunnel);
+        AddHandler(InputElement.PointerPressedEvent, OnAnyInput, RoutingStrategies.Tunnel);
+
         // Subscribe to DataContext changes to ensure content is set
         DataContextChanged += OnDataContextChanged;
 
@@ -99,6 +106,16 @@ public partial class MainWindow : Window
     /// holds focus, so focus sitting elsewhere would otherwise let Escape drop the
     /// window out of fullscreen with a dialog still on screen.
     /// </summary>
+    /// <summary>
+    /// Runs ahead of every key press and click purely to timestamp it. Deliberately does
+    /// nothing else and never marks the event handled, so it cannot alter what the input
+    /// actually does.
+    /// </summary>
+    private static void OnAnyInput(object? sender, RoutedEventArgs e)
+    {
+        App.TelemetryManager?.MarkActivity();
+    }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         if (e.Key == Key.F11)

@@ -168,6 +168,41 @@
                 </Grid>
             </Border>
 
+            <!-- Demo notice. Docked above the content rather than floated over it, so it
+                 pushes the app down instead of hiding part of it, and so it cannot be
+                 mistaken for a dialog waiting to be answered. Leaving the demo has always
+                 been possible from File; what was missing was anything that asked at the
+                 moment the answer might be yes. -->
+            <Border DockPanel.Dock="Top"
+                    IsVisible="{Binding ShowSampleBanner}"
+                    Background="{DynamicResource WarningLightBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="0,0,0,1"
+                    Padding="16,10">
+                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding SampleBannerText}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center"
+                               FontSize="13"
+                               Foreground="{DynamicResource WarningTextBrush}" />
+
+                    <Button Grid.Column="1"
+                            Classes="primary-button"
+                            Padding="12,6" MinHeight="0"
+                            VerticalAlignment="Center"
+                            Command="{Binding CreateMyCompanyCommand}"
+                            Content="{loc:Loc 'Create my company'}" />
+
+                    <Button Grid.Column="2"
+                            Classes="link-button"
+                            Padding="8,6" MinHeight="0"
+                            VerticalAlignment="Center"
+                            Command="{Binding DismissSampleBannerCommand}"
+                            Content="{loc:Loc 'Dismiss'}" />
+                </Grid>
+            </Border>
+
             <!-- Main Content Area -->
             <ContentControl x:Name="MainContent" Content="{Binding CurrentView}" />
         </DockPanel>
