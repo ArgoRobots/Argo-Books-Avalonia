@@ -3277,9 +3277,12 @@ public partial class App : Application
     /// <summary>
     /// Points the sample-company banner at whichever company is now open.
     ///
-    /// Leaving the demo resets the scan count and the dismissal, so opening it again later
-    /// starts clean rather than showing a stale tally or staying silent because it was
-    /// dismissed weeks ago.
+    /// Every open of the demo starts a fresh visit: the scan count restarts and an earlier
+    /// dismissal does not carry over. Dismiss means "not now", not "never again", and
+    /// someone opening the demo for a third time is likelier to be ready to make something
+    /// real, not less. Keying this on the open rather than on leaving also avoids the trap
+    /// the first version fell into, where closing and reopening the demo was not a
+    /// transition away from it and so reset nothing.
     /// </summary>
     private static void SyncSampleCompanyState()
     {
@@ -3289,11 +3292,13 @@ public partial class App : Application
         }
 
         var isSample = CompanyManager.IsSampleCompany;
-        if (!isSample && _mainWindowViewModel.IsSampleCompany)
+
+        if (isSample)
         {
             _mainWindowViewModel.SampleReceiptScans = 0;
             _mainWindowViewModel.SampleBannerDismissed = false;
         }
+
         _mainWindowViewModel.IsSampleCompany = isSample;
     }
 
