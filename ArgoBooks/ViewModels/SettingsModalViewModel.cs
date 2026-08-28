@@ -2263,18 +2263,38 @@ public partial class SettingsModalViewModel : ViewModelBase
             ArgoApiPendingSummary = "{0} items waiting".TranslateFormat(preview.TotalObjects);
 
             if (App.ConfirmationDialog == null) return; // never import without a review step
-            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+
+            // Three answers, not two. Cancel leaves everything queued for next time, which
+            // is the right response to "not now" but a poor one to "never": without Discard
+            // an unwanted object is re-offered on every sync forever, and the app that sent
+            // it cannot tell refusal from inattention.
+            var choice = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
             {
                 Title = "Import from the Argo Books API".Translate(),
-                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?"
+                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?\n\nDiscard removes them for good and tells the apps that sent them. Cancel leaves them waiting."
                     .TranslateFormat(
                         preview.TotalObjects,
                         preview.TotalRevenue.ToString("C2"),
                         preview.TotalExpenses.ToString("C2")),
                 PrimaryButtonText = "Import".Translate(),
+                SecondaryButtonText = "Discard".Translate(),
+                IsSecondaryDestructive = true,
                 CancelButtonText = "Cancel".Translate()
-            }) == ConfirmationResult.Primary;
-            if (!confirmed) return;
+            });
+
+            if (choice == ConfirmationResult.Secondary)
+            {
+                ArgoApiSyncStatus = "Discarding...".Translate();
+                var discarded = await svc.RejectPreviewAsync(data, preview);
+                ArgoApiPendingSummary = null;
+                await App.ShowInfoMessageBoxAsync(
+                    "Argo Books API".Translate(),
+                    "Discarded {0} items. They will not be offered again."
+                        .TranslateFormat(discarded));
+                return;
+            }
+
+            if (choice != ConfirmationResult.Primary) return;
 
             var creation = await svc.ImportPreviewAsync(data, preview, SyncProgress(v => ArgoApiSyncStatus = v));
 

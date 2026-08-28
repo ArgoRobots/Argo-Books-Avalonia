@@ -342,6 +342,62 @@ public class ArgoApiSyncService
         }
     }
 
+    /// <summary>
+    /// Decline everything in a preview, so the queue empties and the apps that sent it are
+    /// told they were refused.
+    ///
+    /// Declining is the missing third answer. Without it the only options are "take it" and
+    /// "not now", so an object nobody wants is re-offered on every sync forever and the
+    /// developer who pushed it can never tell refusal from inattention.
+    ///
+    /// Each object is rejected on its own because that is the shape of the endpoint, and a
+    /// failure on one is swallowed: leaving the rest queued because a single id had already
+    /// been actioned elsewhere would be a worse outcome than a partial clear.
+    /// </summary>
+    /// <returns>How many objects the server accepted a rejection for.</returns>
+    public async Task<int> RejectPreviewAsync(
+        CompanyData data,
+        ArgoApiSyncPreview preview,
+        CancellationToken ct = default)
+    {
+        var api = data.Settings.Integrations.ArgoApi;
+        if (!api.Enabled || string.IsNullOrWhiteSpace(api.DesktopKey))
+            return 0;
+
+        var key = api.DesktopKey!;
+
+        var targets = new List<(string Resource, string Id)>();
+        foreach (var c in preview.Categories) targets.Add(("categories", c.Id));
+        foreach (var c in preview.Customers) targets.Add(("customers", c.Id));
+        foreach (var x in preview.Suppliers) targets.Add(("suppliers", x.Id));
+        foreach (var x in preview.Products) targets.Add(("products", x.Id));
+        foreach (var x in preview.Expenses) targets.Add(("expenses", x.Id));
+        foreach (var x in preview.Revenue) targets.Add(("revenue", x.Id));
+        foreach (var x in preview.Refunds) targets.Add(("refunds", x.Id));
+
+        var rejected = 0;
+        foreach (var (resource, id) in targets)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+
+            try
+            {
+                await _client.RejectAsync(key, resource, id, ct);
+                rejected++;
+            }
+            catch (ArgoApiException)
+            {
+                // Already imported or already rejected by another client. Nothing to undo
+                // and nothing to report: the object is out of the queue either way.
+            }
+        }
+
+        return rejected;
+    }
+
     public async Task<bool> TryReleaseBatchAsync(CompanyData data, string batchId, CancellationToken ct = default)
     {
         var api = data.Settings.Integrations.ArgoApi;
