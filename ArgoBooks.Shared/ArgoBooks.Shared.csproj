@@ -12,5 +12,7 @@
     <ItemGroup>
         <!-- Receipt image preprocessing (ReceiptImageHelper): cross-platform, safe for the Android head. -->
         <PackageReference Include="SkiaSharp" />
+        <PackageReference Include="LibHeifSharp" />
+        <PackageReference Include="LibHeif.Native.Runtime" />
     </ItemGroup>
 </Project>

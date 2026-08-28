@@ -11,7 +11,7 @@ public static class FilePickerTypes
     /// File extensions (lowercase, leading dot) the AI receipt scanner can process.
     /// Single source of truth for the file picker, drag-drop, and queue validation.
     /// </summary>
-    public static readonly string[] SupportedReceiptExtensions = [".jpg", ".jpeg", ".png", ".webp", ".pdf"];
+    public static readonly string[] SupportedReceiptExtensions = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".pdf"];
 
     /// <summary>
     /// Returns true if the path points to a file the receipt scanner accepts.
@@ -27,8 +27,8 @@ public static class FilePickerTypes
 
     public static readonly FilePickerFileType ImageFileType = new("Images")
     {
-        Patterns = ["*.jpg", "*.jpeg", "*.png", "*.webp"],
-        MimeTypes = ["image/jpeg", "image/png", "image/webp"]
+        Patterns = ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.heic", "*.heif"],
+        MimeTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]
     };
 
     public static readonly FilePickerFileType PdfFileType = new("PDF Documents")
@@ -39,7 +39,7 @@ public static class FilePickerTypes
 
     public static readonly FilePickerFileType AllSupportedTypes = new("All Supported")
     {
-        Patterns = ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.pdf"],
-        MimeTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"]
+        Patterns = ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.heic", "*.heif", "*.pdf"],
+        MimeTypes = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/pdf"]
     };
 }

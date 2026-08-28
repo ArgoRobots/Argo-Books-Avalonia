@@ -1071,9 +1071,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var fileName = item.FileName;
 
             // 2. Preprocess (CPU-bound: EXIF fix, contrast, sharpen)
-            item.PreprocessedData = await Task.Run(() =>
-                ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
-            item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
+            var convertedToJpeg = false;
+            item.PreprocessedData = await Task.Run(
+                () => ReceiptImageHelper.PreprocessForOcr(fileData, fileName, out convertedToJpeg), token);
+            // Only a real re-encode earns the .jpg name. HEIC comes back untouched.
+            item.ScanFileName = convertedToJpeg ? Path.ChangeExtension(fileName, ".jpg") : fileName;
 
             // 3. Generate preview (fire-and-forget, non-blocking), skip if already generated in queue
             if (string.IsNullOrEmpty(item.PreviewImagePath))
@@ -1757,10 +1759,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // The result is used for both the preview image and the API call, avoiding
         // a redundant FixOrientation decode/encode cycle. PDFs are returned unchanged.
         var isPdf = Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
-        var preprocessedData = await Task.Run(() =>
-            ReceiptImageHelper.PreprocessForOcr(imageData, fileName));
+        var convertedToJpeg = false;
+        var preprocessedData = await Task.Run(
+            () => ReceiptImageHelper.PreprocessForOcr(imageData, fileName, out convertedToJpeg));
         _currentImageData = preprocessedData;
-        _currentFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
+        _currentFileName = convertedToJpeg ? Path.ChangeExtension(fileName, ".jpg") : fileName;
 
         // Render preview pages off the UI thread (all pages for PDFs, single image otherwise).
         _ = LoadPreviewPagesAsync(preprocessedData, fileName, isPdf, "ScanPreview");
