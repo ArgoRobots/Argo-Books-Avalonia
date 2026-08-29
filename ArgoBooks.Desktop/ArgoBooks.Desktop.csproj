@@ -45,4 +45,17 @@
     <ItemGroup>
         <ProjectReference Include="..\ArgoBooks\ArgoBooks.csproj" />
     </ItemGroup>
+
+    <!-- SkiaSharp and HarfBuzzSharp ship native debug symbols as package content, and they
+         are copied into the publish output: 80MB and 20MB of a 512MB folder. They are
+         native PDBs, readable only by a native debugger, so nothing in the app can use
+         them. The managed ones are kept: ErrorLogger reads GetFileLineNumber() off a live
+         stack trace, which needs them present at runtime. -->
+    <Target Name="RemoveNativeSymbols" AfterTargets="Publish">
+        <ItemGroup>
+            <NativeSymbolsToRemove Include="$(PublishDir)libSkiaSharp.pdb" />
+            <NativeSymbolsToRemove Include="$(PublishDir)libHarfBuzzSharp.pdb" />
+        </ItemGroup>
+        <Delete Files="@(NativeSymbolsToRemove)" />
+    </Target>
 </Project>
