@@ -23,7 +23,7 @@ public class StripeRefundReturnTests
         var ret = Assert.Single(data.Returns);
         Assert.Equal(revId, ret.OriginalTransactionId);
         Assert.Equal(50.00m, ret.RefundAmount);
-        Assert.Empty(data.Expenses.Where(e => e.Description == "Stripe refund")); // no fallback expense
+        Assert.DoesNotContain(data.Expenses, e => e.Description == "Stripe refund"); // no fallback expense
     }
 
     [Fact]

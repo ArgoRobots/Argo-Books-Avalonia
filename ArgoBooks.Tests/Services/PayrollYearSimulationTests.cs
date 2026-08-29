@@ -217,7 +217,7 @@ public class PayrollYearSimulationTests
 
         PayrollYearToDate before = service.YearToDateFor(data, EmployeeId, second);
 
-        service.Void(data, second);
+        service.Void(data, second!);
 
         PayRun? third = service.CreateDraft(data, new DateTime(2026, 7, 31), new DateTime(2026, 7, 18), new DateTime(2026, 7, 31));
         PayrollYearToDate after = service.YearToDateFor(data, EmployeeId, third);
