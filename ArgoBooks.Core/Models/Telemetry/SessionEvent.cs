@@ -33,6 +33,12 @@ public class SessionEvent : TelemetryEvent
     public long? ActiveSeconds { get; set; }
 
     /// <summary>
+    /// The page on screen when the session ended (only for SessionEnd events). Null on
+    /// SessionStart, on ends reconstructed after a force-quit, and on older builds.
+    /// </summary>
+    public string? LastPage { get; set; }
+
+    /// <summary>
     /// Whether the session shut down normally. False marks a SessionEnd reconstructed on
     /// the next launch from a leftover <see cref="Services.SessionSentinel"/>, meaning the
     /// run was force-quit, cut off by an OS restart, or lost to a power failure.

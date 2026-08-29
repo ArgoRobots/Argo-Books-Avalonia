@@ -25,6 +25,12 @@ public interface ITelemetryManager
     void MarkActivity();
 
     /// <summary>
+    /// Remember which page is on screen, so a session can report where it ended.
+    /// Cheap and synchronous: it runs on every navigation.
+    /// </summary>
+    void NoteCurrentPage(string? pageName);
+
+    /// <summary>
     /// Tracks a feature usage event.
     /// </summary>
     Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default);

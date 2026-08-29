@@ -1704,6 +1704,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public async Task OpenScanModalAsync(string filePath)
     {
+        // Before the file check: picking an unreadable file is still an attempt.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanOpened);
+
         if (!File.Exists(filePath))
         {
             await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions

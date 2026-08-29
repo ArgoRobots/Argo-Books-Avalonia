@@ -37,6 +37,17 @@ public class TelemetryManager : ITelemetryManager
     private readonly string _userAgent;
 
     /// <inheritdoc />
+    public void NoteCurrentPage(string? pageName)
+    {
+        // Shares the activity lock: both are written from the UI thread and read at
+        // session end, so a second lock would only add an ordering to get wrong.
+        lock (_activityLock)
+        {
+            _currentPage = string.IsNullOrWhiteSpace(pageName) ? null : pageName;
+        }
+    }
+
+    /// <inheritdoc />
     public void MarkActivity()
     {
         var now = DateTime.UtcNow;
@@ -72,6 +83,7 @@ public class TelemetryManager : ITelemetryManager
     private readonly SemaphoreSlim _initLock = new(1, 1);
     private readonly object _activityLock = new();
     private DateTime _lastActivityUtc;
+    private string? _currentPage;
     private long _activeSeconds;
     private DateTime _sessionStartTime;
     private GeoLocationData? _cachedGeoLocation;
@@ -131,6 +143,7 @@ public class TelemetryManager : ITelemetryManager
             _sessionStartTime = DateTime.UtcNow;
             _lastActivityUtc = _sessionStartTime;
             _activeSeconds = 0;
+            _currentPage = null;
             _isInitialized = true;
 
             try
@@ -187,15 +200,18 @@ public class TelemetryManager : ITelemetryManager
             var duration = (long)(DateTime.UtcNow - _sessionStartTime).TotalSeconds;
 
             long activeSeconds;
+            string? lastPage;
             lock (_activityLock)
             {
                 activeSeconds = _activeSeconds;
+                lastPage = _currentPage;
             }
 
             var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
             sessionEvent.Action = SessionAction.SessionEnd;
             sessionEvent.DurationSeconds = duration;
             sessionEvent.ActiveSeconds = activeSeconds;
+            sessionEvent.LastPage = lastPage;
             sessionEvent.Clean = true;
             await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
 

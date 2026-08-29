@@ -59,5 +59,14 @@ public enum FeatureName
     /// Their subsequent activity is evaluation, not real bookkeeping, and without this
     /// event the two are indistinguishable.
     /// </summary>
-    SampleCompanyOpened
+    SampleCompanyOpened,
+
+    // Attempts, so a completion can be divided by one. Without the denominator,
+    // abandonment is invisible.
+    CompanyCreateOpened,
+    ReceiptScanOpened,
+    InvoiceCreateOpened,
+
+    /// <summary>Navigated to a page, with its name in the event's context field.</summary>
+    PageViewed
 }

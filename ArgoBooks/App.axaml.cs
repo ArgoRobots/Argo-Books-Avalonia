@@ -1252,6 +1252,21 @@ public partial class App : Application
                 TutorialService.Instance.DismissCompletionGuidance();
             };
 
+            // Consecutive repeats are dropped: re-navigating to the current page is a
+            // no-op to the user and would only pad the timeline.
+            var lastTrackedPage = string.Empty;
+            NavigationService.Navigated += (_, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(e.PageName) || e.PageName == lastTrackedPage)
+                {
+                    return;
+                }
+
+                lastTrackedPage = e.PageName;
+                TelemetryManager?.NoteCurrentPage(e.PageName);
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.PageViewed, e.PageName);
+            };
+
             // Chart text (axis labels, titles, legends) is drawn by LiveCharts with
             // baked-in SkiaSharp paints. Page view models recolor their charts on
             // ThemeChanged, but LiveCharts does not repaint an already-rendered chart

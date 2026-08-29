@@ -1124,6 +1124,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     public void OpenCreateModal()
     {
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.InvoiceCreateOpened);
+
         LoadCustomerOptions(includeAllOption: false);
         LoadProductOptions();
         LoadTemplateOptions();
