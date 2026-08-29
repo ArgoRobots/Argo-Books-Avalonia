@@ -104,8 +104,5 @@ public static class ArgoFiles
 
         // Register backup file extension
         RegisterFileIcon(".argobk", iconPath, 0, "Argo Books Backup File");
-
-        // Register template file extension
-        RegisterFileIcon(".argotemplate", iconPath, 0, "Argo Books Template File");
     }
 }
