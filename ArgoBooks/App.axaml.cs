@@ -1521,8 +1521,7 @@ public partial class App : Application
             // Load recent companies asynchronously (footer reads from .argo files)
             await LoadRecentCompaniesAsync();
 
-            // Register file type associations on Windows
-            RegisterFileTypeAssociationsAsync();
+            await ClearLegacyFileAssociationsAsync();
 
             // Open the file the shell handed us (.argo double-click), or the last company
             // after an update restart
@@ -1937,94 +1936,28 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Registers file type associations for .argo files on Windows.
-    /// Extracts the embedded icon to disk and associates it with the file extension.
+    /// Removes the per-user .argo registrations written by 2.0.13 and earlier. They take
+    /// precedence over the installer's per-machine association, so until they are gone the
+    /// extension keeps pointing at whichever build last ran.
     /// </summary>
-    private static void RegisterFileTypeAssociationsAsync()
+    private static async Task ClearLegacyFileAssociationsAsync()
     {
+        if (SettingsService == null || SettingsService.GlobalSettings.LegacyFileAssociationsCleared)
+            return;
+
         try
         {
-            // Only register on Windows
-            if (!OperatingSystem.IsWindows())
-                return;
+            if (OperatingSystem.IsWindows())
+            {
+                ArgoFiles.RemoveLegacyRegistrations();
+            }
 
-            var platformService = PlatformServiceFactory.GetPlatformService();
-
-            // Extract the icon from embedded resources to a file
-            var iconPath = ExtractIconToFile();
-            if (string.IsNullOrEmpty(iconPath))
-                return;
-
-            // Register file type associations
-            platformService.RegisterFileTypeAssociations(iconPath);
+            SettingsService.GlobalSettings.LegacyFileAssociationsCleared = true;
+            await SettingsService.SaveGlobalSettingsAsync();
         }
         catch (Exception ex)
         {
-            // Log but don't crash - file association is not critical
-            ErrorLogger?.LogWarning($"Failed to register file type associations: {ex.Message}", "FileAssociation");
-        }
-    }
-
-    /// <summary>
-    /// Extracts the embedded icon resource to a file in LocalAppData.
-    /// </summary>
-    /// <returns>Path to the extracted icon file, or null if extraction failed.</returns>
-    private static string? ExtractIconToFile()
-    {
-        try
-        {
-            // Destination path in LocalAppData
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var iconDirectory = Path.Combine(localAppData, "ArgoBooks");
-            var iconPath = Path.Combine(iconDirectory, "argo-logo.ico");
-
-            // Ensure directory exists
-            Directory.CreateDirectory(iconDirectory);
-
-            // Try Avalonia's asset loader first (for AvaloniaResource items)
-            try
-            {
-                var uri = new Uri("avares://ArgoBooks/Assets/argo-logo.ico");
-                using var avaloniaStream = Avalonia.Platform.AssetLoader.Open(uri);
-                using var fileStream = new FileStream(iconPath, FileMode.Create, FileAccess.Write);
-                avaloniaStream.CopyTo(fileStream);
-                return iconPath;
-            }
-            catch
-            {
-                // Avalonia asset loader failed, try other methods
-            }
-
-            // Try manifest resource stream
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "ArgoBooks.Assets.argo-logo.ico";
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream != null)
-            {
-                using var fileStream = new FileStream(iconPath, FileMode.Create, FileAccess.Write);
-                stream.CopyTo(fileStream);
-                return iconPath;
-            }
-
-            // Fall back to copying from the executable directory if available
-            var exeDir = Path.GetDirectoryName(Environment.ProcessPath);
-            if (!string.IsNullOrEmpty(exeDir))
-            {
-                var sourceIcon = Path.Combine(exeDir, "Assets", "argo-logo.ico");
-                if (File.Exists(sourceIcon))
-                {
-                    File.Copy(sourceIcon, iconPath, overwrite: true);
-                    return iconPath;
-                }
-            }
-
-            ErrorLogger?.LogWarning("Could not find icon resource", "IconExtraction");
-            return null;
-        }
-        catch (Exception ex)
-        {
-            ErrorLogger?.LogWarning($"Failed to extract icon: {ex.Message}", "IconExtraction");
-            return null;
+            ErrorLogger?.LogWarning($"Failed to clear legacy file associations: {ex.Message}", "FileAssociation");
         }
     }
 

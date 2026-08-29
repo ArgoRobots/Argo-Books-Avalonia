@@ -5,104 +5,82 @@ using Microsoft.Win32;
 namespace ArgoBooks.Core.Platform;
 
 /// <summary>
-/// Handles file associations and icon registration for Argo Books file types.
+/// Removes the per-user file type registrations that Argo Books wrote on every launch up to
+/// 2.0.13. The installer now owns the .argo association, and an entry under
+/// HKCU\Software\Classes takes precedence over the installer's per-machine one, so the old
+/// entries have to go or they keep pointing the extension at whichever build ran last.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class ArgoFiles
 {
-    /// <summary>
-    /// Import for the Windows Shell32 API function to notify the system of association changes.
-    /// </summary>
     [DllImport("shell32.dll", SetLastError = true)]
     private static extern void SHChangeNotify(uint wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
 
-    // Shell change notification constants
-    private const uint SHCNE_ASSOCCHANGED = 0x8000000;  // Notifies system of association change
-    private const uint SHCNF_IDLIST = 0x0;              // No additional flags needed
+    private const uint SHCNE_ASSOCCHANGED = 0x8000000;
+    private const uint SHCNF_IDLIST = 0x0;
+
+    private static readonly string[] LegacyExtensions = [".argo", ".argobk", ".argotemplate"];
 
     /// <summary>
-    /// Registers a file extension with Windows and associates it with an icon and the current application.
+    /// Deletes the legacy registrations and returns true if anything was removed.
     /// </summary>
-    /// <param name="extension">The file extension including the dot (e.g., ".argo")</param>
-    /// <param name="iconSourcePath">Path to the source icon file</param>
-    /// <param name="iconIndex">Icon index (usually 0)</param>
-    /// <param name="fileTypeDescription">Human-readable description of the file type</param>
-    public static void RegisterFileIcon(string extension, string iconSourcePath, int iconIndex, string fileTypeDescription = "Argo Books File")
+    public static bool RemoveLegacyRegistrations()
     {
-        if (string.IsNullOrEmpty(iconSourcePath) || !File.Exists(iconSourcePath))
-            return;
+        var removed = false;
 
-        try
+        foreach (var extension in LegacyExtensions)
         {
-            // Create a persistent copy of the icon in local app data
-            string tempIconPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "ArgoBooks",
-                $"{extension.Replace(".", "")}.ico"
-            );
+            var progId = $"ArgoBooks{extension.Replace(".", "")}";
+            removed |= DeleteExtension(extension, progId);
+            removed |= DeleteKey($@"Software\Classes\{progId}");
+        }
 
-            // Ensure directory exists
-            var directory = Path.GetDirectoryName(tempIconPath);
-            if (!string.IsNullOrEmpty(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            // Copy the icon to the persistent location
-            File.Copy(iconSourcePath, tempIconPath, overwrite: true);
-
-            // Generate a unique class name for this file type
-            string className = $"ArgoBooks{extension.Replace(".", "")}";
-
-            // Registry path for user-specific file associations
-            string userClassesRoot = @"Software\Classes";
-
-            // Create file extension association
-            using (RegistryKey extensionKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{extension}"))
-            {
-                extensionKey.SetValue("", className);
-            }
-
-            // Create file type information
-            using (RegistryKey classKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}"))
-            {
-                classKey.SetValue("", fileTypeDescription);
-            }
-
-            // Associate icon with file type
-            using (RegistryKey defaultIconKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}\DefaultIcon"))
-            {
-                defaultIconKey.SetValue("", $"{tempIconPath},{iconIndex}");
-            }
-
-            // Get the current executable path
-            var executablePath = Environment.ProcessPath;
-            if (!string.IsNullOrEmpty(executablePath))
-            {
-                // Set up command to open files with this application
-                using RegistryKey commandKey = Registry.CurrentUser.CreateSubKey($@"{userClassesRoot}\{className}\shell\open\command");
-                commandKey.SetValue("", $"\"{executablePath}\" \"%1\"");
-            }
-
-            // Notify Windows to refresh icon cache and file associations
+        if (removed)
+        {
             SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
         }
-        catch
-        {
-            // File association is not critical
-        }
+
+        return removed;
     }
 
     /// <summary>
-    /// Registers all Argo Books file types with their icons.
+    /// Removes an extension key only while it still points at our ProgID, so an association the
+    /// user has since handed to another application is left alone.
     /// </summary>
-    /// <param name="iconPath">Path to the Argo Books icon file</param>
-    public static void RegisterAllFileTypes(string iconPath)
+    private static bool DeleteExtension(string extension, string progId)
     {
-        // Register the main .argo company file extension
-        RegisterFileIcon(".argo", iconPath, 0, "Argo Books Company File");
+        var path = $@"Software\Classes\{extension}";
 
-        // Register backup file extension
-        RegisterFileIcon(".argobk", iconPath, 0, "Argo Books Backup File");
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(path);
+            if (key?.GetValue("") as string != progId)
+                return false;
+        }
+        catch
+        {
+            return false;
+        }
+
+        return DeleteKey(path);
+    }
+
+    private static bool DeleteKey(string path)
+    {
+        try
+        {
+            using (var key = Registry.CurrentUser.OpenSubKey(path))
+            {
+                if (key == null)
+                    return false;
+            }
+
+            Registry.CurrentUser.DeleteSubKeyTree(path);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
