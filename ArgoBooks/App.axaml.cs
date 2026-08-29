@@ -953,6 +953,10 @@ public partial class App : Application
     private static IdleDetectionService? _idleDetectionService;
     private static Timer? _pendingConversionTimer;
 
+    // Captured in OnFrameworkInitializationCompleted; InitializeAsync runs later and the
+    // lifetime is not reachable from there.
+    private static string[] _startupArgs = [];
+
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
     private static AnalyticsPageViewModel? _analyticsPageViewModel;
@@ -1105,6 +1109,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _startupArgs = desktop.Args ?? [];
+
             // Initialize error logging first so it's available for all services
             var errorLogger = new ErrorLogger();
             ErrorLogger = errorLogger;
@@ -1518,8 +1524,9 @@ public partial class App : Application
             // Register file type associations on Windows
             RegisterFileTypeAssociationsAsync();
 
-            // Post-update recovery: auto-reopen the last company after an update restart
-            await TryAutoOpenRecentCompanyAfterUpdateAsync();
+            // Open the file the shell handed us (.argo double-click), or the last company
+            // after an update restart
+            await TryOpenStartupCompanyAsync();
 
             // Initialize services that depend on settings.
             if (SettingsService != null)
@@ -1804,37 +1811,42 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// After an update, automatically reopens the company that was open before the restart.
-    /// Checks the AutoOpenRecentAfterUpdate flag, clears it, and opens the most recent company.
+    /// Opens a company at startup instead of landing on the welcome screen, from either
+    /// source: a file path the Windows shell passed for a double-clicked .argo file, or the
+    /// AutoOpenRecentAfterUpdate flag set before an update restart. The command-line file
+    /// wins; the flag is consumed either way so it can't fire on a later launch.
     /// </summary>
-    private static async Task TryAutoOpenRecentCompanyAfterUpdateAsync()
+    private static async Task TryOpenStartupCompanyAsync()
     {
-        if (SettingsService == null)
-            return;
+        var requestedFile = StartupFileArgs.GetCompanyFilePath(_startupArgs);
 
-        var updateSettings = SettingsService.GlobalSettings.Updates;
-        if (!updateSettings.AutoOpenRecentAfterUpdate)
-            return;
-
-        // Clear the flag immediately so it doesn't fire again on next startup
-        updateSettings.AutoOpenRecentAfterUpdate = false;
-        await SettingsService.SaveGlobalSettingsAsync();
+        var reopenAfterUpdate = false;
+        if (SettingsService != null)
+        {
+            var updateSettings = SettingsService.GlobalSettings.Updates;
+            reopenAfterUpdate = updateSettings.AutoOpenRecentAfterUpdate;
+            if (reopenAfterUpdate)
+            {
+                updateSettings.AutoOpenRecentAfterUpdate = false;
+                await SettingsService.SaveGlobalSettingsAsync();
+            }
+        }
 
         try
         {
-            var recentCompanies = SettingsService.GetValidRecentCompanies();
-            if (recentCompanies.Count > 0)
+            if (requestedFile == null && reopenAfterUpdate)
             {
-                var mostRecent = recentCompanies[0];
-                if (File.Exists(mostRecent))
-                {
-                    await OpenCompanyWithRetryAsync(mostRecent);
-                }
+                requestedFile = SettingsService?.GetValidRecentCompanies().FirstOrDefault(File.Exists);
             }
+
+            if (requestedFile == null)
+                return;
+
+            await OpenCompanyWithRetryAsync(requestedFile);
         }
         catch (Exception ex)
         {
-            ErrorLogger?.LogWarning($"Failed to auto-open company after update: {ex.Message}", "AutoUpdate");
+            ErrorLogger?.LogWarning($"Failed to open company at startup: {ex.Message}", "Startup");
         }
     }
 
