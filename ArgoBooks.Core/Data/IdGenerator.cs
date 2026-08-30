@@ -52,6 +52,15 @@ public class IdGenerator(CompanyData companyData)
     }
 
     /// <summary>
+    /// Generates a new recurring-transaction schedule ID (REC-TXN-00001).
+    /// </summary>
+    public string NextRecurringTransactionId()
+    {
+        companyData.IdCounters.RecurringTransaction++;
+        return $"REC-TXN-{companyData.IdCounters.RecurringTransaction:D5}";
+    }
+
+    /// <summary>
     /// Peeks at what the next invoice ID and number would be without incrementing the counter.
     /// </summary>
     public (string Id, string Number) PeekNextInvoice()
