@@ -219,45 +219,6 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Upcoming recurring occurrences -->
-                <Border IsVisible="{Binding HasUpcomingRecurring}"
-                        Background="{DynamicResource SurfaceBrush}"
-                        BorderBrush="{DynamicResource BorderBrush}"
-                        BorderThickness="1"
-                        CornerRadius="12"
-                        Padding="20"
-                        Margin="0,0,0,16"
-                        HorizontalAlignment="Stretch">
-                    <StackPanel Spacing="12">
-                        <TextBlock Text="{loc:Loc 'Coming up'}"
-                                   FontSize="16"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <ItemsControl ItemsSource="{Binding UpcomingRecurring}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="vm:UpcomingRecurringItem">
-                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
-                                        <TextBlock Text="{Binding DateFormatted}"
-                                                   Width="64"
-                                                   FontSize="13"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Grid.Column="1"
-                                                   Text="{Binding Description}"
-                                                   FontSize="13"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
-                                        <TextBlock Grid.Column="2"
-                                                   Text="{Binding AmountFormatted}"
-                                                   FontSize="13"
-                                                   FontWeight="Medium"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
-
                 <!-- Empty dashboard message, normal mode -->
                 <Border x:Name="EmptyDashboardMessage"
                         IsVisible="False"

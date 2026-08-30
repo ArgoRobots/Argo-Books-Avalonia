@@ -245,6 +245,28 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     }
 
     [RelayCommand]
+    private void AcceptGenerated(RevenueDisplayItem? item)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null || item == null) return;
+
+        var entry = data.Revenues.FirstOrDefault(e => e.Id == item.Id);
+        if (entry == null || !entry.NeedsReview) return;
+
+        entry.NeedsReview = false;
+        item.NeedsReview = false;
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Accept {entry.Id}",
+            () => { entry.NeedsReview = true; item.NeedsReview = true; },
+            () => { entry.NeedsReview = false; item.NeedsReview = false; }));
+
+        GeneratedBannerCount = data.Revenues.Count(e => e.NeedsReview);
+        HasGeneratedBanner = GeneratedBannerCount > 0;
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
     private void MarkReviewed()
     {
         var data = App.CompanyManager?.CompanyData;
@@ -600,6 +622,7 @@ public RevenuePageViewModel()
             return new RevenueDisplayItem
             {
                 Id = revenue.Id,
+                NeedsReview = revenue.NeedsReview,
                 AccountantName = accountant?.Name ?? "System",
                 CustomerName = customer?.Name ?? "-",
                 ProductDescription = productName,
@@ -1167,6 +1190,10 @@ public RevenuePageViewModel()
 /// </summary>
 public partial class RevenueDisplayItem : ObservableObject
 {
+    /// <summary>Set on entries a recurring schedule produced, until the user accepts them.</summary>
+    [ObservableProperty]
+    private bool _needsReview;
+
     [ObservableProperty]
     private string _id = string.Empty;
 

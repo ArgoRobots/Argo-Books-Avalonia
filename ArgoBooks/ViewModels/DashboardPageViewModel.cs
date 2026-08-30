@@ -530,38 +530,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
     /// <summary>
     /// Loads all dashboard data from the company data.
     /// </summary>
-    public ObservableCollection<UpcomingRecurringItem> UpcomingRecurring { get; } = [];
-
-    public bool HasUpcomingRecurring => UpcomingRecurring.Count > 0;
-
-    private void LoadUpcomingRecurring(Core.Data.CompanyData data)
-    {
-        UpcomingRecurring.Clear();
-
-        var upcoming = data.RecurringTransactions
-            .Where(s => s.Status == Core.Models.Transactions.RecurringTransactionStatus.Active && s.Template != null)
-            .OrderBy(s => s.NextDate)
-            .Take(5);
-
-        foreach (var schedule in upcoming)
-        {
-            UpcomingRecurring.Add(new UpcomingRecurringItem
-            {
-                Description = schedule.Template!.Description,
-                DateFormatted = schedule.NextDate.ToString("MMM d"),
-                AmountFormatted = Services.CurrencyService.Format(schedule.Template.Total)
-            });
-        }
-
-        OnPropertyChanged(nameof(HasUpcomingRecurring));
-    }
-
     public void LoadDashboardData()
     {
         var data = _companyManager?.CompanyData;
         if (data == null) return;
-
-        LoadUpcomingRecurring(data);
 
         // Correct rental statuses before displaying
         CorrectRentalStatuses(data);
@@ -1056,11 +1028,3 @@ public class TransactionNavigationParameter(string transactionId)
 }
 
 #endregion
-
-/// <summary>One upcoming occurrence on the dashboard.</summary>
-public class UpcomingRecurringItem
-{
-    public string Description { get; set; } = string.Empty;
-    public string DateFormatted { get; set; } = string.Empty;
-    public string AmountFormatted { get; set; } = string.Empty;
-}

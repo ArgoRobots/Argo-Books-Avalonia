@@ -169,6 +169,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             if (amountChanged)
             {
                 IsOpen = false;
+                GenerateDueNow(data);
                 App.CompanyManager?.MarkAsChanged();
                 Saved?.Invoke();
                 await OfferRetroactiveCorrection(existing);
@@ -177,8 +178,22 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         }
 
         IsOpen = false;
+        GenerateDueNow(data);
         App.CompanyManager?.MarkAsChanged();
         Saved?.Invoke();
+    }
+
+    /// <summary>
+    /// Company open is the usual trigger, but a schedule starting today would otherwise show as
+    /// due with nothing to show for it until the file was reopened.
+    /// </summary>
+    private static void GenerateDueNow(Core.Data.CompanyData data)
+    {
+        var generated = RecurringTransactionService.GenerateDue(data, DateTime.UtcNow);
+        if (generated.Count == 0) return;
+
+        var expenses = generated.Count(t => t is Expense);
+        RecurringTransactionService.RaiseGenerated(expenses, generated.Count - expenses);
     }
 
     private void ApplyTemplate(RecurringTransaction schedule, decimal amount)
