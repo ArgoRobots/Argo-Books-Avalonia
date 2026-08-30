@@ -57,6 +57,15 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     [ObservableProperty]
     private string _counterpartyAddNewText = string.Empty;
 
+    /// <summary>Generated entries need a line item with a product, the same as one entered by hand.</summary>
+    public ObservableCollection<ProductOption> ProductOptions { get; } = [];
+
+    [ObservableProperty]
+    private ProductOption? _selectedProduct;
+
+    [ObservableProperty]
+    private bool _hasProductError;
+
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
@@ -81,8 +90,11 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         EndDate = null;
         ErrorMessage = string.Empty;
         LoadCounterparties(side);
+        LoadProducts(side);
         SelectedCounterparty = null;
+        SelectedProduct = null;
         HasCounterpartyError = false;
+        HasProductError = false;
         _originalSnapshot = Snapshot();
         IsOpen = true;
     }
@@ -105,7 +117,11 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             ? (schedule.RevenueTemplate?.CustomerId)
             : (schedule.ExpenseTemplate?.SupplierId);
         SelectedCounterparty = CounterpartyOptions.FirstOrDefault(o => o.Id == currentId);
+        LoadProducts(schedule.Type);
+        var productId = schedule.Template?.LineItems.FirstOrDefault()?.ProductId;
+        SelectedProduct = ProductOptions.FirstOrDefault(o => o.Id == productId);
         HasCounterpartyError = false;
+        HasProductError = false;
         _originalSnapshot = Snapshot();
         IsOpen = true;
     }
@@ -175,8 +191,33 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// Mirrors how the transaction modals filter: a product whose category belongs to the other
+    /// side is not offered.
+    /// </summary>
+    private void LoadProducts(CategoryType side)
+    {
+        ProductOptions.Clear();
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var product in data.Products.OrderBy(p => p.Name))
+        {
+            var category = data.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
+            if (category != null && category.Type != side) continue;
+
+            ProductOptions.Add(new ProductOption
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Description = product.Description,
+                UnitPrice = side == CategoryType.Expense ? product.CostPrice : product.UnitPrice
+            });
+        }
+    }
+
     private string Snapshot() =>
-        $"{Description}|{Amount}|{FrequencyIndex}|{StartDate?.Date:d}|{EndDate?.Date:d}|{SelectedCounterparty?.Id}";
+        $"{Description}|{Amount}|{FrequencyIndex}|{StartDate?.Date:d}|{EndDate?.Date:d}|{SelectedCounterparty?.Id}|{SelectedProduct?.Id}";
 
     private bool IsDirty => Snapshot() != _originalSnapshot;
 
@@ -350,6 +391,17 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
     private void ApplyTemplate(RecurringTransaction schedule, decimal amount)
     {
+        var lineItems = new List<Core.Models.Common.LineItem>
+        {
+            new()
+            {
+                ProductId = SelectedProduct?.Id,
+                Description = Description.Trim(),
+                Quantity = 1,
+                UnitPrice = amount
+            }
+        };
+
         if (schedule.Type == CategoryType.Revenue)
         {
             schedule.ExpenseTemplate = null;
@@ -361,7 +413,8 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 Total = amount,
                 Quantity = 1,
                 UnitPrice = amount,
-                CustomerId = SelectedCounterparty?.Id
+                CustomerId = SelectedCounterparty?.Id,
+                LineItems = lineItems
             };
         }
         else
@@ -374,7 +427,8 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 Total = amount,
                 Quantity = 1,
                 UnitPrice = amount,
-                SupplierId = SelectedCounterparty?.Id
+                SupplierId = SelectedCounterparty?.Id,
+                LineItems = lineItems
             };
         }
     }

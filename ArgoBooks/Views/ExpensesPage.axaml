@@ -254,9 +254,23 @@
                                         Classes.highlighted-row="{Binding IsHighlighted}">
                                     <StackPanel Orientation="Horizontal">
                                         <!-- Simple text cells using ArgoTableCell -->
-                                        <table:ArgoTableCell Text="{Binding Id}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}" />
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowIdColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <PathIcon Data="{x:Static icons:Icons.Refresh}"
+                                                              Width="12" Height="12"
+                                                              IsVisible="{Binding IsRecurring}"
+                                                              ToolTip.Tip="{loc:Loc 'Created by a recurring schedule'}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <TextBlock Text="{Binding Id}"
+                                                               FontWeight="Medium"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ColumnWidths.ProductColumnWidth}"
                                                                  IsColumnVisible="{Binding $parent[ItemsControl].((vm:ExpensesPageViewModel)DataContext).ShowProductColumn}">

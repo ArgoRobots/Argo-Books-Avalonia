@@ -649,6 +649,7 @@ public RevenuePageViewModel()
             {
                 Id = revenue.Id,
                 NeedsReview = revenue.NeedsReview,
+                IsRecurring = !string.IsNullOrEmpty(revenue.RecurringScheduleId),
                 AccountantName = accountant?.Name ?? "System",
                 CustomerName = customer?.Name ?? "-",
                 ProductDescription = productName,
@@ -1219,6 +1220,10 @@ public partial class RevenueDisplayItem : ObservableObject
     /// <summary>Set on entries a recurring schedule produced, until the user accepts them.</summary>
     [ObservableProperty]
     private bool _needsReview;
+
+    /// <summary>Stays true after the entry is accepted, so its origin is still visible.</summary>
+    [ObservableProperty]
+    private bool _isRecurring;
 
     [ObservableProperty]
     private string _id = string.Empty;
