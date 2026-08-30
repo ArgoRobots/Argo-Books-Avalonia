@@ -25,9 +25,6 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     private string _title = string.Empty;
 
     [ObservableProperty]
-    private string _description = string.Empty;
-
-    [ObservableProperty]
     private string _amount = string.Empty;
 
     [ObservableProperty]
@@ -83,7 +80,6 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         _side = side;
         _editingId = null;
         Title = (side == CategoryType.Revenue ? "New recurring revenue" : "New recurring expense").Translate();
-        Description = string.Empty;
         Amount = string.Empty;
         FrequencyIndex = (int)Frequency.Monthly;
         StartDate = DateTimeOffset.Now;
@@ -106,7 +102,6 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         _side = schedule.Type;
         _editingId = schedule.Id;
         Title = "Edit recurring transaction".Translate();
-        Description = schedule.Template.Description;
         Amount = schedule.Template.Total.ToString("0.##");
         FrequencyIndex = (int)schedule.Frequency;
         StartDate = new DateTimeOffset(schedule.StartDate);
@@ -217,7 +212,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     }
 
     private string Snapshot() =>
-        $"{Description}|{Amount}|{FrequencyIndex}|{StartDate?.Date:d}|{EndDate?.Date:d}|{SelectedCounterparty?.Id}|{SelectedProduct?.Id}";
+        $"{Amount}|{FrequencyIndex}|{StartDate?.Date:d}|{EndDate?.Date:d}|{SelectedCounterparty?.Id}|{SelectedProduct?.Id}";
 
     private bool IsDirty => Snapshot() != _originalSnapshot;
 
@@ -234,12 +229,6 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     {
         var data = App.CompanyManager?.CompanyData;
         if (data == null) return;
-
-        if (string.IsNullOrWhiteSpace(Description))
-        {
-            ErrorMessage = "Enter a description.".Translate();
-            return;
-        }
 
         if (!decimal.TryParse(Amount, out var amount) || amount <= 0)
         {
@@ -391,12 +380,13 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
     private void ApplyTemplate(RecurringTransaction schedule, decimal amount)
     {
+        var description = SelectedProduct?.Name ?? string.Empty;
         var lineItems = new List<Core.Models.Common.LineItem>
         {
             new()
             {
                 ProductId = SelectedProduct?.Id,
-                Description = Description.Trim(),
+                Description = description,
                 Quantity = 1,
                 UnitPrice = amount
             }
@@ -407,7 +397,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             schedule.ExpenseTemplate = null;
             schedule.RevenueTemplate = new Revenue
             {
-                Description = Description.Trim(),
+                Description = description,
                 Amount = amount,
                 Subtotal = amount,
                 Total = amount,
@@ -422,7 +412,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             schedule.RevenueTemplate = null;
             schedule.ExpenseTemplate = new Expense
             {
-                Description = Description.Trim(),
+                Description = description,
                 Amount = amount,
                 Total = amount,
                 Quantity = 1,

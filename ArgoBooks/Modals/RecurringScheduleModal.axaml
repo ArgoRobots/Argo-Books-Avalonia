@@ -36,12 +36,14 @@
                         <StackPanel Margin="24" Spacing="16">
                             <StackPanel Spacing="6">
                                 <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
-                                    <Run Text="{loc:Loc 'Description'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                    <Run Text="{loc:Loc 'Product / Service'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
-                                <TextBox Text="{Binding Description, Mode=TwoWay}"
-                                         Classes="form-input"
-                                         PlaceholderText="{loc:Loc 'Office rent'}"
-                                         MaxLength="200" />
+                                <controls:SearchableDropdown ItemsSource="{Binding ProductOptions}"
+                                                             SelectedItem="{Binding SelectedProduct}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="{loc:Loc 'Search for a product...'}"
+                                                             HasError="{Binding HasProductError}"
+                                                             EmptyMessage="{loc:Loc 'No products found'}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
@@ -59,18 +61,6 @@
                                                              EmptyMessage="{loc:Loc 'None found'}"
                                                              EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                              EmptyCreateCommand="{Binding CreateCounterpartyCommand}" />
-                            </StackPanel>
-
-                            <StackPanel Spacing="6">
-                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
-                                    <Run Text="{loc:Loc 'Product / Service'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
-                                </TextBlock>
-                                <controls:SearchableDropdown ItemsSource="{Binding ProductOptions}"
-                                                             SelectedItem="{Binding SelectedProduct}"
-                                                             DisplayMemberPath="Name"
-                                                             Placeholder="{loc:Loc 'Search for a product...'}"
-                                                             HasError="{Binding HasProductError}"
-                                                             EmptyMessage="{loc:Loc 'No products found'}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">
