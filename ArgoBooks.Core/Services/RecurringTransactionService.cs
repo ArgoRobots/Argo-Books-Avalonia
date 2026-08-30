@@ -20,6 +20,29 @@ public static class RecurringTransactionService
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    public static event Action<int>? ExpensesGenerated;
+    public static event Action<int>? RevenuesGenerated;
+
+    /// <summary>
+    /// Counts the Expenses and Revenue pages read on construction, so a banner survives generation
+    /// happening while the user is still on the dashboard.
+    /// </summary>
+    public static int PendingExpenseCount { get; private set; }
+
+    public static int PendingRevenueCount { get; private set; }
+
+    public static void RaiseGenerated(int expenses, int revenues)
+    {
+        PendingExpenseCount = expenses;
+        PendingRevenueCount = revenues;
+        if (expenses > 0) ExpensesGenerated?.Invoke(expenses);
+        if (revenues > 0) RevenuesGenerated?.Invoke(revenues);
+    }
+
+    public static void ClearPendingExpenses() => PendingExpenseCount = 0;
+
+    public static void ClearPendingRevenues() => PendingRevenueCount = 0;
+
     /// <summary>Generates every occurrence due on or before <paramref name="asOfUtc"/>.</summary>
     public static IReadOnlyList<Transaction> GenerateDue(CompanyData data, DateTime asOfUtc)
     {

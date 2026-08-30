@@ -1033,6 +1033,8 @@ public partial class App : Application
         // it on a company switch/close so a count produced for the previous company can't surface as a
         // phantom banner on the next company (whose own generation run may have produced nothing).
         RecurringInvoiceService.ClearPendingGenerated();
+        RecurringTransactionService.ClearPendingExpenses();
+        RecurringTransactionService.ClearPendingRevenues();
     }
 
     // File watchers for recent companies - watches directories containing recent company files

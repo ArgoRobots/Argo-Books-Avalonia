@@ -176,6 +176,22 @@ public partial class App
                                 OpenRecurringInvoicesTab);
                         }
 
+                        var generatedTxns = RecurringTransactionService
+                            .GenerateDue(CompanyManager.CompanyData, DateTime.UtcNow);
+                        if (generatedTxns.Count > 0)
+                        {
+                            await CompanyManager.SaveCompanyAsync();
+                            var txnExpenses = generatedTxns.Count(t => t is Core.Models.Transactions.Expense);
+                            var txnRevenues = generatedTxns.Count - txnExpenses;
+                            RecurringTransactionService.RaiseGenerated(txnExpenses, txnRevenues);
+                            AddNotification(
+                                "Recurring transactions",
+                                generatedTxns.Count == 1
+                                    ? "1 recurring transaction was generated and needs review."
+                                    : $"{generatedTxns.Count} recurring transactions were generated and need review.",
+                                NotificationType.Info);
+                        }
+
                         // Remind about recurring drafts still waiting to be sent: ones generated on an
                         // earlier open that the user hasn't sent yet. Exclude the ones just generated above
                         // (they already got the "added to drafts" notice) so the same drafts aren't announced twice.
