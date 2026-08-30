@@ -1,0 +1,238 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Views.RecurringPage"
+             x:DataType="vm:RecurringPageViewModel">
+
+    <Panel>
+        <Grid RowDefinitions="Auto,*" Margin="24">
+
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{loc:Loc 'Recurring'}"
+                               FontSize="24" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{loc:Loc 'Entries generated on a schedule. Each one is flagged for review when it is created.'}"
+                               FontSize="13"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Classes="primary-button"
+                        VerticalAlignment="Center"
+                        Content="{loc:Loc 'New schedule'}"
+                        Command="{Binding AddScheduleCommand}" />
+            </Grid>
+
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    ClipToBounds="True">
+                <Panel>
+                    <StackPanel IsVisible="{Binding !HasSchedules}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8"
+                                Margin="40">
+                        <TextBlock Text="{loc:Loc 'No recurring schedules yet'}"
+                                   FontSize="16" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Add one for rent, a subscription, or anything else that repeats.'}"
+                                   FontSize="13"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <ScrollViewer IsVisible="{Binding HasSchedules}"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding Schedules}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:RecurringDisplayItem">
+                                    <Border BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="24,14">
+                                        <Grid ColumnDefinitions="2*,Auto,Auto,Auto,Auto,Auto">
+                                            <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding FrequencyLabel}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+
+                                            <Border Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Margin="16,0"
+                                                    CornerRadius="4"
+                                                    Padding="8,4"
+                                                    Background="{DynamicResource ErrorLightBrush}"
+                                                    IsVisible="{Binding IsExpense}">
+                                                <TextBlock Text="{Binding TypeLabel}"
+                                                           FontSize="11" FontWeight="Medium"
+                                                           Foreground="{DynamicResource ErrorBrush}" />
+                                            </Border>
+                                            <Border Grid.Column="1"
+                                                    VerticalAlignment="Center"
+                                                    Margin="16,0"
+                                                    CornerRadius="4"
+                                                    Padding="8,4"
+                                                    Background="{DynamicResource SuccessLightBrush}"
+                                                    IsVisible="{Binding !IsExpense}">
+                                                <TextBlock Text="{Binding TypeLabel}"
+                                                           FontSize="11" FontWeight="Medium"
+                                                           Foreground="{DynamicResource SuccessBrush}" />
+                                            </Border>
+
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding AmountFormatted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,24,0"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                                            <StackPanel Grid.Column="3" Spacing="2" VerticalAlignment="Center" Margin="0,0,24,0">
+                                                <TextBlock Text="{loc:Loc 'Next'}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <TextBlock Text="{Binding NextDateFormatted}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="4"
+                                                       Text="{Binding StatusLabel}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,16,0"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                            <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Edit'}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).EditScheduleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Pause or resume'}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).TogglePauseCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Refresh}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Skip the next occurrence'}"
+                                                        IsEnabled="{Binding IsActive}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).SkipNextCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.SwapType}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Delete'}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).DeleteScheduleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Panel>
+            </Border>
+        </Grid>
+
+        <controls:ModalOverlay IsOpen="{Binding IsEditorOpen}"
+                               ClosingCommand="{Binding CloseEditorCommand}">
+            <controls:ModalOverlay.ModalContent>
+                <Border Background="{DynamicResource SurfaceBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1" CornerRadius="12" Width="480" MaxHeight="640"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <Border Grid.Row="0" Padding="24,20"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{Binding EditorTitle}"
+                                           FontSize="18" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button Grid.Column="1" Classes="icon-button" Command="{Binding CloseEditorCommand}">
+                                    <PathIcon Data="{x:Static icons:Icons.Close}" Width="20" Height="20" />
+                                </Button>
+                            </Grid>
+                        </Border>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel Margin="24" Spacing="16">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Type'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox SelectedIndex="{Binding EditorTypeIndex}" HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="{loc:Loc 'Expense'}" />
+                                        <ComboBoxItem Content="{loc:Loc 'Revenue'}" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Description'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding EditorDescription}" PlaceholderText="{loc:Loc 'Office rent'}" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Amount'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding EditorAmount}" PlaceholderText="0.00" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Frequency'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <ComboBox SelectedIndex="{Binding EditorFrequencyIndex}" HorizontalAlignment="Stretch">
+                                        <ComboBoxItem Content="{loc:Loc 'Weekly'}" />
+                                        <ComboBoxItem Content="{loc:Loc 'Every two weeks'}" />
+                                        <ComboBoxItem Content="{loc:Loc 'Monthly'}" />
+                                        <ComboBoxItem Content="{loc:Loc 'Quarterly'}" />
+                                        <ComboBoxItem Content="{loc:Loc 'Annually'}" />
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Starts'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <DatePicker SelectedDate="{Binding EditorStartDate}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Ends (optional)'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <DatePicker SelectedDate="{Binding EditorEndDate}" HorizontalAlignment="Stretch" />
+                                </StackPanel>
+
+                                <TextBlock Text="{Binding EditorError}"
+                                           IsVisible="{Binding HasEditorError}"
+                                           Foreground="{DynamicResource ErrorBrush}"
+                                           TextWrapping="Wrap"
+                                           FontSize="13" />
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="2" Padding="24,16"
+                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                                <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding CloseEditorCommand}" />
+                                <Button Classes="primary-button" Content="{loc:Loc 'Save'}" Command="{Binding SaveScheduleCommand}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </controls:ModalOverlay.ModalContent>
+        </controls:ModalOverlay>
+    </Panel>
+</UserControl>

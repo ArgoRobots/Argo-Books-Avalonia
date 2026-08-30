@@ -162,6 +162,7 @@ public partial class SidebarViewModel : ViewModelBase
         // both can produce an expense or a revenue, so neither belongs to one side.
         ImportItems.Add(CreateItem("Bank Matching", "BankMatching", Icons.Bank));
         ImportItems.Add(CreateItem("Receipts", "Receipts", Icons.Receipts));
+        ImportItems.Add(CreateItem("Recurring", "Recurring", Icons.Refresh));
 
         // Rentals Section
         RentalItems.Add(CreateItem("Rental Inventory", "RentalInventory", Icons.RentalInventory));
