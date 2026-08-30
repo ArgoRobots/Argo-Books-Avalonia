@@ -963,9 +963,6 @@ public class SaveChartImageEventArgs : EventArgs
 /// </summary>
 public class ExcelExportEventArgs : EventArgs
 {
-    /// <summary>
-    /// Gets or sets the title of the chart.
-    /// </summary>
     public string ChartTitle { get; set; } = string.Empty;
 
     /// <summary>

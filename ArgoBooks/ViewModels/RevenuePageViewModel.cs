@@ -404,17 +404,14 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             ? CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay)
             : CurrencyService.PendingMarker;
 
-        // Sales count
         SalesCount = _allRevenue.Count;
 
-        // Unique customers
         UniqueCustomers = _allRevenue
             .Where(s => !string.IsNullOrEmpty(s.CustomerId))
             .Select(s => s.CustomerId)
             .Distinct()
             .Count();
 
-        // Returns count
         if (companyData?.Returns.Count > 0)
         {
             var revenueIds = new HashSet<string>(_allRevenue.Select(s => s.Id));
@@ -479,14 +476,12 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         decimal RefundedForRevenue(Revenue r) =>
             !string.IsNullOrEmpty(r.InvoiceId) && refundedByInvoiceId.TryGetValue(r.InvoiceId, out var amt) ? amt : 0m;
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             filtered = filtered.Where(s =>
                 GetStatusDisplay(s, lostDamagedIds, returnedIds, RefundedForRevenue(s)) == FilterStatus);
         }
 
-        // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
             filtered = filtered.Where(s => s.CustomerId == FilterCustomerId);
@@ -503,7 +498,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             });
         }
 
-        // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(s => s.Total >= minAmount);
@@ -513,7 +507,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(s => s.Total <= maxAmount);
         }
 
-        // Apply date filter
         if (FilterDateFrom.HasValue)
         {
             filtered = filtered.Where(s => s.Date >= FilterDateFrom.Value.DateTime);
@@ -526,7 +519,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Materialize filtered results
         var filteredList = filtered.ToList();
 
-        // Create display items
         var displayItems = filteredList.Select(revenue =>
         {
             var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");

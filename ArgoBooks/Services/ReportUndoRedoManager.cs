@@ -88,14 +88,8 @@ public class ReportUndoRedoManager(int maxStackSize = 100) : INotifyPropertyChan
     /// </summary>
     public string? RedoDescription => _redoStack.Count > 0 ? _redoStack.Peek().Description : null;
 
-    /// <summary>
-    /// Gets the undo history.
-    /// </summary>
     public IEnumerable<string> UndoHistory => _undoStack.Select(a => a.Description);
 
-    /// <summary>
-    /// Gets the redo history.
-    /// </summary>
     public IEnumerable<string> RedoHistory => _redoStack.Select(a => a.Description);
 
     /// <inheritdoc />
@@ -589,7 +583,6 @@ public class DeletePageAction : IReportUndoableAction
         }
         _config.PageCount++;
 
-        // Restore removed elements
         foreach (var element in _removedElements)
         {
             _config.Elements.Add(element.Clone());
@@ -598,7 +591,6 @@ public class DeletePageAction : IReportUndoableAction
 
     public void Redo()
     {
-        // Remove elements on the deleted page
         var elementsOnPage = _config.Elements.Where(e => e.PageNumber == _deletedPageNumber).ToList();
         foreach (var element in elementsOnPage)
         {

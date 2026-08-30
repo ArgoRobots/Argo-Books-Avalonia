@@ -71,7 +71,6 @@ public class NavigationService : INavigationService
         // Clear forward stack on new navigation
         _forwardStack.Clear();
 
-        // Create new entry
         _currentEntry = new NavigationEntry(pageName, parameter);
 
         // Navigate and notify
@@ -130,7 +129,6 @@ public class NavigationService : INavigationService
             _forwardStack.Push(_currentEntry);
         }
 
-        // Pop from back stack
         _currentEntry = _backStack.Pop();
 
         // Navigate and notify
@@ -152,7 +150,6 @@ public class NavigationService : INavigationService
             _backStack.Push(_currentEntry);
         }
 
-        // Pop from forward stack
         _currentEntry = _forwardStack.Pop();
 
         // Navigate and notify

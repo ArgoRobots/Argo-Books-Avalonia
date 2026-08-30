@@ -404,7 +404,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(o => o.OrderDate.Date <= endDate.Value.Date);
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrEmpty(filterSupplier) && filterSupplier != "All")
         {
             filtered = filtered.Where(o =>
@@ -414,7 +413,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
             });
         }
 
-        // Apply status filter
         if (!string.IsNullOrEmpty(filterStatus) && filterStatus != "All")
         {
             var statusEnum = PurchaseOrderStatusExtensions.ParsePurchaseOrderStatus(filterStatus);
@@ -448,7 +446,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Create display items
         var displayItems = filtered.Select(order =>
         {
             var supplier = suppliers.FirstOrDefault(s => s.Id == order.SupplierId);
@@ -503,7 +500,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
                 o => o.OrderDate);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
@@ -619,7 +615,6 @@ public partial class PurchaseOrdersPageViewModel : SortablePageViewModelBase
         order.UpdatedAt = DateTime.UtcNow;
         companyData?.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Approve order '{item.PoNumber}'",
             () =>

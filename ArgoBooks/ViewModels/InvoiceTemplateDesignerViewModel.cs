@@ -62,7 +62,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
     [ObservableProperty]
     private int _propertiesTabIndex;
 
-    // Undo/Redo
     private readonly UndoRedoManager _undoRedoManager = new();
     private bool _suppressUndoRecording;
 
@@ -983,7 +982,6 @@ public partial class InvoiceTemplateDesignerViewModel : ViewModelBase
         RecordChange("Toggle due date prominent", v => ShowDueDateProminent = v, oldValue, newValue);
         UpdatePreview();
     }
-
 
     partial void OnLogoBase64Changed(string? oldValue, string? newValue)
     {

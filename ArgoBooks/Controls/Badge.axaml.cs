@@ -71,9 +71,6 @@ public partial class Badge : UserControl
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the badge size.
-    /// </summary>
     public BadgeSize Size
     {
         get => GetValue(SizeProperty);

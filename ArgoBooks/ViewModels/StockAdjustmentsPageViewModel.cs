@@ -219,7 +219,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
     #endregion
 
-
     #region Constructor
 
     /// <summary>
@@ -344,7 +343,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
 
         _allAdjustments.AddRange(companyData.StockAdjustments);
 
-        // Load filter options
         LoadFilterOptions();
         UpdateStatistics();
         FilterAdjustments();
@@ -358,7 +356,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        // Update location options
         LocationOptions.Clear();
         LocationOptions.Add("All");
         var locations = companyData.Locations.Select(l => l.Name).Distinct().OrderBy(n => n).ToList();
@@ -367,7 +364,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             LocationOptions.Add(location);
         }
 
-        // Update product options
         ProductOptions.Clear();
         ProductOptions.Add("All");
         var products = companyData.Products.Select(p => p.Name).Distinct().OrderBy(n => n).ToList();
@@ -440,7 +436,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(a => a.Timestamp.Date <= EndDate.Value.Date);
         }
 
-        // Apply location filter
         if (FilterLocation != "All")
         {
             filtered = filtered.Where(a =>
@@ -452,7 +447,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
             });
         }
 
-        // Apply product filter
         if (FilterProduct != "All")
         {
             filtered = filtered.Where(a =>
@@ -490,7 +484,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Create display items
         var displayItems = filtered.Select(adjustment =>
         {
             var invItem = inventory.FirstOrDefault(i => i.Id == adjustment.InventoryItemId);

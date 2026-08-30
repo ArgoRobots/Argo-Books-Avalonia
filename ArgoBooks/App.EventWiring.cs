@@ -454,7 +454,6 @@ public partial class App
 
         var fileMenu = _appShellViewModel.FileMenuPanelViewModel;
 
-        // Open Company
         fileMenu.OpenCompanyRequested += async (_, _) =>
         {
             await OpenCompanyFileDialogAsync(desktop);
@@ -495,7 +494,6 @@ public partial class App
             }
         };
 
-        // Close Company
         fileMenu.CloseCompanyRequested += async (_, _) =>
         {
             if (CompanyManager?.IsCompanyOpen == true)
@@ -535,13 +533,11 @@ public partial class App
             }
         };
 
-        // Show in Folder
         fileMenu.ShowInFolderRequested += (_, _) =>
         {
             CompanyManager?.ShowInFolder();
         };
 
-        // Open Recent Company
         fileMenu.OpenRecentCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
@@ -561,7 +557,6 @@ public partial class App
 
         createCompany.CompanyCreated += async (_, args) =>
         {
-            // Show save dialog
             var file = await ShowSaveFileDialogAsync(desktop, args.CompanyName);
             if (file == null) return;
 
@@ -705,7 +700,6 @@ public partial class App
             await OpenCompanyFileDialogAsync(desktop);
         };
 
-        // Open recent company
         _welcomeScreenViewModel.OpenRecentCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
@@ -733,7 +727,6 @@ public partial class App
             }
         };
 
-        // Open sample company
         _welcomeScreenViewModel.OpenSampleCompanyRequested += async (_, _) =>
         {
             await OpenSampleCompanyAsync();
@@ -828,7 +821,6 @@ public partial class App
 
             try
             {
-                // Update company settings
                 var settings = CompanyManager.CurrentCompanySettings;
                 if (settings != null)
                 {
@@ -961,7 +953,6 @@ public partial class App
                             settings.Company.Address = oldAddress;
                             settings.Company.ProvinceState = oldProvinceState;
 
-                            // Restore old logo
                             RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
 
                             // Clear pending rename (revert to original file name)
@@ -985,7 +976,6 @@ public partial class App
                             settings.Company.Address = newAddress;
                             settings.Company.ProvinceState = newProvinceState;
 
-                            // Restore new logo
                             RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);
 
                             // Re-schedule the file rename
@@ -1006,7 +996,6 @@ public partial class App
             }
         };
 
-        // Browse logo
         editCompany.BrowseLogoRequested += async (_, _) =>
         {
             var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -1093,7 +1082,6 @@ public partial class App
             settings.SetBiometricLoginWithoutAuth(false);
         }
 
-        // Add password
         settings.AddPasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
@@ -1116,7 +1104,6 @@ public partial class App
             }
         };
 
-        // Change password
         settings.ChangePasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
@@ -1147,7 +1134,6 @@ public partial class App
             }
         };
 
-        // Remove password
         settings.RemovePasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true) return;
@@ -1178,7 +1164,6 @@ public partial class App
             }
         };
 
-        // Auto-lock settings changed
         settings.AutoLockSettingsChanged += (_, args) =>
         {
             if (_idleDetectionService != null)
@@ -1187,7 +1172,6 @@ public partial class App
                 _idleDetectionService.Configure(enabled, args.TimeoutMinutes);
             }
 
-            // Save to company settings
             if (CompanyManager?.CurrentCompanySettings != null)
             {
                 CompanyManager.CurrentCompanySettings.Security.AutoLockEnabled = args.TimeoutMinutes > 0;
@@ -1265,7 +1249,6 @@ public partial class App
         // biometric login setting changed (after successful authentication)
         settings.BiometricLoginChanged += (_, args) =>
         {
-            // Save to company settings
             if (CompanyManager?.CurrentCompanySettings != null)
             {
                 CompanyManager.CurrentCompanySettings.Security.BiometricEnabled = args.Enabled;
@@ -1425,7 +1408,6 @@ public partial class App
 
         var exportModal = _appShellViewModel.ExportAsModalViewModel;
 
-        // Refresh record counts when modal opens
         exportModal.RefreshRecordCountsRequested += (_, _) =>
         {
             exportModal.RefreshRecordCounts(CompanyManager?.CompanyData);

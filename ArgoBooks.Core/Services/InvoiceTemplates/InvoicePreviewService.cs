@@ -33,7 +33,6 @@ public static class InvoicePreviewService
             var filename = $"invoice-preview-{safeId}.html";
             var filePath = Path.Combine(TempDirectory, filename);
 
-            // Write the HTML to the file
             await File.WriteAllTextAsync(filePath, html);
 
             // Open in default browser

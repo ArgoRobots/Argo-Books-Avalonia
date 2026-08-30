@@ -698,7 +698,6 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         var oldDueDate = _editingRecord.DueDate;
         var oldNotes = _editingRecord.Notes;
 
-        // Build new line items
         var newLineItems = new List<RentalLineItem>();
         foreach (var li in RentalLineItems)
         {
@@ -1258,7 +1257,6 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         ViewNotes = rentalRecord.Notes;
         ViewDaysOverdue = rentalRecord.EffectiveDaysOverdue;
 
-        // Populate view line items
         ViewLineItems.Clear();
         var effectiveItems = GetEffectiveLineItems(rentalRecord);
         ViewHasMultipleItems = effectiveItems.Count > 1;

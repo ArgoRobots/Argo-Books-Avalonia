@@ -119,24 +119,12 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _selectedTabIndex;
 
-    /// <summary>
-    /// Gets whether the All Items tab is selected.
-    /// </summary>
     public bool IsAllItemsTabSelected => SelectedTabIndex == 0;
 
-    /// <summary>
-    /// Gets whether the Low Stock tab is selected.
-    /// </summary>
     public bool IsLowStockTabSelected => SelectedTabIndex == 1;
 
-    /// <summary>
-    /// Gets whether the Out of Stock tab is selected.
-    /// </summary>
     public bool IsOutOfStockTabSelected => SelectedTabIndex == 2;
 
-    /// <summary>
-    /// Gets whether the Overstock tab is selected.
-    /// </summary>
     public bool IsOverstockTabSelected => SelectedTabIndex == 3;
 
     partial void OnSelectedTabIndexChanged(int value)
@@ -231,7 +219,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
     protected override void OnSortOrPageChanged() => FilterItems();
 
     #endregion
-
 
     #region Constructor
 
@@ -332,7 +319,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
         if (companyData == null)
             return;
 
-        // Load inventory items
         _allItems.AddRange(companyData.Inventory);
 
         UpdateStatistics();
@@ -443,7 +429,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply category filter
         if (FilterCategory != "All")
         {
             var categoryProducts = (companyData.Categories)
@@ -455,7 +440,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => categoryProducts.Contains(i.ProductId));
         }
 
-        // Apply location filter
         if (FilterLocation != "All")
         {
             var locationId = (companyData.Locations)
@@ -536,7 +520,6 @@ public partial class StockLevelsPageViewModel : SortablePageViewModelBase
                 i => i.ProductName);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination

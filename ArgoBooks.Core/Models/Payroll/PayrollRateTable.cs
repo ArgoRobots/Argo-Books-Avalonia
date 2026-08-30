@@ -306,7 +306,6 @@ public class HealthPremiumBand
     public decimal MaxPremium { get; set; }
 }
 
-
 /// <summary>
 /// Everything Quebec needs that the rest of Canada does not.
 ///

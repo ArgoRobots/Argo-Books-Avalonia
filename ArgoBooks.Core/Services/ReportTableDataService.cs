@@ -49,7 +49,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             _ => query
         };
 
-        // Apply max rows
         if (tableConfig.MaxRows > 0)
         {
             query = query.Take(tableConfig.MaxRows);
@@ -119,7 +118,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             _ => query
         };
 
-        // Apply max rows
         if (tableConfig.MaxRows > 0)
         {
             query = query.Take(tableConfig.MaxRows);
@@ -706,7 +704,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         var query = companyData.Returns
             .Where(r => r.ReturnDate >= startDate && r.ReturnDate <= endDate);
 
-        // Apply sort order
         query = tableConfig.SortOrder switch
         {
             TableSortOrder.DateAscending => query.OrderBy(r => r.ReturnDate),
@@ -716,7 +713,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             _ => query.OrderByDescending(r => r.ReturnDate)
         };
 
-        // Apply max rows
         if (tableConfig.MaxRows > 0)
         {
             query = query.Take(tableConfig.MaxRows);
@@ -765,7 +761,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         var query = companyData.LostDamaged
             .Where(l => l.DateDiscovered >= startDate && l.DateDiscovered <= endDate);
 
-        // Apply sort order
         query = tableConfig.SortOrder switch
         {
             TableSortOrder.DateAscending => query.OrderBy(l => l.DateDiscovered),
@@ -775,7 +770,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             _ => query.OrderByDescending(l => l.DateDiscovered)
         };
 
-        // Apply max rows
         if (tableConfig.MaxRows > 0)
         {
             query = query.Take(tableConfig.MaxRows);
@@ -889,7 +883,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             stats.AverageShippingCost = shippingCosts.Count > 0 ? shippingCosts.Average() : 0;
         }
 
-        // Calculate growth rate
         stats.GrowthRate = CalculateGrowthRate(startDate, endDate);
 
         return stats;
@@ -923,9 +916,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     #region Top/Bottom Analysis
 
-    /// <summary>
-    /// Gets top products by revenue.
-    /// </summary>
     public List<ProductAnalysisRow> GetTopProductsByRevenue(int count = 10)
     {
         if (companyData?.Revenues == null)
@@ -963,9 +953,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
         return productSales;
     }
 
-    /// <summary>
-    /// Gets top customers by revenue.
-    /// </summary>
     public List<CustomerAnalysisRow> GetTopCustomersByRevenue(int count = 10)
     {
         if (companyData?.Revenues == null)

@@ -26,14 +26,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _selectedTabIndex;
 
-    /// <summary>
-    /// Gets whether the Expenses tab is selected.
-    /// </summary>
     public bool IsExpensesTabSelected => SelectedTabIndex == 0;
 
-    /// <summary>
-    /// Gets whether the Revenue tab is selected.
-    /// </summary>
     public bool IsRevenueTabSelected => SelectedTabIndex == 1;
 
     partial void OnSelectedTabIndexChanged(int value)
@@ -566,7 +560,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         var typePrefix = IsExpensesTabSelected ? "PUR" : "SAL";
         var newId = $"CAT-{typePrefix}-{companyData.IdCounters.Category:D3}";
 
-        // Use the sub-category parent if adding a sub-category
         var parentId = IsAddingSubCategory ? _addingSubCategoryParent?.Id : null;
 
         var newCategory = new Category
@@ -583,7 +576,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         companyData.Categories.Add(newCategory);
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add category '{newCategory.Name}'",
             () =>
@@ -659,7 +651,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
             () =>
@@ -751,7 +742,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             companyData.Categories.Remove(category);
             companyData.MarkAsModified();
 
-            // Record undo action
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete category '{deletedCategory.Name}'",
                 () =>
@@ -761,7 +751,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
                     if (shouldDeleteSubcategories)
                     {
-                        // Restore deleted children
                         foreach (var child in deletedChildren)
                         {
                             companyData.Categories.Add(child);
@@ -865,7 +854,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         category.ParentId = newParentId;
         companyData?.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Move category '{category.Name}'",
             () =>

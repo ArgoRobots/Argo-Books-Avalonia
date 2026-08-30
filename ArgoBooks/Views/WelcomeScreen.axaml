@@ -457,7 +457,6 @@
             <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
         </Style>
 
-
         <!-- Footer Link -->
         <Style Selector="Button.footer-link">
             <Setter Property="Background" Value="Transparent" />

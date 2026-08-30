@@ -732,7 +732,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 && i.Status != InvoiceStatus.Draft),
             i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
-        // Paid this month
         PaidThisMonth = CurrencyService.FormatSumDisplayFromUSD(
             _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
             i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
@@ -798,7 +797,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             if (Enum.TryParse<InvoiceStatus>(FilterStatus, out var status))
@@ -808,13 +806,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
             filtered = filtered.Where(i => i.CustomerId == FilterCustomerId);
         }
 
-        // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, System.Globalization.CultureInfo.InvariantCulture, out var minAmount))
         {
             filtered = filtered.Where(i => i.Total >= minAmount);
@@ -824,7 +820,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => i.Total <= maxAmount);
         }
 
-        // Apply issue date filter
         if (FilterIssueDateFrom.HasValue)
         {
             filtered = filtered.Where(i => i.IssueDate >= FilterIssueDateFrom.Value.DateTime);
@@ -834,7 +829,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => i.IssueDate <= FilterIssueDateTo.Value.DateTime);
         }
 
-        // Apply due date filter
         if (FilterDueDateFrom.HasValue)
         {
             filtered = filtered.Where(i => i.DueDate >= FilterDueDateFrom.Value.DateTime);
@@ -929,7 +923,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 i => i.IssueDate);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination

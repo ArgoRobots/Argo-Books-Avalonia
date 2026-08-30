@@ -598,7 +598,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.ItemType == FilterItemType);
         }
 
-        // Apply category filter
         if (!string.IsNullOrWhiteSpace(FilterCategory) && FilterCategory != "All Categories")
         {
             var categoryOption = AvailableCategories.FirstOrDefault(c => c.Name == FilterCategory);
@@ -608,7 +607,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrWhiteSpace(FilterSupplier) && FilterSupplier != "All Suppliers")
         {
             var supplierOption = AvailableSuppliers.FirstOrDefault(s => s.Name == FilterSupplier);
@@ -618,7 +616,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Create display items
         var displayItems = filtered.Select(product =>
         {
             var category = companyData.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
@@ -659,7 +656,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 p => p.Name);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
@@ -864,7 +860,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
             () =>
@@ -946,7 +941,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             companyData.Products.Remove(product);
             companyData.MarkAsModified();
 
-            // Record undo action
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete product '{deletedProduct.Name}'",
                 () =>

@@ -253,7 +253,6 @@ public partial class ProductModalsViewModel : ViewModelBase
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
 
-
     #endregion
 
     #region Add Product

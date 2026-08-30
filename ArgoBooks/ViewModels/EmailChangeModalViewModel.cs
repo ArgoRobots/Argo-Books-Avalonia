@@ -202,7 +202,6 @@ public partial class EmailChangeModalViewModel : ObservableObject
         OnPropertyChanged(nameof(CanResend));
     }
 
-
     [RelayCommand]
     private async Task ContinueFromNewEmailAsync()
     {

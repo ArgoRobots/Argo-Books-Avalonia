@@ -128,9 +128,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// </summary>
     public bool ShowEditContent => !IsShowingPreview && !IsShowingSuccess && !IsSending;
 
-    /// <summary>
-    /// Gets whether to show the preview content.
-    /// </summary>
     public bool ShowPreviewContent => IsShowingPreview && !IsShowingSuccess && !IsSending;
 
     /// <summary>
@@ -279,7 +276,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             case "fee": CustomFeeIsPercent = !CustomFeeIsPercent; break;
         }
     }
-
 
     // Pulls a number out of a value that may carry a currency symbol / thousands separators.
     private static bool TryParsePaperNumber(string raw, out decimal result)
@@ -1274,7 +1270,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             LineItems.Add(lineItem);
         }
 
-        // Set tax rate from revenue
         TaxRate = revenue.TaxRate;
 
         UpdateTotals();
@@ -1530,7 +1525,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     [RelayCommand]
     private void ApplyFilters()
     {
-        // Update FilterCustomerId from selected customer
         FilterCustomerId = FilterSelectedCustomer?.Id;
         FiltersApplied?.Invoke(this, EventArgs.Empty);
         CloseFilterModal();
@@ -1791,7 +1785,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 hasErrors = true;
             }
 
-            // Check line items
             if (LineItems.Count == 0)
             {
                 errorMessages.Add("Please add at least one line item.".Translate());
@@ -2183,7 +2176,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             }
         }
 
-        // Update invoice status
         invoice.Status = InvoiceStatus.Sent;
         invoice.History.Add(new InvoiceHistoryEntry
         {
@@ -2631,7 +2623,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
     }
 
-
     /// <summary>
     /// Links an invoice to any rental records referenced by its line items.
     /// </summary>
@@ -2689,7 +2680,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
 
-        // Build a description from the line items
         var description = invoice.LineItems.Count switch
         {
             0 => $"Invoice {invoice.InvoiceNumber}",

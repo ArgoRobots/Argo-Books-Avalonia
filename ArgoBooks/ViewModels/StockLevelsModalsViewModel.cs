@@ -551,7 +551,6 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         companyData.Inventory.Add(newItem);
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add inventory item for '{SelectedProduct.Name}'",
             () =>

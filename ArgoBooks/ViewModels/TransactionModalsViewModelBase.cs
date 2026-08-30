@@ -615,7 +615,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         SelectedPaymentMethod = transaction.PaymentMethod.ToString();
         ModalNotes = transaction.Notes;
 
-        // Load line items
         LineItems.Clear();
         if (transaction.LineItems.Count > 0)
         {

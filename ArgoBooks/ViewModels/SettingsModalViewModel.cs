@@ -2998,7 +2998,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             }
         }
 
-        // Load portal settings
         LoadPortalSettings();
 
         // Load bank import rules
@@ -3007,7 +3006,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Load mobile sync state (paired devices)
         LoadMobileSync();
 
-        // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
 
         // Store original values for potential revert

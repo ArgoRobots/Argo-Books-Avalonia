@@ -699,7 +699,6 @@ public partial class ReportsPage : UserControl
             var (clampedX, clampedY, overscrollX, overscrollY) =
                 _previewOverscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
-            // Apply clamped scroll offset
             _previewScrollViewer.Offset = new Vector(clampedX, clampedY);
 
             // Apply overscroll visual effect
@@ -831,7 +830,6 @@ public partial class ReportsPage : UserControl
                 break;
 
             case Key.S when e.KeyModifiers.HasFlag(KeyModifiers.Control):
-                // Save template
                 vm.OpenSaveTemplateCommand.Execute(null);
                 e.Handled = true;
                 break;
@@ -852,7 +850,6 @@ public partial class ReportsPage : UserControl
                 break;
 
             case Key.D when e.KeyModifiers.HasFlag(KeyModifiers.Control):
-                // Duplicate selected elements
                 vm.DuplicateSelectedElementsCommand.Execute(null);
                 e.Handled = true;
                 break;

@@ -171,9 +171,6 @@ public class ReportConfiguration
         return false;
     }
 
-    /// <summary>
-    /// Gets an element by its ID.
-    /// </summary>
     public ReportElementBase? GetElementById(string elementId)
     {
         return Elements.FirstOrDefault(e => e.Id == elementId);
@@ -411,7 +408,6 @@ public static class PageDimensions
     /// Margin from page edges in pixels.
     /// </summary>
     public const int Margin = 40;
-
 
     /// <summary>
     /// Render scale for high-quality export.

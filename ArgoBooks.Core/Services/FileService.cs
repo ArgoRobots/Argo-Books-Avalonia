@@ -38,7 +38,6 @@ public class FileService(
         string companyName,
         CancellationToken cancellationToken = default)
     {
-        // Create temp directory
         var tempDirectory = SecureTempDirectory.Create();
 
         try
@@ -87,7 +86,6 @@ public class FileService(
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
-            // Save to file
             await SaveCompanyAsync(filePath, companyDir, null, cancellationToken);
         }
         finally
@@ -139,7 +137,6 @@ public class FileService(
                     contentStream, password!, footer.Salt!, footer.Iv!, footer.PasswordHash!);
         }
 
-        // Decompress GZip
         await using var decompressedStream = await compressionService.DecompressGZipAsync(dataStream, cancellationToken);
 
         // Extract TAR to temp directory
@@ -224,7 +221,6 @@ public class FileService(
         await using var tarStream = await compressionService.CreateTarArchiveAsync(
             tempDirectory, includeBaseDirectory: false, cancellationToken);
 
-        // Compress with GZip
         await using var compressedStream = await compressionService.CompressGZipAsync(
             tarStream, cancellationToken: cancellationToken);
 
@@ -735,7 +731,6 @@ public class FileService(
 
     private static string? GenerateLogoThumbnail(string tempDirectory)
     {
-        // Find logo file in the temp directory
         var logoPath = FindLogoFileInDirectory(tempDirectory);
         if (logoPath == null)
             return null;

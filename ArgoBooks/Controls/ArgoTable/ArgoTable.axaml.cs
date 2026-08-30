@@ -91,7 +91,6 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<Thickness> SearchIconMarginProperty =
         AvaloniaProperty.Register<ArgoTable, Thickness>(nameof(SearchIconMargin), new Thickness(12, 0, 8, 0));
 
-    // Filter Button
     public static readonly StyledProperty<bool> ShowFilterButtonProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowFilterButton), true);
 
@@ -105,7 +104,6 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<bool> ShowExtraButtonsProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowExtraButtons), true);
 
-    // Add Button
     public static readonly StyledProperty<bool> ShowAddButtonProperty =
         AvaloniaProperty.Register<ArgoTable, bool>(nameof(ShowAddButton), true);
 
@@ -156,11 +154,9 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string> EmptyMessageProperty =
         AvaloniaProperty.Register<ArgoTable, string>(nameof(EmptyMessage), "Add your first item to get started.");
 
-    // Column Widths Manager
     public static readonly StyledProperty<ITableColumnWidths?> ColumnWidthsManagerProperty =
         AvaloniaProperty.Register<ArgoTable, ITableColumnWidths?>(nameof(ColumnWidthsManager));
 
-    // Column Menu
     public static readonly StyledProperty<ICommand?> ToggleColumnMenuCommandProperty =
         AvaloniaProperty.Register<ArgoTable, ICommand?>(nameof(ToggleColumnMenuCommand));
 

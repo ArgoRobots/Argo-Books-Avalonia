@@ -79,18 +79,12 @@ public partial class ArgoTableHeader : UserControl
         set => SetValue(SortPropertyProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the column width.
-    /// </summary>
     public double ColumnWidth
     {
         get => GetValue(ColumnWidthProperty);
         set => SetValue(ColumnWidthProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether the column is visible.
-    /// </summary>
     public bool IsColumnVisible
     {
         get => GetValue(IsColumnVisibleProperty);

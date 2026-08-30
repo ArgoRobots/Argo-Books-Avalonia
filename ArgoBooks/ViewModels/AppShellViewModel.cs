@@ -72,39 +72,18 @@ public partial class AppShellViewModel : ViewModelBase
 
     #region ViewModels
 
-    /// <summary>
-    /// Gets the sidebar view model.
-    /// </summary>
     public SidebarViewModel SidebarViewModel { get; }
 
-    /// <summary>
-    /// Gets the header view model.
-    /// </summary>
     public HeaderViewModel HeaderViewModel { get; }
 
-    /// <summary>
-    /// Gets the quick actions view model.
-    /// </summary>
     public QuickActionsViewModel QuickActionsViewModel { get; }
 
-    /// <summary>
-    /// Gets the notification panel view model.
-    /// </summary>
     public NotificationPanelViewModel NotificationPanelViewModel { get; }
 
-    /// <summary>
-    /// Gets the file menu panel view model.
-    /// </summary>
     public FileMenuPanelViewModel FileMenuPanelViewModel { get; }
 
-    /// <summary>
-    /// Gets the help panel view model.
-    /// </summary>
     public HelpPanelViewModel HelpPanelViewModel { get; }
 
-    /// <summary>
-    /// Gets the upgrade modal view model.
-    /// </summary>
     public UpgradeModalViewModel UpgradeModalViewModel { get; }
 
     /// <summary>
@@ -112,49 +91,22 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public CreateCompanyViewModel CreateCompanyViewModel { get; }
 
-    /// <summary>
-    /// Gets the company switcher panel view model.
-    /// </summary>
     public CompanySwitcherPanelViewModel CompanySwitcherPanelViewModel { get; }
 
-    /// <summary>
-    /// Gets the settings modal view model.
-    /// </summary>
     public SettingsModalViewModel SettingsModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the check for update modal view model.
-    /// </summary>
     public CheckForUpdateModalViewModel CheckForUpdateModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the prediction info modal view model.
-    /// </summary>
     public PredictionInfoModalViewModel PredictionInfoModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the past predictions modal view model.
-    /// </summary>
     public PastPredictionsModalViewModel PastPredictionsModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the import modal view model.
-    /// </summary>
     public ImportModalViewModel ImportModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the import validation dialog view model.
-    /// </summary>
     public ImportValidationDialogViewModel ImportValidationDialogViewModel { get; }
 
-    /// <summary>
-    /// Gets the import result dialog view model.
-    /// </summary>
     public ImportResultDialogViewModel ImportResultDialogViewModel { get; }
 
-    /// <summary>
-    /// Gets the import mapping dialog view model.
-    /// </summary>
     public ImportMappingDialogViewModel ImportMappingDialogViewModel { get; }
 
     /// <summary>
@@ -169,29 +121,14 @@ public partial class AppShellViewModel : ViewModelBase
     /// </summary>
     public RateUnavailableDialogViewModel RateUnavailableDialogViewModel { get; }
 
-    /// <summary>
-    /// Gets the export as modal view model.
-    /// </summary>
     public ExportAsModalViewModel ExportAsModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the switch account modal view model.
-    /// </summary>
     public SwitchAccountModalViewModel SwitchAccountModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the password prompt modal view model.
-    /// </summary>
     public PasswordPromptModalViewModel PasswordPromptModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the edit company modal view model.
-    /// </summary>
     public EditCompanyModalViewModel EditCompanyModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the customer modals view model.
-    /// </summary>
     public CustomerModalsViewModel CustomerModalsViewModel
     {
         get
@@ -207,9 +144,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the product modals view model.
-    /// </summary>
     public ProductModalsViewModel ProductModalsViewModel
     {
         get
@@ -225,9 +159,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the category modals view model.
-    /// </summary>
     public CategoryModalsViewModel CategoryModalsViewModel
     {
         get
@@ -243,9 +174,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the supplier modals view model.
-    /// </summary>
     public SupplierModalsViewModel SupplierModalsViewModel
     {
         get
@@ -261,9 +189,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the rental inventory modals view model.
-    /// </summary>
     public RentalInventoryModalsViewModel RentalInventoryModalsViewModel
     {
         get
@@ -296,9 +221,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the rental records modals view model.
-    /// </summary>
     public RentalRecordsModalsViewModel RentalRecordsModalsViewModel
     {
         get
@@ -315,9 +237,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the payment modals view model.
-    /// </summary>
     public PaymentModalsViewModel PaymentModalsViewModel
     {
         get
@@ -382,9 +301,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the expense modals view model.
-    /// </summary>
     public ExpenseModalsViewModel ExpenseModalsViewModel
     {
         get
@@ -400,9 +316,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the revenue modals view model.
-    /// </summary>
     public RevenueModalsViewModel RevenueModalsViewModel
     {
         get
@@ -418,9 +331,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the stock levels modals view model.
-    /// </summary>
     public StockLevelsModalsViewModel StockLevelsModalsViewModel
     {
         get
@@ -434,9 +344,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the locations modals view model.
-    /// </summary>
     public LocationsModalsViewModel LocationsModalsViewModel
     {
         get
@@ -450,9 +357,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the payroll modals view model.
-    /// </summary>
     public PayrollModalsViewModel PayrollModalsViewModel
     {
         get
@@ -482,9 +386,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the year end modal view model.
-    /// </summary>
     public YearEndModalViewModel YearEndModalViewModel
     {
         get
@@ -498,9 +399,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the stock adjustments modals view model.
-    /// </summary>
     public StockAdjustmentsModalsViewModel StockAdjustmentsModalsViewModel
     {
         get
@@ -514,9 +412,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the bank matching modals view model.
-    /// </summary>
     public BankMatchingModalsViewModel BankMatchingModalsViewModel
     {
         get
@@ -530,9 +425,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the bank statement import modal view model.
-    /// </summary>
     public BankStatementImportModalViewModel BankStatementImportModalViewModel
     {
         get
@@ -546,9 +438,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the purchase orders modals view model.
-    /// </summary>
     public PurchaseOrdersModalsViewModel PurchaseOrdersModalsViewModel
     {
         get
@@ -562,9 +451,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the receipts modals view model.
-    /// </summary>
     public ReceiptsModalsViewModel ReceiptsModalsViewModel
     {
         get
@@ -580,9 +466,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the lost/damaged modals view model.
-    /// </summary>
     public LostDamagedModalsViewModel LostDamagedModalsViewModel
     {
         get
@@ -596,9 +479,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the returns modals view model.
-    /// </summary>
     public ReturnsModalsViewModel ReturnsModalsViewModel
     {
         get
@@ -612,9 +492,6 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the report modals view model.
-    /// </summary>
     public ReportModalsViewModel ReportModalsViewModel
     {
         get
@@ -628,19 +505,10 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
-    /// <summary>
-    /// Gets the version history modal view model.
-    /// </summary>
     public VersionHistoryModalViewModel VersionHistoryModalViewModel { get; }
 
-    /// <summary>
-    /// Gets the unsaved changes dialog view model.
-    /// </summary>
     public UnsavedChangesDialogViewModel UnsavedChangesDialogViewModel { get; }
 
-    /// <summary>
-    /// Gets the custom date range modal view model.
-    /// </summary>
     public CustomDateRangeModalViewModel CustomDateRangeModalViewModel { get; }
 
     #endregion
@@ -720,10 +588,8 @@ public partial class AppShellViewModel : ViewModelBase
     {
         _navigationService = navigationService;
 
-        // Create sidebar with navigation service
         SidebarViewModel = new SidebarViewModel(navigationService);
 
-        // Create header with navigation service
         HeaderViewModel = new HeaderViewModel(navigationService);
 
         // Create quick actions panel with navigation service and link to sidebar
@@ -740,7 +606,6 @@ public partial class AppShellViewModel : ViewModelBase
         // Create help panel with navigation service
         HelpPanelViewModel = new HelpPanelViewModel();
 
-        // Create upgrade modal
         UpgradeModalViewModel = new UpgradeModalViewModel();
 
         // Wire up license verification to enable premium features
@@ -752,10 +617,8 @@ public partial class AppShellViewModel : ViewModelBase
         // Create company creation wizard
         CreateCompanyViewModel = new CreateCompanyViewModel();
 
-        // Create company switcher panel
         CompanySwitcherPanelViewModel = new CompanySwitcherPanelViewModel();
 
-        // Create settings modal
         SettingsModalViewModel = new SettingsModalViewModel();
 
         // Create check for update modal (with real update service on desktop, stub otherwise)
@@ -763,43 +626,31 @@ public partial class AppShellViewModel : ViewModelBase
             ? new CheckForUpdateModalViewModel(updateService)
             : new CheckForUpdateModalViewModel();
 
-        // Create prediction info modal
         PredictionInfoModalViewModel = new PredictionInfoModalViewModel();
 
-        // Create past predictions modal
         PastPredictionsModalViewModel = new PastPredictionsModalViewModel();
 
-        // Create import modal
         ImportModalViewModel = new ImportModalViewModel();
 
-        // Create import validation dialog
         ImportValidationDialogViewModel = new ImportValidationDialogViewModel();
         ImportResultDialogViewModel = new ImportResultDialogViewModel();
 
-        // Create import mapping dialog
         ImportMappingDialogViewModel = new ImportMappingDialogViewModel();
         CurrencyAmbiguityDialogViewModel = new CurrencyAmbiguityDialogViewModel();
         RateUnavailableDialogViewModel = new RateUnavailableDialogViewModel();
 
-        // Create export as modal
         ExportAsModalViewModel = new ExportAsModalViewModel();
 
-        // Create switch account modal
         SwitchAccountModalViewModel = new SwitchAccountModalViewModel();
 
-        // Create password prompt modal
         PasswordPromptModalViewModel = new PasswordPromptModalViewModel();
 
-        // Create edit company modal
         EditCompanyModalViewModel = new EditCompanyModalViewModel();
 
-        // Create version history modal
         VersionHistoryModalViewModel = new VersionHistoryModalViewModel();
 
-        // Create unsaved changes dialog
         UnsavedChangesDialogViewModel = new UnsavedChangesDialogViewModel();
 
-        // Create custom date range modal
         CustomDateRangeModalViewModel = new CustomDateRangeModalViewModel();
 
         // Register navigation guard for unsaved changes check
@@ -1006,7 +857,6 @@ public partial class AppShellViewModel : ViewModelBase
         SidebarViewModel.SetActivePage(e.PageName);
         HeaderViewModel.SetPageTitle(e.PageName);
 
-        // Track DashboardPageViewModel when on Dashboard page
         if (e.PageName == "Dashboard" && CurrentPage is Control { DataContext: DashboardPageViewModel dashVm })
         {
             WidgetCatalog = dashVm.LayoutViewModel.Catalog;
@@ -1020,7 +870,6 @@ public partial class AppShellViewModel : ViewModelBase
             WidgetCatalog = null;
         }
 
-        // Track ReportsPageViewModel when on Reports page
         if (e.PageName == "Reports" && CurrentPage is Control { DataContext: ReportsPageViewModel reportsVm })
         {
             _reportsPageViewModel = reportsVm;
@@ -1101,13 +950,11 @@ public partial class AppShellViewModel : ViewModelBase
             return true; // Allow navigation
         }
 
-        // Check if there are unsaved changes
         if (!_reportsPageViewModel.HasUnsavedChanges)
         {
             return true; // No changes, allow navigation
         }
 
-        // Show unsaved changes dialog
         var result2 = await UnsavedChangesDialogViewModel.ShowSimpleAsync(
             "Unsaved Report Changes".Translate(),
             "You have unsaved changes in the report designer. Would you like to save them?".Translate());
@@ -1168,7 +1015,6 @@ public partial class AppShellViewModel : ViewModelBase
         SettingsModalViewModel.HasPremium = hasPremium;
         UpgradeModalViewModel.HasPremium = hasPremium;
         HeaderViewModel.HasPremium = hasPremium;
-
 
         // Notify any subscribers (e.g., ProductsPageViewModel) of plan status change
         App.RaisePlanStatusChanged(hasPremium);
@@ -1238,7 +1084,6 @@ public partial class AppShellViewModel : ViewModelBase
         type.GetProperty("IsColumnMenuOpen", BindingFlags.Public | BindingFlags.Instance)?
             .SetValue(vm, false);
 
-        // Close chart context menu
         type.GetProperty("IsChartContextMenuOpen", BindingFlags.Public | BindingFlags.Instance)?
             .SetValue(vm, false);
 

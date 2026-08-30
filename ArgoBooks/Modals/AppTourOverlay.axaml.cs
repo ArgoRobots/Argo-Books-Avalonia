@@ -111,7 +111,6 @@ public partial class AppTourOverlay : UserControl
             return;
         }
 
-        // Get the bounds relative to this overlay
         var bounds = GetElementBoundsRelativeToOverlay(element, targetArea);
         if (bounds == null)
         {
@@ -148,7 +147,6 @@ public partial class AppTourOverlay : UserControl
             if (transform == null)
                 return null;
 
-            // Get element bounds
             var elementBounds = new Rect(0, 0, element.Bounds.Width, element.Bounds.Height);
 
             // Transform to overlay coordinates

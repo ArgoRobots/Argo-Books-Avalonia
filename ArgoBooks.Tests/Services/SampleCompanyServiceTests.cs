@@ -137,7 +137,6 @@ public class SampleCompanyServiceTests
             UpdatedAt = oldDate
         });
 
-        // Add an invoice
         data.Invoices.Add(new Invoice
         {
             Id = "INV-001",

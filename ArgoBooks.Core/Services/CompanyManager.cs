@@ -59,9 +59,6 @@ public class CompanyManager : IDisposable
     /// </summary>
     public string? CurrentFilePath { get; private set; }
 
-    /// <summary>
-    /// Gets the current company name.
-    /// </summary>
     public string? CurrentCompanyName => CompanyData?.Settings.Company.Name;
 
     /// <summary>
@@ -110,9 +107,6 @@ public class CompanyManager : IDisposable
         return _currentPassword;
     }
 
-    /// <summary>
-    /// Gets the current company settings.
-    /// </summary>
     public CompanySettings? CurrentCompanySettings => CompanyData?.Settings;
 
     /// <summary>
@@ -539,7 +533,6 @@ public class CompanyManager : IDisposable
             // Create receipts subdirectory after saving data files
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
-            // Save to file
             await _fileService.SaveCompanyAsync(filePath, _currentTempDirectory, password, cancellationToken);
 
             // The new company is now durably on disk, so it starts with no unsaved changes.
@@ -623,7 +616,6 @@ public class CompanyManager : IDisposable
         var opened = false;
         try
         {
-            // Check if file is encrypted
             var isEncrypted = await _fileService.IsFileEncryptedAsync(filePath);
 
             if (isEncrypted && string.IsNullOrEmpty(password))
@@ -652,7 +644,6 @@ public class CompanyManager : IDisposable
                 }
             }
 
-            // Open the file
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
             // Load company data, but defer receipts (they carry base64 image data and
@@ -979,7 +970,6 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(CurrentFilePath);
             }
 
-            // Mark as saved
             CompanyData!.MarkAsSaved();
 
             // Now that the file at the new path contains the freshly-written footer
@@ -1072,7 +1062,6 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(newFilePath);
             }
 
-            // Mark as saved
             CompanyData!.MarkAsSaved();
 
             // Add to recent companies
@@ -1465,7 +1454,6 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(CurrentFilePath);
             }
 
-            // Update current password
             _currentPassword = passwordToUse;
 
             // Note: We intentionally do NOT:

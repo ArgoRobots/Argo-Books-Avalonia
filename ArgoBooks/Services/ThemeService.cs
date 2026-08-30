@@ -175,9 +175,6 @@ public class ThemeService : IThemeService
         }
     }
 
-    /// <summary>
-    /// Gets the current theme name.
-    /// </summary>
     public string CurrentThemeName => CurrentTheme.GetDisplayName();
 
     /// <summary>
@@ -226,7 +223,6 @@ public class ThemeService : IThemeService
         app.Resources["SidebarActiveColor"] = colors.Primary;
         app.Resources["SidebarActiveBrush"] = new SolidColorBrush(colors.Primary);
 
-        // Update input focus border color
         app.Resources["InputFocusBorderColor"] = colors.Primary;
         app.Resources["InputFocusBorderBrush"] = new SolidColorBrush(colors.Primary);
 

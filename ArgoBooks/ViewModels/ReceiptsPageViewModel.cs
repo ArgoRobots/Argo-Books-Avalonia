@@ -571,13 +571,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             );
         }
 
-        // Apply type filter
         if (filterType != "All")
         {
             filtered = filtered.Where(r => r.TransactionType == filterType);
         }
 
-        // Apply source filter
         if (filterSource != "All")
         {
             filtered = filterSource switch
@@ -588,7 +586,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             };
         }
 
-        // Apply file type filter
         if (filterFileType != "All")
         {
             filtered = filterFileType switch
@@ -599,7 +596,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             };
         }
 
-        // Apply amount filter
         if (decimal.TryParse(filterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(r => r.Amount >= minAmount);
@@ -609,7 +605,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             filtered = filtered.Where(r => r.Amount <= maxAmount);
         }
 
-        // Apply date filter
         if (filterDateFrom.HasValue)
         {
             filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime);

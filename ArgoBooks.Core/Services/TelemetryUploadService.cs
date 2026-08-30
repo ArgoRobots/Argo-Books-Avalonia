@@ -113,7 +113,6 @@ public class TelemetryUploadService : ITelemetryUploadService
         {
             result.Success = false;
             result.ErrorMessage = "Upload cancelled";
-            // Save backup on cancellation
             result.BackupFilePath = await _storageService.SaveBackupFileAsync(CancellationToken.None);
         }
         catch (Exception ex)

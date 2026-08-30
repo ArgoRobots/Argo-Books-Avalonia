@@ -18,8 +18,6 @@ public class InsightsService(
     private const int MinimumTransactionsForInsights = 5;
     private const int MinimumMonthsForForecasting = 2;
 
-    // ML forecasting service
-
     public InsightsService() : this(new LocalMLForecastingService(), new ForecastAccuracyService())
     {
     }
@@ -329,7 +327,6 @@ public class InsightsService(
             insights.Add(seasonalInsight);
         }
 
-        // Transaction volume trend
         var volumeTrendInsight = AnalyzeTransactionVolumeTrend(currentSales.Count, previousSales.Count);
         if (volumeTrendInsight != null)
         {
@@ -395,7 +392,6 @@ public class InsightsService(
 
         if (monthlyData.Count < 6) return null;
 
-        // Use ML service to detect seasonal pattern
         var seasonalPattern = mlForecastingService.DetectSeasonality(monthlyData);
 
         if (seasonalPattern.SeasonalStrength > 0.2) // Significant seasonal pattern detected
@@ -504,7 +500,6 @@ public class InsightsService(
             anomalies.Add(expenseAnomaly);
         }
 
-        // Return rate anomaly
         var returnAnomaly = DetectReturnRateAnomaly(companyData, historicalRange);
         if (returnAnomaly != null)
         {
@@ -1030,21 +1025,18 @@ public class InsightsService(
             recommendations.Add(topProductRec);
         }
 
-        // Inactive customers
         var inactiveCustomerRec = AnalyzeInactiveCustomers(companyData, historicalRange);
         if (inactiveCustomerRec != null)
         {
             recommendations.Add(inactiveCustomerRec);
         }
 
-        // Overdue invoices
         var overdueRec = AnalyzeOverdueInvoices(companyData);
         if (overdueRec != null)
         {
             recommendations.Add(overdueRec);
         }
 
-        // Supplier optimization
         var supplierRec = AnalyzeSupplierOptimization(companyData, historicalRange);
         if (supplierRec != null)
         {

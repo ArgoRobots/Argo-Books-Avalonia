@@ -728,7 +728,6 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             // projections, converted at today's rate) instead of briefly showing "Pending".
             await CurrencyService.TryWarmTodayRateAsync();
 
-            // Update forecast display
             UpdateForecastDisplay(forecast);
         }
         catch (Exception ex)
@@ -780,7 +779,6 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             // Generate insights using the service with historical data
             var insights = await _insightsService.GenerateInsightsAsync(companyData, insightsDateRange);
 
-            // Check for sufficient data
             if (!insights.HasSufficientData)
             {
                 HasInsufficientData = true;
@@ -826,7 +824,6 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
     /// </summary>
     private async Task RunBacktestIfNeededAsync(Core.Data.CompanyData companyData, CompanySettings settings)
     {
-        // Check if backtest should run
         if (!_forecastAccuracyService.ShouldRunBacktest(companyData, settings))
         {
             return;
@@ -848,7 +845,6 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
                 BacktestProgressMessage = report.message;
             });
 
-            // Run backtest
             var recordsCreated = await _forecastAccuracyService.RunBacktestAsync(
                 companyData,
                 settings,
@@ -925,7 +921,6 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
             ValidatedForecastsNote = string.Empty;
         }
 
-        // Seasonal pattern info
         HasSeasonalPattern = forecast.SeasonalInfo?.HasSeasonalPattern ?? false;
         if (HasSeasonalPattern && forecast.SeasonalInfo != null)
         {

@@ -319,7 +319,6 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
             var dialog = App.ConfirmationDialog;
             if (dialog == null) return;
 
-            // Check if receipt is linked to a transaction
             var isLinked = !string.IsNullOrEmpty(receipt.TransactionId);
             var message = "Are you sure you want to delete this receipt?".Translate();
             if (isLinked)

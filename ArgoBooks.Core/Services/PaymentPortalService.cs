@@ -506,7 +506,6 @@ public class PaymentPortalService : IDisposable
                 ProcessingFee = portalPayment.ProcessingFee,
             };
 
-            // Add to company data
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
 

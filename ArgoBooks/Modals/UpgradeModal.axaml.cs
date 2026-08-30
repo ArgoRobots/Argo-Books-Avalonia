@@ -141,7 +141,6 @@ public partial class UpgradeModal : UserControl
                 }
             }
 
-            // Reset continue button
             if (ContinueButtonPanel != null)
             {
                 ContinueButtonPanel.Opacity = 0;

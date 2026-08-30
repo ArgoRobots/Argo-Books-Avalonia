@@ -200,7 +200,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             if (!await ConfirmDiscardFiltersAsync())
                 return;
 
-            // Restore filter values to original values
             RestoreOriginalFilterValues();
         }
 
@@ -2028,7 +2027,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         try
         {
-            // Get or create scanner service
             _scannerService ??= CreateScannerService();
             _usageService ??= CreateUsageService();
 
@@ -2420,7 +2418,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedDiscount, out var discount);
         decimal.TryParse(ExtractedShipping, out var shipping);
 
-        // Create line items
         var lineItems = LineItems.Select(li =>
         {
             decimal.TryParse(li.Quantity, out var qty);
@@ -2455,12 +2452,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         if (IsRevenue)
         {
-            // Create revenue transaction
             CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
         else
         {
-            // Create expense transaction
             CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
 
@@ -2977,7 +2972,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         _aiSuggestion = suggestion;
 
-        // Apply supplier suggestion
         if (!string.IsNullOrEmpty(suggestion.MatchedSupplierId))
         {
             var supplier = SupplierOptions.FirstOrDefault(s => s.Id == suggestion.MatchedSupplierId);

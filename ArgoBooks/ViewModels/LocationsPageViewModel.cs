@@ -340,7 +340,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(l => GetLocationType(l) == FilterType).ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             var isActive = FilterStatus == "Active";
@@ -353,7 +352,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Create display items
         var displayItems = filtered.Select(location =>
         {
             var addressParts = new List<string>();
@@ -552,9 +550,6 @@ public partial class LocationDisplayItem : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Gets the status text.
-    /// </summary>
     public string StatusText => IsActive ? "Active" : "Inactive";
 
     /// <summary>

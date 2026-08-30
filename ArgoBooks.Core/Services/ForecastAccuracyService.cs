@@ -35,7 +35,6 @@ public class ForecastAccuracyService : IForecastAccuracyService
         }
         else
         {
-            // Create new record
             var record = new ForecastAccuracyRecord
             {
                 ForecastDate = DateTime.Now,
@@ -199,7 +198,6 @@ public class ForecastAccuracyService : IForecastAccuracyService
         if (allDates.Count == 0)
             return false;
 
-        // Get distinct months
         var distinctMonths = allDates
             .Select(d => new DateTime(d.Year, d.Month, 1))
             .Distinct()
@@ -328,7 +326,6 @@ public class ForecastAccuracyService : IForecastAccuracyService
                 recordsCreated++;
             }
 
-            // Update last backtested month
             settings.LastBacktestedMonth = monthlyData.Last().Month.ToString("yyyy-MM");
 
             if (recordsCreated > 0)

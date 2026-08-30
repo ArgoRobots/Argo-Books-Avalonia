@@ -281,7 +281,6 @@ public partial class MainWindow : Window
                 // Cancel the close event to show dialog
                 e.Cancel = true;
 
-                // Show unsaved changes dialog
                 if (DataContext is MainWindowViewModel { UnsavedChangesDialogViewModel: not null } viewModel)
                 {
                     var result = await viewModel.UnsavedChangesDialogViewModel.ShowSimpleAsync(

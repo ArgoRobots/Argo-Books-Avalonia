@@ -57,7 +57,6 @@ public class ArgoApiImportCreation
         }
         foreach (var ret in Returns) data.Returns.Remove(ret);
 
-
         // The rows are gone, so their queued currency conversions have nothing left
         // to convert. Nothing else prunes those: the reconcile pass only drops an
         // entry whose record exists and is already converted, so one whose record has

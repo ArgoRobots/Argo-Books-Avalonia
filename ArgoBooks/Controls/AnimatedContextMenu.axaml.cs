@@ -180,7 +180,6 @@ public partial class AnimatedContextMenu : UserControl, INotifyPropertyChanged
         var containerWidth = Bounds.Width;
         var containerHeight = Bounds.Height;
 
-        // Measure the menu to get its size
         menuBorder.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var menuWidth = menuBorder.DesiredSize.Width;
         var menuHeight = menuBorder.DesiredSize.Height;

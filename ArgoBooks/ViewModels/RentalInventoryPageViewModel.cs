@@ -349,7 +349,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             filtered = FilterStatus switch
@@ -361,7 +360,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             };
         }
 
-        // Apply availability filter
         if (FilterAvailability != "All")
         {
             filtered = FilterAvailability switch
@@ -372,7 +370,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             };
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrWhiteSpace(FilterSupplier) && FilterSupplier != "All Suppliers")
         {
             var supplier = companyData?.Suppliers.FirstOrDefault(s => s.Name == FilterSupplier);
@@ -382,7 +379,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply daily rate filter
         if (decimal.TryParse(FilterDailyRateMin, out var minRate))
         {
             filtered = filtered.Where(i => i.DailyRate >= minRate);
@@ -392,7 +388,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => i.DailyRate <= maxRate);
         }
 
-        // Create display items
         var displayItems = filtered.Select(item =>
         {
             var inStock = ResolveInStock(item);

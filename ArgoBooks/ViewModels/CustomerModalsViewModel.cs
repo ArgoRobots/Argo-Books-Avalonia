@@ -1129,7 +1129,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             });
         }
 
-        // Apply filters
         var filtered = ApplyHistoryFiltersInternal(historyItems);
 
         // Sort by date descending and add to collection
@@ -1146,13 +1145,11 @@ public partial class CustomerModalsViewModel : ViewModelBase
     {
         var filtered = items.AsEnumerable();
 
-        // Filter by type
         if (HistoryFilterType != "All")
         {
             filtered = filtered.Where(h => h.Type == HistoryFilterType);
         }
 
-        // Filter by status
         if (HistoryFilterStatus != "All")
         {
             filtered = filtered.Where(h => h.Status == HistoryFilterStatus);

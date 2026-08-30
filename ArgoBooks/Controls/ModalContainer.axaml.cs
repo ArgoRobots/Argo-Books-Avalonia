@@ -89,9 +89,6 @@ public partial class ModalContainer : UserControl
         set => SetValue(SubtitleProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the modal content.
-    /// </summary>
     public object? ModalContent
     {
         get => GetValue(ModalContentProperty);
@@ -152,45 +149,30 @@ public partial class ModalContainer : UserControl
         set => SetValue(MaxHeightProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the header.
-    /// </summary>
     public bool ShowHeader
     {
         get => GetValue(ShowHeaderProperty);
         set => SetValue(ShowHeaderProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the footer.
-    /// </summary>
     public bool ShowFooter
     {
         get => GetValue(ShowFooterProperty);
         set => SetValue(ShowFooterProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the close button.
-    /// </summary>
     public bool ShowCloseButton
     {
         get => GetValue(ShowCloseButtonProperty);
         set => SetValue(ShowCloseButtonProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the primary button text.
-    /// </summary>
     public string? PrimaryButtonText
     {
         get => GetValue(PrimaryButtonTextProperty);
         set => SetValue(PrimaryButtonTextProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the secondary button text.
-    /// </summary>
     public string? SecondaryButtonText
     {
         get => GetValue(SecondaryButtonTextProperty);
@@ -224,9 +206,6 @@ public partial class ModalContainer : UserControl
         set => SetValue(IsPrimaryLoadingProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the left footer content.
-    /// </summary>
     public object? FooterLeftContent
     {
         get => GetValue(FooterLeftContentProperty);

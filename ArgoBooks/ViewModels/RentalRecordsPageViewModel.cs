@@ -403,7 +403,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             var statusEnum = FilterStatus switch
@@ -420,7 +419,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply customer filter
         if (!string.IsNullOrWhiteSpace(FilterCustomer) && FilterCustomer != "All Customers")
         {
             var customer = companyData?.Customers.FirstOrDefault(c => c.Name == FilterCustomer);
@@ -430,7 +428,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply item filter
         if (!string.IsNullOrWhiteSpace(FilterItem) && FilterItem != "All Items")
         {
             // Resolve filter item name through chain: find all RentalItems whose resolved name matches
@@ -464,7 +461,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(r => r.DueDate <= FilterDueDateTo.Value);
         }
 
-        // Create display items
         var displayItems = filtered.Select(record =>
         {
             var customer = companyData?.Customers.FirstOrDefault(c => c.Id == record.CustomerId);

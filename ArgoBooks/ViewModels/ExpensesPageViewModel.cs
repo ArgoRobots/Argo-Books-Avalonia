@@ -382,10 +382,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             _allExpenses.Where(p => p.Date >= startOfMonth),
             p => p.Total, p => p.OriginalCurrency, p => p.TotalUSD, p => p.Date);
 
-        // Transaction count
         TransactionCount = _allExpenses.Count;
 
-        // Receipts on file
         ReceiptsOnFile = _allExpenses.Count(p => !string.IsNullOrEmpty(p.ReceiptId));
 
         // Returns count (linked to returns data)
@@ -437,13 +435,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             filtered = filtered.Where(p => GetStatusDisplay(p, lostDamagedIds, returnedIds) == FilterStatus);
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrEmpty(FilterSupplierId))
         {
             filtered = filtered.Where(p => p.SupplierId == FilterSupplierId);
@@ -460,7 +456,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             });
         }
 
-        // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(p => p.Total >= minAmount);
@@ -470,7 +465,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.Total <= maxAmount);
         }
 
-        // Apply date filter
         if (FilterDateFrom.HasValue)
         {
             filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime);
@@ -480,7 +474,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime);
         }
 
-        // Apply receipt status filter
         if (FilterReceiptStatus != "All")
         {
             filtered = FilterReceiptStatus switch
@@ -494,7 +487,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         // Materialize filtered results
         var filteredList = filtered.ToList();
 
-        // Create display items
         var displayItems = filteredList.Select(purchase =>
         {
             var supplier = companyData?.GetSupplier(purchase.SupplierId ?? "");

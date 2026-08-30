@@ -472,7 +472,6 @@ public partial class SkiaReportDesignCanvas : UserControl
                     DrawFooter(canvas, baseWidth, baseHeight, page, pageCount);
                 }
 
-                // Render elements for this page
                 renderer.RenderElementsToCanvas(canvas, page);
 
                 canvas.Restore();
@@ -1039,7 +1038,6 @@ public partial class SkiaReportDesignCanvas : UserControl
         // Mark that we're zooming from wheel (so UpdateZoomTransform doesn't also adjust offset)
         _zoomingFromWheel = true;
 
-        // Apply the new zoom level
         ZoomLevel = newZoom;
 
         // Get canvas dimensions (page width, total stacked height)
@@ -1304,7 +1302,6 @@ public partial class SkiaReportDesignCanvas : UserControl
                     _selectedElements.Add(element);
                 }
 
-                // Start drag
                 StartDrag(point);
                 NotifySelectionChanged();
             }
@@ -1356,7 +1353,6 @@ public partial class SkiaReportDesignCanvas : UserControl
                 var (clampedX, clampedY, overscrollX, overscrollY) =
                     _overscrollHelper.CalculateOverscroll(desiredX, desiredY, maxX, maxY);
 
-                // Apply clamped scroll offset
                 _scrollViewer.Offset = new Vector(clampedX, clampedY);
 
                 // Apply overscroll visual effect

@@ -24,7 +24,6 @@ public static class FilePickerTypes
         return Array.IndexOf(SupportedReceiptExtensions, extension) >= 0;
     }
 
-
     public static readonly FilePickerFileType ImageFileType = new("Images")
     {
         Patterns = ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.heic", "*.heif"],

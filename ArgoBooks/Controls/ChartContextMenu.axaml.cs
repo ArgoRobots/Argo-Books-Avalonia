@@ -76,36 +76,24 @@ public partial class ChartContextMenu : UserControl
         set => SetValue(MenuYProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the command to save the chart as an image.
-    /// </summary>
     public ICommand? SaveChartAsImageCommand
     {
         get => GetValue(SaveChartAsImageCommandProperty);
         set => SetValue(SaveChartAsImageCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the command to export to Google Sheets.
-    /// </summary>
     public ICommand? ExportToGoogleSheetsCommand
     {
         get => GetValue(ExportToGoogleSheetsCommandProperty);
         set => SetValue(ExportToGoogleSheetsCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the command to export to Excel.
-    /// </summary>
     public ICommand? ExportToExcelCommand
     {
         get => GetValue(ExportToExcelCommandProperty);
         set => SetValue(ExportToExcelCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the command to reset chart zoom.
-    /// </summary>
     public ICommand? ResetChartZoomCommand
     {
         get => GetValue(ResetChartZoomCommandProperty);
@@ -121,9 +109,6 @@ public partial class ChartContextMenu : UserControl
         set => SetValue(ShowResetZoomProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show export options.
-    /// </summary>
     public bool ShowExportOptions
     {
         get => GetValue(ShowExportOptionsProperty);

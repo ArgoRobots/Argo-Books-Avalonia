@@ -344,7 +344,6 @@ public partial class ReturnsPageViewModel : ViewModelBase, ICleanupViewModel
             );
         }
 
-        // Apply reason filter
         if (filterReason != "All")
         {
             filtered = filtered.Where(r =>
@@ -352,7 +351,6 @@ public partial class ReturnsPageViewModel : ViewModelBase, ICleanupViewModel
             );
         }
 
-        // Apply date filter
         if (filterDateFrom.HasValue)
         {
             filtered = filtered.Where(r => r.ReturnDate >= filterDateFrom.Value.DateTime);

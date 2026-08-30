@@ -261,7 +261,6 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
         OnStateChanged();
     }
 
-
     /// <summary>
     /// Undoes the last action.
     /// </summary>
