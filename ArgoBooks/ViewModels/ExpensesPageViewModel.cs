@@ -210,8 +210,56 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     #region Constructor
 
-    public ExpensesPageViewModel()
+        [ObservableProperty]
+    private int _generatedBannerCount;
+
+    [ObservableProperty]
+    private bool _hasGeneratedBanner;
+
+    /// <summary>
+    /// Subscribes for the live case and reads any pending count for the common case where
+    /// generation ran on company open, before this page existed.
+    /// </summary>
+    private void WireRecurringBanner()
     {
+        RecurringTransactionService.ExpensesGenerated += OnRecurringGenerated;
+        if (RecurringTransactionService.PendingExpenseCount > 0)
+        {
+            GeneratedBannerCount = RecurringTransactionService.PendingExpenseCount;
+            HasGeneratedBanner = true;
+        }
+    }
+
+    private void OnRecurringGenerated(int count)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            GeneratedBannerCount = count;
+            HasGeneratedBanner = true;
+            LoadExpenses();
+        });
+    }
+
+    [RelayCommand]
+    private void MarkReviewed()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var entry in data.Expenses.Where(e => e.NeedsReview))
+            entry.NeedsReview = false;
+
+        HasGeneratedBanner = false;
+        GeneratedBannerCount = 0;
+        RecurringTransactionService.ClearPendingExpenses();
+        App.CompanyManager?.MarkAsChanged();
+        LoadExpenses();
+    }
+
+public ExpensesPageViewModel()
+    {
+        WireRecurringBanner();
+
         // Set default sort values for expenses
         SortColumn = "Date";
         SortDirection = SortDirection.Descending;

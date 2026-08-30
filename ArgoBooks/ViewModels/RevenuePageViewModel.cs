@@ -204,8 +204,56 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     #region Constructor
 
-    public RevenuePageViewModel()
+        [ObservableProperty]
+    private int _generatedBannerCount;
+
+    [ObservableProperty]
+    private bool _hasGeneratedBanner;
+
+    /// <summary>
+    /// Subscribes for the live case and reads any pending count for the common case where
+    /// generation ran on company open, before this page existed.
+    /// </summary>
+    private void WireRecurringBanner()
     {
+        RecurringTransactionService.RevenuesGenerated += OnRecurringGenerated;
+        if (RecurringTransactionService.PendingRevenueCount > 0)
+        {
+            GeneratedBannerCount = RecurringTransactionService.PendingRevenueCount;
+            HasGeneratedBanner = true;
+        }
+    }
+
+    private void OnRecurringGenerated(int count)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            GeneratedBannerCount = count;
+            HasGeneratedBanner = true;
+            LoadRevenue();
+        });
+    }
+
+    [RelayCommand]
+    private void MarkReviewed()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        foreach (var entry in data.Revenues.Where(e => e.NeedsReview))
+            entry.NeedsReview = false;
+
+        HasGeneratedBanner = false;
+        GeneratedBannerCount = 0;
+        RecurringTransactionService.ClearPendingRevenues();
+        App.CompanyManager?.MarkAsChanged();
+        LoadRevenue();
+    }
+
+public RevenuePageViewModel()
+    {
+        WireRecurringBanner();
+
         // Set default sort values for revenue
         SortColumn = "Date";
         SortDirection = SortDirection.Descending;
