@@ -388,6 +388,9 @@ public static class Icons
     public const string Arc = "M 12,1.5 A 10.5,10.5 0 0 1 22.5,12";
 
     /// <summary>Play/triangle button.</summary>
+    /// <summary>Triangle against a bar, for skipping one occurrence of a schedule.</summary>
+    public const string SkipNext = "M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z";
+
     public const string Play = "M8 5v14l11-7z";
 
     /// <summary>Pause (two vertical bars).</summary>

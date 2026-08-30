@@ -294,6 +294,7 @@
         <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
         <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
         <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
+        <modals:RecurringScheduleModal DataContext="{Binding RecurringScheduleEditorViewModel}" />
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
         <modals:PayrollModals DataContext="{Binding PayrollModalsViewModel}" />
         <modals:PayRunModals DataContext="{Binding PayRunModalsViewModel}" />

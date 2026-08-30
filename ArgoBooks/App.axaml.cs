@@ -1059,6 +1059,10 @@ public partial class App : Application
     /// </summary>
     public static ConfirmationDialogViewModel? ConfirmationDialog { get; private set; }
 
+    /// <summary>The one recurring schedule editor, shared by the Expenses and Revenue tabs.</summary>
+    public static RecurringScheduleEditorViewModel? RecurringScheduleEditor =>
+        _appShellViewModel?.RecurringScheduleEditorViewModel;
+
     /// <summary>
     /// Gets the unsaved changes dialog ViewModel for showing save prompts with change lists.
     /// </summary>

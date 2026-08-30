@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:behaviors="using:ArgoBooks.Behaviors"
+             xmlns:local="using:ArgoBooks"
+             xmlns:loc="using:ArgoBooks.Localization"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="ArgoBooks.Modals.RecurringScheduleModal"
+             x:DataType="vm:RecurringScheduleEditorViewModel">
+
+    <controls:ModalOverlay IsOpen="{Binding IsOpen}"
+                           ClosingCommand="{Binding RequestCloseCommand}">
+        <controls:ModalOverlay.ModalContent>
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1" CornerRadius="12" Width="500" MaxHeight="640"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Border Grid.Row="0" Padding="24,20"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{Binding Title}"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Button Grid.Column="1" Classes="icon-button" Command="{Binding RequestCloseCommand}">
+                                <PathIcon Data="{x:Static local:Icons.Close}" Width="20" Height="20" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Margin="24" Spacing="16">
+                            <StackPanel Spacing="6">
+                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
+                                    <Run Text="{loc:Loc 'Description'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                </TextBlock>
+                                <TextBox Text="{Binding Description, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         PlaceholderText="{loc:Loc 'Office rent'}"
+                                         MaxLength="200" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
+                                    <Run Text="{loc:Loc 'Amount'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                </TextBlock>
+                                <TextBox Text="{Binding Amount, Mode=TwoWay}"
+                                         Classes="form-input"
+                                         PlaceholderText="0.00"
+                                         behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                         MaxLength="13" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
+                                    <Run Text="{loc:Loc 'Frequency'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                </TextBlock>
+                                <ComboBox SelectedIndex="{Binding FrequencyIndex}" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="{loc:Loc 'Weekly'}" />
+                                    <ComboBoxItem Content="{loc:Loc 'Every two weeks'}" />
+                                    <ComboBoxItem Content="{loc:Loc 'Monthly'}" />
+                                    <ComboBoxItem Content="{loc:Loc 'Quarterly'}" />
+                                    <ComboBoxItem Content="{loc:Loc 'Annually'}" />
+                                </ComboBox>
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
+                                    <Run Text="{loc:Loc 'Starts'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                </TextBlock>
+                                <DatePicker SelectedDate="{Binding StartDate}"
+                                            Classes="form-datepicker"
+                                            MinWidth="0"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{loc:Loc 'Ends (optional)'}"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13" />
+                                <DatePicker SelectedDate="{Binding EndDate}"
+                                            Classes="form-datepicker"
+                                            MinWidth="0"
+                                            HorizontalAlignment="Stretch" />
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding ErrorMessage}"
+                                       IsVisible="{Binding HasError}"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       TextWrapping="Wrap"
+                                       FontSize="13" />
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border Grid.Row="2" Padding="24,16"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                            <Button Classes="secondary-button" Content="{loc:Loc 'Cancel'}" Command="{Binding RequestCloseCommand}" />
+                            <Button Classes="primary-button" Content="{loc:Loc 'Save'}" Command="{Binding SaveCommand}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+        </controls:ModalOverlay.ModalContent>
+    </controls:ModalOverlay>
+</UserControl>

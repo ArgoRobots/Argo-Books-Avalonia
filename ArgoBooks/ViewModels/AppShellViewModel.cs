@@ -159,6 +159,23 @@ public partial class AppShellViewModel : ViewModelBase
         }
     }
 
+    private RecurringScheduleEditorViewModel? _recurringScheduleEditorViewModel;
+
+    public RecurringScheduleEditorViewModel RecurringScheduleEditorViewModel
+    {
+        get
+        {
+            if (_recurringScheduleEditorViewModel == null)
+            {
+                _recurringScheduleEditorViewModel = new RecurringScheduleEditorViewModel();
+                _recurringScheduleEditorViewModel.Saved += () => RaiseUnsavedChanges(this, EventArgs.Empty);
+                OnPropertyChanged();
+            }
+
+            return _recurringScheduleEditorViewModel;
+        }
+    }
+
     public CategoryModalsViewModel CategoryModalsViewModel
     {
         get
