@@ -1094,6 +1094,17 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
     }
 
     [RelayCommand]
+    private async Task SwitchType(ReceiptDisplayItem? item)
+    {
+        if (item == null) return;
+
+        if (await ReceiptTypeSwitchService.SwitchAsync(item.Id))
+        {
+            LoadReceipts();
+        }
+    }
+
+    [RelayCommand]
     private void SelectAll()
     {
         foreach (var receipt in Receipts)

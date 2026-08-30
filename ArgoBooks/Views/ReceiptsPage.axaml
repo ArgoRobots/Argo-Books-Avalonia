@@ -478,6 +478,13 @@
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                         <Button Classes="icon-button"
+                                                                ToolTip.Tip="{loc:Loc 'Change between expense and revenue'}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).SwitchTypeCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.SwapType}"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
+                                                        <Button Classes="icon-button"
                                                                 ToolTip.Tip="{loc:Loc 'Delete'}"
                                                                 Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).DeleteReceiptCommand}"
                                                                 CommandParameter="{Binding}">

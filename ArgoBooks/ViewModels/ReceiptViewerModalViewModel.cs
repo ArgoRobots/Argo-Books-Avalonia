@@ -41,6 +41,25 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _canDelete = true;
 
+    [ObservableProperty]
+    private string _transactionType = string.Empty;
+
+    /// <summary>Empty while the receipt has no linked transaction, which hides the switch action.</summary>
+    public string SwitchTargetType => TransactionType switch
+    {
+        "Revenue" => "Expense",
+        "Expense" => "Revenue",
+        _ => string.Empty
+    };
+
+    public bool CanSwitchType => SwitchTargetType.Length > 0;
+
+    partial void OnTransactionTypeChanged(string value)
+    {
+        OnPropertyChanged(nameof(SwitchTargetType));
+        OnPropertyChanged(nameof(CanSwitchType));
+    }
+
     /// <summary>
     /// The documents this viewer can page between, when it was opened on a set rather than a
     /// single file. Empty for a receipt or a one-off document.
@@ -113,6 +132,8 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
     public void Show(string receiptId, string? title = null)
     {
         ReceiptId = receiptId;
+        TransactionType = App.CompanyManager?.CompanyData?.Receipts
+            .FirstOrDefault(r => r.Id == receiptId && !string.IsNullOrEmpty(r.TransactionId))?.TransactionType ?? string.Empty;
         _documentBytes = null;
         ClearDocumentSet();
         _documentFileName = string.Empty;
@@ -301,6 +322,17 @@ public partial class ReceiptViewerModalViewModel : ViewModelBase
         }
         _pageOrder.Insert(pos, index);
         ReceiptPages.Insert(pos, path);
+    }
+
+    [RelayCommand]
+    private async Task SwitchType()
+    {
+        if (string.IsNullOrEmpty(ReceiptId)) return;
+
+        if (await Services.ReceiptTypeSwitchService.SwitchAsync(ReceiptId))
+        {
+            TransactionType = SwitchTargetType;
+        }
     }
 
     [RelayCommand]

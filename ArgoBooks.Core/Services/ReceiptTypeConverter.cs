@@ -1,0 +1,358 @@
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Tracking;
+using ArgoBooks.Core.Models.Transactions;
+
+namespace ArgoBooks.Core.Services;
+
+/// <summary>Why a receipt cannot be switched, or <see cref="None"/> when it can.</summary>
+public enum ReceiptSwitchBlock
+{
+    None,
+    NoTransaction,
+    HasPayments,
+    FromInvoice,
+    HasReturns,
+    UsedByPayRun
+}
+
+/// <summary>
+/// What a switch replaced and everything it brought into existence, so it can be undone and redone
+/// without leaving orphans behind.
+/// </summary>
+public sealed record ReceiptSwitchResult(
+    Transaction Removed,
+    Transaction Created,
+    string PreviousType,
+    Supplier? CreatedSupplier,
+    Customer? CreatedCustomer,
+    Category? CreatedCategory,
+    IReadOnlyList<Product> CreatedProducts);
+
+/// <summary>
+/// Moves the transaction behind a receipt from one side of the books to the other. A receipt only
+/// records which transaction it belongs to, so switching its type means replacing that transaction
+/// and everything that hangs off it: the counterparty is a supplier on one side and a customer on
+/// the other, and products are typed per side too, so both are resolved for the target side.
+/// </summary>
+public static class ReceiptTypeConverter
+{
+    public const string Expense = "Expense";
+    public const string Revenue = "Revenue";
+
+    /// <summary>
+    /// Other records reference a transaction by id, and a switch mints a new one. Anything holding
+    /// such a reference has to block the switch or it would be left pointing at nothing.
+    /// </summary>
+    public static ReceiptSwitchBlock GetBlockReason(CompanyData data, Receipt receipt)
+    {
+        var id = receipt.TransactionId;
+        if (string.IsNullOrEmpty(id))
+            return ReceiptSwitchBlock.NoTransaction;
+
+        var transaction = Find(data, receipt);
+        if (transaction == null)
+            return ReceiptSwitchBlock.NoTransaction;
+
+        if (transaction is Models.Transactions.Revenue revenue)
+        {
+            if (data.Payments.Any(p => p.RevenueId == id))
+                return ReceiptSwitchBlock.HasPayments;
+            if (!string.IsNullOrEmpty(revenue.InvoiceId))
+                return ReceiptSwitchBlock.FromInvoice;
+        }
+
+        if (data.Returns.Any(r => r.OriginalTransactionId == id))
+            return ReceiptSwitchBlock.HasReturns;
+
+        if (transaction is Models.Transactions.Expense
+            && data.PayRuns.Any(p => p.Lines.Any(l => l.ExpenseId == id)))
+            return ReceiptSwitchBlock.UsedByPayRun;
+
+        return ReceiptSwitchBlock.None;
+    }
+
+    /// <summary>
+    /// Replaces the receipt's transaction with its counterpart. Call <see cref="GetBlockReason"/>
+    /// first. The counterparty and the line items' products are resolved for the target side,
+    /// creating them from the receipt when nothing matches, the way a receipt scan already handles
+    /// a name it has not seen before.
+    /// </summary>
+    public static ReceiptSwitchResult Switch(CompanyData data, Receipt receipt)
+    {
+        var existing = Find(data, receipt) ?? throw new InvalidOperationException(
+            $"Receipt {receipt.Id} has no transaction to switch.");
+
+        var toRevenue = existing is Models.Transactions.Expense;
+        var targetType = toRevenue ? CategoryType.Revenue : CategoryType.Expense;
+
+        Category? createdCategory = null;
+        var createdProducts = new List<Product>();
+        var lineItems = ResolveLineItems(data, existing.LineItems, targetType, ref createdCategory, createdProducts);
+
+        Transaction created;
+        Supplier? createdSupplier = null;
+        Customer? createdCustomer = null;
+
+        if (toRevenue)
+        {
+            var expense = (Models.Transactions.Expense)existing;
+            data.Expenses.Remove(expense);
+
+            data.IdCounters.Revenue++;
+            var revenue = new Models.Transactions.Revenue
+            {
+                Id = $"REV-{expense.Date:yyyy}-{data.IdCounters.Revenue:D5}",
+                Subtotal = expense.Amount,
+                CustomerId = ResolveCustomer(data, receipt, out createdCustomer)
+            };
+            CopyShared(expense, revenue, lineItems);
+            data.Revenues.Add(revenue);
+            created = revenue;
+        }
+        else
+        {
+            var revenue = (Models.Transactions.Revenue)existing;
+            data.Revenues.Remove(revenue);
+
+            data.IdCounters.Expense++;
+            var expense = new Models.Transactions.Expense
+            {
+                Id = $"PUR-{revenue.Date:yyyy}-{data.IdCounters.Expense:D5}",
+                SupplierId = ResolveSupplier(data, receipt, out createdSupplier)
+            };
+            CopyShared(revenue, expense, lineItems);
+            data.Expenses.Add(expense);
+            created = expense;
+        }
+
+        created.ReceiptId = receipt.Id;
+        created.UpdatedAt = DateTime.UtcNow;
+        receipt.TransactionId = created.Id;
+        receipt.TransactionType = toRevenue ? Revenue : Expense;
+
+        return new ReceiptSwitchResult(
+            existing, created, toRevenue ? Expense : Revenue,
+            createdSupplier, createdCustomer, createdCategory, createdProducts);
+    }
+
+    /// <summary>Puts back exactly what <see cref="Switch"/> replaced.</summary>
+    public static void Revert(CompanyData data, Receipt receipt, ReceiptSwitchResult result)
+    {
+        Remove(data, result.Created);
+
+        foreach (var product in result.CreatedProducts)
+            data.Products.Remove(product);
+        if (result.CreatedCategory != null) data.Categories.Remove(result.CreatedCategory);
+        if (result.CreatedSupplier != null) data.Suppliers.Remove(result.CreatedSupplier);
+        if (result.CreatedCustomer != null) data.Customers.Remove(result.CreatedCustomer);
+
+        Add(data, result.Removed);
+        result.Removed.ReceiptId = receipt.Id;
+        receipt.TransactionId = result.Removed.Id;
+        receipt.TransactionType = result.PreviousType;
+    }
+
+    /// <summary>Re-applies a switch that <see cref="Revert"/> undid, reusing the same records.</summary>
+    public static void Reapply(CompanyData data, Receipt receipt, ReceiptSwitchResult result)
+    {
+        Remove(data, result.Removed);
+
+        if (result.CreatedCategory != null && !data.Categories.Contains(result.CreatedCategory))
+            data.Categories.Add(result.CreatedCategory);
+        foreach (var product in result.CreatedProducts.Where(p => !data.Products.Contains(p)))
+            data.Products.Add(product);
+        if (result.CreatedSupplier != null && !data.Suppliers.Contains(result.CreatedSupplier))
+            data.Suppliers.Add(result.CreatedSupplier);
+        if (result.CreatedCustomer != null && !data.Customers.Contains(result.CreatedCustomer))
+            data.Customers.Add(result.CreatedCustomer);
+
+        Add(data, result.Created);
+        result.Created.ReceiptId = receipt.Id;
+        receipt.TransactionId = result.Created.Id;
+        receipt.TransactionType = result.PreviousType == Expense ? Revenue : Expense;
+    }
+
+    /// <summary>
+    /// Clones the line items for the new transaction and points each at a product of the target
+    /// side. The originals keep their own products, so a revert needs nothing undone on them.
+    /// </summary>
+    private static List<LineItem> ResolveLineItems(
+        CompanyData data,
+        List<LineItem> source,
+        CategoryType targetType,
+        ref Category? createdCategory,
+        List<Product> createdProducts)
+    {
+        var clones = new List<LineItem>(source.Count);
+
+        foreach (var item in source)
+        {
+            var clone = new LineItem
+            {
+                Description = item.Description,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                TaxRate = item.TaxRate,
+                Discount = item.Discount,
+                RentalRecordId = item.RentalRecordId,
+                RevenueRecordId = item.RevenueRecordId
+            };
+
+            var name = ProductName(data, item);
+            if (!string.IsNullOrEmpty(name))
+            {
+                var product = data.Products.FirstOrDefault(
+                    p => p.Type == targetType && string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+
+                if (product == null)
+                {
+                    createdCategory ??= ResolveCategory(data, targetType);
+                    data.IdCounters.Product++;
+                    product = new Product
+                    {
+                        Id = $"PRD-{data.IdCounters.Product:D3}",
+                        Name = name,
+                        CategoryId = createdCategory.Id,
+                        Type = targetType,
+                        UnitPrice = targetType == CategoryType.Revenue ? item.UnitPrice : 0,
+                        CostPrice = targetType == CategoryType.Expense ? item.UnitPrice : 0
+                    };
+                    data.Products.Add(product);
+                    createdProducts.Add(product);
+                }
+
+                clone.ProductId = product.Id;
+            }
+
+            clones.Add(clone);
+        }
+
+        return clones;
+    }
+
+    private static string? ProductName(CompanyData data, LineItem item)
+    {
+        if (!string.IsNullOrEmpty(item.ProductId))
+        {
+            var existing = data.Products.FirstOrDefault(p => p.Id == item.ProductId);
+            if (existing != null) return existing.Name;
+        }
+
+        return string.IsNullOrWhiteSpace(item.Description) ? null : item.Description.Trim();
+    }
+
+    private static Category ResolveCategory(CompanyData data, CategoryType type)
+    {
+        var existing = data.Categories.FirstOrDefault(c => c.Type == type);
+        if (existing != null) return existing;
+
+        data.IdCounters.Category++;
+        var category = new Category
+        {
+            Id = $"CAT-{(type == CategoryType.Revenue ? "SAL" : "PUR")}-{data.IdCounters.Category:D3}",
+            Name = type == CategoryType.Revenue ? "General Sales" : "General Expenses",
+            Type = type
+        };
+        data.Categories.Add(category);
+        return category;
+    }
+
+    private static string? ResolveSupplier(CompanyData data, Receipt receipt, out Supplier? created)
+    {
+        created = null;
+        var name = receipt.Supplier?.Trim();
+        if (string.IsNullOrEmpty(name)) return null;
+
+        var match = data.Suppliers.FirstOrDefault(
+            s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (match != null) return match.Id;
+
+        data.IdCounters.Supplier++;
+        created = new Supplier
+        {
+            Id = $"SUP-{data.IdCounters.Supplier:D3}",
+            Name = name,
+            Notes = "Created from receipt scan"
+        };
+        data.Suppliers.Add(created);
+        return created.Id;
+    }
+
+    private static string? ResolveCustomer(CompanyData data, Receipt receipt, out Customer? created)
+    {
+        created = null;
+        var name = receipt.Supplier?.Trim();
+        if (string.IsNullOrEmpty(name)) return null;
+
+        var match = data.Customers.FirstOrDefault(
+            c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (match != null) return match.Id;
+
+        data.IdCounters.Customer++;
+        created = new Customer
+        {
+            Id = $"CUS-{data.IdCounters.Customer:D3}",
+            Name = name,
+            Notes = "Created from receipt scan"
+        };
+        data.Customers.Add(created);
+        return created.Id;
+    }
+
+    private static Transaction? Find(CompanyData data, Receipt receipt)
+    {
+        var id = receipt.TransactionId;
+        if (string.IsNullOrEmpty(id)) return null;
+
+        return receipt.TransactionType == Revenue
+            ? data.Revenues.FirstOrDefault(r => r.Id == id)
+            : data.Expenses.FirstOrDefault(e => e.Id == id);
+    }
+
+    private static void Add(CompanyData data, Transaction transaction)
+    {
+        if (transaction is Models.Transactions.Expense expense) data.Expenses.Add(expense);
+        else if (transaction is Models.Transactions.Revenue revenue) data.Revenues.Add(revenue);
+    }
+
+    private static void Remove(CompanyData data, Transaction transaction)
+    {
+        if (transaction is Models.Transactions.Expense expense) data.Expenses.Remove(expense);
+        else if (transaction is Models.Transactions.Revenue revenue) data.Revenues.Remove(revenue);
+    }
+
+    private static void CopyShared(Transaction from, Transaction to, List<LineItem> lineItems)
+    {
+        to.Date = from.Date;
+        to.AccountantId = from.AccountantId;
+        to.Description = from.Description;
+        to.LineItems = lineItems;
+        to.Quantity = from.Quantity;
+        to.UnitPrice = from.UnitPrice;
+        to.Amount = from.Amount;
+        to.TaxRate = from.TaxRate;
+        to.TaxAmount = from.TaxAmount;
+        to.ShippingCost = from.ShippingCost;
+        to.Discount = from.Discount;
+        to.Fee = from.Fee;
+        to.Total = from.Total;
+        to.ReferenceNumber = from.ReferenceNumber;
+        to.PaymentMethod = from.PaymentMethod;
+        to.Notes = from.Notes;
+        to.CreatedAt = from.CreatedAt;
+        to.BankMatched = from.BankMatched;
+        to.BankMatchedDate = from.BankMatchedDate;
+        to.BankMatchedLineId = from.BankMatchedLineId;
+        to.OriginalCurrency = from.OriginalCurrency;
+        to.TotalUSD = from.TotalUSD;
+        to.UnitPriceUSD = from.UnitPriceUSD;
+        to.ShippingCostUSD = from.ShippingCostUSD;
+        to.TaxAmountUSD = from.TaxAmountUSD;
+        to.DiscountUSD = from.DiscountUSD;
+        to.FeeUSD = from.FeeUSD;
+        to.IsPendingConversion = from.IsPendingConversion;
+    }
+}
