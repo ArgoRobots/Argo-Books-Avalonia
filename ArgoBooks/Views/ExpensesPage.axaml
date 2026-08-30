@@ -17,9 +17,23 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid RowDefinitions="*">
-        <!-- Main Content -->
-        <Grid Grid.Row="0" RowDefinitions="Auto,Auto,*" Margin="24">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Tab Bar -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                        Margin="0"
+                        Classes="page-tabs">
+                <TabItem Header="{loc:Loc 'All Expenses'}" />
+                <TabItem Header="{loc:Loc 'Recurring'}" />
+            </TabControl>
+        </Border>
+
+        <Panel Grid.Row="1">
+            <!-- Main Content -->
+            <Grid RowDefinitions="Auto,Auto,*" Margin="24" IsVisible="{Binding !IsRecurringTab}">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'Monthly Expenses'}"
@@ -440,6 +454,10 @@
             </table:ArgoTable>
         </Grid>
 
+            <controls:RecurringSchedulesView DataContext="{Binding RecurringSchedules}"
+                                             Margin="24"
+                                             IsVisible="{Binding $parent[UserControl].((vm:ExpensesPageViewModel)DataContext).IsRecurringTab}" />
+        </Panel>
     </Grid>
 
     <!-- Column Visibility Menu -->

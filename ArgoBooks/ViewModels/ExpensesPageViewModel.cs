@@ -211,6 +211,16 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     #region Constructor
 
         [ObservableProperty]
+    private int _selectedTabIndex;
+
+    public bool IsRecurringTab => SelectedTabIndex == 1;
+
+    partial void OnSelectedTabIndexChanged(int value) => OnPropertyChanged(nameof(IsRecurringTab));
+
+    /// <summary>Schedules for this side only, shown on the Recurring tab.</summary>
+    public RecurringSchedulesViewModel RecurringSchedules { get; } = new(CategoryType.Expense);
+
+    [ObservableProperty]
     private int _generatedBannerCount;
 
     [ObservableProperty]

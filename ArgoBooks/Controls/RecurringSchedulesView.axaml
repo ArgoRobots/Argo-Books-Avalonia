@@ -7,24 +7,22 @@
              xmlns:loc="using:ArgoBooks.Localization"
              xmlns:icons="using:ArgoBooks"
              mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
-             x:Class="ArgoBooks.Views.RecurringPage"
-             x:DataType="vm:RecurringPageViewModel">
+             x:Class="ArgoBooks.Controls.RecurringSchedulesView"
+             x:DataType="vm:RecurringSchedulesViewModel">
 
     <Panel>
-        <Grid RowDefinitions="Auto,*" Margin="24">
+        <Grid RowDefinitions="Auto,*" Margin="0">
 
             <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="{loc:Loc 'Recurring'}"
-                               FontSize="24" FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="{loc:Loc 'Entries generated on a schedule. Each one is flagged for review when it is created.'}"
-                               FontSize="13"
-                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                </StackPanel>
+                <TextBlock Text="{loc:Loc 'Entries generated on a schedule. Each one is flagged for review when it is created.'}"
+                           FontSize="13"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
                 <Button Grid.Column="1"
                         Classes="primary-button"
                         VerticalAlignment="Center"
+                        Margin="16,0,0,0"
                         Content="{loc:Loc 'New schedule'}"
                         Command="{Binding AddScheduleCommand}" />
             </Grid>
@@ -120,26 +118,26 @@
                                             <StackPanel Grid.Column="5" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                                 <Button Classes="icon-button"
                                                         ToolTip.Tip="{loc:Loc 'Edit'}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).EditScheduleCommand}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).EditScheduleCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Classes="icon-button"
                                                         ToolTip.Tip="{loc:Loc 'Pause or resume'}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).TogglePauseCommand}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).TogglePauseCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{x:Static icons:Icons.Refresh}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Classes="icon-button"
                                                         ToolTip.Tip="{loc:Loc 'Skip the next occurrence'}"
                                                         IsEnabled="{Binding IsActive}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).SkipNextCommand}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).SkipNextCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{x:Static icons:Icons.SwapType}" Width="16" Height="16" />
                                                 </Button>
                                                 <Button Classes="icon-button"
                                                         ToolTip.Tip="{loc:Loc 'Delete'}"
-                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringPageViewModel)DataContext).DeleteScheduleCommand}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).DeleteScheduleCommand}"
                                                         CommandParameter="{Binding}">
                                                     <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
                                                 </Button>
@@ -176,14 +174,6 @@
 
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                             <StackPanel Margin="24" Spacing="16">
-                                <StackPanel Spacing="6">
-                                    <TextBlock Text="{loc:Loc 'Type'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
-                                    <ComboBox SelectedIndex="{Binding EditorTypeIndex}" HorizontalAlignment="Stretch">
-                                        <ComboBoxItem Content="{loc:Loc 'Expense'}" />
-                                        <ComboBoxItem Content="{loc:Loc 'Revenue'}" />
-                                    </ComboBox>
-                                </StackPanel>
-
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Description'}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding EditorDescription}" PlaceholderText="{loc:Loc 'Office rent'}" />

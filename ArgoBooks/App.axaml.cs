@@ -4130,7 +4130,6 @@ public partial class App : Application
             }
             return new LocationsPage { DataContext = _locationsPageViewModel };
         });
-        navigationService.RegisterPage("Recurring", _ => new RecurringPage { DataContext = new RecurringPageViewModel() });
         navigationService.RegisterPage("StockAdjustments", _ => new StockAdjustmentsPage { DataContext = _stockAdjustmentsPageViewModel ??= new StockAdjustmentsPageViewModel() });
         navigationService.RegisterPage("BankMatching", _ =>
         {

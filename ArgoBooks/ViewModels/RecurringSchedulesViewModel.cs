@@ -26,8 +26,12 @@ public partial class RecurringDisplayItem : ObservableObject
     public bool IsExpense { get; set; }
 }
 
-public partial class RecurringPageViewModel : ViewModelBase
+public partial class RecurringSchedulesViewModel : ViewModelBase
 {
+    /// <summary>Which side this list belongs to. The hosting tab already says which, so the
+    /// editor has no type picker.</summary>
+    private readonly CategoryType _side;
+
     public ObservableCollection<RecurringDisplayItem> Schedules { get; } = [];
 
     public bool HasSchedules => Schedules.Count > 0;
@@ -37,9 +41,6 @@ public partial class RecurringPageViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _editorTitle = string.Empty;
-
-    [ObservableProperty]
-    private int _editorTypeIndex;
 
     [ObservableProperty]
     private string _editorDescription = string.Empty;
@@ -63,8 +64,13 @@ public partial class RecurringPageViewModel : ViewModelBase
 
     private string? _editingId;
 
-    public RecurringPageViewModel()
+    public RecurringSchedulesViewModel() : this(CategoryType.Expense)
     {
+    }
+
+    public RecurringSchedulesViewModel(CategoryType side)
+    {
+        _side = side;
         Load();
     }
 
@@ -81,7 +87,7 @@ public partial class RecurringPageViewModel : ViewModelBase
             return;
         }
 
-        foreach (var schedule in data.RecurringTransactions.OrderBy(s => s.NextDate))
+        foreach (var schedule in data.RecurringTransactions.Where(s => s.Type == _side).OrderBy(s => s.NextDate))
         {
             var template = schedule.Template;
             Schedules.Add(new RecurringDisplayItem
@@ -106,7 +112,6 @@ public partial class RecurringPageViewModel : ViewModelBase
     {
         _editingId = null;
         EditorTitle = "New recurring transaction".Translate();
-        EditorTypeIndex = 0;
         EditorDescription = string.Empty;
         EditorAmount = string.Empty;
         EditorFrequencyIndex = (int)Frequency.Monthly;
@@ -124,7 +129,6 @@ public partial class RecurringPageViewModel : ViewModelBase
 
         _editingId = schedule.Id;
         EditorTitle = "Edit recurring transaction".Translate();
-        EditorTypeIndex = schedule.Type == CategoryType.Revenue ? 1 : 0;
         EditorDescription = schedule.Template.Description;
         EditorAmount = schedule.Template.Total.ToString("0.##");
         EditorFrequencyIndex = (int)schedule.Frequency;
@@ -161,7 +165,7 @@ public partial class RecurringPageViewModel : ViewModelBase
             return;
         }
 
-        var type = EditorTypeIndex == 1 ? CategoryType.Revenue : CategoryType.Expense;
+        var type = _side;
         var start = EditorStartDate.Value.DateTime.Date;
         var frequency = (Frequency)EditorFrequencyIndex;
 
