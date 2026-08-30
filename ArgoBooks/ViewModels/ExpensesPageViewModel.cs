@@ -6,6 +6,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Helpers;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -226,10 +227,28 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private bool _hasGeneratedBanner;
 
+    /// <summary>StringFormat cannot pluralise, so the whole sentence is built here.</summary>
+    public string GeneratedBannerText => GeneratedBannerCount == 1
+        ? "1 entry was generated from your recurring schedules and needs review.".Translate()
+        : "{0} entries were generated from your recurring schedules and need review.".TranslateFormat(GeneratedBannerCount);
+
+    partial void OnGeneratedBannerCountChanged(int value) => OnPropertyChanged(nameof(GeneratedBannerText));
+
     /// <summary>
     /// Subscribes for the live case and reads any pending count for the common case where
     /// generation ran on company open, before this page existed.
     /// </summary>
+    /// <summary>
+    /// The banner is derived from the data rather than tracked alongside it, so an undo of an
+    /// accept brings it back without every caller having to remember to.
+    /// </summary>
+    private void RefreshReviewBanner()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        GeneratedBannerCount = data?.Expenses.Count(e => e.NeedsReview) ?? 0;
+        HasGeneratedBanner = GeneratedBannerCount > 0;
+    }
+
     private void WireRecurringBanner()
     {
         RecurringTransactionService.ExpensesGenerated += OnRecurringGenerated;
@@ -267,8 +286,7 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             () => { entry.NeedsReview = true; item.NeedsReview = true; },
             () => { entry.NeedsReview = false; item.NeedsReview = false; }));
 
-        GeneratedBannerCount = data.Expenses.Count(e => e.NeedsReview);
-        HasGeneratedBanner = GeneratedBannerCount > 0;
+        RefreshReviewBanner();
         App.CompanyManager?.MarkAsChanged();
     }
 
@@ -278,12 +296,19 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         var data = App.CompanyManager?.CompanyData;
         if (data == null) return;
 
-        foreach (var entry in data.Expenses.Where(e => e.NeedsReview))
+        var accepted = data.Expenses.Where(e => e.NeedsReview).ToList();
+        if (accepted.Count == 0) return;
+
+        foreach (var entry in accepted)
             entry.NeedsReview = false;
 
-        HasGeneratedBanner = false;
-        GeneratedBannerCount = 0;
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Accept {accepted.Count} generated entries",
+            () => { foreach (var entry in accepted) entry.NeedsReview = true; },
+            () => { foreach (var entry in accepted) entry.NeedsReview = false; }));
+
         RecurringTransactionService.ClearPendingExpenses();
+        RefreshReviewBanner();
         App.CompanyManager?.MarkAsChanged();
         LoadExpenses();
     }
@@ -373,6 +398,8 @@ public ExpensesPageViewModel()
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        RefreshReviewBanner();
+
         if (App.NavigationService?.CurrentPageName != PageNames.Expenses)
         {
             _needsRefresh = true;

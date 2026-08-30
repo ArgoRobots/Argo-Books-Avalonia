@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
@@ -38,6 +39,24 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     [ObservableProperty]
     private DateTimeOffset? _endDate;
 
+    /// <summary>Customers on the revenue side, suppliers on the expense side.</summary>
+    public ObservableCollection<CounterpartyOption> CounterpartyOptions { get; } = [];
+
+    [ObservableProperty]
+    private CounterpartyOption? _selectedCounterparty;
+
+    [ObservableProperty]
+    private bool _hasCounterpartyError;
+
+    [ObservableProperty]
+    private string _counterpartyLabel = string.Empty;
+
+    [ObservableProperty]
+    private string _counterpartyPlaceholder = string.Empty;
+
+    [ObservableProperty]
+    private string _counterpartyAddNewText = string.Empty;
+
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
@@ -45,6 +64,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
     partial void OnErrorMessageChanged(string value) => OnPropertyChanged(nameof(HasError));
 
+    private EventHandler? _counterpartySavedHandler;
     private CategoryType _side = CategoryType.Expense;
     private string? _editingId;
     private string _originalSnapshot = string.Empty;
@@ -60,6 +80,9 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         StartDate = DateTimeOffset.Now;
         EndDate = null;
         ErrorMessage = string.Empty;
+        LoadCounterparties(side);
+        SelectedCounterparty = null;
+        HasCounterpartyError = false;
         _originalSnapshot = Snapshot();
         IsOpen = true;
     }
@@ -77,12 +100,83 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         StartDate = new DateTimeOffset(schedule.StartDate);
         EndDate = schedule.EndDate == null ? null : new DateTimeOffset(schedule.EndDate.Value);
         ErrorMessage = string.Empty;
+        LoadCounterparties(schedule.Type);
+        var currentId = schedule.Type == CategoryType.Revenue
+            ? (schedule.RevenueTemplate?.CustomerId)
+            : (schedule.ExpenseTemplate?.SupplierId);
+        SelectedCounterparty = CounterpartyOptions.FirstOrDefault(o => o.Id == currentId);
+        HasCounterpartyError = false;
         _originalSnapshot = Snapshot();
         IsOpen = true;
     }
 
+    private void LoadCounterparties(CategoryType side)
+    {
+        CounterpartyOptions.Clear();
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        CounterpartyLabel = (side == CategoryType.Revenue ? "Customer" : "Supplier").Translate();
+        CounterpartyPlaceholder = (side == CategoryType.Revenue
+            ? "Search for a customer..."
+            : "Search for a supplier...").Translate();
+        CounterpartyAddNewText = (side == CategoryType.Revenue
+            ? "Create new customer"
+            : "Create new supplier").Translate();
+
+        var options = side == CategoryType.Revenue
+            ? data.Customers.Select(c => new CounterpartyOption { Id = c.Id, Name = c.Name })
+            : data.Suppliers.Select(sup => new CounterpartyOption { Id = sup.Id, Name = sup.Name });
+
+        foreach (var option in options.OrderBy(o => o.Name))
+            CounterpartyOptions.Add(option);
+    }
+
+    /// <summary>
+    /// Opens the create-customer or create-supplier modal on top of this one and selects whatever
+    /// comes back, matching how the transaction modals offer it.
+    /// </summary>
+    [RelayCommand]
+    private void CreateCounterparty()
+    {
+        if (_side == CategoryType.Revenue)
+        {
+            var customers = App.CustomerModalsViewModel;
+            if (customers == null) return;
+
+            CreateModalSubscription.RearmOnce(ref _counterpartySavedHandler,
+                h => customers.CustomerSaved += h,
+                h => customers.CustomerSaved -= h,
+                () =>
+                {
+                    LoadCounterparties(_side);
+                    SelectedCounterparty = CounterpartyOptions
+                        .FirstOrDefault(o => o.Id == customers.LastSavedCustomerId);
+                    HasCounterpartyError = false;
+                });
+            customers.OpenAddModal();
+        }
+        else
+        {
+            var suppliers = App.SupplierModalsViewModel;
+            if (suppliers == null) return;
+
+            CreateModalSubscription.RearmOnce(ref _counterpartySavedHandler,
+                h => suppliers.SupplierSaved += h,
+                h => suppliers.SupplierSaved -= h,
+                () =>
+                {
+                    LoadCounterparties(_side);
+                    SelectedCounterparty = CounterpartyOptions
+                        .FirstOrDefault(o => o.Id == suppliers.LastSavedSupplierId);
+                    HasCounterpartyError = false;
+                });
+            suppliers.OpenAddModal();
+        }
+    }
+
     private string Snapshot() =>
-        $"{Description}|{Amount}|{FrequencyIndex}|{StartDate?.Date:d}|{EndDate?.Date:d}";
+        $"{Description}|{Amount}|{FrequencyIndex}|{StartDate?.Date:d}|{EndDate?.Date:d}|{SelectedCounterparty?.Id}";
 
     private bool IsDirty => Snapshot() != _originalSnapshot;
 
@@ -118,6 +212,15 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             return;
         }
 
+        if (SelectedCounterparty?.Id == null)
+        {
+            HasCounterpartyError = true;
+            ErrorMessage = "Choose a {0}.".TranslateFormat(CounterpartyLabel.ToLowerInvariant());
+            return;
+        }
+
+        HasCounterpartyError = false;
+
         var start = StartDate.Value.DateTime.Date;
         var end = EndDate?.DateTime.Date;
 
@@ -145,10 +248,31 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             ApplyTemplate(created, amount);
             data.RecurringTransactions.Add(created);
 
+            var dateBefore = created.NextDate;
+            var generated = GenerateDueNow(data);
+            var dateAfter = created.NextDate;
+
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Add recurring schedule {created.Id}",
-                () => { data.RecurringTransactions.Remove(created); Saved?.Invoke(); },
-                () => { data.RecurringTransactions.Add(created); Saved?.Invoke(); }));
+                () =>
+                {
+                    RemoveGenerated(data, generated);
+                    created.NextDate = dateBefore;
+                    data.RecurringTransactions.Remove(created);
+                    Saved?.Invoke();
+                },
+                () =>
+                {
+                    data.RecurringTransactions.Add(created);
+                    RestoreGenerated(data, generated);
+                    created.NextDate = dateAfter;
+                    Saved?.Invoke();
+                }));
+
+            IsOpen = false;
+            App.CompanyManager?.MarkAsChanged();
+            Saved?.Invoke();
+            return;
         }
         else
         {
@@ -161,39 +285,67 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             ApplyTemplate(existing, amount);
 
             var after = Capture(existing);
+
+            var dateBefore = existing.NextDate;
+            var generated = GenerateDueNow(data);
+            var dateAfter = existing.NextDate;
+
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Edit recurring schedule {existing.Id}",
-                () => { Restore(existing, before); Saved?.Invoke(); },
-                () => { Restore(existing, after); Saved?.Invoke(); }));
+                () =>
+                {
+                    RemoveGenerated(data, generated);
+                    Restore(existing, before);
+                    existing.NextDate = dateBefore;
+                    Saved?.Invoke();
+                },
+                () =>
+                {
+                    Restore(existing, after);
+                    RestoreGenerated(data, generated);
+                    existing.NextDate = dateAfter;
+                    Saved?.Invoke();
+                }));
+
+            IsOpen = false;
+            App.CompanyManager?.MarkAsChanged();
+            Saved?.Invoke();
 
             if (amountChanged)
-            {
-                IsOpen = false;
-                GenerateDueNow(data);
-                App.CompanyManager?.MarkAsChanged();
-                Saved?.Invoke();
                 await OfferRetroactiveCorrection(existing);
-                return;
-            }
         }
-
-        IsOpen = false;
-        GenerateDueNow(data);
-        App.CompanyManager?.MarkAsChanged();
-        Saved?.Invoke();
     }
 
     /// <summary>
     /// Company open is the usual trigger, but a schedule starting today would otherwise show as
     /// due with nothing to show for it until the file was reopened.
     /// </summary>
-    private static void GenerateDueNow(Core.Data.CompanyData data)
+    private static IReadOnlyList<Transaction> GenerateDueNow(Core.Data.CompanyData data)
     {
         var generated = RecurringTransactionService.GenerateDue(data, DateTime.UtcNow);
-        if (generated.Count == 0) return;
+        if (generated.Count == 0) return generated;
 
         var expenses = generated.Count(t => t is Expense);
         RecurringTransactionService.RaiseGenerated(expenses, generated.Count - expenses);
+        return generated;
+    }
+
+    private static void RemoveGenerated(Core.Data.CompanyData data, IReadOnlyList<Transaction> generated)
+    {
+        foreach (var entry in generated)
+        {
+            if (entry is Expense expense) data.Expenses.Remove(expense);
+            else if (entry is Revenue revenue) data.Revenues.Remove(revenue);
+        }
+    }
+
+    private static void RestoreGenerated(Core.Data.CompanyData data, IReadOnlyList<Transaction> generated)
+    {
+        foreach (var entry in generated)
+        {
+            if (entry is Expense expense && !data.Expenses.Contains(expense)) data.Expenses.Add(expense);
+            else if (entry is Revenue revenue && !data.Revenues.Contains(revenue)) data.Revenues.Add(revenue);
+        }
     }
 
     private void ApplyTemplate(RecurringTransaction schedule, decimal amount)
@@ -208,7 +360,8 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 Subtotal = amount,
                 Total = amount,
                 Quantity = 1,
-                UnitPrice = amount
+                UnitPrice = amount,
+                CustomerId = SelectedCounterparty?.Id
             };
         }
         else
@@ -220,7 +373,8 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 Amount = amount,
                 Total = amount,
                 Quantity = 1,
-                UnitPrice = amount
+                UnitPrice = amount,
+                SupplierId = SelectedCounterparty?.Id
             };
         }
     }

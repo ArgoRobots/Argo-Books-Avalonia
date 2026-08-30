@@ -46,6 +46,23 @@
 
                             <StackPanel Spacing="6">
                                 <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
+                                    <Run Text="{Binding CounterpartyLabel}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
+                                </TextBlock>
+                                <controls:SearchableDropdown ItemsSource="{Binding CounterpartyOptions}"
+                                                             SelectedItem="{Binding SelectedCounterparty}"
+                                                             DisplayMemberPath="Name"
+                                                             Placeholder="{Binding CounterpartyPlaceholder}"
+                                                             HasError="{Binding HasCounterpartyError}"
+                                                             ShowAddNew="True"
+                                                             AddNewText="{Binding CounterpartyAddNewText}"
+                                                             AddNewCommand="{Binding CreateCounterpartyCommand}"
+                                                             EmptyMessage="{loc:Loc 'None found'}"
+                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                             EmptyCreateCommand="{Binding CreateCounterpartyCommand}" />
+                            </StackPanel>
+
+                            <StackPanel Spacing="6">
+                                <TextBlock Foreground="{DynamicResource TextSecondaryBrush}" FontSize="13">
                                     <Run Text="{loc:Loc 'Amount'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                 </TextBlock>
                                 <TextBox Text="{Binding Amount, Mode=TwoWay}"

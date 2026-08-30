@@ -289,12 +289,13 @@
         <modals:RentalInventoryModals DataContext="{Binding RentalInventoryModalsViewModel}" />
         <modals:RentalAvailabilityModal DataContext="{Binding RentalAvailabilityModalViewModel}" />
 
+        <modals:RecurringScheduleModal DataContext="{Binding RecurringScheduleEditorViewModel}" />
+
         <!-- Entity creation modals (top layer, opened from other modals) -->
         <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
         <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />
         <modals:SupplierModals DataContext="{Binding SupplierModalsViewModel}" />
         <modals:CategoryModals DataContext="{Binding CategoryModalsViewModel}" />
-        <modals:RecurringScheduleModal DataContext="{Binding RecurringScheduleEditorViewModel}" />
         <modals:LocationsModals DataContext="{Binding LocationsModalsViewModel}" />
         <modals:PayrollModals DataContext="{Binding PayrollModalsViewModel}" />
         <modals:PayRunModals DataContext="{Binding PayRunModalsViewModel}" />
