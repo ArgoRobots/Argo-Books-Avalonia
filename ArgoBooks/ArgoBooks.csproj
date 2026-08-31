@@ -23,6 +23,8 @@
     <ItemGroup>
         <!-- Sample company data embedded resource -->
         <EmbeddedResource Include="Resources\SampleCompanyData.xlsx" />
+        <EmbeddedResource Include="Resources\pdfjs\pdf.min.js" />
+        <EmbeddedResource Include="Resources\pdfjs\pdf.worker.min.js" />
     </ItemGroup>
 
     <ItemGroup>
