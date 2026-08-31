@@ -36,6 +36,12 @@ public interface ITelemetryManager
     Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Records a completed visit to one screen. Raised by <see cref="NoteCurrentPage"/> when
+    /// the page changes and at session end, so callers never invoke this directly.
+    /// </summary>
+    Task TrackPageViewAsync(string pageName, long activeSeconds, long durationSeconds, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Tracks an export operation.
     /// </summary>
     Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default);

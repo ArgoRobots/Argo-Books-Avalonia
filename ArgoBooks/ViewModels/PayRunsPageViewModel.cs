@@ -326,6 +326,8 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
 
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
+
+            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.PayStubsExported);
         }
         catch (Exception ex)
         {

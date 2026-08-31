@@ -39,5 +39,11 @@ public enum TelemetryDataType
     /// <summary>
     /// How long a launch took, split at the first moment the app could draw anything.
     /// </summary>
-    Startup
+    Startup,
+
+    /// <summary>
+    /// One visit to one screen, with how long it held attention. Its own type rather than a
+    /// feature, because navigating is not a feature and would swamp the ones that are.
+    /// </summary>
+    PageView
 }

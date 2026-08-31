@@ -67,6 +67,17 @@ public enum FeatureName
     ReceiptScanOpened,
     InvoiceCreateOpened,
 
-    /// <summary>Navigated to a page, with its name in the event's context field.</summary>
-    PageViewed
+    // Payroll reported only its exceptions, so a company could run payroll all year and file
+    // its T4s without producing a single event. Zero errors read the same as nobody opening
+    // the page, which is the one thing worth knowing about the most complex feature here.
+    //
+    // Drafted then approved is the pair that matters: the gap between them is people who
+    // started a pay run and could not finish it.
+    PayRunDrafted,
+    PayRunApproved,
+    PayStubsExported,
+    T4SlipsGenerated,
+
+    /// <summary>The CRA submission file itself, so actually filing is separable from previewing.</summary>
+    T4XmlGenerated
 }

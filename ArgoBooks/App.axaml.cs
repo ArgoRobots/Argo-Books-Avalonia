@@ -1276,8 +1276,8 @@ public partial class App : Application
                 }
 
                 lastTrackedPage = e.PageName;
+                // Raises the PageView event for the page being left, timed and idle-aware.
                 TelemetryManager?.NoteCurrentPage(e.PageName);
-                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.PageViewed, e.PageName);
             };
 
             // Chart text (axis labels, titles, legends) is drawn by LiveCharts with

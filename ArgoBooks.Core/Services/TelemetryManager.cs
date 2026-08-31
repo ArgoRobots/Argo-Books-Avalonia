@@ -39,12 +39,41 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public void NoteCurrentPage(string? pageName)
     {
+        var now = DateTime.UtcNow;
+        string? left;
+        long activeOnPage;
+        long wallOnPage;
+
         // Shares the activity lock: both are written from the UI thread and read at
         // session end, so a second lock would only add an ordering to get wrong.
         lock (_activityLock)
         {
+            left = _currentPage;
+            // Active time is already idle-aware, so the difference across the visit is too.
+            // Deriving it rather than running a second timer means one idle rule, not two
+            // that can disagree.
+            activeOnPage = _activeSeconds - _pageEnteredActiveSeconds;
+            wallOnPage = (long)(now - _pageEnteredUtc).TotalSeconds;
+
             _currentPage = string.IsNullOrWhiteSpace(pageName) ? null : pageName;
+            _pageEnteredActiveSeconds = _activeSeconds;
+            _pageEnteredUtc = now;
         }
+
+        if (left != null)
+        {
+            _ = TrackPageViewAsync(left, activeOnPage, wallOnPage);
+        }
+    }
+
+    /// <summary>
+    /// Closes the page still open, so the last screen of a session is recorded like the rest.
+    /// Without this the page someone quit from is the one page never measured, which is the
+    /// one most worth seeing.
+    /// </summary>
+    private void FlushCurrentPage()
+    {
+        NoteCurrentPage(null);
     }
 
     /// <inheritdoc />
@@ -84,6 +113,8 @@ public class TelemetryManager : ITelemetryManager
     private readonly object _activityLock = new();
     private DateTime _lastActivityUtc;
     private string? _currentPage;
+    private long _pageEnteredActiveSeconds;
+    private DateTime _pageEnteredUtc;
     private long _activeSeconds;
     private DateTime _sessionStartTime;
     private GeoLocationData? _cachedGeoLocation;
@@ -195,17 +226,27 @@ public class TelemetryManager : ITelemetryManager
         // Stopped first so a heartbeat can't race the sentinel's removal below.
         StopHeartbeat();
 
+        // Before lastPage is read below: this clears _currentPage, so the read has to happen
+        // after, and the value it wants is captured here.
+        string? finalPage;
+        lock (_activityLock)
+        {
+            finalPage = _currentPage;
+        }
+        FlushCurrentPage();
+
         try
         {
             var duration = (long)(DateTime.UtcNow - _sessionStartTime).TotalSeconds;
 
             long activeSeconds;
-            string? lastPage;
             lock (_activityLock)
             {
                 activeSeconds = _activeSeconds;
-                lastPage = _currentPage;
             }
+
+            // finalPage, not _currentPage: flushing the last page view cleared the latter.
+            string? lastPage = finalPage;
 
             var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
             sessionEvent.Action = SessionAction.SessionEnd;
@@ -335,6 +376,23 @@ public class TelemetryManager : ITelemetryManager
         catch (Exception ex)
         {
             _errorLogger.LogDebug($"Failed to track feature: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task TrackPageViewAsync(string pageName, long activeSeconds, long durationSeconds, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var pageEvent = await CreateEventAsync<PageViewEvent>(cancellationToken);
+            pageEvent.PageName = pageName;
+            pageEvent.ActiveSeconds = activeSeconds < 0 ? 0 : activeSeconds;
+            pageEvent.DurationSeconds = durationSeconds < 0 ? 0 : durationSeconds;
+            await _storageService.RecordEventAsync(pageEvent, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger.LogDebug($"Failed to track page view: {ex.Message}");
         }
     }
 
