@@ -376,9 +376,9 @@ public partial class YearEndModalViewModel : ViewModelBase
         //
         // Clearing AvailableYears makes the ComboBox drop its selection, and assigning the same
         // year back raises no change, so the control sat blank while this held a good year:
-        // filing worked, the box just looked empty. Blanking the field first makes the
-        // assignment a real change every time.
-        _selectedYear = null;
+        // filing worked, the box just looked empty. Going through null first makes the
+        // assignment a real change every time. OnSelectedYearChanged ignores the null.
+        SelectedYear = null;
         SelectedYear = AvailableYears[0];
         _refillingYears = false;
 
