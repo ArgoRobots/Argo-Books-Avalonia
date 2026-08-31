@@ -296,6 +296,7 @@ public partial class App : Application
     /// <param name="title">The notification title.</param>
     /// <param name="message">The notification message.</param>
     /// <param name="type">The notification type.</param>
+    /// <param name="onClick">Runs when the notification is clicked, if given.</param>
     public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info,
         Action? onClick = null)
     {
@@ -1267,7 +1268,7 @@ public partial class App : Application
             // Consecutive repeats are dropped: re-navigating to the current page is a
             // no-op to the user and would only pad the timeline.
             var lastTrackedPage = string.Empty;
-            NavigationService.Navigated += (_, e) =>
+            NavigationService.Navigated += (sender, e) =>
             {
                 if (string.IsNullOrWhiteSpace(e.PageName) || e.PageName == lastTrackedPage)
                 {
@@ -1445,7 +1446,7 @@ public partial class App : Application
             SyncSampleCompanyState();
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
-            var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
+            var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
             if (savedCollapsed)
             {
                 _appShellViewModel.SidebarViewModel.IsCollapsed = true;
@@ -1564,7 +1565,8 @@ public partial class App : Application
                 {
                     try
                     {
-                        using var crashHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+                        using var crashHttpClient = new HttpClient();
+                        crashHttpClient.Timeout = TimeSpan.FromSeconds(20);
                         await CrashReporter.UploadPendingAsync(crashHttpClient, flushVersion);
                     }
                     catch
@@ -1602,7 +1604,8 @@ public partial class App : Application
                 var capturedErrorLogger = ErrorLogger;
                 _ = Task.Run(async () =>
                 {
-                    using var firstRunHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                    using var firstRunHttpClient = new HttpClient();
+                    firstRunHttpClient.Timeout = TimeSpan.FromSeconds(15);
                     var firstRunReporter = new FirstRunReporter(
                         firstRunHttpClient,
                         appVersion,
@@ -1900,7 +1903,7 @@ public partial class App : Application
         // Without this the System.Threading.Timer callback would touch that List concurrently with a
         // save. Matches the window-Activated path, which already calls this on the UI thread.
         _pendingConversionTimer = new Timer(
-            _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = TryProcessPendingConversionsAsync(); }),
+            state => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = TryProcessPendingConversionsAsync(); }),
             null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 
@@ -2417,7 +2420,7 @@ public partial class App : Application
                 var currencyScan = CurrencyImportPreparer.ScanWorkbook(filePath, updatedAnalysis);
                 if (currencyScan.Ambiguities.Count > 0)
                 {
-                    var companyCurrency = companyData.Settings?.Localization?.Currency ?? "USD";
+                    var companyCurrency = companyData.Settings.Localization.Currency;
                     var currencyDialog = _appShellViewModel.CurrencyAmbiguityDialogViewModel;
                     var currencyResult = await currencyDialog.ShowAsync(currencyScan.Ambiguities, companyCurrency);
                     if (currencyResult == CurrencyAmbiguityDialogResult.Cancel)
@@ -2448,8 +2451,7 @@ public partial class App : Application
                     // cancelable phase with a determinate progress bar so the import doesn't look frozen.
                     using var rateCts = new CancellationTokenSource();
                     _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
-                    var rateProgress = new Progress<int>(pct =>
-                        _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, pct, rateCts, ConfirmCancelAsync));
+                    var rateProgress = new Progress<int>(pct => _mainWindowViewModel?.UpdateLoadingProgress(pct));
 
                     while (true)
                     {
@@ -4259,7 +4261,7 @@ public partial class App : Application
         // Tracking Section
         navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = _returnsPageViewModel ??= new ReturnsPageViewModel() });
         navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = _lostDamagedPageViewModel ??= new LostDamagedPageViewModel() });
-        navigationService.RegisterPage("Receipts", _ =>
+        navigationService.RegisterPage("Receipts", param =>
         {
             _receiptsPageViewModel ??= new ReceiptsPageViewModel();
             // Update plan status each time (may have changed)
@@ -4268,17 +4270,6 @@ public partial class App : Application
             return new ReceiptsPage { DataContext = _receiptsPageViewModel };
         });
 
-    }
-
-    /// <summary>
-    /// Creates a placeholder page view for pages not yet implemented.
-    /// </summary>
-    private static object CreatePlaceholderPage(string title, string description)
-    {
-        return new PlaceholderPage
-        {
-            DataContext = new PlaceholderPageViewModel(title, description)
-        };
     }
 
     /// <summary>

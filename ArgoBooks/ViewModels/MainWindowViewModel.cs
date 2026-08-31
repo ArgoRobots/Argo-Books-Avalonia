@@ -413,6 +413,12 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
+    /// Moves the progress bar without disturbing the message or the cancel wiring, so a progress
+    /// callback does not have to hold the CancellationTokenSource just to report a percentage.
+    /// </summary>
+    public void UpdateLoadingProgress(double progress) => LoadingProgress = progress;
+
+    /// <summary>
     /// Hides the loading overlay.
     /// </summary>
     public void HideLoading()
