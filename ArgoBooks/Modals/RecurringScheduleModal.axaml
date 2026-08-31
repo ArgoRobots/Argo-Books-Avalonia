@@ -43,7 +43,12 @@
                                                              DisplayMemberPath="Name"
                                                              Placeholder="{loc:Loc 'Search for a product...'}"
                                                              HasError="{Binding HasProductError}"
-                                                             EmptyMessage="{loc:Loc 'No products found'}" />
+                                                             ShowAddNew="True"
+                                                             AddNewText="{Binding ProductAddNewText}"
+                                                             AddNewCommand="{Binding CreateProductCommand}"
+                                                             EmptyMessage="{loc:Loc 'No products found'}"
+                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
+                                                             EmptyCreateCommand="{Binding CreateProductCommand}" />
                             </StackPanel>
 
                             <StackPanel Spacing="6">

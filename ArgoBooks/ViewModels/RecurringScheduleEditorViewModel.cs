@@ -64,6 +64,9 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     private bool _hasProductError;
 
     [ObservableProperty]
+    private string _productAddNewText = string.Empty;
+
+    [ObservableProperty]
     private string _errorMessage = string.Empty;
 
     public bool HasError => ErrorMessage.Length > 0;
@@ -71,6 +74,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     partial void OnErrorMessageChanged(string value) => OnPropertyChanged(nameof(HasError));
 
     private EventHandler? _counterpartySavedHandler;
+    private EventHandler? _productSavedHandler;
     private CategoryType _side = CategoryType.Expense;
     private string? _editingId;
     private string _originalSnapshot = string.Empty;
@@ -134,6 +138,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         CounterpartyAddNewText = (side == CategoryType.Revenue
             ? "Create new customer"
             : "Create new supplier").Translate();
+        ProductAddNewText = "Create new product".Translate();
 
         var options = side == CategoryType.Revenue
             ? data.Customers.Select(c => new CounterpartyOption { Id = c.Id, Name = c.Name })
@@ -141,6 +146,28 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
         foreach (var option in options.OrderBy(o => o.Name))
             CounterpartyOptions.Add(option);
+    }
+
+    /// <summary>
+    /// Opens the create-product modal on top of this one, on the side this schedule belongs to,
+    /// and selects whatever comes back.
+    /// </summary>
+    [RelayCommand]
+    private void CreateProduct()
+    {
+        var products = App.ProductModalsViewModel;
+        if (products == null) return;
+
+        CreateModalSubscription.RearmOnce(ref _productSavedHandler,
+            h => products.ProductSaved += h,
+            h => products.ProductSaved -= h,
+            () =>
+            {
+                LoadProducts(_side);
+                SelectedProduct = ProductOptions.FirstOrDefault(o => o.Id == products.LastSavedProductId);
+                HasProductError = false;
+            });
+        products.OpenAddModal(_side == CategoryType.Expense);
     }
 
     /// <summary>
@@ -275,7 +302,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 NextDate = start,
                 EndDate = end
             };
-            ApplyTemplate(created, amount);
+            await ApplyTemplateAsync(created, amount, start);
             data.RecurringTransactions.Add(created);
 
             var dateBefore = created.NextDate;
@@ -312,7 +339,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             existing.Frequency = (Frequency)FrequencyIndex;
             existing.StartDate = start;
             existing.EndDate = end;
-            ApplyTemplate(existing, amount);
+            await ApplyTemplateAsync(existing, amount, start);
 
             var after = Capture(existing);
 
@@ -378,8 +405,15 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         }
     }
 
-    private void ApplyTemplate(RecurringTransaction schedule, decimal amount)
+    /// <summary>
+    /// The amount is entered in the display currency, so it is converted to USD the same way a
+    /// hand-entered transaction is. Without this the entry is stored as if it were already USD,
+    /// which both misstates the books and leaves the Total column showing "Pending".
+    /// </summary>
+    private async Task ApplyTemplateAsync(RecurringTransaction schedule, decimal amount, DateTime date)
     {
+        var converted = await CurrencyService.CreateMonetaryValueAsync(amount, date);
+
         var description = SelectedProduct?.Name ?? string.Empty;
         var lineItems = new List<Core.Models.Common.LineItem>
         {
@@ -404,7 +438,10 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 Quantity = 1,
                 UnitPrice = amount,
                 CustomerId = SelectedCounterparty?.Id,
-                LineItems = lineItems
+                LineItems = lineItems,
+                OriginalCurrency = converted.OriginalCurrency,
+                TotalUSD = converted.AmountUSD,
+                UnitPriceUSD = converted.AmountUSD
             };
         }
         else
@@ -418,7 +455,10 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 Quantity = 1,
                 UnitPrice = amount,
                 SupplierId = SelectedCounterparty?.Id,
-                LineItems = lineItems
+                LineItems = lineItems,
+                OriginalCurrency = converted.OriginalCurrency,
+                TotalUSD = converted.AmountUSD,
+                UnitPriceUSD = converted.AmountUSD
             };
         }
     }
