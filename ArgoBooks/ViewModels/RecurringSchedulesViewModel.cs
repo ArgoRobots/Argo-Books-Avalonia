@@ -27,7 +27,7 @@ public partial class RecurringDisplayItem : ObservableObject
 /// The schedules for one side of the books, shown on that page's Recurring tab. The editor lives
 /// on the shell and is shared, so it is reached through <see cref="App.RecurringScheduleEditor"/>.
 /// </summary>
-public partial class RecurringSchedulesViewModel : ViewModelBase
+public partial class RecurringSchedulesViewModel : ViewModelBase, ICleanupViewModel
 {
     private readonly CategoryType _side;
 
@@ -47,7 +47,21 @@ public partial class RecurringSchedulesViewModel : ViewModelBase
         if (App.RecurringScheduleEditor != null)
             App.RecurringScheduleEditor.Saved += Load;
 
-        App.UndoRedoManager.StateChanged += (_, _) => Load();
+        App.UndoRedoManager.StateChanged += OnUndoRedoStateChanged;
+    }
+
+    private void OnUndoRedoStateChanged(object? sender, EventArgs e) => Load();
+
+    /// <summary>
+    /// The editor and the undo manager both outlive this list, and a page view model is rebuilt on
+    /// every company switch, so a stale instance would keep reloading against the new company.
+    /// </summary>
+    public void Cleanup()
+    {
+        if (App.RecurringScheduleEditor != null)
+            App.RecurringScheduleEditor.Saved -= Load;
+
+        App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
     }
 
     public void Load()

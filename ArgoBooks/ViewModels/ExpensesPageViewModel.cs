@@ -237,19 +237,14 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     private void WireRecurringBanner()
     {
         RecurringTransactionService.ExpensesGenerated += OnRecurringGenerated;
-        if (RecurringTransactionService.PendingExpenseCount > 0)
-        {
-            GeneratedBannerCount = RecurringTransactionService.PendingExpenseCount;
-            HasGeneratedBanner = true;
-        }
+        RefreshReviewBanner();
     }
 
     private void OnRecurringGenerated(int count)
     {
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            GeneratedBannerCount = count;
-            HasGeneratedBanner = true;
+            RefreshReviewBanner();
             LoadExpenses();
         });
     }
@@ -342,6 +337,8 @@ public ExpensesPageViewModel()
     public override void Cleanup()
     {
         base.Cleanup();
+        RecurringTransactionService.ExpensesGenerated -= OnRecurringGenerated;
+        RecurringSchedules.Cleanup();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;

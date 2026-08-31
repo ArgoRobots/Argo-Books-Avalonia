@@ -209,4 +209,73 @@ public class RecurringTransactionServiceTests
         Assert.Equal(2200m, data.Expenses[1].Total);
         Assert.Equal(2200m, data.Expenses[2].Total);
     }
+
+    private static (CompanyData data, RecurringTransaction schedule) WithForeignMonthlyRent(DateTime start)
+    {
+        var (data, schedule) = WithMonthlyRent(start);
+        schedule.ExpenseTemplate!.OriginalCurrency = "CAD";
+        schedule.ExpenseTemplate.TotalUSD = 1500m;
+        schedule.ExpenseTemplate.UnitPrice = 2000m;
+        return (data, schedule);
+    }
+
+    [Fact]
+    public void GenerateDue_ForeignCurrency_ConvertsEachOccurrenceAtItsOwnDate()
+    {
+        var (data, _) = WithForeignMonthlyRent(new DateTime(2026, 1, 1));
+
+        // A rate that moves by month, so a stale template value would be visible.
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 3, 15),
+            (decimal amount, string _, DateTime date, out decimal usd) =>
+            {
+                usd = amount * (0.70m + date.Month * 0.01m);
+                return true;
+            });
+
+        Assert.Equal(3, data.Expenses.Count);
+        Assert.Equal(2000m * 0.71m, data.Expenses[0].TotalUSD);
+        Assert.Equal(2000m * 0.72m, data.Expenses[1].TotalUSD);
+        Assert.Equal(2000m * 0.73m, data.Expenses[2].TotalUSD);
+        Assert.All(data.Expenses, e => Assert.False(e.IsPendingConversion));
+    }
+
+    [Fact]
+    public void GenerateDue_NoRateForTheOccurrence_QueuesItRatherThanGuessing()
+    {
+        var (data, _) = WithForeignMonthlyRent(new DateTime(2026, 1, 1));
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15),
+            (decimal _, string _, DateTime _, out decimal usd) =>
+            {
+                usd = 0m;
+                return false;
+            });
+
+        var entry = Assert.Single(data.Expenses);
+        Assert.True(entry.IsPendingConversion);
+
+        var queued = Assert.Single(data.PendingConversions);
+        Assert.Equal(entry.Id, queued.TransactionId);
+        Assert.Equal("Expense", queued.TransactionType);
+        Assert.Equal("CAD", queued.OriginalCurrency);
+        Assert.Equal(new DateTime(2026, 1, 1), queued.TransactionDate);
+        Assert.Equal(2000m, queued.Total);
+    }
+
+    [Fact]
+    public void GenerateDue_UsdSchedule_NeedsNoConversion()
+    {
+        var (data, _) = WithMonthlyRent(new DateTime(2026, 1, 1));
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15),
+            (decimal _, string _, DateTime _, out decimal usd) =>
+            {
+                usd = 0m;
+                return false;
+            });
+
+        var entry = Assert.Single(data.Expenses);
+        Assert.False(entry.IsPendingConversion);
+        Assert.Empty(data.PendingConversions);
+    }
 }

@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
@@ -10,6 +11,12 @@ namespace ArgoBooks.Core.Services;
 /// Generated entries are real transactions flagged for review, not rows held outside the books:
 /// holding them out would mean every total and report needed a filter to exclude them.
 /// </summary>
+/// <summary>
+/// Converts an amount into USD at a given date, reporting false when no rate is held for that
+/// date so the caller can queue the entry rather than record an approximate figure.
+/// </summary>
+public delegate bool UsdConverter(decimal amount, string currency, DateTime date, out decimal usd);
+
 public static class RecurringTransactionService
 {
     /// <summary>Stops a corrupt far-past date with a short cadence from spinning.</summary>
@@ -43,9 +50,16 @@ public static class RecurringTransactionService
 
     public static void ClearPendingRevenues() => PendingRevenueCount = 0;
 
-    /// <summary>Generates every occurrence due on or before <paramref name="asOfUtc"/>.</summary>
-    public static IReadOnlyList<Transaction> GenerateDue(CompanyData data, DateTime asOfUtc)
+    /// <summary>
+    /// Generates every occurrence due on or before <paramref name="asOfUtc"/>. The converter is
+    /// injectable so this does not have to reach for the exchange rate singleton, which is set
+    /// once per process and cannot be controlled by a caller.
+    /// </summary>
+    public static IReadOnlyList<Transaction> GenerateDue(
+        CompanyData data, DateTime asOfUtc, UsdConverter? convert = null)
     {
+        convert ??= DefaultConverter;
+
         var generated = new List<Transaction>();
         var asOfDate = asOfUtc.Date;
 
@@ -68,7 +82,7 @@ public static class RecurringTransactionService
                 var skipped = schedule.SkippedDates.Any(d => d.Date == occurrence);
                 if (!skipped && !AlreadyGenerated(data, schedule, occurrence))
                 {
-                    generated.Add(CloneFor(schedule, occurrence, data));
+                    generated.Add(CloneFor(schedule, occurrence, data, convert));
                     schedule.LastGeneratedAt = asOfUtc;
                 }
 
@@ -137,6 +151,17 @@ public static class RecurringTransactionService
             target.Discount = template.Discount;
             target.Fee = template.Fee;
             target.Total = template.Total;
+
+            // The USD figures are what the books and every report actually read, so a correction
+            // that moved only the entered amount would leave the old converted value behind.
+            target.OriginalCurrency = template.OriginalCurrency;
+            target.TotalUSD = template.TotalUSD;
+            target.UnitPriceUSD = template.UnitPriceUSD;
+            target.TaxAmountUSD = template.TaxAmountUSD;
+            target.ShippingCostUSD = template.ShippingCostUSD;
+            target.DiscountUSD = template.DiscountUSD;
+            target.FeeUSD = template.FeeUSD;
+
             target.UpdatedAt = DateTime.UtcNow;
         }
     }
@@ -155,7 +180,8 @@ public static class RecurringTransactionService
             : data.Expenses.Any(Matches);
     }
 
-    private static Transaction CloneFor(RecurringTransaction schedule, DateTime occurrence, CompanyData data)
+    private static Transaction CloneFor(
+        RecurringTransaction schedule, DateTime occurrence, CompanyData data, UsdConverter convert)
     {
         Transaction entry;
 
@@ -190,7 +216,69 @@ public static class RecurringTransactionService
 
         entry.CreatedAt = DateTime.UtcNow;
         entry.UpdatedAt = DateTime.UtcNow;
+
+        ConvertForOccurrence(data, entry, occurrence, convert);
         return entry;
+    }
+
+    /// <summary>
+    /// The template holds the amount in its own currency converted at the schedule's start date.
+    /// Every occurrence falls on a different day, so each one is reconverted at its own date, the
+    /// way a hand-entered transaction is. Without this a year of a foreign-currency schedule would
+    /// all sit at one stale rate.
+    ///
+    /// When no rate is held for that date the entry is queued the same way an offline manual entry
+    /// is, so PendingConversionService fixes it up rather than the books carrying a wrong figure.
+    /// </summary>
+    private static void ConvertForOccurrence(
+        CompanyData data, Transaction entry, DateTime occurrence, UsdConverter convert)
+    {
+        if (string.Equals(entry.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+        {
+            entry.IsPendingConversion = false;
+            return;
+        }
+
+        if (convert(entry.Total, entry.OriginalCurrency, occurrence, out var totalUsd))
+        {
+            entry.TotalUSD = totalUsd;
+            entry.UnitPriceUSD = Rebase(convert, entry.UnitPrice, entry.OriginalCurrency, occurrence);
+            entry.TaxAmountUSD = Rebase(convert, entry.TaxAmount, entry.OriginalCurrency, occurrence);
+            entry.ShippingCostUSD = Rebase(convert, entry.ShippingCost, entry.OriginalCurrency, occurrence);
+            entry.DiscountUSD = Rebase(convert, entry.Discount, entry.OriginalCurrency, occurrence);
+            entry.FeeUSD = Rebase(convert, entry.Fee, entry.OriginalCurrency, occurrence);
+            entry.IsPendingConversion = false;
+            return;
+        }
+
+        entry.IsPendingConversion = true;
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = entry.Id,
+            TransactionType = entry is Models.Transactions.Revenue ? "Revenue" : "Expense",
+            OriginalCurrency = entry.OriginalCurrency,
+            TransactionDate = occurrence,
+            Total = entry.Total,
+            TaxAmount = entry.TaxAmount,
+            ShippingCost = entry.ShippingCost,
+            Discount = entry.Discount,
+            Fee = entry.Fee,
+            UnitPrice = entry.UnitPrice
+        });
+    }
+
+    private static decimal Rebase(
+        UsdConverter convert, decimal amount, string currency, DateTime date) =>
+        amount != 0 && convert(amount, currency, date, out var usd) ? usd : 0m;
+
+    private static bool DefaultConverter(decimal amount, string currency, DateTime date, out decimal usd)
+    {
+        var rates = ExchangeRateService.Instance;
+        if (rates != null)
+            return rates.TryConvertToUsdBase(amount, currency, date, out usd);
+
+        usd = 0m;
+        return false;
     }
 
     private static T Clone<T>(T source) =>

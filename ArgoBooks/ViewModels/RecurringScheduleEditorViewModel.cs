@@ -306,7 +306,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             data.RecurringTransactions.Add(created);
 
             var dateBefore = created.NextDate;
-            var generated = GenerateDueNow(data);
+            var generated = OwnEntries(GenerateDueNow(data), created);
             var dateAfter = created.NextDate;
 
             App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -344,7 +344,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             var after = Capture(existing);
 
             var dateBefore = existing.NextDate;
-            var generated = GenerateDueNow(data);
+            var generated = OwnEntries(GenerateDueNow(data), existing);
             var dateAfter = existing.NextDate;
 
             App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -386,6 +386,14 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         RecurringTransactionService.RaiseGenerated(expenses, generated.Count - expenses);
         return generated;
     }
+
+    /// <summary>
+    /// Generation runs every schedule that has come due, not only the one just saved. Undoing this
+    /// save must not delete an entry another schedule legitimately produced.
+    /// </summary>
+    private static IReadOnlyList<Transaction> OwnEntries(
+        IReadOnlyList<Transaction> generated, RecurringTransaction schedule) =>
+        generated.Where(t => t.RecurringScheduleId == schedule.Id).ToList();
 
     private static void RemoveGenerated(Core.Data.CompanyData data, IReadOnlyList<Transaction> generated)
     {

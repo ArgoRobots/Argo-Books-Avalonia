@@ -230,19 +230,14 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     private void WireRecurringBanner()
     {
         RecurringTransactionService.RevenuesGenerated += OnRecurringGenerated;
-        if (RecurringTransactionService.PendingRevenueCount > 0)
-        {
-            GeneratedBannerCount = RecurringTransactionService.PendingRevenueCount;
-            HasGeneratedBanner = true;
-        }
+        RefreshReviewBanner();
     }
 
     private void OnRecurringGenerated(int count)
     {
         Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            GeneratedBannerCount = count;
-            HasGeneratedBanner = true;
+            RefreshReviewBanner();
             LoadRevenue();
         });
     }
@@ -339,6 +334,8 @@ public RevenuePageViewModel()
     public override void Cleanup()
     {
         base.Cleanup();
+        RecurringTransactionService.RevenuesGenerated -= OnRecurringGenerated;
+        RecurringSchedules.Cleanup();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
