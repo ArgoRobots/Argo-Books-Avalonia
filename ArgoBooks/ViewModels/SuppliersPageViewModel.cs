@@ -34,9 +34,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     #region Column Visibility
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -66,18 +63,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Suppliers", "Address", value); }
     partial void OnShowCountryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Country", value); ColumnVisibilityHelper.Save("Suppliers", "Country", value); }
     partial void OnShowProductsColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Products", value); ColumnVisibilityHelper.Save("Suppliers", "Products", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()

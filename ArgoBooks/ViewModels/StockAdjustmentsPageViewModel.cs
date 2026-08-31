@@ -56,9 +56,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     #region Column Visibility
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -96,18 +93,6 @@ public partial class StockAdjustmentsPageViewModel : SortablePageViewModelBase
     partial void OnShowPreviousColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Previous", value); ColumnVisibilityHelper.Save("StockAdjustments", "Previous", value); }
     partial void OnShowNewColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("New", value); ColumnVisibilityHelper.Save("StockAdjustments", "New", value); }
     partial void OnShowReasonColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reason", value); ColumnVisibilityHelper.Save("StockAdjustments", "Reason", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()

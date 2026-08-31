@@ -127,9 +127,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -152,18 +149,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Categories", "Name", value); }
     partial void OnShowDescriptionColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Description", value); ColumnVisibilityHelper.Save("Categories", "Description", value); }
     partial void OnShowProductCountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("ProductCount", value); ColumnVisibilityHelper.Save("Categories", "ProductCount", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()

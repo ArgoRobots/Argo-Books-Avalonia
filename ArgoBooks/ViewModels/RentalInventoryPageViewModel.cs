@@ -42,9 +42,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -79,18 +76,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     partial void OnShowDailyRateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("DailyRate", value); ColumnVisibilityHelper.Save("RentalInventory", "DailyRate", value); }
     partial void OnShowWeeklyRateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("WeeklyRate", value); ColumnVisibilityHelper.Save("RentalInventory", "WeeklyRate", value); }
     partial void OnShowDepositColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Deposit", value); ColumnVisibilityHelper.Save("RentalInventory", "Deposit", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()

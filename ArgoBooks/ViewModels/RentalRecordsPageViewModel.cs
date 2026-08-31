@@ -79,9 +79,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -136,18 +133,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     partial void OnShowDepositColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Deposit", value); ColumnVisibilityHelper.Save("RentalRecords", "Deposit", value); }
     partial void OnShowPaidColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Paid", value); ColumnVisibilityHelper.Save("RentalRecords", "Paid", value); }
     partial void OnShowInvoiceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Invoice", value); ColumnVisibilityHelper.Save("RentalRecords", "Invoice", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()

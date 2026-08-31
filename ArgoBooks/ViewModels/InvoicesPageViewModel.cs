@@ -320,9 +320,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -363,18 +360,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     partial void OnShowDueDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("DueDate", value); ColumnVisibilityHelper.Save("Invoices", "DueDate", value); }
     partial void OnShowAmountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Amount", value); ColumnVisibilityHelper.Save("Invoices", "Amount", value); }
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Invoices", "Status", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()

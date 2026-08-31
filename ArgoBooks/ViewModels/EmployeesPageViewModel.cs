@@ -129,9 +129,6 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     private string _paginationText = "0 employees";
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private bool _showEmployeeColumn = ColumnVisibilityHelper.Load("Employees", "Employee", true);
 
     [ObservableProperty]
@@ -155,12 +152,6 @@ public partial class EmployeesPageViewModel : SortablePageViewModelBase
     partial void OnShowPayRateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("PayRate", value); ColumnVisibilityHelper.Save("Employees", "PayRate", value); }
     partial void OnShowFrequencyColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Frequency", value); ColumnVisibilityHelper.Save("Employees", "Frequency", value); }
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Employees", "Status", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu() => IsColumnMenuOpen = !IsColumnMenuOpen;
-
-    [RelayCommand]
-    private void CloseColumnMenu() => IsColumnMenuOpen = false;
 
     [RelayCommand]
     private void ResetColumnVisibility()
