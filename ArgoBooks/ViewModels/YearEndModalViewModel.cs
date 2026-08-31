@@ -373,6 +373,12 @@ public partial class YearEndModalViewModel : ViewModelBase
 
         // Reselect before lifting the guard, so the whole refill produces exactly one rebuild
         // here rather than one from the setter and another from this call.
+        //
+        // Clearing AvailableYears makes the ComboBox drop its selection, and assigning the same
+        // year back raises no change, so the control sat blank while this held a good year:
+        // filing worked, the box just looked empty. Blanking the field first makes the
+        // assignment a real change every time.
+        _selectedYear = null;
         SelectedYear = AvailableYears[0];
         _refillingYears = false;
 
