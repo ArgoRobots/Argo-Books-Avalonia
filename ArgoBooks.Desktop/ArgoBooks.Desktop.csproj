@@ -17,6 +17,10 @@
              installer has to be produced from a publish output. See docs/Publishing.md. -->
         <PublishReadyToRun>true</PublishReadyToRun>
 
+        <!-- Without this the exe carries no icon, so Explorer and a pinned but unlaunched
+             taskbar entry fall back to the generic one. -->
+        <ApplicationIcon>..\ArgoBooks\Assets\argo-logo.ico</ApplicationIcon>
+
         <AssemblyName>Argo Books</AssemblyName>
         <Title>Argo Books</Title>
         <Product>Argo Books</Product>

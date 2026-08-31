@@ -41,7 +41,7 @@
                 <StackPanel HorizontalAlignment="Center"
                             Margin="0,0,0,48">
                     <!-- App Logo -->
-                    <Image Source="avares://ArgoBooks/Assets/Argo Books icon.png"
+                    <Image Source="avares://ArgoBooks/Assets/argo-logo.png"
                            Width="80" Height="80"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,24" />
