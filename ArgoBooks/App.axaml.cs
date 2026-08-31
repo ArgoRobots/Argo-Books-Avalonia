@@ -2008,27 +2008,23 @@ public partial class App : Application
         {
             Title = title,
             AllowMultiple = false,
-            FileTypeFilter =
-            [
-                new FilePickerFileType("Images")
-                {
-                    Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                }
-            ]
+            FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
         });
 
         if (files.Count == 0) return;
 
         var path = files[0].Path.LocalPath;
-        try
+        var prepared = await Task.Run(() => Helpers.ImageFileLoader.TryPrepare(path));
+        if (prepared == null)
         {
-            var bitmap = new Bitmap(path);
-            onPicked(path, bitmap);
+            ErrorLogger?.LogWarning($"Could not read avatar image: {path}", errorTag);
+            await ShowErrorMessageBoxAsync(
+                "Image Not Supported".Translate(),
+                "That image could not be read. Try a PNG or JPEG.".Translate());
+            return;
         }
-        catch (Exception ex)
-        {
-            ErrorLogger?.LogWarning($"Failed to load avatar image: {ex.Message}", errorTag);
-        }
+
+        onPicked(prepared.Path, prepared.Bitmap);
     }
 
     /// <summary>

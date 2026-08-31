@@ -1,6 +1,7 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Portal;
@@ -424,18 +425,22 @@ public partial class App
             {
                 Title = "Select Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
             {
-                _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
+                var picked = files[0].Path.LocalPath;
+                var prepared = await Task.Run(() => ImageFileLoader.TryPrepare(picked));
+                if (prepared == null)
+                {
+                    await ShowErrorMessageBoxAsync(
+                        "Logo Not Supported".Translate(),
+                        "That image could not be read. Try a PNG or JPEG.".Translate());
+                    return;
+                }
+
+                _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(prepared.Path);
             }
         };
 
@@ -671,27 +676,22 @@ public partial class App
             {
                 Title = "Select Company Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
             {
                 var path = files[0].Path.LocalPath;
-                try
+                var prepared = await Task.Run(() => ImageFileLoader.TryPrepare(path));
+                if (prepared == null)
                 {
-                    var bitmap = new Bitmap(path);
-                    createCompany.SetLogo(path, bitmap);
+                    await ShowErrorMessageBoxAsync(
+                        "Logo Not Supported".Translate(),
+                        "That image could not be read. Try a PNG or JPEG.".Translate());
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "CreateCompanyLogo");
-                }
+
+                createCompany.SetLogo(prepared.Path, prepared.Bitmap);
             }
         };
     }
@@ -1018,27 +1018,22 @@ public partial class App
             {
                 Title = "Select Company Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
             {
                 var path = files[0].Path.LocalPath;
-                try
+                var prepared = await Task.Run(() => ImageFileLoader.TryPrepare(path));
+                if (prepared == null)
                 {
-                    var bitmap = new Bitmap(path);
-                    editCompany.SetLogo(path, bitmap);
+                    await ShowErrorMessageBoxAsync(
+                        "Logo Not Supported".Translate(),
+                        "That image could not be read. Try a PNG or JPEG.".Translate());
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "EditCompanyLogo");
-                }
+
+                editCompany.SetLogo(prepared.Path, prepared.Bitmap);
             }
         };
     }
@@ -1319,13 +1314,7 @@ public partial class App
             {
                 Title = "Select Portal Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)

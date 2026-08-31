@@ -141,7 +141,7 @@ public partial class InvoiceModals : UserControl
             {
                 new FilePickerFileType("Images")
                 {
-                    Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.bmp" }
+                    Patterns = new[] { "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.bmp", "*.heic", "*.heif" }
                 }
             }
         });
@@ -153,7 +153,13 @@ public partial class InvoiceModals : UserControl
             await using var stream = await files[0].OpenReadAsync();
             using var raw = new MemoryStream();
             await stream.CopyToAsync(raw);
-            vm.SetLogoFromPaper(DownscaleToBase64(raw.ToArray()));
+
+            // HEIC cannot be decoded by Skia, so it is converted rather than dropped.
+            var decodable = ArgoBooks.Helpers.ImageFileLoader.TryMakeDecodable(raw.ToArray());
+            if (decodable == null)
+                return;
+
+            vm.SetLogoFromPaper(DownscaleToBase64(decodable));
         }
         catch
         {
