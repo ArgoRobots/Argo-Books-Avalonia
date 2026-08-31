@@ -3107,6 +3107,7 @@ public partial class App : Application
             data.Invoices,
             data.Payments,
             data.RecurringInvoices,
+            data.RecurringTransactions,
             data.Inventory,
             data.StockAdjustments,
             data.StockTransfers,
@@ -3190,6 +3191,7 @@ public partial class App : Application
         RestoreList(data.Invoices, "Invoices");
         RestoreList(data.Payments, "Payments");
         RestoreList(data.RecurringInvoices, "RecurringInvoices");
+        RestoreList(data.RecurringTransactions, "RecurringTransactions");
         RestoreList(data.Inventory, "Inventory");
         RestoreList(data.StockAdjustments, "StockAdjustments");
         RestoreList(data.StockTransfers, "StockTransfers");
