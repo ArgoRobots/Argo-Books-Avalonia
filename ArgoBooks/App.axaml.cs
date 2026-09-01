@@ -34,6 +34,15 @@ public partial class App : Application
     public static IUpdateService? UpdateService { get; set; }
 
     /// <summary>
+    /// Builds the platform's update service. Set by the platform entry point, which cannot
+    /// hand over an instance without paying for it before Avalonia has started: constructing
+    /// NetSparkle loads its assemblies and signature crypto, and that landed squarely in the
+    /// window where the screen is still empty. Nothing reads UpdateService until the shell
+    /// view model is built, long after the splash is up.
+    /// </summary>
+    public static Func<IUpdateService?>? UpdateServiceFactory { get; set; }
+
+    /// <summary>
     /// Gets the navigation service instance.
     /// </summary>
     public static NavigationService? NavigationService { get; private set; }
@@ -1174,6 +1183,22 @@ public partial class App : Application
             {
                 errorLogger.LogWarning($"Failed to show splash window: {ex.Message}", "Startup");
                 splash = null;
+            }
+
+            // Now that there is something on screen, pay for the update service.
+            if (UpdateService == null && UpdateServiceFactory != null)
+            {
+                try
+                {
+                    UpdateService = UpdateServiceFactory();
+                }
+                catch (Exception ex)
+                {
+                    errorLogger.LogWarning(
+                        $"Could not create the update service: {ex.Message}",
+                        "Startup", Core.Models.Telemetry.ErrorCategory.Network,
+                        "UpdateServiceCreateFailed");
+                }
             }
 
             // Initialize core services
