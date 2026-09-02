@@ -772,26 +772,27 @@
                                                 VerticalAlignment="Stretch" />
                                     </Grid>
 
-                                    <!-- Set state: read-only display + Change button (locked, change-via-flow) -->
+                                    <!-- Set state: plain label + Change button. Not boxed like the
+                                         editable inputs, because it cannot be typed into: changing it
+                                         goes through the verified Change flow. Looking like a text box
+                                         invited people to try. -->
                                     <Grid ColumnDefinitions="*,Auto"
+                                          MinHeight="{StaticResource FormControlHeight}"
                                           IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                        <Border Grid.Column="0"
-                                                Background="{DynamicResource AltSurfaceBrush}"
-                                                BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1" CornerRadius="4"
-                                                Padding="12,0"
-                                                HorizontalAlignment="Stretch"
-                                                MinHeight="{StaticResource FormControlHeight}">
-                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13"
-                                                       VerticalAlignment="Center" />
-                                        </Border>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding CompanyEmail}"
+                                                   FontSize="14"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" />
                                         <Button Grid.Column="1"
                                                 Content="{loc:Loc 'Change'}"
                                                 Classes="secondary-button"
                                                 Command="{Binding OpenEmailChangeModalCommand}"
                                                 Margin="8,0,0,0"
                                                 Padding="12,6"
-                                                VerticalAlignment="Stretch" />
+                                                VerticalAlignment="Center" />
                                     </Grid>
                                 </StackPanel>
 
