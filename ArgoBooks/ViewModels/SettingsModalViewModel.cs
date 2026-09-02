@@ -1383,7 +1383,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         _isLoadingPortalSettings = true;
-        PortalCompanyName = string.Empty;
+        PortalCompanyName = settings.CompanyName ?? string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
         // Cached values only. RefreshProviderStatusAsync below overwrites these
         // from the server, which is authoritative because the reminder cron and
@@ -1551,6 +1551,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
+        // Kept locally because the name has to be entered before a provider can be
+        // connected, so until then there is no portal record holding it.
+        settings.CompanyName = PortalCompanyName;
         settings.NotifyOnPayment = PortalNotifyOnPayment;
         settings.EmailOwnerOnPayment = PortalEmailOwnerOnPayment;
         settings.SendPaymentReminders = PortalSendPaymentReminders;

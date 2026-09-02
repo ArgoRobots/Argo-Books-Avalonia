@@ -112,6 +112,17 @@ public class PortalSettings
     public DateTime? RemindersEnabledAt { get; set; }
 
     /// <summary>
+    /// The business name shown to customers on the portal.
+    /// </summary>
+    /// <remarks>
+    /// A cache of server state, like the notification flags: the server wins on load. Kept
+    /// locally because the name has to be entered before a payment provider can be connected,
+    /// and until that happens there is no server record to hold it.
+    /// </remarks>
+    [JsonPropertyName("companyName")]
+    public string? CompanyName { get; set; }
+
+    /// <summary>
     /// The customer-facing portal URL for this company (returned by the server during setup).
     /// </summary>
     [JsonPropertyName("portalUrl")]
