@@ -134,7 +134,7 @@
                                         </Grid>
                                     </Border>
 
-                                    <TextBlock Text="{Binding LineItemsValidationMessage}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding LineItemsValidationMessage}"
                                                Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding LineItemsValidationMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
@@ -169,7 +169,7 @@
                                                 IsEnabled="{Binding CanResend}"
                                                 Command="{Binding ResendCodeCommand}" />
                                     </Grid>
-                                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
 
@@ -363,7 +363,7 @@
                                                 IsEnabled="{Binding CanResend}"
                                                 Command="{Binding ResendCommand}" />
                                     </Grid>
-                                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
                                                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
 
@@ -489,7 +489,7 @@
                                 <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"
                                            Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12"
                                            IsVisible="{Binding ShowSharedStatusMessage}" />
-                                <TextBlock Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ErrorMessage}" Foreground="#dc2626" FontSize="12"
                                            IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
                         </ScrollViewer>

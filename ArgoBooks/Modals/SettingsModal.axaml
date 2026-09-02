@@ -1832,7 +1832,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                        <TextBlock TextWrapping="Wrap" Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -1962,7 +1962,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                        <TextBlock TextWrapping="Wrap" Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -2015,7 +2015,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                        <TextBlock TextWrapping="Wrap" Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">

@@ -485,7 +485,7 @@
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
-                                                <TextBlock Text="{Binding TotalErrorMessage}"
+                                                <TextBlock TextWrapping="Wrap" Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource ErrorBrush}"
                                                            IsVisible="{Binding HasTotalError}" />
@@ -755,7 +755,7 @@
                                         </Border>
 
                                         <!-- Line Items Error -->
-                                        <TextBlock Text="{Binding LineItemsErrorMessage}"
+                                        <TextBlock TextWrapping="Wrap" Text="{Binding LineItemsErrorMessage}"
                                                    FontSize="13"
                                                    Foreground="{DynamicResource ErrorBrush}"
                                                    IsVisible="{Binding HasLineItemsError}"
@@ -1747,7 +1747,7 @@
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
-                                                <TextBlock Text="{Binding TotalErrorMessage}"
+                                                <TextBlock TextWrapping="Wrap" Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource ErrorBrush}"
                                                            IsVisible="{Binding HasTotalError}" />
