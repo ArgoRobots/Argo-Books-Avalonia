@@ -3574,6 +3574,10 @@ public partial class App : Application
                 var newName = CompanyManager.CurrentCompanyName ?? "Company";
                 RefreshCompanyUi(newName);
 
+                // Not in RefreshCompanyUi: its other callers are renames, where this would
+                // bring a dismissed banner back.
+                SyncSampleCompanyState();
+
                 _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
 
                 await LoadRecentCompaniesAsync();
