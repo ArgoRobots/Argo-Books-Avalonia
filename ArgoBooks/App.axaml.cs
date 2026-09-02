@@ -3291,6 +3291,14 @@ public partial class App : Application
         }
 
         _mainWindowViewModel.IsSampleCompany = isSample;
+
+        // The settings modal keeps its own copy, set only on company open and close. Save As
+        // fires neither, so without this its sample-company notice and the controls it
+        // disables stayed that way over the user's own company.
+        if (_appShellViewModel?.SettingsModalViewModel != null)
+        {
+            _appShellViewModel.SettingsModalViewModel.IsSampleCompany = isSample;
+        }
     }
 
     internal static async Task RequestCreateNewCompanyAsync()
