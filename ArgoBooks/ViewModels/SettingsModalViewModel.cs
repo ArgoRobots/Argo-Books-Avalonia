@@ -3909,6 +3909,19 @@ public partial class SettingsModalViewModel : ViewModelBase
         var companyManager = App.CompanyManager;
         if (companyData == null || companyManager == null) return;
 
+        // Same reason as SetInitialOwnerEmailAsync: every step of the change flow is an
+        // authenticated portal call. A company can reach Change rather than Set purely
+        // because its own settings carry an email, which says nothing about whether a
+        // portal account exists. The sample company is exactly that case, and without
+        // this the flow opens and then fails with "Invalid or missing API key".
+        if (!PortalSettings.IsConfigured)
+        {
+            var portalService = App.PaymentPortalService;
+            if (portalService == null) return;
+            var registered = await TryRegisterPortalAsync(portalService);
+            if (!registered) return;
+        }
+
         // Pre-flight sync: if the settings modal was already open when the owner
         // email changed on the server (e.g. a revert link was used), starting the
         // change flow from the stale local value would confuse the user. Pull the
