@@ -1419,7 +1419,23 @@ public partial class SettingsModalViewModel : ViewModelBase
     private async Task RefreshProviderStatusAsync()
     {
         var portalService = App.PaymentPortalService;
-        if (portalService == null || !PortalSettings.IsConfigured) return;
+        if (portalService == null) return;
+
+        // The key lives in the company file and is copied into the process cache on company
+        // open. If that copy is missing this returned early and never asked the server, which
+        // left the tab claiming nothing was connected and the owner email unverified until
+        // the company was closed and reopened. Re-prime from the file rather than trusting
+        // the open path to have done it.
+        if (!PortalSettings.IsConfigured)
+        {
+            PortalSettings.ActivateApiKey(App.CompanyManager?.CompanyData?.Settings.PaymentPortal);
+            if (!PortalSettings.IsConfigured) return;
+
+            App.ErrorLogger?.LogWarning(
+                "Portal API key was missing from the process cache and was re-primed from the company file.",
+                nameof(SettingsModalViewModel), Core.Models.Telemetry.ErrorCategory.Api,
+                "PortalKeyNotActivated");
+        }
 
         try
         {
