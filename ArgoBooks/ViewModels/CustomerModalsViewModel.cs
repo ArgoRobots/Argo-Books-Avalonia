@@ -36,8 +36,15 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isHistoryFilterModalOpen;
 
-    [ObservableProperty]
-    private bool _hasValidationMessage;
+    /// <summary>
+    /// Whether the footer's "enter all required fields" line shows. Derived rather than
+    /// stored: every check in ValidateModal sets one of the field errors, so a stored copy
+    /// only added a second thing to remember to clear, and clearing a field error left the
+    /// footer behind until the next Save.
+    /// </summary>
+    public bool HasValidationMessage =>
+        ModalIdError != null || ModalFirstNameError != null || ModalLastNameError != null
+        || ModalEmailError != null || ModalPhoneError != null;
 
     [ObservableProperty]
     private string _validationMessage = string.Empty;
@@ -86,18 +93,23 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private string _modalStatus = "Active";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalIdError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalFirstNameError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalLastNameError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalEmailError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalPhoneError;
 
     partial void OnModalIdChanged(string value)
@@ -765,7 +777,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             {
                 App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Customer.ChangeId");
                 ModalIdError = ex.Message;
-                HasValidationMessage = true;
                 return;
             }
         }
@@ -1290,7 +1301,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalLastNameError = null;
         ModalEmailError = null;
         ModalPhoneError = null;
-        HasValidationMessage = false;
     }
 
     private bool ValidateModal()
@@ -1387,7 +1397,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             }
         }
 
-        HasValidationMessage = !isValid;
         return isValid;
     }
 
