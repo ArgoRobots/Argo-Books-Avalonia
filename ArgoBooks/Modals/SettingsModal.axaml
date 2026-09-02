@@ -301,44 +301,6 @@
                                     </Grid>
                                 </Border>
 
-                                <!-- Payment Emails (sent by the server, so they arrive with the app closed) -->
-                                    <Border Classes="settings-row"
-                                            IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Sends an email to your business email address each time an online payment comes in, even when Argo Books is closed'}"
-                                                       FontSize="12"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <!-- Amber-on-amber pill rather than amber text: the plain
-                                                 WarningBrush (#F59E0B) has poor contrast against the
-                                                 light-theme SurfaceAlt (#E9ECEF). WarningNotice* is the
-                                                 theme-aware pair; the plain Warning* brushes are
-                                                 theme-invariant and glare in dark mode. Matches the
-                                                 sample-company notice at the top of this tab. -->
-                                            <Border Background="{DynamicResource WarningNoticeBgBrush}"
-                                                    CornerRadius="6"
-                                                    Padding="8,6"
-                                                    Margin="0,4,0,0"
-                                                    HorizontalAlignment="Left"
-                                                    IsVisible="{Binding !PortalOwnerEmailVerified}">
-                                                <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
-                                                           FontSize="12"
-                                                           TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource WarningNoticeTextBrush}" />
-                                            </Border>
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding PortalEmailOwnerOnPayment}"
-                                                      IsEnabled="{Binding PortalOwnerEmailVerified}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
                                 <!-- Unsaved Changes Reminder -->
                                     <Border Classes="settings-row last"
                                             IsEnabled="{Binding !IsSampleCompany}">
@@ -1024,6 +986,43 @@
                                         </Grid>
                                     </Border>
                                 </StackPanel>
+
+                                <!-- Sent by the server, so it arrives with the app closed. Here rather
+                                     than under Notifications because it depends on the owner email
+                                     verified at the top of this tab. -->
+                                <Border Classes="settings-row"
+                                        IsEnabled="{Binding !IsSampleCompany}">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
+                                                       FontSize="14"
+                                                       FontWeight="Medium"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{loc:Loc 'Sends an email to your business email address each time an online payment comes in, even when Argo Books is closed'}"
+                                                       FontSize="12"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            <!-- Amber-on-amber pill rather than amber text: the plain
+                                                 WarningBrush (#F59E0B) has poor contrast against the
+                                                 light-theme SurfaceAlt (#E9ECEF). -->
+                                            <Border Background="{DynamicResource WarningNoticeBgBrush}"
+                                                    CornerRadius="6"
+                                                    Padding="8,6"
+                                                    Margin="0,4,0,0"
+                                                    HorizontalAlignment="Left"
+                                                    IsVisible="{Binding !PortalOwnerEmailVerified}">
+                                                <TextBlock Text="{loc:Loc 'Verify your business email above to turn this on.'}"
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           Foreground="{DynamicResource WarningNoticeTextBrush}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1"
+                                                      IsChecked="{Binding PortalEmailOwnerOnPayment}"
+                                                      IsEnabled="{Binding PortalOwnerEmailVerified}"
+                                                      VerticalAlignment="Center" />
+                                    </Grid>
+                                </Border>
 
                                 <!-- Automatic overdue reminders, sent by the server. -->
                                 <Border Classes="settings-row last">
