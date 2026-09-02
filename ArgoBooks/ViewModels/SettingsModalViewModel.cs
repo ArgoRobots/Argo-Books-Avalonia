@@ -3909,6 +3909,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         var companyManager = App.CompanyManager;
         if (companyData == null || companyManager == null) return;
 
+        var portalService = App.PaymentPortalService;
+
         // Same reason as SetInitialOwnerEmailAsync: every step of the change flow is an
         // authenticated portal call. A company can reach Change rather than Set purely
         // because its own settings carry an email, which says nothing about whether a
@@ -3916,10 +3918,8 @@ public partial class SettingsModalViewModel : ViewModelBase
         // this the flow opens and then fails with "Invalid or missing API key".
         if (!PortalSettings.IsConfigured)
         {
-            var portalService = App.PaymentPortalService;
             if (portalService == null) return;
-            var registered = await TryRegisterPortalAsync(portalService);
-            if (!registered) return;
+            if (!await TryRegisterPortalAsync(portalService)) return;
         }
 
         // Pre-flight sync: if the settings modal was already open when the owner
@@ -3927,7 +3927,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         // change flow from the stale local value would confuse the user. Pull the
         // authoritative email first. Best-effort: CheckStatusAsync swallows its own
         // network errors and returns Success=false, in which case we keep local.
-        var portalService = App.PaymentPortalService;
         if (portalService != null && PortalSettings.IsConfigured)
         {
             // Cap the pre-flight so a bad network can't make the button feel
@@ -3959,7 +3958,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                 companyData.Settings.Company.Email = newEmail;
                 CompanyEmail = newEmail;
                 companyData.ChangesMade = true;
-            });
+            },
+            currentEmailVerified: PortalOwnerEmailVerified);
     }
 
     #endregion
