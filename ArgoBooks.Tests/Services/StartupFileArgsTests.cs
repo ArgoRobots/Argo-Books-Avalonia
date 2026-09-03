@@ -67,6 +67,31 @@ public class StartupFileArgsTests
         Assert.Null(StartupFileArgs.GetCompanyFilePath(["   "], AllExist));
     }
 
+    /// <summary>
+    /// The AppImage registers application/x-argo and the desktop entry passes %f, so on Linux the
+    /// file manager hands over an absolute POSIX path. Treating a leading '/' as a switch, which is
+    /// only true on Windows, discarded every one of them and left double-click doing nothing.
+    /// </summary>
+    [Fact]
+    public void GetCompanyFilePath_AcceptsAPosixAbsolutePath()
+    {
+        const string path = "/home/evan/Books/Acme.argo";
+
+        var result = StartupFileArgs.GetCompanyFilePath([path], AllExist);
+
+        Assert.Equal(Path.GetFullPath(path), result);
+    }
+
+    /// <summary>
+    /// The companion to the case above: dropping the '/' check must not let a Windows-style switch
+    /// through. The extension test is what turns it away.
+    /// </summary>
+    [Fact]
+    public void GetCompanyFilePath_StillIgnoresASlashSwitch()
+    {
+        Assert.Null(StartupFileArgs.GetCompanyFilePath(["/silent", "/S"], AllExist));
+    }
+
     [Fact]
     public void GetCompanyFilePath_FindsRealFileOnDisk()
     {
