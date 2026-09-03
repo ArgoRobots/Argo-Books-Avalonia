@@ -27,8 +27,8 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="840"
-                MinHeight="700"
-                MaxHeight="700"
+                MinHeight="750"
+                MaxHeight="750"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000">
