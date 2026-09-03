@@ -188,6 +188,11 @@ public static class ReceiptTypeConverter
     {
         var clones = new List<LineItem>(source.Count);
 
+        // The category the new products are filed under, which is usually one the company already
+        // has. Kept apart from createdCategory: that one is what a revert deletes, so putting a
+        // category we merely looked up into it would delete a category the user has had all along.
+        Category? category = null;
+
         foreach (var item in source)
         {
             var clone = new LineItem
@@ -209,13 +214,18 @@ public static class ReceiptTypeConverter
 
                 if (product == null)
                 {
-                    createdCategory ??= ResolveCategory(data, targetType);
+                    if (category == null)
+                    {
+                        category = ResolveCategory(data, targetType, out var newCategory);
+                        if (newCategory) createdCategory = category;
+                    }
+
                     data.IdCounters.Product++;
                     product = new Product
                     {
                         Id = $"PRD-{data.IdCounters.Product:D3}",
                         Name = name,
-                        CategoryId = createdCategory.Id,
+                        CategoryId = category.Id,
                         Type = targetType,
                         UnitPrice = targetType == CategoryType.Revenue ? item.UnitPrice : 0,
                         CostPrice = targetType == CategoryType.Expense ? item.UnitPrice : 0
@@ -244,11 +254,20 @@ public static class ReceiptTypeConverter
         return string.IsNullOrWhiteSpace(item.Description) ? null : item.Description.Trim();
     }
 
-    private static Category ResolveCategory(CompanyData data, CategoryType type)
+    /// <summary>
+    /// The category new products of the target side are filed under, reusing one the company
+    /// already has where possible. <paramref name="created"/> reports which of the two happened,
+    /// the way <see cref="ResolveSupplier"/> and <see cref="ResolveCustomer"/> do, because a
+    /// revert may only delete what this actually created.
+    /// </summary>
+    private static Category ResolveCategory(CompanyData data, CategoryType type, out bool created)
     {
+        created = false;
+
         var existing = data.Categories.FirstOrDefault(c => c.Type == type);
         if (existing != null) return existing;
 
+        created = true;
         data.IdCounters.Category++;
         var category = new Category
         {

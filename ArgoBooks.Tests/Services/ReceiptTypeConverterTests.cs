@@ -232,6 +232,44 @@ public class ReceiptTypeConverterTests
         Assert.Null(result.CreatedSupplier);
     }
 
+    /// <summary>
+    /// The switch files new products under a category of the target side, and reuses one the
+    /// company already has rather than minting a second. Reverting must not take that one with it:
+    /// every product and transaction already pointing at it would be orphaned.
+    /// </summary>
+    [Fact]
+    public void Revert_KeepsACategoryItDidNotCreate()
+    {
+        var (data, receipt) = WithExpenseReceipt();
+        var existing = new Category { Id = "CAT-SAL-001", Name = "Consulting", Type = CategoryType.Revenue };
+        data.Categories.Add(existing);
+        data.Products.Add(new Product
+        {
+            Id = "PRD-900", Name = "Advice", Type = CategoryType.Revenue, CategoryId = existing.Id
+        });
+
+        var result = ReceiptTypeConverter.Switch(data, receipt);
+        ReceiptTypeConverter.Revert(data, receipt, result);
+
+        Assert.Null(result.CreatedCategory);
+        Assert.Contains(data.Categories, c => c.Id == existing.Id);
+    }
+
+    /// <summary>The reused category is still what the new products are filed under.</summary>
+    [Fact]
+    public void Switch_FilesNewProductsUnderTheExistingCategory()
+    {
+        var (data, receipt) = WithExpenseReceipt();
+        data.Categories.Add(new Category
+        {
+            Id = "CAT-SAL-001", Name = "Consulting", Type = CategoryType.Revenue
+        });
+
+        var result = ReceiptTypeConverter.Switch(data, receipt);
+
+        Assert.Equal("CAT-SAL-001", Assert.Single(result.CreatedProducts).CategoryId);
+    }
+
     [Fact]
     public void Reapply_PutsTheSwitchBackAfterARevert()
     {
