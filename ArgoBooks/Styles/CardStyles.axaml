@@ -93,4 +93,15 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
+    <!-- No "On"/"Off" caption. The switch draws the caption inside itself and sits in an
+         Auto column flush to the row's right edge, so the caption being wider for "Off"
+         than "On" comes out of the left and slides the knob every time it is toggled.
+         Without one the control is a single width in both states. The row names the
+         setting and the switch carries its own state, as switches do elsewhere. No
+         explicit Width: it only drags the switch off the margin it should sit against. -->
+    <Style Selector="Border.settings-row ToggleSwitch, ToggleSwitch.settings-switch">
+        <Setter Property="OnContent" Value="{x:Null}" />
+        <Setter Property="OffContent" Value="{x:Null}" />
+    </Style>
+
 </Styles>
