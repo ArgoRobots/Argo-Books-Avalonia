@@ -320,9 +320,18 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     /// </summary>
     private bool _needsRefresh;
 
+    /// <summary>
+    /// The sidebar opens this page on a tab, under its own page name, so matching only the bare
+    /// name left every navigation here unrecognised and the page never reloaded. Anything created
+    /// somewhere else, a receipt scan or a receipt type switch, stayed invisible until the company
+    /// was reopened.
+    /// </summary>
+    private static bool IsThisPage(string? pageName) =>
+        pageName is PageNames.Categories or PageNames.ExpenseCategories or PageNames.RevenueCategories;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != PageNames.Categories)
+        if (!IsThisPage(App.NavigationService?.CurrentPageName))
         {
             _needsRefresh = true;
             return;
@@ -332,7 +341,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == PageNames.Categories && _needsRefresh)
+        if (IsThisPage(e.PageName) && _needsRefresh)
         {
             _needsRefresh = false;
             LoadCategories();
