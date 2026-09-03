@@ -45,9 +45,11 @@ public class StartupEvent : TelemetryEvent
     public long? ToViewModelsReadyMs { get; set; }
 
     /// <summary>
-    /// True when no other instance was already running. A second instance starting while the
-    /// first is live reads its files from the OS cache and is not comparable to a cold launch,
-    /// so mixing the two would flatter the average exactly when we are investigating relaunches.
+    /// True when this launch had to read from disk rather than from a warm OS file cache,
+    /// decided by how long ago the previous launch was. See
+    /// <see cref="Services.StartupTimeline.IsColdStart"/>. Relaunching soon after quitting is
+    /// not comparable to a first launch, and mixing the two flatters the average exactly when
+    /// relaunches are what is being investigated.
     /// </summary>
     public bool ColdStart { get; set; }
 }
