@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Reports;
@@ -272,6 +272,18 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
     /// </summary>
     public bool IsSampleCompany => _companyManager?.IsSampleCompany == true;
 
+    /// <summary>
+    /// Re-reads the two properties above. Both are computed live but only a notification makes
+    /// a binding look again, and Save As turns the sample company into the user's own without
+    /// closing anything or navigating, so the page on screen would otherwise keep warning about
+    /// a sample company that is no longer open.
+    /// </summary>
+    public void RefreshSampleCompanyState()
+    {
+        OnPropertyChanged(nameof(WelcomeSubtitle));
+        OnPropertyChanged(nameof(IsSampleCompany));
+    }
+
     #endregion
 
     #region Empty State Date Range Detection
@@ -447,8 +459,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
         TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.ExploreDashboard);
 
         // Notify properties that depend on company manager
-        OnPropertyChanged(nameof(WelcomeSubtitle));
-        OnPropertyChanged(nameof(IsSampleCompany));
+        RefreshSampleCompanyState();
 
         // Subscribe to data change events
         _companyManager.CompanyDataChanged += OnCompanyDataChanged;

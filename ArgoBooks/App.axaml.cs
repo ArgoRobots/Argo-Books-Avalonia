@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -3303,6 +3303,13 @@ public partial class App : Application
         {
             _appShellViewModel.SettingsModalViewModel.IsSampleCompany = isSample;
         }
+
+        // These two read the flag live but raise nothing on their own, and a page control is
+        // rebuilt only when navigated to. Save As neither navigates nor clears the page cache,
+        // so the dashboard's sample warning and the greyed out resend buttons stayed as they
+        // were on whichever page was already open.
+        _dashboardPageViewModel?.RefreshSampleCompanyState();
+        _invoicesPageViewModel?.RefreshSampleCompanyState();
     }
 
     internal static async Task RequestCreateNewCompanyAsync()

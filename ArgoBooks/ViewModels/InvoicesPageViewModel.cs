@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Data;
@@ -196,6 +196,18 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
     /// <summary>Bound to the resend button's IsEnabled.</summary>
     public bool CanResendInvoice => !IsSampleCompany;
+
+    /// <summary>
+    /// Re-reads the two properties above. Reading live is not enough on its own: a binding
+    /// only looks again when told to, and Save As turns the sample company into the user's own
+    /// without closing anything or navigating, so resend stayed greyed out on the page already
+    /// on screen.
+    /// </summary>
+    public void RefreshSampleCompanyState()
+    {
+        OnPropertyChanged(nameof(IsSampleCompany));
+        OnPropertyChanged(nameof(CanResendInvoice));
+    }
 
     [ObservableProperty]
     private int _sentInvoicesThisMonthCount;
