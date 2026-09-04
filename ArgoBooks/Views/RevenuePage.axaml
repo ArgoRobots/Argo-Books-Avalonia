@@ -17,9 +17,23 @@
     </Design.DataContext>
 
     <Panel>
-    <Grid RowDefinitions="*">
-        <!-- Main Content -->
-        <Grid Grid.Row="0" RowDefinitions="Auto,*" Margin="24">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Tab Bar -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <TabControl SelectedIndex="{Binding SelectedTabIndex}"
+                        Margin="0"
+                        Classes="page-tabs">
+                <TabItem Header="{loc:Loc 'All Revenue'}" />
+                <TabItem Header="{loc:Loc 'Recurring'}" />
+            </TabControl>
+        </Border>
+
+        <Panel Grid.Row="1">
+            <!-- Main Content -->
+            <Grid RowDefinitions="Auto,Auto,*" Margin="24" IsVisible="{Binding !IsRecurringTab}">
             <!-- Statistics Cards Row -->
             <controls:StatCardsRow Grid.Row="0" Margin="0,0,0,24">
                 <controls:StatCard Label="{loc:Loc 'Monthly Revenue'}"
@@ -41,7 +55,28 @@
             </controls:StatCardsRow>
 
             <!-- Main Content Card using ArgoTable -->
-            <table:ArgoTable Grid.Row="1"
+                        <Border Grid.Row="1"
+                    IsVisible="{Binding HasGeneratedBanner}"
+                    Background="{DynamicResource SurfaceAltBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16,12"
+                    Margin="0,0,0,16">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding GeneratedBannerText}"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Classes="primary-button"
+                            Margin="16,0,0,0"
+                            Content="{loc:Loc 'Mark reviewed'}"
+                            Command="{Binding MarkReviewedCommand}" />
+                </Grid>
+            </Border>
+
+            <table:ArgoTable Grid.Row="2"
                                 Title="{loc:Loc Revenue}"
                                 ItemsSource="{Binding Revenue}"
                                 SearchQuery="{Binding SearchQuery, Mode=TwoWay}"
@@ -340,10 +375,23 @@
                                         Classes.highlighted-row="{Binding IsHighlighted}">
                                     <StackPanel Orientation="Horizontal">
                                         <!-- ID -->
-                                        <table:ArgoTableCell Text="{Binding Id}"
-                                                                 ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
-                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowIdColumn}"
-                                                                 FontWeight="Medium" />
+                                        <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.IdColumnWidth}"
+                                                                 IsColumnVisible="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ShowIdColumn}">
+                                            <table:ArgoTableCell.CellContent>
+                                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <PathIcon Data="{x:Static icons:Icons.Refresh}"
+                                                              Width="12" Height="12"
+                                                              IsVisible="{Binding IsRecurring}"
+                                                              ToolTip.Tip="{loc:Loc 'Created by a recurring schedule'}"
+                                                              Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    <TextBlock Text="{Binding Id}"
+                                                               FontWeight="Medium"
+                                                               VerticalAlignment="Center"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                </StackPanel>
+                                            </table:ArgoTableCell.CellContent>
+                                        </table:ArgoTableCell>
 
                                         <!-- Customer with Avatar - Custom content required -->
                                         <table:ArgoTableCell ColumnWidth="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).ColumnWidths.CustomerColumnWidth}"
@@ -515,6 +563,16 @@
                                                             HorizontalAlignment="Left"
                                                             VerticalAlignment="Center"
                                                             Spacing="4">
+                                                    <!-- Generated by a schedule and not yet accepted -->
+                                                    <Button Classes="icon-button"
+                                                            ToolTip.Tip="{loc:Loc 'Generated from a schedule. Click to accept.'}"
+                                                            IsVisible="{Binding NeedsReview}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:RevenuePageViewModel)DataContext).AcceptGeneratedCommand}"
+                                                            CommandParameter="{Binding}">
+                                                        <PathIcon Data="{x:Static icons:Icons.Check}"
+                                                                  Width="16" Height="16"
+                                                                  Foreground="{DynamicResource WarningBrush}" />
+                                                    </Button>
                                                     <!-- View Receipt Button -->
                                                     <Button Classes="icon-button"
                                                             ToolTip.Tip="{loc:Loc 'View Receipt'}"
@@ -605,6 +663,11 @@
                 </table:ArgoTable.RowsContent>
             </table:ArgoTable>
         </Grid>
+
+            <controls:RecurringSchedulesView DataContext="{Binding RecurringSchedules}"
+                                             Margin="24"
+                                             IsVisible="{Binding $parent[UserControl].((vm:RevenuePageViewModel)DataContext).IsRecurringTab}" />
+        </Panel>
     </Grid>
 
     <!-- Column Visibility Menu -->

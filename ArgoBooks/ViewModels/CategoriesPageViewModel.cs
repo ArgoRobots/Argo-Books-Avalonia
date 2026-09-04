@@ -26,14 +26,8 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     [ObservableProperty]
     private int _selectedTabIndex;
 
-    /// <summary>
-    /// Gets whether the Expenses tab is selected.
-    /// </summary>
     public bool IsExpensesTabSelected => SelectedTabIndex == 0;
 
-    /// <summary>
-    /// Gets whether the Revenue tab is selected.
-    /// </summary>
     public bool IsRevenueTabSelected => SelectedTabIndex == 1;
 
     partial void OnSelectedTabIndexChanged(int value)
@@ -133,9 +127,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -158,18 +149,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     partial void OnShowNameColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Name", value); ColumnVisibilityHelper.Save("Categories", "Name", value); }
     partial void OnShowDescriptionColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Description", value); ColumnVisibilityHelper.Save("Categories", "Description", value); }
     partial void OnShowProductCountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("ProductCount", value); ColumnVisibilityHelper.Save("Categories", "ProductCount", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -341,9 +320,18 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
     /// </summary>
     private bool _needsRefresh;
 
+    /// <summary>
+    /// The sidebar opens this page on a tab, under its own page name, so matching only the bare
+    /// name left every navigation here unrecognised and the page never reloaded. Anything created
+    /// somewhere else, a receipt scan or a receipt type switch, stayed invisible until the company
+    /// was reopened.
+    /// </summary>
+    private static bool IsThisPage(string? pageName) =>
+        pageName is PageNames.Categories or PageNames.ExpenseCategories or PageNames.RevenueCategories;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != PageNames.Categories)
+        if (!IsThisPage(App.NavigationService?.CurrentPageName))
         {
             _needsRefresh = true;
             return;
@@ -353,7 +341,7 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == PageNames.Categories && _needsRefresh)
+        if (IsThisPage(e.PageName) && _needsRefresh)
         {
             _needsRefresh = false;
             LoadCategories();
@@ -566,7 +554,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         var typePrefix = IsExpensesTabSelected ? "PUR" : "SAL";
         var newId = $"CAT-{typePrefix}-{companyData.IdCounters.Category:D3}";
 
-        // Use the sub-category parent if adding a sub-category
         var parentId = IsAddingSubCategory ? _addingSubCategoryParent?.Id : null;
 
         var newCategory = new Category
@@ -583,7 +570,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         companyData.Categories.Add(newCategory);
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Add category '{newCategory.Name}'",
             () =>
@@ -659,7 +645,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit category '{newName}'",
             () =>
@@ -751,7 +736,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
             companyData.Categories.Remove(category);
             companyData.MarkAsModified();
 
-            // Record undo action
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete category '{deletedCategory.Name}'",
                 () =>
@@ -761,7 +745,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
 
                     if (shouldDeleteSubcategories)
                     {
-                        // Restore deleted children
                         foreach (var child in deletedChildren)
                         {
                             companyData.Categories.Add(child);
@@ -865,7 +848,6 @@ public partial class CategoriesPageViewModel : SortablePageViewModelBase
         category.ParentId = newParentId;
         companyData?.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Move category '{category.Name}'",
             () =>

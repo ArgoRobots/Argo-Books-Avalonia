@@ -63,7 +63,6 @@
         <Color x:Key="HighlightAnimationColor">#3060A5FA</Color>
     </Styles.Resources>
 
-
     <!-- ToolTip: force theme-aware colors so tooltip text/surface track the active theme.
          Foreground cascades to the tooltip's text, so the inner TextBlock needs no separate
          setter. (Sidebar tooltips also need SidebarItem's text styles scoped to .label so

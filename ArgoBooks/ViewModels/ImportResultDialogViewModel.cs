@@ -144,7 +144,6 @@ public partial class ImportResultDialogViewModel : ViewModelBase
             Warnings.Add(warning);
         HasWarnings = Warnings.Count > 0;
 
-        // Unimported rows
         if (unimportedRows != null)
         {
             foreach (var row in unimportedRows)

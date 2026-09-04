@@ -125,7 +125,6 @@ public class CompressionService
                     if (!string.IsNullOrEmpty(parentDir))
                         Directory.CreateDirectory(parentDir);
 
-                    // Extract file
                     await entry.ExtractToFileAsync(destinationPath, overwrite: true, cancellationToken);
                     break;
             }

@@ -182,7 +182,6 @@ public class LocalMLForecastingService : ILocalMLForecastingService
             windowSize = Math.Max(2, windowSize);
             seriesLength = Math.Max(windowSize + 1, seriesLength);
 
-            // Create SSA forecasting pipeline
             var pipeline = _mlContext.Forecasting.ForecastBySsa(
                 outputColumnName: nameof(TimeSeriesOutput.Forecast),
                 inputColumnName: nameof(TimeSeriesInput.Value),
@@ -220,7 +219,6 @@ public class LocalMLForecastingService : ILocalMLForecastingService
 
             result.ConfidenceScore = CalculateConfidenceScore(data, null, null);
 
-            // Detect seasonality for the result
             result.SeasonalPattern = DetectSeasonality(data);
         }
         catch (Exception)
@@ -485,9 +483,6 @@ public class EnhancedForecastResult
     /// </summary>
     public int PeriodsForecasted { get; set; }
 
-    /// <summary>
-    /// Gets the first forecasted value.
-    /// </summary>
     public decimal ForecastedValue => ForecastedValues.FirstOrDefault();
 
     /// <summary>

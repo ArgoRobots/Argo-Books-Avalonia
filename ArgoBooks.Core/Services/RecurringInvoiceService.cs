@@ -43,32 +43,9 @@ public static class RecurringInvoiceService
     /// <summary>Clears the pending banner count once the user has reviewed or dismissed it.</summary>
     public static void ClearPendingGenerated() => PendingGeneratedCount = 0;
 
-    /// <summary>
-    /// Advances a date by one cadence step. For monthly/quarterly cadences an optional
-    /// <paramref name="anchorDay"/> (the schedule's original billing day-of-month) keeps the date
-    /// pinned to that day: crossing a shorter month clamps to its last day, but the following month
-    /// returns to the anchor instead of drifting earlier for the rest of the schedule's life. When
-    /// omitted the current date's own day is used as the anchor (single-step, backward-compatible).
-    /// </summary>
-    public static DateTime AdvanceDate(DateTime date, Frequency frequency, int? anchorDay = null) => frequency switch
-    {
-        Frequency.Weekly => date.AddDays(7),
-        Frequency.BiWeekly => date.AddDays(14),
-        Frequency.Monthly => AddMonthsAnchored(date, 1, anchorDay ?? date.Day),
-        Frequency.Quarterly => AddMonthsAnchored(date, 3, anchorDay ?? date.Day),
-        Frequency.Annually => date.AddYears(1),
-        _ => AddMonthsAnchored(date, 1, anchorDay ?? date.Day)
-    };
-
-    // Adds whole months, then re-pins to the anchor day-of-month (clamped to the target month's
-    // length). Computing from the anchor rather than chaining off the previous clamped day is what
-    // stops end-of-month schedules drifting earlier once they pass February.
-    private static DateTime AddMonthsAnchored(DateTime date, int months, int anchorDay)
-    {
-        var shifted = date.AddMonths(months);
-        var day = Math.Min(anchorDay, DateTime.DaysInMonth(shifted.Year, shifted.Month));
-        return new DateTime(shifted.Year, shifted.Month, day);
-    }
+    /// <inheritdoc cref="RecurrenceSchedule.AdvanceDate"/>
+    public static DateTime AdvanceDate(DateTime date, Frequency frequency, int? anchorDay = null)
+        => RecurrenceSchedule.AdvanceDate(date, frequency, anchorDay);
 
     /// <summary>
     /// Formats payment terms ("Due on receipt" or "Net N") from an invoice's issue and due dates,

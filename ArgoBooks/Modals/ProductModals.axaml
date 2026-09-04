@@ -57,7 +57,7 @@
                                         <Run Text="{loc:Loc 'Product name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter product name'}" MaxLength="100" />
-                                    <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalProductNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -88,7 +88,7 @@
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
                                                             OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
-                                    <TextBlock Text="{Binding ModalCategoryError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalCategoryError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalCategoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -195,7 +195,7 @@
                                         <Run Text="{loc:Loc 'Product name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" />
                                     </TextBlock>
                                     <TextBox Text="{Binding ModalProductName, Mode=TwoWay}" Classes="form-input" PlaceholderText="{loc:Loc 'Enter product name'}" MaxLength="100" />
-                                    <TextBlock Text="{Binding ModalProductNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalProductNameError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalProductNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>
@@ -226,7 +226,7 @@
                                     <controls:CategoryInput Categories="{Binding CategoryItems}"
                                                             SelectedCategoryId="{Binding ModalCategoryId, Mode=TwoWay}"
                                                             OpenCategoriesPageCommand="{Binding OpenCategoriesWithAddModalCommand}" />
-                                    <TextBlock Text="{Binding ModalCategoryError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalCategoryError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalCategoryError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                             </Grid>

@@ -268,6 +268,15 @@ public class EmailChangeRequestResult : ApiResult
     [JsonPropertyName("changeId")] public long ChangeId { get; set; }
     [JsonPropertyName("state")] public string? State { get; set; }
     [JsonPropertyName("maskedOldEmail")] public string? MaskedOldEmail { get; set; }
+
+    /// <summary>
+    /// False when the current address was never verified, so no code was sent to it and one
+    /// has already gone to the new address. The old-code step is skipped entirely.
+    /// </summary>
+    [JsonPropertyName("oldEmailVerificationRequired")] public bool OldEmailVerificationRequired { get; set; } = true;
+
+    /// <summary>Present only when the old step was skipped, since the new code is already out.</summary>
+    [JsonPropertyName("maskedNewEmail")] public string? MaskedNewEmail { get; set; }
 }
 
 public class EmailChangeStateResult : ApiResult

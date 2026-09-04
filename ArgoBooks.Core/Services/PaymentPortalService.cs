@@ -24,7 +24,12 @@ public class PaymentPortalService : IDisposable
 
     private static readonly JsonSerializerOptions DeserializeOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters =
+        {
+            new PortalDateTimeConverter(),
+            new PortalNullableDateTimeConverter()
+        }
     };
 
     private readonly HttpClient _httpClient;
@@ -506,7 +511,6 @@ public class PaymentPortalService : IDisposable
                 ProcessingFee = portalPayment.ProcessingFee,
             };
 
-            // Add to company data
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
 

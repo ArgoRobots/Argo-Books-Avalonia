@@ -1248,7 +1248,6 @@ public class DataValidatorTests
     {
         var (data, validator) = CreateEmptyValidator();
 
-        // Add a customer
         data.Customers.Add(new Customer { Id = "CUS-001", Name = "Shared Customer" });
 
         // The validator should see the shared customer when validating a duplicate

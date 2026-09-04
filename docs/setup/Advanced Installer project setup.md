@@ -142,7 +142,30 @@ Set the two logos that the AppInstaller theme shows on the install dialog:
 3. Click the **...** button next to **App Logo Icon** and pick `C:\Users\<you>\Desktop\Argo logos\Third\Argo Books icon transparent.png`.
 4. Click the **...** button next to **App Logo Icon Dark** and pick `C:\Users\<you>\Desktop\Argo logos\Third\Argo Books icon white background.png`.
 
-## Step 7: Custom Action `WriteInstallToken`
+## Step 7: File associations
+
+This is what makes double-clicking a `.argo` file open that company.
+
+1. Go to **Resources → File Associations** in the left sidebar.
+2. Click **New File Association Wizard** in the toolbar. It creates the ProgID, extension and verb together, so there is no separate ProgID field to fill in.
+3. Extension: `argo`.
+4. Description: `Argo Books Company File`. This is the text Explorer shows in its **Type** column.
+5. When the wizard asks you to select the application in your package that should be associated with this type, choose `Argo Books.exe`.
+6. Verb: `open`, with **Arguments** set to `"%1"`, including the quotes. Without them, company files stored under a path containing a space fail to open.
+7. Select the new ProgID in the tree and rename it to `ArgoBooks.Company`. The default is `[|Manufacturer].[|ProductName].argo`, which resolves to `Argo Books.Argo Books.argo`. ProgIDs are conventionally alphanumeric with periods and no spaces.
+8. In **ProgId Properties**, tick **Be the default application associated with these file types**, and check that **Display → Icon** already shows the Argo Books icon. The wizard sets that icon from the executable picked in step 5.
+
+`.argobk` is deliberately not registered. Backup files have no open path, so an open verb would produce a file that looks handleable and then lands the user on the welcome screen.
+
+To confirm the association after installing:
+
+```powershell
+Get-ItemProperty "Registry::HKEY_CLASSES_ROOT\$((Get-ItemProperty 'Registry::HKEY_CLASSES_ROOT\.argo').'(default)')\shell\open\command"
+```
+
+It should name the executable under `C:\Program Files (x86)\Argo Books\`.
+
+## Step 8: Custom Action `WriteInstallToken`
 
 On the website admin page there's a **funnel** that tracks each user through their journey: first website visit → download → install → using the app → paying for Premium. This custom action is what plugs in the **install** part.
 
@@ -184,7 +207,7 @@ If the user renames the installer before running it (for whatever reason), the c
 - Uninstall: **unchecked**
 - Maintenance: **unchecked**
 
-## Step 8: Build settings
+## Step 9: Build settings
 
 In the left sidebar under **Package Definition**:
 
@@ -196,7 +219,7 @@ In the left sidebar under **Package Definition**:
 | Package type | Single EXE setup (resources inside) |
 | EXE icon | `Argo Books icon.ico` |
 
-## Step 9: Digital Signature
+## Step 10: Digital Signature
 
 In **Digital Signature**:
 
@@ -210,7 +233,7 @@ In **Digital Signature**:
 
 This signs against the Azure-hosted Microsoft Trusted Signing certificate so SmartScreen reputation accrues against the publisher identity over time.
 
-## Step 10: Verify a build
+## Step 11: Verify a build
 
 1. Save the project and click **Build**.
 2. Output lands at `C:\Users\<you>\Documents\Advanced Installer\Projects\Argo Books\Setup Files\Argo Books Installer V.{version}.exe`.

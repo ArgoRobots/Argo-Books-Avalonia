@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
@@ -36,7 +36,96 @@ public class TelemetryManager : ITelemetryManager
     private readonly string _platform;
     private readonly string _userAgent;
 
+    /// <inheritdoc />
+    public void NoteCurrentPage(string? pageName)
+    {
+        var now = DateTime.UtcNow;
+        string? left;
+        long activeOnPage;
+        long wallOnPage;
+
+        // Shares the activity lock: both are written from the UI thread and read at
+        // session end, so a second lock would only add an ordering to get wrong.
+        lock (_activityLock)
+        {
+            left = _currentPage;
+            // Active time is already idle-aware, so the difference across the visit is too.
+            // Deriving it rather than running a second timer means one idle rule, not two
+            // that can disagree. Subtracted as ticks and rounded once, so a visit is not
+            // charged the rounding of every input inside it.
+            activeOnPage = ToSeconds(_activeTicks - _pageEnteredActiveTicks);
+            wallOnPage = (long)(now - _pageEnteredUtc).TotalSeconds;
+
+            _currentPage = string.IsNullOrWhiteSpace(pageName) ? null : pageName;
+            _pageEnteredActiveTicks = _activeTicks;
+            _pageEnteredUtc = now;
+        }
+
+        if (left != null)
+        {
+            _ = TrackPageViewAsync(left, activeOnPage, wallOnPage);
+        }
+    }
+
+    /// <summary>
+    /// Closes the page still open, so the last screen of a session is recorded like the rest.
+    /// Without this the page someone quit from is the one page never measured, which is the
+    /// one most worth seeing.
+    /// </summary>
+    private void FlushCurrentPage()
+    {
+        NoteCurrentPage(null);
+    }
+
+    /// <inheritdoc />
+    public void MarkActivity()
+    {
+        var now = DateTime.UtcNow;
+
+        lock (_activityLock)
+        {
+            if (!_isInitialized)
+            {
+                return;
+            }
+
+            // Credit the gap since the previous input, but only if it is short enough to
+            // have been someone reading the screen rather than someone who walked away.
+            // A longer gap contributes nothing at all, which is the whole point: it is why
+            // an app left open overnight cannot inflate the figure.
+            //
+            // Accumulated in ticks rather than whole seconds. Clicks and keystrokes are
+            // usually a fraction of a second apart, and truncating each gap on its own
+            // threw all of that away: three keys a second measured as no activity at all,
+            // and one input every 1.5s as half the time it took. The faster someone
+            // worked, the less of their time was counted.
+            var gap = now - _lastActivityUtc;
+            if (gap > TimeSpan.Zero && gap <= IdleThreshold)
+            {
+                _activeTicks += gap.Ticks;
+            }
+
+            _lastActivityUtc = now;
+        }
+    }
+
+    /// <summary>Ticks to whole seconds, rounded once at the point of reporting.</summary>
+    private static long ToSeconds(long ticks) => ticks / TimeSpan.TicksPerSecond;
+
+    /// <summary>
+    /// How long a gap between inputs before the user is treated as away. Long enough that
+    /// reading a report on screen still counts, short enough that a window left open over
+    /// lunch does not.
+    /// </summary>
+    private static readonly TimeSpan IdleThreshold = TimeSpan.FromMinutes(5);
+
     private readonly SemaphoreSlim _initLock = new(1, 1);
+    private readonly object _activityLock = new();
+    private DateTime _lastActivityUtc;
+    private string? _currentPage;
+    private long _pageEnteredActiveTicks;
+    private DateTime _pageEnteredUtc;
+    private long _activeTicks;
     private DateTime _sessionStartTime;
     private GeoLocationData? _cachedGeoLocation;
     private bool _isInitialized;
@@ -93,6 +182,9 @@ public class TelemetryManager : ITelemetryManager
                 return;
 
             _sessionStartTime = DateTime.UtcNow;
+            _lastActivityUtc = _sessionStartTime;
+            _activeTicks = 0;
+            _currentPage = null;
             _isInitialized = true;
 
             try
@@ -144,13 +236,33 @@ public class TelemetryManager : ITelemetryManager
         // Stopped first so a heartbeat can't race the sentinel's removal below.
         StopHeartbeat();
 
+        // Before lastPage is read below: this clears _currentPage, so the read has to happen
+        // after, and the value it wants is captured here.
+        string? finalPage;
+        lock (_activityLock)
+        {
+            finalPage = _currentPage;
+        }
+        FlushCurrentPage();
+
         try
         {
             var duration = (long)(DateTime.UtcNow - _sessionStartTime).TotalSeconds;
 
+            long activeSeconds;
+            lock (_activityLock)
+            {
+                activeSeconds = ToSeconds(_activeTicks);
+            }
+
+            // finalPage, not _currentPage: flushing the last page view cleared the latter.
+            string? lastPage = finalPage;
+
             var sessionEvent = await CreateEventAsync<SessionEvent>(cancellationToken);
             sessionEvent.Action = SessionAction.SessionEnd;
             sessionEvent.DurationSeconds = duration;
+            sessionEvent.ActiveSeconds = activeSeconds;
+            sessionEvent.LastPage = lastPage;
             sessionEvent.Clean = true;
             await _storageService.RecordEventAsync(sessionEvent, cancellationToken);
 
@@ -278,6 +390,23 @@ public class TelemetryManager : ITelemetryManager
     }
 
     /// <inheritdoc />
+    public async Task TrackPageViewAsync(string pageName, long activeSeconds, long durationSeconds, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var pageEvent = await CreateEventAsync<PageViewEvent>(cancellationToken);
+            pageEvent.PageName = pageName;
+            pageEvent.ActiveSeconds = activeSeconds < 0 ? 0 : activeSeconds;
+            pageEvent.DurationSeconds = durationSeconds < 0 ? 0 : durationSeconds;
+            await _storageService.RecordEventAsync(pageEvent, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger.LogDebug($"Failed to track page view: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
     public async Task TrackCompanyProfileAsync(
         string? companyName,
         string? businessType,
@@ -325,6 +454,8 @@ public class TelemetryManager : ITelemetryManager
     /// <inheritdoc />
     public async Task TrackStartupAsync(
         long? toFirstPaintMs,
+        long? toServicesReadyMs,
+        long? toViewModelsReadyMs,
         long? toReadyMs,
         bool coldStart,
         CancellationToken cancellationToken = default)
@@ -334,6 +465,8 @@ public class TelemetryManager : ITelemetryManager
             var startupEvent = await CreateEventAsync<StartupEvent>(cancellationToken);
             startupEvent.ToFirstPaintMs = toFirstPaintMs;
             startupEvent.ToReadyMs = toReadyMs;
+            startupEvent.ToServicesReadyMs = toServicesReadyMs;
+            startupEvent.ToViewModelsReadyMs = toViewModelsReadyMs;
             startupEvent.ColdStart = coldStart;
             await _storageService.RecordEventAsync(startupEvent, cancellationToken);
         }

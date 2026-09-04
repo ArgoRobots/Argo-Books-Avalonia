@@ -24,14 +24,8 @@ public partial class NotificationPanelViewModel : ViewModelBase
     /// </summary>
     public bool HasUnreadNotifications => _headerViewModel?.HasUnreadNotifications ?? false;
 
-    /// <summary>
-    /// Gets the unread notification count.
-    /// </summary>
     public int UnreadCount => _headerViewModel?.UnreadNotificationCount ?? 0;
 
-    /// <summary>
-    /// Gets the notifications collection.
-    /// </summary>
     public ObservableCollection<NotificationItem> Notifications { get; }
 
     /// <summary>

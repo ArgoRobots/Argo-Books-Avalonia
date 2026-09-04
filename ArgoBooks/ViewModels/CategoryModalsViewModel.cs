@@ -108,7 +108,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
 
     #endregion
 
-
     #region Dropdown Options
 
     /// <summary>

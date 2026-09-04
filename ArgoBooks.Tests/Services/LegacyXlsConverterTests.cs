@@ -22,7 +22,6 @@ public class LegacyXlsConverterTests
         var format = workbook.CreateDataFormat();
         dateStyle.DataFormat = format.GetFormat("yyyy-mm-dd");
 
-        // Header row
         var header = sheet.CreateRow(0);
         header.CreateCell(0).SetCellValue("ID");
         header.CreateCell(1).SetCellValue("Name");

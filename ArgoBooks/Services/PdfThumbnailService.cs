@@ -252,7 +252,7 @@ public sealed class PdfThumbnailService
         _webView.WebMessageReceived += OnReadyMessage;
         _webView.NavigationCompleted += OnNavCompleted;
 
-        _webView.NavigateToString(PdfJsRendererHtml, new Uri("https://localhost/pdfrender"));
+        _webView.NavigateToString(RendererHtml, new Uri("https://localhost/pdfrender"));
 
         var navCompleted = await Task.WhenAny(navTcs.Task, Task.Delay(15000));
         if (navCompleted != navTcs.Task || !navTcs.Task.Result)
@@ -315,11 +315,49 @@ public sealed class PdfThumbnailService
 
     public void Dispose() => CleanupWebView();
 
-    private const string PdfJsRendererHtml = """
+
+    /// <summary>
+    /// The renderer page, with pdf.js and its worker inlined.
+    ///
+    /// Both used to be script tags pointing at cdnjs. That put two downloads, about 1.4MB, on
+    /// the path between opening a document and seeing it, and it meant PDFs did not render at
+    /// all without a connection: the ready handshake simply timed out after 15 seconds. For an
+    /// app that keeps its data on the machine and says so, calling a CDN to look at a pay stub
+    /// was the wrong shape.
+    ///
+    /// The worker cannot be a script tag, pdf.js wants a URL, so it rides along as inert
+    /// text and the page turns it into a blob URL at startup.
+    ///
+    /// Built once and cached: it is a 1.4MB string and the WebView is created once per session.
+    /// </summary>
+    internal static string RendererHtml => _rendererHtml ??= PdfJsRendererTemplate
+        .Replace("__PDFJS_LIB__", ReadEmbeddedText("pdf.min.js"))
+        .Replace("__PDFJS_WORKER__", ReadEmbeddedText("pdf.worker.min.js"));
+
+    private static string? _rendererHtml;
+
+    /// <summary>WebView2's NavigateToString refuses anything larger, so the page has to fit.</summary>
+    internal const int NavigateToStringLimitBytes = 2 * 1024 * 1024;
+
+    private static string ReadEmbeddedText(string fileName)
+    {
+        var assembly = typeof(PdfThumbnailService).Assembly;
+        var name = Array.Find(
+            assembly.GetManifestResourceNames(),
+            n => n.EndsWith("." + fileName, StringComparison.Ordinal))
+            ?? throw new InvalidOperationException($"Embedded resource not found: {fileName}");
+
+        using var stream = assembly.GetManifestResourceStream(name)!;
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
+    }
+
+    private const string PdfJsRendererTemplate = """
 <!DOCTYPE html>
 <html>
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>__PDFJS_LIB__</script>
+<script type="text/plain" id="pdfjs-worker-src">__PDFJS_WORKER__</script>
 <script>
     function postMsg(msg) {
         try { window.chrome.webview.postMessage(msg); } catch(e) {}
@@ -328,8 +366,9 @@ public sealed class PdfThumbnailService
 
     function initPdfJs() {
         if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc =
-                'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            var workerSrc = document.getElementById('pdfjs-worker-src').textContent;
+            var workerBlob = new Blob([workerSrc], { type: 'text/javascript' });
+            pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob);
             postMsg('pdfjs-ready');
         } else {
             setTimeout(initPdfJs, 200);

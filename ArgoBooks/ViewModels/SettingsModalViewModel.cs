@@ -1383,7 +1383,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         }
 
         _isLoadingPortalSettings = true;
-        PortalCompanyName = string.Empty;
+        PortalCompanyName = settings.CompanyName ?? string.Empty;
         PortalNotifyOnPayment = settings.NotifyOnPayment;
         // Cached values only. RefreshProviderStatusAsync below overwrites these
         // from the server, which is authoritative because the reminder cron and
@@ -1419,7 +1419,23 @@ public partial class SettingsModalViewModel : ViewModelBase
     private async Task RefreshProviderStatusAsync()
     {
         var portalService = App.PaymentPortalService;
-        if (portalService == null || !PortalSettings.IsConfigured) return;
+        if (portalService == null) return;
+
+        // The key lives in the company file and is copied into the process cache on company
+        // open. If that copy is missing this returned early and never asked the server, which
+        // left the tab claiming nothing was connected and the owner email unverified until
+        // the company was closed and reopened. Re-prime from the file rather than trusting
+        // the open path to have done it.
+        if (!PortalSettings.IsConfigured)
+        {
+            PortalSettings.ActivateApiKey(App.CompanyManager?.CompanyData?.Settings.PaymentPortal);
+            if (!PortalSettings.IsConfigured) return;
+
+            App.ErrorLogger?.LogWarning(
+                "Portal API key was missing from the process cache and was re-primed from the company file.",
+                nameof(SettingsModalViewModel), Core.Models.Telemetry.ErrorCategory.Api,
+                "PortalKeyNotActivated");
+        }
 
         try
         {
@@ -1551,6 +1567,9 @@ public partial class SettingsModalViewModel : ViewModelBase
         var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
         if (settings == null) return;
 
+        // Kept locally because the name has to be entered before a provider can be
+        // connected, so until then there is no portal record holding it.
+        settings.CompanyName = PortalCompanyName;
         settings.NotifyOnPayment = PortalNotifyOnPayment;
         settings.EmailOwnerOnPayment = PortalEmailOwnerOnPayment;
         settings.SendPaymentReminders = PortalSendPaymentReminders;
@@ -2263,18 +2282,38 @@ public partial class SettingsModalViewModel : ViewModelBase
             ArgoApiPendingSummary = "{0} items waiting".TranslateFormat(preview.TotalObjects);
 
             if (App.ConfirmationDialog == null) return; // never import without a review step
-            var confirmed = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
+
+            // Three answers, not two. Cancel leaves everything queued for next time, which
+            // is the right response to "not now" but a poor one to "never": without Discard
+            // an unwanted object is re-offered on every sync forever, and the app that sent
+            // it cannot tell refusal from inattention.
+            var choice = await App.ConfirmationDialog.ShowAsync(new ConfirmationDialogOptions
             {
                 Title = "Import from the Argo Books API".Translate(),
-                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?"
+                Message = "Import {0} items sent by your connected apps: {1} in revenue and {2} in expenses?\n\nDiscard removes them for good and tells the apps that sent them. Cancel leaves them waiting."
                     .TranslateFormat(
                         preview.TotalObjects,
                         preview.TotalRevenue.ToString("C2"),
                         preview.TotalExpenses.ToString("C2")),
                 PrimaryButtonText = "Import".Translate(),
+                SecondaryButtonText = "Discard".Translate(),
+                IsSecondaryDestructive = true,
                 CancelButtonText = "Cancel".Translate()
-            }) == ConfirmationResult.Primary;
-            if (!confirmed) return;
+            });
+
+            if (choice == ConfirmationResult.Secondary)
+            {
+                ArgoApiSyncStatus = "Discarding...".Translate();
+                var discarded = await svc.RejectPreviewAsync(data, preview);
+                ArgoApiPendingSummary = null;
+                await App.ShowInfoMessageBoxAsync(
+                    "Argo Books API".Translate(),
+                    "Discarded {0} items. They will not be offered again."
+                        .TranslateFormat(discarded));
+                return;
+            }
+
+            if (choice != ConfirmationResult.Primary) return;
 
             var creation = await svc.ImportPreviewAsync(data, preview, SyncProgress(v => ArgoApiSyncStatus = v));
 
@@ -2978,7 +3017,6 @@ public partial class SettingsModalViewModel : ViewModelBase
             }
         }
 
-        // Load portal settings
         LoadPortalSettings();
 
         // Load bank import rules
@@ -2987,7 +3025,6 @@ public partial class SettingsModalViewModel : ViewModelBase
         // Load mobile sync state (paired devices)
         LoadMobileSync();
 
-        // Refresh telemetry stats
         _ = RefreshTelemetryStatsAsync();
 
         // Store original values for potential revert
@@ -3872,12 +3909,24 @@ public partial class SettingsModalViewModel : ViewModelBase
         var companyManager = App.CompanyManager;
         if (companyData == null || companyManager == null) return;
 
+        var portalService = App.PaymentPortalService;
+
+        // Same reason as SetInitialOwnerEmailAsync: every step of the change flow is an
+        // authenticated portal call. A company can reach Change rather than Set purely
+        // because its own settings carry an email, which says nothing about whether a
+        // portal account exists. The sample company is exactly that case, and without
+        // this the flow opens and then fails with "Invalid or missing API key".
+        if (!PortalSettings.IsConfigured)
+        {
+            if (portalService == null) return;
+            if (!await TryRegisterPortalAsync(portalService)) return;
+        }
+
         // Pre-flight sync: if the settings modal was already open when the owner
         // email changed on the server (e.g. a revert link was used), starting the
         // change flow from the stale local value would confuse the user. Pull the
         // authoritative email first. Best-effort: CheckStatusAsync swallows its own
         // network errors and returns Success=false, in which case we keep local.
-        var portalService = App.PaymentPortalService;
         if (portalService != null && PortalSettings.IsConfigured)
         {
             // Cap the pre-flight so a bad network can't make the button feel
@@ -3909,7 +3958,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                 companyData.Settings.Company.Email = newEmail;
                 CompanyEmail = newEmail;
                 companyData.ChangesMade = true;
-            });
+            },
+            currentEmailVerified: PortalOwnerEmailVerified);
     }
 
     #endregion

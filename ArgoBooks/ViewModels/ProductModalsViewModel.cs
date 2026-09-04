@@ -1,4 +1,4 @@
-using ArgoBooks.Localization;
+﻿using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.ViewModels;
 
@@ -252,7 +253,6 @@ public partial class ProductModalsViewModel : ViewModelBase
     public string? LastSavedProductId { get; private set; }
     public event EventHandler? FiltersApplied;
     public event EventHandler? FiltersCleared;
-
 
     #endregion
 
@@ -688,6 +688,13 @@ public partial class ProductModalsViewModel : ViewModelBase
                     usages.Add("Return".Translate());
                 if (cd.LostDamaged.Any(ld => ld.ProductId == item.Id))
                     usages.Add("Lost / Damaged".Translate());
+                // Both kinds of schedule clone their template's line items into every
+                // occurrence, so a product either of them names is still in use.
+                if (cd.RecurringInvoices.Any(ri => ri.Template != null
+                        && ri.Template.LineItems.Any(li => li.ProductId == item.Id)))
+                    usages.Add("Recurring Invoice".Translate());
+                if (RecurringTransactionService.IsProductInUse(cd, item.Id))
+                    usages.Add("Recurring Transaction".Translate());
                 if (usages.Count > 0)
                 {
                     await App.ShowWarningMessageBoxAsync(

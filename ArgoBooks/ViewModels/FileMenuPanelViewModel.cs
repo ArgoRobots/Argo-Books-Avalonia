@@ -46,9 +46,6 @@ public partial class FileMenuPanelViewModel : ViewModelBase
     /// </summary>
     public Thickness PanelMargin => new(PanelLeftOffset, 60, 0, 0);
 
-    /// <summary>
-    /// Gets the margin for the submenu.
-    /// </summary>
     public Thickness SubmenuMargin => new(SubmenuLeftOffset, 60 + SubmenuVerticalOffset, 0, 0);
 
     #endregion

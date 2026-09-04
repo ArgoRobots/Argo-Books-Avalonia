@@ -121,9 +121,6 @@ public partial class UnsavedChangesDialogViewModel : ViewModelBase
     [ObservableProperty]
     private string _cancelButtonText = "Cancel".Translate();
 
-    /// <summary>
-    /// Gets the collection of change categories.
-    /// </summary>
     public ObservableCollection<ChangeCategory> Categories { get; } = [];
 
     /// <summary>
@@ -157,7 +154,6 @@ public partial class UnsavedChangesDialogViewModel : ViewModelBase
         if (title != null) Title = title;
         if (message != null) Message = message;
 
-        // Clear and populate categories
         Categories.Clear();
         if (categories != null)
         {

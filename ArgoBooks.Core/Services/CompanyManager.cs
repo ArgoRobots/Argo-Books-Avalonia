@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -59,9 +59,6 @@ public class CompanyManager : IDisposable
     /// </summary>
     public string? CurrentFilePath { get; private set; }
 
-    /// <summary>
-    /// Gets the current company name.
-    /// </summary>
     public string? CurrentCompanyName => CompanyData?.Settings.Company.Name;
 
     /// <summary>
@@ -110,9 +107,6 @@ public class CompanyManager : IDisposable
         return _currentPassword;
     }
 
-    /// <summary>
-    /// Gets the current company settings.
-    /// </summary>
     public CompanySettings? CurrentCompanySettings => CompanyData?.Settings;
 
     /// <summary>
@@ -539,7 +533,6 @@ public class CompanyManager : IDisposable
             // Create receipts subdirectory after saving data files
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
-            // Save to file
             await _fileService.SaveCompanyAsync(filePath, _currentTempDirectory, password, cancellationToken);
 
             // The new company is now durably on disk, so it starts with no unsaved changes.
@@ -623,7 +616,6 @@ public class CompanyManager : IDisposable
         var opened = false;
         try
         {
-            // Check if file is encrypted
             var isEncrypted = await _fileService.IsFileEncryptedAsync(filePath);
 
             if (isEncrypted && string.IsNullOrEmpty(password))
@@ -652,7 +644,6 @@ public class CompanyManager : IDisposable
                 }
             }
 
-            // Open the file
             _currentTempDirectory = await _fileService.OpenCompanyAsync(filePath, password, cancellationToken);
 
             // Load company data, but defer receipts (they carry base64 image data and
@@ -979,7 +970,6 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(CurrentFilePath);
             }
 
-            // Mark as saved
             CompanyData!.MarkAsSaved();
 
             // Now that the file at the new path contains the freshly-written footer
@@ -1072,7 +1062,6 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(newFilePath);
             }
 
-            // Mark as saved
             CompanyData!.MarkAsSaved();
 
             // Add to recent companies
@@ -1258,6 +1247,10 @@ public class CompanyManager : IDisposable
             // it must follow the rename too, otherwise future invoices point at the old, gone Id.
             if (ri.Template != null && ri.Template.CustomerId == oldId) ri.Template.CustomerId = trimmed;
         }
+        // Recurring transactions hold the same kind of template, for the same reason.
+        foreach (var rt in CompanyData.RecurringTransactions)
+            if (rt.RevenueTemplate != null && rt.RevenueTemplate.CustomerId == oldId)
+                rt.RevenueTemplate.CustomerId = trimmed;
         foreach (var ret in CompanyData.Returns)
             if (ret.CustomerId == oldId) ret.CustomerId = trimmed;
 
@@ -1301,6 +1294,11 @@ public class CompanyManager : IDisposable
             if (ret.SupplierId == oldId) ret.SupplierId = trimmed;
         foreach (var exp in CompanyData.Expenses)
             if (exp.SupplierId == oldId) exp.SupplierId = trimmed;
+        // The template each generated occurrence is cloned from, so it has to follow the
+        // rename or every future expense points at a supplier that is gone.
+        foreach (var rt in CompanyData.RecurringTransactions)
+            if (rt.ExpenseTemplate != null && rt.ExpenseTemplate.SupplierId == oldId)
+                rt.ExpenseTemplate.SupplierId = trimmed;
 
         TryMoveEntityAvatarOnRename(supplier, trimmed, SupplierAvatarSubdirectory);
 
@@ -1350,6 +1348,16 @@ public class CompanyManager : IDisposable
         foreach (var po in CompanyData.PurchaseOrders)
             foreach (var line in po.LineItems)
                 if (line.ProductId == oldId) line.ProductId = trimmed;
+
+        // Both kinds of recurring schedule keep a template whose line items are cloned into
+        // every occurrence, so a product rename has to reach inside them as well.
+        foreach (var ri in CompanyData.RecurringInvoices)
+            if (ri.Template != null) CascadeProductIdInLineItems(ri.Template.LineItems, oldId, trimmed);
+        foreach (var rt in CompanyData.RecurringTransactions)
+        {
+            if (rt.ExpenseTemplate != null) CascadeProductIdInLineItems(rt.ExpenseTemplate.LineItems, oldId, trimmed);
+            if (rt.RevenueTemplate != null) CascadeProductIdInLineItems(rt.RevenueTemplate.LineItems, oldId, trimmed);
+        }
 
         // Return items live nested inside Return.Items
         foreach (var ret in CompanyData.Returns)
@@ -1465,7 +1473,6 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(CurrentFilePath);
             }
 
-            // Update current password
             _currentPassword = passwordToUse;
 
             // Note: We intentionally do NOT:

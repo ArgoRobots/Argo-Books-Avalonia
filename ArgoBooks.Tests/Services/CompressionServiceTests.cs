@@ -181,7 +181,6 @@ public class CompressionServiceTests : IDisposable
         var file3Path = Path.Combine(subDir, "file3.txt");
         await File.WriteAllTextAsync(file3Path, "Content of file 3 in subdirectory");
 
-        // Create TAR archive
         using var tarStream = await _compressionService.CreateTarArchiveAsync(sourceDir, includeBaseDirectory: true);
 
         // Extract to different location
@@ -306,10 +305,8 @@ public class CompressionServiceTests : IDisposable
         Directory.CreateDirectory(sourceDir);
         await File.WriteAllTextAsync(Path.Combine(sourceDir, "data.txt"), "Important data content");
 
-        // Create TAR archive
         using var tarStream = await _compressionService.CreateTarArchiveAsync(sourceDir, includeBaseDirectory: false);
 
-        // Compress with GZip
         using var gzipStream = await _compressionService.CompressGZipAsync(tarStream);
 
         // Decompress

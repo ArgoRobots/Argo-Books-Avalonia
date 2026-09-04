@@ -14,9 +14,29 @@ public class SessionEvent : TelemetryEvent
     public SessionAction Action { get; set; }
 
     /// <summary>
-    /// Session duration in seconds (only for SessionEnd events).
+    /// Wall clock seconds from launch to quit (only for SessionEnd events).
+    ///
+    /// Counts a window left open overnight as use, which is why the longest sessions on
+    /// record run to days. Kept because every session ever recorded is measured this way,
+    /// but <see cref="ActiveSeconds"/> is the one worth charting.
     /// </summary>
     public long? DurationSeconds { get; set; }
+
+    /// <summary>
+    /// Seconds the app was actually being driven (only for SessionEnd events).
+    ///
+    /// Accumulated between inputs, skipping any gap longer than the idle threshold, so a
+    /// long unattended stretch adds nothing. Null on SessionStart, on ends reconstructed
+    /// after a force-quit where no input history survived, and on builds predating the
+    /// field, where a reader must treat it as "not measured" rather than zero.
+    /// </summary>
+    public long? ActiveSeconds { get; set; }
+
+    /// <summary>
+    /// The page on screen when the session ended (only for SessionEnd events). Null on
+    /// SessionStart, on ends reconstructed after a force-quit, and on older builds.
+    /// </summary>
+    public string? LastPage { get; set; }
 
     /// <summary>
     /// Whether the session shut down normally. False marks a SessionEnd reconstructed on

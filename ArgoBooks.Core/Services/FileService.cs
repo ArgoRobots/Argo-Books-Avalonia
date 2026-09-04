@@ -38,7 +38,6 @@ public class FileService(
         string companyName,
         CancellationToken cancellationToken = default)
     {
-        // Create temp directory
         var tempDirectory = SecureTempDirectory.Create();
 
         try
@@ -68,6 +67,7 @@ public class FileService(
             await WriteJsonAsync(companyDir, "invoices.json", companyData.Invoices, cancellationToken);
             await WriteJsonAsync(companyDir, "payments.json", companyData.Payments, cancellationToken);
             await WriteJsonAsync(companyDir, "recurringInvoices.json", companyData.RecurringInvoices, cancellationToken);
+            await WriteJsonAsync(companyDir, "recurringTransactions.json", companyData.RecurringTransactions, cancellationToken);
             await WriteJsonAsync(companyDir, "inventory.json", companyData.Inventory, cancellationToken);
             await WriteJsonAsync(companyDir, "stockAdjustments.json", companyData.StockAdjustments, cancellationToken);
             await WriteJsonAsync(companyDir, "stockTransfers.json", companyData.StockTransfers, cancellationToken);
@@ -87,7 +87,6 @@ public class FileService(
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
-            // Save to file
             await SaveCompanyAsync(filePath, companyDir, null, cancellationToken);
         }
         finally
@@ -139,7 +138,6 @@ public class FileService(
                     contentStream, password!, footer.Salt!, footer.Iv!, footer.PasswordHash!);
         }
 
-        // Decompress GZip
         await using var decompressedStream = await compressionService.DecompressGZipAsync(dataStream, cancellationToken);
 
         // Extract TAR to temp directory
@@ -224,7 +222,6 @@ public class FileService(
         await using var tarStream = await compressionService.CreateTarArchiveAsync(
             tempDirectory, includeBaseDirectory: false, cancellationToken);
 
-        // Compress with GZip
         await using var compressedStream = await compressionService.CompressGZipAsync(
             tarStream, cancellationToken: cancellationToken);
 
@@ -459,6 +456,7 @@ public class FileService(
         var invoicesTask          = ReadJsonAsync<List<Models.Transactions.Invoice>>(tempDirectory, "invoices.json", cancellationToken);
         var paymentsTask          = ReadJsonAsync<List<Models.Transactions.Payment>>(tempDirectory, "payments.json", cancellationToken);
         var recurringInvoicesTask = ReadJsonAsync<List<Models.Transactions.RecurringInvoice>>(tempDirectory, "recurringInvoices.json", cancellationToken);
+        var recurringTransactionsTask = ReadJsonAsync<List<Models.Transactions.RecurringTransaction>>(tempDirectory, "recurringTransactions.json", cancellationToken);
         var inventoryTask         = ReadJsonAsync<List<Models.Inventory.InventoryItem>>(tempDirectory, "inventory.json", cancellationToken);
         var stockAdjustmentsTask  = ReadJsonAsync<List<Models.Inventory.StockAdjustment>>(tempDirectory, "stockAdjustments.json", cancellationToken);
         var stockTransfersTask    = ReadJsonAsync<List<Models.Inventory.StockTransfer>>(tempDirectory, "stockTransfers.json", cancellationToken);
@@ -493,6 +491,7 @@ public class FileService(
             idCountersTask, customersTask, productsTask, suppliersTask,
             categoriesTask, accountantsTask, locationsTask,
             revenuesTask, expensesTask, invoicesTask, paymentsTask, recurringInvoicesTask,
+            recurringTransactionsTask,
             inventoryTask, stockAdjustmentsTask, stockTransfersTask, purchaseOrdersTask,
             rentalInventoryTask, rentalsTask, returnsTask, lostDamagedTask, receiptsTask,
             invoiceTemplatesTask, eventLogTask, pendingConversionsTask,
@@ -530,6 +529,7 @@ public class FileService(
             Invoices = invoicesTask.Result ?? [],
             Payments = paymentsTask.Result ?? [],
             RecurringInvoices = recurringInvoicesTask.Result ?? [],
+            RecurringTransactions = recurringTransactionsTask.Result ?? [],
             Inventory = inventoryTask.Result ?? [],
             StockAdjustments = stockAdjustmentsTask.Result ?? [],
             StockTransfers = stockTransfersTask.Result ?? [],
@@ -591,6 +591,7 @@ public class FileService(
         await WriteJsonAsync(companyDirectory, "invoices.json", data.Invoices, cancellationToken);
         await WriteJsonAsync(companyDirectory, "payments.json", data.Payments, cancellationToken);
         await WriteJsonAsync(companyDirectory, "recurringInvoices.json", data.RecurringInvoices, cancellationToken);
+        await WriteJsonAsync(companyDirectory, "recurringTransactions.json", data.RecurringTransactions, cancellationToken);
         await WriteJsonAsync(companyDirectory, "inventory.json", data.Inventory, cancellationToken);
         await WriteJsonAsync(companyDirectory, "stockAdjustments.json", data.StockAdjustments, cancellationToken);
         await WriteJsonAsync(companyDirectory, "stockTransfers.json", data.StockTransfers, cancellationToken);
@@ -735,7 +736,6 @@ public class FileService(
 
     private static string? GenerateLogoThumbnail(string tempDirectory)
     {
-        // Find logo file in the temp directory
         var logoPath = FindLogoFileInDirectory(tempDirectory);
         if (logoPath == null)
             return null;

@@ -16,6 +16,12 @@ public class GlobalSettings
     public WindowStateSettings? WindowState { get; set; }
     public ReportExportSettings ReportExport { get; set; } = new();
     public TutorialSettings Tutorial { get; set; } = new();
+
+    /// <summary>
+    /// Set once the per-user file type registrations written by 2.0.13 and earlier have been
+    /// removed, so the one-time cleanup does not run again.
+    /// </summary>
+    public bool LegacyFileAssociationsCleared { get; set; }
 }
 
 public class WelcomeSettings

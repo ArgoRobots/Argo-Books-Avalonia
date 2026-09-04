@@ -28,9 +28,6 @@ public static class CurrencyService
     public static string CurrentCurrencyCode =>
         App.CompanyManager?.CompanyData?.Settings.Localization.Currency ?? "USD";
 
-    /// <summary>
-    /// Gets the current currency info.
-    /// </summary>
     public static CurrencyInfo CurrentCurrency => CurrencyInfo.GetByCode(CurrentCurrencyCode);
 
     /// <summary>
@@ -368,17 +365,11 @@ public static class CurrencyService
         return CurrencyInfo.ParseCodeFromDisplayString(displayString);
     }
 
-    /// <summary>
-    /// Gets the display string for a currency code.
-    /// </summary>
     public static string GetDisplayString(string currencyCode)
     {
         return CurrencyInfo.GetByCode(currencyCode).DisplayString;
     }
 
-    /// <summary>
-    /// Gets the symbol for a currency code.
-    /// </summary>
     public static string GetSymbol(string currencyCode)
     {
         return CurrencyInfo.GetSymbol(currencyCode);

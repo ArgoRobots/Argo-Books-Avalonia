@@ -160,6 +160,4 @@ public static class FileFormatConstants
     /// File extension for backup files.
     /// </summary>
     public const string BackupFileExtension = ".argobk";
-
-
 }

@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
@@ -35,8 +35,15 @@ public partial class SupplierModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isFilterModalOpen;
 
-    [ObservableProperty]
-    private bool _hasValidationMessage;
+    /// <summary>
+    /// Whether the footer's "enter all required fields" line shows. Derived rather than
+    /// stored, for the same reason as the customer modal: every check in ValidateModal sets
+    /// one of the field errors, so a stored copy only added a second thing to remember to
+    /// clear, and the per-field handlers cleared the error and left the footer behind.
+    /// </summary>
+    public bool HasValidationMessage =>
+        ModalError != null || ModalIdError != null || ModalSupplierNameError != null
+        || ModalEmailError != null || ModalPhoneError != null;
 
     [ObservableProperty]
     private string _validationMessage = string.Empty;
@@ -79,18 +86,23 @@ public partial class SupplierModalsViewModel : ViewModelBase
     private string _modalNotes = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalIdError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalSupplierNameError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalEmailError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalPhoneError;
 
     [ObservableProperty]
@@ -733,7 +745,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
             {
                 App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Supplier.ChangeId");
                 ModalIdError = ex.Message;
-                HasValidationMessage = true;
                 return;
             }
         }
@@ -790,6 +801,8 @@ public partial class SupplierModalsViewModel : ViewModelBase
                     usages.Add("Purchase Order".Translate());
                 if (cd.Returns.Any(r => r.SupplierId == item.Id))
                     usages.Add("Return".Translate());
+                if (RecurringTransactionService.IsSupplierInUse(cd, item.Id))
+                    usages.Add("Recurring Expense".Translate());
                 if (usages.Count > 0)
                 {
                     await App.ShowWarningMessageBoxAsync(
@@ -993,7 +1006,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
         ModalSupplierNameError = null;
         ModalEmailError = null;
         ModalPhoneError = null;
-        HasValidationMessage = false;
 
         ModalAvatarSource = null;
         HasModalAvatar = false;
@@ -1066,7 +1078,6 @@ public partial class SupplierModalsViewModel : ViewModelBase
             isValid = false;
         }
 
-        HasValidationMessage = !isValid;
         return isValid;
     }
 

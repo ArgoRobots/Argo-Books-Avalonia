@@ -78,7 +78,6 @@ public class ChartExcelExportService
             var valueFormat = isCurrency ? CurrencyFormat : NumberFormat;
             worksheet.Cells[2, 2, rowCount + 1, 2].Style.Numberformat.Format = valueFormat;
 
-            // Add total row
             var totalRow = rowCount + 2;
             worksheet.Cells[totalRow, 1].Value = "Total";
             worksheet.Cells[totalRow, 1].Style.Font.Bold = true;
@@ -86,7 +85,6 @@ public class ChartExcelExportService
             worksheet.Cells[totalRow, 2].Style.Font.Bold = true;
             worksheet.Cells[totalRow, 2].Style.Numberformat.Format = valueFormat;
 
-            // Auto-fit columns
             worksheet.Cells.AutoFitColumns();
 
             // Create embedded chart
@@ -107,7 +105,6 @@ public class ChartExcelExportService
                 lineChart.Smooth = true;
             }
 
-            // Save the file
             package.SaveAs(new FileInfo(filePath));
         });
     }
@@ -177,7 +174,6 @@ public class ChartExcelExportService
                 worksheet.Cells[2, col + 2, labels.Length + 1, col + 2].Style.Numberformat.Format = valueFormat;
             }
 
-            // Add total row
             var totalRow = labels.Length + 2;
             worksheet.Cells[totalRow, 1].Value = "Total";
             worksheet.Cells[totalRow, 1].Style.Font.Bold = true;
@@ -190,7 +186,6 @@ public class ChartExcelExportService
                 worksheet.Cells[totalRow, col + 2].Style.Numberformat.Format = valueFormat;
             }
 
-            // Auto-fit columns
             worksheet.Cells.AutoFitColumns();
 
             // Create embedded chart
@@ -214,7 +209,6 @@ public class ChartExcelExportService
                 lineChart.Smooth = true;
             }
 
-            // Save the file
             package.SaveAs(new FileInfo(filePath));
         });
     }
@@ -277,7 +271,6 @@ public class ChartExcelExportService
                 worksheet.Cells[i + 2, 3].Style.Numberformat.Format = PercentFormat;
             }
 
-            // Add total row
             var totalRow = sortedData.Count + 2;
             worksheet.Cells[totalRow, 1].Value = "Total";
             worksheet.Cells[totalRow, 1].Style.Font.Bold = true;
@@ -288,7 +281,6 @@ public class ChartExcelExportService
             worksheet.Cells[totalRow, 3].Style.Font.Bold = true;
             worksheet.Cells[totalRow, 3].Style.Numberformat.Format = PercentFormat;
 
-            // Auto-fit columns
             worksheet.Cells.AutoFitColumns();
 
             // Create embedded pie chart
@@ -308,7 +300,6 @@ public class ChartExcelExportService
             chart.DataLabel.ShowCategory = true;
             chart.DataLabel.ShowValue = false;
 
-            // Save the file
             package.SaveAs(new FileInfo(filePath));
         });
     }
@@ -360,7 +351,6 @@ public class ChartExcelExportService
                 worksheet.Cells[i + 2, 2].Style.Numberformat.Format = valueFormat;
             }
 
-            // Add total row
             var totalRow = sortedData.Count + 2;
             worksheet.Cells[totalRow, 1].Value = "Total";
             worksheet.Cells[totalRow, 1].Style.Font.Bold = true;
@@ -368,7 +358,6 @@ public class ChartExcelExportService
             worksheet.Cells[totalRow, 2].Style.Font.Bold = true;
             worksheet.Cells[totalRow, 2].Style.Numberformat.Format = valueFormat;
 
-            // Auto-fit columns
             worksheet.Cells.AutoFitColumns();
 
             // Create embedded Region Map chart
@@ -386,10 +375,8 @@ public class ChartExcelExportService
             serie.ProjectionType = eProjectionType.Mercator;
             serie.RegionLableLayout = eRegionLabelLayout.BestFitOnly;
 
-            // Apply chart style
             chart.StyleManager.SetChartStyle(ePresetChartStyle.RegionMapChartStyle2);
 
-            // Save the file
             package.SaveAs(new FileInfo(filePath));
         });
     }

@@ -46,7 +46,7 @@
                                              Classes="form-input"
                                              PlaceholderText="{loc:Loc 'Enter location name'}"
                                              MaxLength="100" />
-                                    <TextBlock Text="{Binding ModalNameError}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalNameError}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -134,7 +134,7 @@
                             </StackPanel>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding ModalError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding ModalError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding ModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -188,7 +188,7 @@
                                              Classes="form-input"
                                              PlaceholderText="{loc:Loc 'Enter location name'}"
                                              MaxLength="100" />
-                                    <TextBlock Text="{Binding ModalNameError}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalNameError}"
                                                FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalNameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -277,7 +277,7 @@
                             </StackPanel>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding ModalError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding ModalError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding ModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

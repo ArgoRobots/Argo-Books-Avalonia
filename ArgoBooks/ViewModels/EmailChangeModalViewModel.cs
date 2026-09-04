@@ -56,13 +56,25 @@ public partial class EmailChangeModalViewModel : ObservableObject
         RefundService refundService,
         string currentOwnerEmail,
         bool fileIsEncrypted,
-        Func<string, bool> verifyFilePassword)
+        Func<string, bool> verifyFilePassword,
+        bool currentEmailVerified = true)
     {
         _refundService = refundService;
         CurrentOwnerEmail = currentOwnerEmail;
         _fileIsEncrypted = fileIsEncrypted;
         _verifyFilePassword = verifyFilePassword;
+        CurrentEmailCanReceiveCode = currentEmailVerified;
     }
+
+    /// <summary>
+    /// Whether the current address was ever verified. When it was not, the server sends no
+    /// code to it, so promising one would be wrong: the sample company's fake address is the
+    /// obvious case.
+    /// </summary>
+    public bool CurrentEmailCanReceiveCode { get; }
+
+    /// <summary>Inverse of <see cref="CurrentEmailCanReceiveCode"/>, for binding.</summary>
+    public bool CurrentEmailCannotReceiveCode => !CurrentEmailCanReceiveCode;
 
     [ObservableProperty]
     private Step _currentStep = Step.EnterNewEmail;
@@ -202,7 +214,6 @@ public partial class EmailChangeModalViewModel : ObservableObject
         OnPropertyChanged(nameof(CanResend));
     }
 
-
     [RelayCommand]
     private async Task ContinueFromNewEmailAsync()
     {
@@ -263,9 +274,23 @@ public partial class EmailChangeModalViewModel : ObservableObject
             }
             _changeId = result.ChangeId;
             MaskedOldEmail = result.MaskedOldEmail;
-            CurrentStep = Step.EnterOldCode;
-            StatusMessage = $"Code sent to {result.MaskedOldEmail}.";
-            StartResendCooldown(ResendCooldownSecondsInitial); // a code was just sent to the old address
+
+            // An address that was never verified cannot receive anything, so the server skips
+            // it and sends straight to the new one. Asking for a code from an unreachable
+            // inbox is an unopenable lock.
+            if (!result.OldEmailVerificationRequired)
+            {
+                MaskedNewEmail = result.MaskedNewEmail;
+                CurrentStep = Step.EnterNewCode;
+                StatusMessage = $"Code sent to {result.MaskedNewEmail}.";
+            }
+            else
+            {
+                CurrentStep = Step.EnterOldCode;
+                StatusMessage = $"Code sent to {result.MaskedOldEmail}.";
+            }
+
+            StartResendCooldown(ResendCooldownSecondsInitial);
         }
         finally { IsBusy = false; }
     }

@@ -51,9 +51,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     #region Column Visibility
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -75,18 +72,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
     partial void OnShowTypeColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Type", value); ColumnVisibilityHelper.Save("Locations", "Type", value); }
     partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Locations", "Address", value); }
     partial void OnShowManagerColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Manager", value); ColumnVisibilityHelper.Save("Locations", "Manager", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -340,7 +325,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(l => GetLocationType(l) == FilterType).ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             var isActive = FilterStatus == "Active";
@@ -353,7 +337,6 @@ public partial class LocationsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Create display items
         var displayItems = filtered.Select(location =>
         {
             var addressParts = new List<string>();
@@ -552,9 +535,6 @@ public partial class LocationDisplayItem : ObservableObject
         }
     }
 
-    /// <summary>
-    /// Gets the status text.
-    /// </summary>
     public string StatusText => IsActive ? "Active" : "Inactive";
 
     /// <summary>

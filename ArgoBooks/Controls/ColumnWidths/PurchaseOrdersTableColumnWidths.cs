@@ -40,7 +40,6 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
     {
         ColumnOrder = ["PONumber", "Date", "Supplier", "Items", "Total", "Status", "Expected", "Actions"];
 
-        // PO Number column
         RegisterColumn("PONumber", new ColumnDef
         {
             StarValue = 1.0,
@@ -48,7 +47,6 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 120
         }, w => PoNumberColumnWidth = w);
 
-        // Date column
         RegisterColumn("Date", new ColumnDef
         {
             StarValue = 0.9,
@@ -80,7 +78,6 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 110
         }, w => TotalColumnWidth = w);
 
-        // Status column
         RegisterColumn("Status", new ColumnDef
         {
             StarValue = 1.0,
@@ -88,7 +85,6 @@ public partial class PurchaseOrdersTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 120
         }, w => StatusColumnWidth = w);
 
-        // Expected column
         RegisterColumn("Expected", new ColumnDef
         {
             StarValue = 0.9,

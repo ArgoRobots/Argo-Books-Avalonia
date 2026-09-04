@@ -198,7 +198,6 @@ public static class TemplateLayoutHelper
         var startY = context.ContentTop;
         var availableHeight = context.ContentHeight;
 
-        // Remove spacing from available height
         availableHeight -= context.ElementSpacing * (heightRatios.Length - 1);
 
         var stack = new LayoutRect[heightRatios.Length];

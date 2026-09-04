@@ -34,9 +34,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     #region Column Visibility
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -66,18 +63,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
     partial void OnShowAddressColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Address", value); ColumnVisibilityHelper.Save("Suppliers", "Address", value); }
     partial void OnShowCountryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Country", value); ColumnVisibilityHelper.Save("Suppliers", "Country", value); }
     partial void OnShowProductsColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Products", value); ColumnVisibilityHelper.Save("Suppliers", "Products", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -475,14 +460,12 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 .Select(x => x.Supplier);
         }
 
-        // Apply country filter
         if (!string.IsNullOrWhiteSpace(FilterCountry) && FilterCountry != "All Countries")
         {
             filtered = filtered.Where(s =>
                 s.Address.Country.Equals(FilterCountry, StringComparison.OrdinalIgnoreCase));
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             var suppliersWithProducts = companyData.Products
@@ -554,7 +537,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
                 s => s.Name);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
@@ -768,7 +750,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
 
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit supplier '{newName}'",
             () =>
@@ -858,7 +839,6 @@ public partial class SuppliersPageViewModel : SortablePageViewModelBase
             companyData.Suppliers.Remove(supplier);
             companyData.MarkAsModified();
 
-            // Record undo action
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete supplier '{deletedSupplier.Name}'",
                 () =>

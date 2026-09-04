@@ -639,7 +639,7 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
-                            <TextBlock Text="{Binding ItemStatusReasonErrorMessage}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding ItemStatusReasonErrorMessage}"
                                        IsVisible="{Binding HasItemStatusReasonError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}" />

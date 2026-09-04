@@ -271,7 +271,6 @@ public partial class LanguageService
         // Load the language into memory
         EnsureLanguageLoaded(isoCode);
 
-        // Update current language
         CurrentLanguage = languageName;
         CurrentIsoCode = isoCode;
 

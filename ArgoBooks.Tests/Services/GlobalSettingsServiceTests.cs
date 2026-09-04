@@ -308,7 +308,6 @@ public class GlobalSettingsServiceTests : IDisposable
         _settingsService.CreateCompanySettings("Round Trip Co");
         await _settingsService.SaveCompanySettingsAsync(tempDir);
 
-        // Load into a new service
         var newService = new GlobalSettingsService(_platformService);
         await newService.LoadCompanySettingsAsync(tempDir);
 

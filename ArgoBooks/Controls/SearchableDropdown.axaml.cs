@@ -106,18 +106,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    /// <summary>
-    /// Gets or sets the items source.
-    /// </summary>
     public IEnumerable? ItemsSource
     {
         get => GetValue(ItemsSourceProperty);
         set => SetValue(ItemsSourceProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the selected item.
-    /// </summary>
     public object? SelectedItem
     {
         get => GetValue(SelectedItemProperty);
@@ -160,18 +154,12 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         set => SetValue(PlaceholderProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the helper text.
-    /// </summary>
     public string? HelperText
     {
         get => GetValue(HelperTextProperty);
         set => SetValue(HelperTextProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the error message.
-    /// </summary>
     public string? ErrorMessage
     {
         get => GetValue(ErrorMessageProperty);
@@ -196,9 +184,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
         set => SetValue(IsRequiredProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether the dropdown is open.
-    /// </summary>
     public bool IsDropdownOpen
     {
         get => GetValue(IsDropdownOpenProperty);
@@ -310,9 +295,6 @@ public partial class SearchableDropdown : UserControl, INotifyPropertyChanged
     /// </summary>
     public bool ShowPrioritySeparator => HasFilteredPriorityItems && HasFilteredItems;
 
-    /// <summary>
-    /// Gets whether the items source has any items.
-    /// </summary>
     public bool HasItems => ItemsSource?.Cast<object>().Any() == true;
 
     /// <summary>

@@ -119,9 +119,6 @@ public partial class SidebarItem : UserControl
         set => SetValue(CommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the command parameter.
-    /// </summary>
     public object? CommandParameter
     {
         get => GetValue(CommandParameterProperty);
@@ -137,9 +134,6 @@ public partial class SidebarItem : UserControl
         set => SetValue(BadgeTextProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the badge.
-    /// </summary>
     public bool ShowBadge
     {
         get => GetValue(ShowBadgeProperty);

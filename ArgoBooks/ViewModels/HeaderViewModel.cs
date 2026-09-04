@@ -213,7 +213,6 @@ public partial class HeaderViewModel : ViewModelBase
     {
         if (value)
         {
-            // Start the timer when there are unsaved changes
             StartUnsavedChangesReminderTimer();
         }
         else
@@ -329,7 +328,6 @@ public partial class HeaderViewModel : ViewModelBase
     {
         _navigationService = navigationService;
 
-        // Initialize undo/redo with the shared manager
         UndoRedoViewModel.SetUndoRedoManager(SharedUndoRedoManager);
 
         // Sync HasUnsavedChanges with undo/redo state

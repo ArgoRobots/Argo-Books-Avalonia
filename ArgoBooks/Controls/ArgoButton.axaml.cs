@@ -112,27 +112,18 @@ public partial class ArgoButton : UserControl
         set => SetValue(VariantProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the button size.
-    /// </summary>
     public ButtonSize Size
     {
         get => GetValue(SizeProperty);
         set => SetValue(SizeProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the left icon geometry.
-    /// </summary>
     public Geometry? LeftIcon
     {
         get => GetValue(LeftIconProperty);
         set => SetValue(LeftIconProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the right icon geometry.
-    /// </summary>
     public Geometry? RightIcon
     {
         get => GetValue(RightIconProperty);
@@ -166,9 +157,6 @@ public partial class ArgoButton : UserControl
         set => SetValue(CommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the command parameter.
-    /// </summary>
     public object? CommandParameter
     {
         get => GetValue(CommandParameterProperty);

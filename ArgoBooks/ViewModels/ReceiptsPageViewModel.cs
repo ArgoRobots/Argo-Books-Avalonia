@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
@@ -367,7 +367,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
         {
             await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop JPEG, PNG, WebP, or PDF files."));
+                Loc.Tr("Please drop {0} files.", FilePickerTypes.SupportedReceiptFormats));
             return;
         }
 
@@ -571,13 +571,11 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             );
         }
 
-        // Apply type filter
         if (filterType != "All")
         {
             filtered = filtered.Where(r => r.TransactionType == filterType);
         }
 
-        // Apply source filter
         if (filterSource != "All")
         {
             filtered = filterSource switch
@@ -588,7 +586,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             };
         }
 
-        // Apply file type filter
         if (filterFileType != "All")
         {
             filtered = filterFileType switch
@@ -599,7 +596,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             };
         }
 
-        // Apply amount filter
         if (decimal.TryParse(filterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(r => r.Amount >= minAmount);
@@ -609,7 +605,6 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
             filtered = filtered.Where(r => r.Amount <= maxAmount);
         }
 
-        // Apply date filter
         if (filterDateFrom.HasValue)
         {
             filtered = filtered.Where(r => r.Date >= filterDateFrom.Value.DateTime);
@@ -1095,6 +1090,17 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
         catch (Exception ex)
         {
             App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.Validation, "Receipt.DeleteReceipt");
+        }
+    }
+
+    [RelayCommand]
+    private async Task SwitchType(ReceiptDisplayItem? item)
+    {
+        if (item == null) return;
+
+        if (await ReceiptTypeSwitchService.SwitchAsync(item.Id))
+        {
+            LoadReceipts();
         }
     }
 

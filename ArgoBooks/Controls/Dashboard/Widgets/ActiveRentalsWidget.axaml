@@ -80,39 +80,10 @@
                                     Command="{Binding $parent[ItemsControl].((vm:ActiveRentalsWidgetViewModel)DataContext).NavigateToRentalCommand}"
                                     CommandParameter="{Binding}">
                                 <Border Classes="table-row">
-                                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
-                                        <!-- Status Indicator -->
-                                        <Border Grid.Column="0"
-                                                Width="36" Height="36"
-                                                CornerRadius="8"
-                                                Margin="0,0,12,0"
-                                                Classes.active="{Binding !IsOverdue}"
-                                                Classes.overdue="{Binding IsOverdue}">
-                                            <Border.Styles>
-                                                <Style Selector="Border.active">
-                                                    <Setter Property="Background" Value="{DynamicResource InfoIconBgBrush}" />
-                                                </Style>
-                                                <Style Selector="Border.overdue">
-                                                    <Setter Property="Background" Value="{DynamicResource DangerIconBgBrush}" />
-                                                </Style>
-                                            </Border.Styles>
-                                            <PathIcon Data="{x:Static local:Icons.Bookmark}"
-                                                      Width="18" Height="18"
-                                                      Classes.active="{Binding !IsOverdue}"
-                                                      Classes.overdue="{Binding IsOverdue}">
-                                                <PathIcon.Styles>
-                                                    <Style Selector="PathIcon.active">
-                                                        <Setter Property="Foreground" Value="{DynamicResource InfoBrush}" />
-                                                    </Style>
-                                                    <Style Selector="PathIcon.overdue">
-                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
-                                                    </Style>
-                                                </PathIcon.Styles>
-                                            </PathIcon>
-                                        </Border>
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
 
                                         <!-- Item & Customer -->
-                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
                                             <TextBlock Text="{Binding ItemName}"
                                                        FontSize="13"
                                                        FontWeight="Medium"
@@ -125,7 +96,7 @@
                                         </StackPanel>
 
                                         <!-- Due Date & Days Remaining -->
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="12,0" HorizontalAlignment="Right">
                                             <TextBlock Text="{Binding DueDateFormatted}"
                                                        FontSize="13"
                                                        FontWeight="Medium"
@@ -148,7 +119,7 @@
                                         </StackPanel>
 
                                         <!-- Rate -->
-                                        <StackPanel Grid.Column="3" VerticalAlignment="Center" MinWidth="80" HorizontalAlignment="Right">
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" MinWidth="80" HorizontalAlignment="Right">
                                             <TextBlock Text="{Binding RateAmount}"
                                                        FontSize="13"
                                                        FontWeight="SemiBold"

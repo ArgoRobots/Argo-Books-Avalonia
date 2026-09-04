@@ -240,7 +240,7 @@
                             </StackPanel>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding AddModalError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding AddModalError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AddModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -464,7 +464,7 @@
                             </Border>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding ReceiveModalError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding ReceiveModalError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding ReceiveModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

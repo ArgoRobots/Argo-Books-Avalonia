@@ -13,7 +13,7 @@ namespace ArgoBooks.Tests.ViewModels;
 public class ViewerDocumentTests
 {
     [Fact]
-    public void ADocument_IsNotRenderedUntilItIsAskedFor()
+    public async Task ADocument_IsNotRenderedUntilItIsAskedFor()
     {
         int produced = 0;
 
@@ -30,7 +30,7 @@ public class ViewerDocumentTests
 
         Assert.Equal(0, produced);
 
-        Assert.Equal([1, 2, 3], document.LoadAsync().Result);
+        Assert.Equal([1, 2, 3], await document.LoadAsync());
         Assert.Equal(1, produced);
     }
 

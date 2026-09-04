@@ -215,159 +215,165 @@
                 <table:ArgoTable.RowsContent>
                     <Panel Background="Transparent"
                            PointerPressed="OnTableBackgroundPressed">
-                        <!-- Grid View -->
-                        <ItemsControl ItemsSource="{Binding Receipts}"
-                                      IsVisible="{Binding IsGridView}"
-                                      Margin="24">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="vm:ReceiptDisplayItem">
-                                    <Border Width="260"
-                                            Margin="0,0,16,16"
-                                            Background="{DynamicResource SurfaceAltBrush}"
-                                            CornerRadius="8"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="2"
-                                            ClipToBounds="True"
-                                            Cursor="Hand"
-                                            Classes="receipt-card"
-                                            Classes.selected="{Binding IsSelected}"
-                                            PointerPressed="OnReceiptCardPressed">
-                                        <Border.Styles>
-                                            <Style Selector="Border.receipt-card:pointerover:not(.selected)">
-                                                <Setter Property="BorderBrush" Value="{DynamicResource TextTertiaryBrush}" />
-                                            </Style>
-                                        </Border.Styles>
-                                        <Grid RowDefinitions="Auto,Auto">
-                                            <!-- File Preview Area -->
-                                            <Border Grid.Row="0"
-                                                    Height="140"
-                                                    Background="{DynamicResource SurfaceBrush}"
-                                                    CornerRadius="8,8,0,0"
-                                                    ClipToBounds="True">
-                                                <Panel>
-                                                    <!-- Receipt Image (if available). ConverterParameter decodes a
-                                                         downscaled thumbnail (~card width) instead of the full-res photo. -->
-                                                    <Image Source="{Binding ImagePath, Converter={x:Static local:BoolConverters.ToImageSource}, ConverterParameter=320}"
-                                                           Stretch="UniformToFill"
-                                                           IsVisible="{Binding HasImage}" />
+                        <!-- Grid View. ArgoTable's own ScrollViewer is horizontal only, so each
+                             rows slot brings its own vertical one. The list view gets that from the
+                             table-rows style; a WrapPanel of cards cannot use that style because it
+                             also forces a VirtualizingStackPanel. -->
+                        <ScrollViewer IsVisible="{Binding IsGridView}"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Receipts}"
+                                          Margin="24">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:ReceiptDisplayItem">
+                                        <Border Width="260"
+                                                Margin="0,0,16,16"
+                                                Background="{DynamicResource SurfaceAltBrush}"
+                                                CornerRadius="8"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="2"
+                                                ClipToBounds="True"
+                                                Cursor="Hand"
+                                                Classes="receipt-card"
+                                                Classes.selected="{Binding IsSelected}"
+                                                PointerPressed="OnReceiptCardPressed">
+                                            <Border.Styles>
+                                                <Style Selector="Border.receipt-card:pointerover:not(.selected)">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource TextTertiaryBrush}" />
+                                                </Style>
+                                            </Border.Styles>
+                                            <Grid RowDefinitions="Auto,Auto">
+                                                <!-- File Preview Area -->
+                                                <Border Grid.Row="0"
+                                                        Height="140"
+                                                        Background="{DynamicResource SurfaceBrush}"
+                                                        CornerRadius="8,8,0,0"
+                                                        ClipToBounds="True">
+                                                    <Panel>
+                                                        <!-- Receipt Image (if available). ConverterParameter decodes a
+                                                             downscaled thumbnail (~card width) instead of the full-res photo. -->
+                                                        <Image Source="{Binding ImagePath, Converter={x:Static local:BoolConverters.ToImageSource}, ConverterParameter=320}"
+                                                               Stretch="UniformToFill"
+                                                               IsVisible="{Binding HasImage}" />
 
-                                                    <!-- File Type Icon fallback (center) - shown when no image -->
-                                                    <Panel HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           IsVisible="{Binding !HasImage}">
-                                                        <!-- Image Icon -->
-                                                        <PathIcon Data="{x:Static icons:Icons.Image}"
-                                                                  Width="40" Height="40"
-                                                                  Foreground="{DynamicResource TextTertiaryBrush}"
-                                                                  IsVisible="{Binding IsImage}" />
-                                                        <!-- PDF Icon -->
-                                                        <PathIcon Data="{x:Static icons:Icons.FilePdf}"
-                                                                  Width="40" Height="40"
-                                                                  Foreground="{DynamicResource ErrorBrush}"
-                                                                  IsVisible="{Binding IsPdf}" />
-                                                    </Panel>
-
-                                                    <!-- Multi-page badge (top-left) -->
-                                                    <Border Background="#CC000000"
-                                                            CornerRadius="4"
-                                                            Padding="6,3"
-                                                            HorizontalAlignment="Left"
-                                                            VerticalAlignment="Top"
-                                                            Margin="12,12,0,0"
-                                                            IsVisible="{Binding IsMultiPage}">
-                                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <!-- File Type Icon fallback (center) - shown when no image -->
+                                                        <Panel HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               IsVisible="{Binding !HasImage}">
+                                                            <!-- Image Icon -->
+                                                            <PathIcon Data="{x:Static icons:Icons.Image}"
+                                                                      Width="40" Height="40"
+                                                                      Foreground="{DynamicResource TextTertiaryBrush}"
+                                                                      IsVisible="{Binding IsImage}" />
+                                                            <!-- PDF Icon -->
                                                             <PathIcon Data="{x:Static icons:Icons.FilePdf}"
-                                                                      Width="11" Height="11"
-                                                                      Foreground="White" />
-                                                            <TextBlock Text="{Binding PageCount}"
-                                                                       FontSize="10"
-                                                                       FontWeight="Bold"
-                                                                       Foreground="White"
-                                                                       VerticalAlignment="Center" />
-                                                        </StackPanel>
-                                                    </Border>
-                                                </Panel>
-                                            </Border>
-
-                                            <!-- Receipt Details -->
-                                            <StackPanel Grid.Row="1" Margin="16">
-                                                <!-- ID and Date Row -->
-                                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
-                                                    <TextBlock Text="{Binding Id, StringFormat='#{0}'}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Grid.Column="1"
-                                                               Text="{Binding DateFormatted}"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextTertiaryBrush}" />
-                                                </Grid>
-
-                                                <!-- Supplier Name -->
-                                                <TextBlock Text="{Binding Supplier}"
-                                                           FontSize="13"
-                                                           Foreground="{DynamicResource TextSecondaryBrush}"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           Margin="0,0,0,8" />
-
-                                                <!-- Type Badge and Amount Row -->
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <!-- Type Badge -->
-                                                    <Border CornerRadius="4"
-                                                            Padding="8,4">
-                                                        <Border.Background>
-                                                            <MultiBinding>
-                                                                <Binding Path="IsExpense" />
-                                                            </MultiBinding>
-                                                        </Border.Background>
-                                                        <Border.Styles>
-                                                            <Style Selector="Border">
-                                                                <Setter Property="Background" Value="{DynamicResource SuccessLightBrush}" />
-                                                            </Style>
-                                                        </Border.Styles>
-                                                        <Panel>
-                                                            <Border Background="{DynamicResource ErrorLightBrush}"
-                                                                    IsVisible="{Binding IsExpense}"
-                                                                    CornerRadius="4"
-                                                                    Margin="-8,-4"
-                                                                    Padding="8,4">
-                                                                <TextBlock Text="{loc:Loc 'Expense'}"
-                                                                           FontSize="11"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{DynamicResource ErrorBrush}" />
-                                                            </Border>
-                                                            <Border Background="{DynamicResource SuccessLightBrush}"
-                                                                    IsVisible="{Binding IsRevenue}"
-                                                                    CornerRadius="4"
-                                                                    Margin="-8,-4"
-                                                                    Padding="8,4">
-                                                                <TextBlock Text="{loc:Loc 'Revenue'}"
-                                                                           FontSize="11"
-                                                                           FontWeight="Medium"
-                                                                           Foreground="{DynamicResource SuccessBrush}" />
-                                                            </Border>
+                                                                      Width="40" Height="40"
+                                                                      Foreground="{DynamicResource ErrorBrush}"
+                                                                      IsVisible="{Binding IsPdf}" />
                                                         </Panel>
-                                                    </Border>
 
-                                                    <!-- Amount -->
-                                                    <TextBlock Grid.Column="2"
-                                                               Text="{Binding AmountFormatted}"
-                                                               FontSize="14"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}"
-                                                               VerticalAlignment="Center" />
-                                                </Grid>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                                        <!-- Multi-page badge (top-left) -->
+                                                        <Border Background="#CC000000"
+                                                                CornerRadius="4"
+                                                                Padding="6,3"
+                                                                HorizontalAlignment="Left"
+                                                                VerticalAlignment="Top"
+                                                                Margin="12,12,0,0"
+                                                                IsVisible="{Binding IsMultiPage}">
+                                                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                                                <PathIcon Data="{x:Static icons:Icons.FilePdf}"
+                                                                          Width="11" Height="11"
+                                                                          Foreground="White" />
+                                                                <TextBlock Text="{Binding PageCount}"
+                                                                           FontSize="10"
+                                                                           FontWeight="Bold"
+                                                                           Foreground="White"
+                                                                           VerticalAlignment="Center" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Panel>
+                                                </Border>
+
+                                                <!-- Receipt Details -->
+                                                <StackPanel Grid.Row="1" Margin="16">
+                                                    <!-- ID and Date Row -->
+                                                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                                                        <TextBlock Text="{Binding Id, StringFormat='#{0}'}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding DateFormatted}"
+                                                                   FontSize="12"
+                                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                    </Grid>
+
+                                                    <!-- Supplier Name -->
+                                                    <TextBlock Text="{Binding Supplier}"
+                                                               FontSize="13"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Margin="0,0,0,8" />
+
+                                                    <!-- Type Badge and Amount Row -->
+                                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                                        <!-- Type Badge -->
+                                                        <Border CornerRadius="4"
+                                                                Padding="8,4">
+                                                            <Border.Background>
+                                                                <MultiBinding>
+                                                                    <Binding Path="IsExpense" />
+                                                                </MultiBinding>
+                                                            </Border.Background>
+                                                            <Border.Styles>
+                                                                <Style Selector="Border">
+                                                                    <Setter Property="Background" Value="{DynamicResource SuccessLightBrush}" />
+                                                                </Style>
+                                                            </Border.Styles>
+                                                            <Panel>
+                                                                <Border Background="{DynamicResource ErrorLightBrush}"
+                                                                        IsVisible="{Binding IsExpense}"
+                                                                        CornerRadius="4"
+                                                                        Margin="-8,-4"
+                                                                        Padding="8,4">
+                                                                    <TextBlock Text="{loc:Loc 'Expense'}"
+                                                                               FontSize="11"
+                                                                               FontWeight="Medium"
+                                                                               Foreground="{DynamicResource ErrorBrush}" />
+                                                                </Border>
+                                                                <Border Background="{DynamicResource SuccessLightBrush}"
+                                                                        IsVisible="{Binding IsRevenue}"
+                                                                        CornerRadius="4"
+                                                                        Margin="-8,-4"
+                                                                        Padding="8,4">
+                                                                    <TextBlock Text="{loc:Loc 'Revenue'}"
+                                                                               FontSize="11"
+                                                                               FontWeight="Medium"
+                                                                               Foreground="{DynamicResource SuccessBrush}" />
+                                                                </Border>
+                                                            </Panel>
+                                                        </Border>
+
+                                                        <!-- Amount -->
+                                                        <TextBlock Grid.Column="2"
+                                                                   Text="{Binding AmountFormatted}"
+                                                                   FontSize="14"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                                   VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
 
                         <!-- List View (Table Rows) - Using ArgoTableCell -->
                         <ItemsControl Classes="table-rows" ItemsSource="{Binding Receipts}"
@@ -475,6 +481,13 @@
                                                                 Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).DownloadReceiptCommand}"
                                                                 CommandParameter="{Binding}">
                                                             <PathIcon Data="{x:Static icons:Icons.ExportData}"
+                                                                      Width="16" Height="16" />
+                                                        </Button>
+                                                        <Button Classes="icon-button"
+                                                                ToolTip.Tip="{loc:Loc 'Change between expense and revenue'}"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ReceiptsPageViewModel)DataContext).SwitchTypeCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <PathIcon Data="{x:Static icons:Icons.SwapType}"
                                                                       Width="16" Height="16" />
                                                         </Button>
                                                         <Button Classes="icon-button"

@@ -43,9 +43,6 @@ public partial class LoadingSpinner : UserControl
         set => SetValue(IsSpinningProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the spinner size preset.
-    /// </summary>
     public SpinnerSize SizePreset
     {
         get => GetValue(SizePresetProperty);

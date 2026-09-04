@@ -26,9 +26,6 @@ public enum ThemeMode
 /// </summary>
 public static class ThemeModeExtensions
 {
-    /// <summary>
-    /// Gets the display name for a theme mode.
-    /// </summary>
     public static string GetDisplayName(this ThemeMode mode)
     {
         return mode switch

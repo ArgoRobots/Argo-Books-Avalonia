@@ -23,7 +23,7 @@ public class StripeDetailImporterTests
         Assert.Equal(5.00m, rev.Discount);          // discount
         Assert.Equal(46.00m, rev.Subtotal);         // gross - tax
         Assert.Equal("ch_1", rev.ReferenceNumber);  // charge id for refund linkage
-        Assert.NotEmpty(rev.CustomerId);
+        Assert.NotEmpty(rev.CustomerId!);
         Assert.Single(rev.LineItems);
         Assert.NotEmpty(rev.LineItems[0].ProductId!);
 

@@ -83,7 +83,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
     [ObservableProperty]
     private string _modalCountry = string.Empty;
 
-
     [ObservableProperty]
     private string _modalNotes = string.Empty;
 
@@ -145,7 +144,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
     /// Location type options.
     /// </summary>
     public ObservableCollection<string> TypeOptions { get; } = ["Warehouse", "Storage Facility", "Factory", "Retail Store", "Distribution Center"];
-
 
     #endregion
 
@@ -412,7 +410,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
 
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit location '{newName}'",
             () =>
@@ -490,7 +487,6 @@ public partial class LocationsModalsViewModel : ViewModelBase
                 companyData.Locations.Remove(location);
                 companyData.MarkAsModified();
 
-                // Record undo action
                 App.UndoRedoManager.RecordAction(new DelegateAction(
                     $"Delete location '{deletedLocation.Name}'",
                     () =>

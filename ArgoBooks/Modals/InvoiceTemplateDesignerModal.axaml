@@ -335,7 +335,7 @@
                                                      BorderBrush="{Binding HasValidationMessage, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                      PlaceholderText="{loc:Loc 'Enter template name...'}"
                                                      MaxLength="100" />
-                                            <TextBlock Text="{Binding ValidationMessage}"
+                                            <TextBlock TextWrapping="Wrap" Text="{Binding ValidationMessage}"
                                                        FontSize="13"
                                                        Foreground="{DynamicResource ErrorBrush}"
                                                        IsVisible="{Binding HasValidationMessage}" />
@@ -490,7 +490,7 @@
                                                                FontSize="11"
                                                                Foreground="{DynamicResource TextTertiaryBrush}"
                                                                IsVisible="{Binding !HasLogoWidthWarning}" />
-                                                    <TextBlock Text="{Binding LogoWidthWarning}"
+                                                    <TextBlock TextWrapping="Wrap" Text="{Binding LogoWidthWarning}"
                                                                FontSize="11"
                                                                Foreground="{DynamicResource ErrorBrush}"
                                                                IsVisible="{Binding HasLogoWidthWarning}" />
@@ -620,6 +620,7 @@
                                               Width="16" Height="16" />
                                 </Button>
                                 <TextBlock Grid.Column="1"
+                                           TextWrapping="Wrap"
                                            Text="{Binding ValidationMessage}"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            FontSize="13"

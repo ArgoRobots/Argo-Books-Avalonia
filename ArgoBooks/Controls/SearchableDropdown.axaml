@@ -139,6 +139,7 @@
         <TextBlock FontSize="12"
                    Margin="0,2,0,0"
                    Foreground="{DynamicResource ErrorBrush}"
+                   TextWrapping="Wrap"
                    Text="{Binding ErrorMessage, RelativeSource={RelativeSource AncestorType=controls:SearchableDropdown}}">
             <TextBlock.IsVisible>
                 <MultiBinding Converter="{x:Static BoolConverters.And}">

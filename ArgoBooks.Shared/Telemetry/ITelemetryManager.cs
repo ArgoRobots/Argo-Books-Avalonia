@@ -18,9 +18,28 @@ public interface ITelemetryManager
     Task EndSessionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Note that the user just did something. Called from the window's input handlers, so
+    /// it has to stay cheap and synchronous: it runs on the UI thread ahead of every key
+    /// press and click.
+    /// </summary>
+    void MarkActivity();
+
+    /// <summary>
+    /// Remember which page is on screen, so a session can report where it ended.
+    /// Cheap and synchronous: it runs on every navigation.
+    /// </summary>
+    void NoteCurrentPage(string? pageName);
+
+    /// <summary>
     /// Tracks a feature usage event.
     /// </summary>
     Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Records a completed visit to one screen. Raised by <see cref="NoteCurrentPage"/> when
+    /// the page changes and at session end, so callers never invoke this directly.
+    /// </summary>
+    Task TrackPageViewAsync(string pageName, long activeSeconds, long durationSeconds, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Tracks an export operation.
@@ -58,6 +77,8 @@ public interface ITelemetryManager
     /// </summary>
     Task TrackStartupAsync(
         long? toFirstPaintMs,
+        long? toServicesReadyMs,
+        long? toViewModelsReadyMs,
         long? toReadyMs,
         bool coldStart,
         CancellationToken cancellationToken = default);

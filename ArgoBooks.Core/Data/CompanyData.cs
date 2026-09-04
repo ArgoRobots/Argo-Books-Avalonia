@@ -144,6 +144,12 @@ public class CompanyData
     [JsonPropertyName("recurringInvoices")]
     public List<RecurringInvoice> RecurringInvoices { get; init; } = [];
 
+    /// <summary>
+    /// Schedules that generate expenses or revenue on a cadence.
+    /// </summary>
+    [JsonPropertyName("recurringTransactions")]
+    public List<RecurringTransaction> RecurringTransactions { get; init; } = [];
+
     #endregion
 
     #region Inventory
@@ -530,6 +536,9 @@ public class IdCounters
 
     [JsonPropertyName("recurringInvoice")]
     public int RecurringInvoice { get; set; }
+
+    [JsonPropertyName("recurringTransaction")]
+    public int RecurringTransaction { get; set; }
 
     [JsonPropertyName("inventoryItem")]
     public int InventoryItem { get; set; }

@@ -102,11 +102,12 @@ Rules:
 
             if (!skipPreprocessing)
             {
-                // Preprocess image to improve OCR accuracy (contrast, sharpen).
-                // PreprocessForOcr returns PDFs unchanged and outputs JPEG for images.
-                imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName);
-                var extension = Path.GetExtension(fileName).ToLowerInvariant();
-                if (extension != ".pdf")
+                // Preprocess image to improve OCR accuracy (contrast, sharpen). PDFs pass
+                // through unchanged, and so does anything Skia cannot decode: HEIC from an
+                // iPhone arrives here as its original bytes. Rename only on a real
+                // conversion, or the content type below would describe the wrong format.
+                imageData = ReceiptImageHelper.PreprocessForOcr(imageData, fileName, out var convertedToJpeg);
+                if (convertedToJpeg)
                     fileName = Path.ChangeExtension(fileName, ".jpg");
             }
 
@@ -114,7 +115,7 @@ Rules:
             var mimeType = ReceiptImageHelper.GetContentType(fileName);
             if (mimeType == null)
             {
-                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, WebP, BMP, or PDF files.");
+                return ReceiptScanResult.Failed("Unsupported file type. Please use JPEG, PNG, WebP, HEIC, BMP, or PDF files.");
             }
 
             // Convert to base64 for vision API

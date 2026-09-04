@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -32,6 +32,15 @@ public partial class App : Application
     /// before the application starts. Null on platforms that don't support auto-update.
     /// </summary>
     public static IUpdateService? UpdateService { get; set; }
+
+    /// <summary>
+    /// Builds the platform's update service. Set by the platform entry point, which cannot
+    /// hand over an instance without paying for it before Avalonia has started: constructing
+    /// NetSparkle loads its assemblies and signature crypto, and that landed squarely in the
+    /// window where the screen is still empty. Nothing reads UpdateService until the shell
+    /// view model is built, long after the splash is up.
+    /// </summary>
+    public static Func<IUpdateService?>? UpdateServiceFactory { get; set; }
 
     /// <summary>
     /// Gets the navigation service instance.
@@ -296,6 +305,7 @@ public partial class App : Application
     /// <param name="title">The notification title.</param>
     /// <param name="message">The notification message.</param>
     /// <param name="type">The notification type.</param>
+    /// <param name="onClick">Runs when the notification is clicked, if given.</param>
     public static void AddNotification(string title, string message, NotificationType type = NotificationType.Info,
         Action? onClick = null)
     {
@@ -941,10 +951,21 @@ public partial class App : Application
 
     // View models stored for event wiring
     private static MainWindowViewModel? _mainWindowViewModel;
+
+    /// <summary>
+    /// Read-only view of the main window's view model, for the handful of call sites that
+    /// need to nudge window-level state from deeper in the app. Kept internal and
+    /// get-only so nothing outside can swap it out.
+    /// </summary>
+    internal static MainWindowViewModel? MainWindowViewModel => _mainWindowViewModel;
     private static AppShellViewModel? _appShellViewModel;
     private static WelcomeScreenViewModel? _welcomeScreenViewModel;
     private static IdleDetectionService? _idleDetectionService;
     private static Timer? _pendingConversionTimer;
+
+    // Captured in OnFrameworkInitializationCompleted; InitializeAsync runs later and the
+    // lifetime is not reachable from there.
+    private static string[] _startupArgs = [];
 
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
@@ -1022,6 +1043,8 @@ public partial class App : Application
         // it on a company switch/close so a count produced for the previous company can't surface as a
         // phantom banner on the next company (whose own generation run may have produced nothing).
         RecurringInvoiceService.ClearPendingGenerated();
+        RecurringTransactionService.ClearPendingExpenses();
+        RecurringTransactionService.ClearPendingRevenues();
     }
 
     // File watchers for recent companies - watches directories containing recent company files
@@ -1045,6 +1068,10 @@ public partial class App : Application
     /// Gets the confirmation dialog ViewModel for showing confirmation dialogs from anywhere.
     /// </summary>
     public static ConfirmationDialogViewModel? ConfirmationDialog { get; private set; }
+
+    /// <summary>The one recurring schedule editor, shared by the Expenses and Revenue tabs.</summary>
+    public static RecurringScheduleEditorViewModel? RecurringScheduleEditor =>
+        _appShellViewModel?.RecurringScheduleEditorViewModel;
 
     /// <summary>
     /// Gets the unsaved changes dialog ViewModel for showing save prompts with change lists.
@@ -1098,6 +1125,8 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _startupArgs = desktop.Args ?? [];
+
             // Initialize error logging first so it's available for all services
             var errorLogger = new ErrorLogger();
             ErrorLogger = errorLogger;
@@ -1156,6 +1185,22 @@ public partial class App : Application
                 splash = null;
             }
 
+            // Now that there is something on screen, pay for the update service.
+            if (UpdateService == null && UpdateServiceFactory != null)
+            {
+                try
+                {
+                    UpdateService = UpdateServiceFactory();
+                }
+                catch (Exception ex)
+                {
+                    errorLogger.LogWarning(
+                        $"Could not create the update service: {ex.Message}",
+                        "Startup", Core.Models.Telemetry.ErrorCategory.Network,
+                        "UpdateServiceCreateFailed");
+                }
+            }
+
             // Initialize core services
             var compressionService = new CompressionService();
             var footerService = new FooterService();
@@ -1208,6 +1253,9 @@ public partial class App : Application
             // Create navigation service
             NavigationService = new NavigationService();
 
+            // Everything above is the service graph; everything below builds view models.
+            StartupTimeline.MarkServicesReady();
+
             _mainWindowViewModel = new MainWindowViewModel();
             ConfirmationDialog = new ConfirmationDialogViewModel();
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
@@ -1240,6 +1288,21 @@ public partial class App : Application
             NavigationService.Navigated += (_, _) =>
             {
                 TutorialService.Instance.DismissCompletionGuidance();
+            };
+
+            // Consecutive repeats are dropped: re-navigating to the current page is a
+            // no-op to the user and would only pad the timeline.
+            var lastTrackedPage = string.Empty;
+            NavigationService.Navigated += (sender, e) =>
+            {
+                if (string.IsNullOrWhiteSpace(e.PageName) || e.PageName == lastTrackedPage)
+                {
+                    return;
+                }
+
+                lastTrackedPage = e.PageName;
+                // Raises the PageView event for the page being left, timed and idle-aware.
+                TelemetryManager?.NoteCurrentPage(e.PageName);
             };
 
             // Chart text (axis labels, titles, legends) is drawn by LiveCharts with
@@ -1405,13 +1468,16 @@ public partial class App : Application
             // Final reset of unsaved changes before window is shown - ensures clean startup state
             _mainWindowViewModel.HasUnsavedChanges = false;
             _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+            SyncSampleCompanyState();
 
             // Apply saved sidebar collapsed state after settings are loaded from disk.
-            var savedCollapsed = SettingsService?.GlobalSettings.Ui.SidebarCollapsed ?? false;
+            var savedCollapsed = SettingsService.GlobalSettings.Ui.SidebarCollapsed;
             if (savedCollapsed)
             {
                 _appShellViewModel.SidebarViewModel.IsCollapsed = true;
             }
+
+            StartupTimeline.MarkViewModelsReady();
 
             desktop.MainWindow = new MainWindow
             {
@@ -1448,6 +1514,8 @@ public partial class App : Application
 
                 _ = TelemetryManager?.TrackStartupAsync(
                     StartupTimeline.ToFirstPaintMs,
+                    StartupTimeline.ToServicesReadyMs,
+                    StartupTimeline.ToViewModelsReadyMs,
                     StartupTimeline.ToReadyMs(),
                     StartupTimeline.IsColdStart);
             };
@@ -1485,11 +1553,15 @@ public partial class App : Application
             // Load recent companies asynchronously (footer reads from .argo files)
             await LoadRecentCompaniesAsync();
 
-            // Register file type associations on Windows
-            RegisterFileTypeAssociationsAsync();
+            await ClearLegacyFileAssociationsAsync();
 
-            // Post-update recovery: auto-reopen the last company after an update restart
-            await TryAutoOpenRecentCompanyAfterUpdateAsync();
+            // Converted logo and avatar picks from earlier runs. Each one was copied into a
+            // company at the time, so the staged file has no reader left.
+            Helpers.ImageFileLoader.ClearConvertedCache();
+
+            // Open the file the shell handed us (.argo double-click), or the last company
+            // after an update restart
+            await TryOpenStartupCompanyAsync();
 
             // Initialize services that depend on settings.
             if (SettingsService != null)
@@ -1522,7 +1594,8 @@ public partial class App : Application
                 {
                     try
                     {
-                        using var crashHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
+                        using var crashHttpClient = new HttpClient();
+                        crashHttpClient.Timeout = TimeSpan.FromSeconds(20);
                         await CrashReporter.UploadPendingAsync(crashHttpClient, flushVersion);
                     }
                     catch
@@ -1560,7 +1633,8 @@ public partial class App : Application
                 var capturedErrorLogger = ErrorLogger;
                 _ = Task.Run(async () =>
                 {
-                    using var firstRunHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
+                    using var firstRunHttpClient = new HttpClient();
+                    firstRunHttpClient.Timeout = TimeSpan.FromSeconds(15);
                     var firstRunReporter = new FirstRunReporter(
                         firstRunHttpClient,
                         appVersion,
@@ -1774,37 +1848,42 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// After an update, automatically reopens the company that was open before the restart.
-    /// Checks the AutoOpenRecentAfterUpdate flag, clears it, and opens the most recent company.
+    /// Opens a company at startup instead of landing on the welcome screen, from either
+    /// source: a file path the Windows shell passed for a double-clicked .argo file, or the
+    /// AutoOpenRecentAfterUpdate flag set before an update restart. The command-line file
+    /// wins; the flag is consumed either way so it can't fire on a later launch.
     /// </summary>
-    private static async Task TryAutoOpenRecentCompanyAfterUpdateAsync()
+    private static async Task TryOpenStartupCompanyAsync()
     {
-        if (SettingsService == null)
-            return;
+        var requestedFile = StartupFileArgs.GetCompanyFilePath(_startupArgs);
 
-        var updateSettings = SettingsService.GlobalSettings.Updates;
-        if (!updateSettings.AutoOpenRecentAfterUpdate)
-            return;
-
-        // Clear the flag immediately so it doesn't fire again on next startup
-        updateSettings.AutoOpenRecentAfterUpdate = false;
-        await SettingsService.SaveGlobalSettingsAsync();
+        var reopenAfterUpdate = false;
+        if (SettingsService != null)
+        {
+            var updateSettings = SettingsService.GlobalSettings.Updates;
+            reopenAfterUpdate = updateSettings.AutoOpenRecentAfterUpdate;
+            if (reopenAfterUpdate)
+            {
+                updateSettings.AutoOpenRecentAfterUpdate = false;
+                await SettingsService.SaveGlobalSettingsAsync();
+            }
+        }
 
         try
         {
-            var recentCompanies = SettingsService.GetValidRecentCompanies();
-            if (recentCompanies.Count > 0)
+            if (requestedFile == null && reopenAfterUpdate)
             {
-                var mostRecent = recentCompanies[0];
-                if (File.Exists(mostRecent))
-                {
-                    await OpenCompanyWithRetryAsync(mostRecent);
-                }
+                requestedFile = SettingsService?.GetValidRecentCompanies().FirstOrDefault(File.Exists);
             }
+
+            if (requestedFile == null)
+                return;
+
+            await OpenCompanyWithRetryAsync(requestedFile);
         }
         catch (Exception ex)
         {
-            ErrorLogger?.LogWarning($"Failed to auto-open company after update: {ex.Message}", "AutoUpdate");
+            ErrorLogger?.LogWarning($"Failed to open company at startup: {ex.Message}", "Startup");
         }
     }
 
@@ -1853,7 +1932,7 @@ public partial class App : Application
         // Without this the System.Threading.Timer callback would touch that List concurrently with a
         // save. Matches the window-Activated path, which already calls this on the UI thread.
         _pendingConversionTimer = new Timer(
-            _ => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = TryProcessPendingConversionsAsync(); }),
+            state => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = TryProcessPendingConversionsAsync(); }),
             null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
     }
 
@@ -1895,94 +1974,28 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Registers file type associations for .argo files on Windows.
-    /// Extracts the embedded icon to disk and associates it with the file extension.
+    /// Removes the per-user .argo registrations written by 2.0.13 and earlier. They take
+    /// precedence over the installer's per-machine association, so until they are gone the
+    /// extension keeps pointing at whichever build last ran.
     /// </summary>
-    private static void RegisterFileTypeAssociationsAsync()
+    private static async Task ClearLegacyFileAssociationsAsync()
     {
+        if (SettingsService == null || SettingsService.GlobalSettings.LegacyFileAssociationsCleared)
+            return;
+
         try
         {
-            // Only register on Windows
-            if (!OperatingSystem.IsWindows())
-                return;
+            if (OperatingSystem.IsWindows())
+            {
+                ArgoFiles.RemoveLegacyRegistrations();
+            }
 
-            var platformService = PlatformServiceFactory.GetPlatformService();
-
-            // Extract the icon from embedded resources to a file
-            var iconPath = ExtractIconToFile();
-            if (string.IsNullOrEmpty(iconPath))
-                return;
-
-            // Register file type associations
-            platformService.RegisterFileTypeAssociations(iconPath);
+            SettingsService.GlobalSettings.LegacyFileAssociationsCleared = true;
+            await SettingsService.SaveGlobalSettingsAsync();
         }
         catch (Exception ex)
         {
-            // Log but don't crash - file association is not critical
-            ErrorLogger?.LogWarning($"Failed to register file type associations: {ex.Message}", "FileAssociation");
-        }
-    }
-
-    /// <summary>
-    /// Extracts the embedded icon resource to a file in LocalAppData.
-    /// </summary>
-    /// <returns>Path to the extracted icon file, or null if extraction failed.</returns>
-    private static string? ExtractIconToFile()
-    {
-        try
-        {
-            // Destination path in LocalAppData
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var iconDirectory = Path.Combine(localAppData, "ArgoBooks");
-            var iconPath = Path.Combine(iconDirectory, "argo-logo.ico");
-
-            // Ensure directory exists
-            Directory.CreateDirectory(iconDirectory);
-
-            // Try Avalonia's asset loader first (for AvaloniaResource items)
-            try
-            {
-                var uri = new Uri("avares://ArgoBooks/Assets/argo-logo.ico");
-                using var avaloniaStream = Avalonia.Platform.AssetLoader.Open(uri);
-                using var fileStream = new FileStream(iconPath, FileMode.Create, FileAccess.Write);
-                avaloniaStream.CopyTo(fileStream);
-                return iconPath;
-            }
-            catch
-            {
-                // Avalonia asset loader failed, try other methods
-            }
-
-            // Try manifest resource stream
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "ArgoBooks.Assets.argo-logo.ico";
-            using var stream = assembly.GetManifestResourceStream(resourceName);
-            if (stream != null)
-            {
-                using var fileStream = new FileStream(iconPath, FileMode.Create, FileAccess.Write);
-                stream.CopyTo(fileStream);
-                return iconPath;
-            }
-
-            // Fall back to copying from the executable directory if available
-            var exeDir = Path.GetDirectoryName(Environment.ProcessPath);
-            if (!string.IsNullOrEmpty(exeDir))
-            {
-                var sourceIcon = Path.Combine(exeDir, "Assets", "argo-logo.ico");
-                if (File.Exists(sourceIcon))
-                {
-                    File.Copy(sourceIcon, iconPath, overwrite: true);
-                    return iconPath;
-                }
-            }
-
-            ErrorLogger?.LogWarning("Could not find icon resource", "IconExtraction");
-            return null;
-        }
-        catch (Exception ex)
-        {
-            ErrorLogger?.LogWarning($"Failed to extract icon: {ex.Message}", "IconExtraction");
-            return null;
+            ErrorLogger?.LogWarning($"Failed to clear legacy file associations: {ex.Message}", "FileAssociation");
         }
     }
 
@@ -2027,27 +2040,23 @@ public partial class App : Application
         {
             Title = title,
             AllowMultiple = false,
-            FileTypeFilter =
-            [
-                new FilePickerFileType("Images")
-                {
-                    Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                }
-            ]
+            FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
         });
 
         if (files.Count == 0) return;
 
         var path = files[0].Path.LocalPath;
-        try
+        var prepared = await Task.Run(() => Helpers.ImageFileLoader.TryPrepare(path));
+        if (prepared == null)
         {
-            var bitmap = new Bitmap(path);
-            onPicked(path, bitmap);
+            ErrorLogger?.LogWarning($"Could not read avatar image: {path}", errorTag);
+            await ShowErrorMessageBoxAsync(
+                "Image Not Supported".Translate(),
+                "That image could not be read. Try a PNG or JPEG.".Translate());
+            return;
         }
-        catch (Exception ex)
-        {
-            ErrorLogger?.LogWarning($"Failed to load avatar image: {ex.Message}", errorTag);
-        }
+
+        onPicked(prepared.Path, prepared.Bitmap);
     }
 
     /// <summary>
@@ -2137,6 +2146,7 @@ public partial class App : Application
                     // Reset unsaved changes since time-shift is automatic
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                    SyncSampleCompanyState();
 
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
@@ -2439,7 +2449,7 @@ public partial class App : Application
                 var currencyScan = CurrencyImportPreparer.ScanWorkbook(filePath, updatedAnalysis);
                 if (currencyScan.Ambiguities.Count > 0)
                 {
-                    var companyCurrency = companyData.Settings?.Localization?.Currency ?? "USD";
+                    var companyCurrency = companyData.Settings.Localization.Currency;
                     var currencyDialog = _appShellViewModel.CurrencyAmbiguityDialogViewModel;
                     var currencyResult = await currencyDialog.ShowAsync(currencyScan.Ambiguities, companyCurrency);
                     if (currencyResult == CurrencyAmbiguityDialogResult.Cancel)
@@ -2470,8 +2480,7 @@ public partial class App : Application
                     // cancelable phase with a determinate progress bar so the import doesn't look frozen.
                     using var rateCts = new CancellationTokenSource();
                     _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
-                    var rateProgress = new Progress<int>(pct =>
-                        _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, pct, rateCts, ConfirmCancelAsync));
+                    var rateProgress = new Progress<int>(pct => _mainWindowViewModel?.UpdateLoadingProgress(pct));
 
                     while (true)
                     {
@@ -3127,6 +3136,7 @@ public partial class App : Application
             data.Invoices,
             data.Payments,
             data.RecurringInvoices,
+            data.RecurringTransactions,
             data.Inventory,
             data.StockAdjustments,
             data.StockTransfers,
@@ -3210,6 +3220,7 @@ public partial class App : Application
         RestoreList(data.Invoices, "Invoices");
         RestoreList(data.Payments, "Payments");
         RestoreList(data.RecurringInvoices, "RecurringInvoices");
+        RestoreList(data.RecurringTransactions, "RecurringTransactions");
         RestoreList(data.Inventory, "Inventory");
         RestoreList(data.StockAdjustments, "StockAdjustments");
         RestoreList(data.StockTransfers, "StockTransfers");
@@ -3258,6 +3269,49 @@ public partial class App : Application
     /// create-company wizard, so making a new company can't silently discard pending edits.
     /// The welcome screen's "Create New Company" path skips this (no company is open there).
     /// </summary>
+    /// <summary>
+    /// Points the sample-company banner at whichever company is now open.
+    ///
+    /// Every open of the demo starts a fresh visit: the scan count restarts and an earlier
+    /// dismissal does not carry over. Dismiss means "not now", not "never again", and
+    /// someone opening the demo for a third time is likelier to be ready to make something
+    /// real, not less. Keying this on the open rather than on leaving also avoids the trap
+    /// the first version fell into, where closing and reopening the demo was not a
+    /// transition away from it and so reset nothing.
+    /// </summary>
+    private static void SyncSampleCompanyState()
+    {
+        if (_mainWindowViewModel == null || CompanyManager == null)
+        {
+            return;
+        }
+
+        var isSample = CompanyManager.IsSampleCompany;
+
+        if (isSample)
+        {
+            _mainWindowViewModel.SampleReceiptScans = 0;
+            _mainWindowViewModel.SampleBannerDismissed = false;
+        }
+
+        _mainWindowViewModel.IsSampleCompany = isSample;
+
+        // The settings modal keeps its own copy, set only on company open and close. Save As
+        // fires neither, so without this its sample-company notice and the controls it
+        // disables stayed that way over the user's own company.
+        if (_appShellViewModel?.SettingsModalViewModel != null)
+        {
+            _appShellViewModel.SettingsModalViewModel.IsSampleCompany = isSample;
+        }
+
+        // These two read the flag live but raise nothing on their own, and a page control is
+        // rebuilt only when navigated to. Save As neither navigates nor clears the page cache,
+        // so the dashboard's sample warning and the greyed out resend buttons stayed as they
+        // were on whichever page was already open.
+        _dashboardPageViewModel?.RefreshSampleCompanyState();
+        _invoicesPageViewModel?.RefreshSampleCompanyState();
+    }
+
     internal static async Task RequestCreateNewCompanyAsync()
     {
         if (_appShellViewModel == null) return;
@@ -3328,6 +3382,7 @@ public partial class App : Application
                     CompanyManager.CompanyData.MarkAsSaved();
                     _mainWindowViewModel.HasUnsavedChanges = false;
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+                    SyncSampleCompanyState();
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
                 }
 
@@ -3537,6 +3592,10 @@ public partial class App : Application
                 // Refresh UI with the (possibly updated) company name
                 var newName = CompanyManager.CurrentCompanyName ?? "Company";
                 RefreshCompanyUi(newName);
+
+                // Not in RefreshCompanyUi: its other callers are renames, where this would
+                // bring a dismissed banner back.
+                SyncSampleCompanyState();
 
                 _appShellViewModel!.HeaderViewModel.ShowSavedFeedback(forceSaved: true);
 
@@ -4252,7 +4311,7 @@ public partial class App : Application
         // Tracking Section
         navigationService.RegisterPage("Returns", _ => new ReturnsPage { DataContext = _returnsPageViewModel ??= new ReturnsPageViewModel() });
         navigationService.RegisterPage("LostDamaged", _ => new LostDamagedPage { DataContext = _lostDamagedPageViewModel ??= new LostDamagedPageViewModel() });
-        navigationService.RegisterPage("Receipts", _ =>
+        navigationService.RegisterPage("Receipts", param =>
         {
             _receiptsPageViewModel ??= new ReceiptsPageViewModel();
             // Update plan status each time (may have changed)
@@ -4261,17 +4320,6 @@ public partial class App : Application
             return new ReceiptsPage { DataContext = _receiptsPageViewModel };
         });
 
-    }
-
-    /// <summary>
-    /// Creates a placeholder page view for pages not yet implemented.
-    /// </summary>
-    private static object CreatePlaceholderPage(string title, string description)
-    {
-        return new PlaceholderPage
-        {
-            DataContext = new PlaceholderPageViewModel(title, description)
-        };
     }
 
     /// <summary>

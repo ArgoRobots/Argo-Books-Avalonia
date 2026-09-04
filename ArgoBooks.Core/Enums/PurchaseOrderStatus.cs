@@ -38,9 +38,6 @@ public enum PurchaseOrderStatus
 /// </summary>
 public static class PurchaseOrderStatusExtensions
 {
-    /// <summary>
-    /// Gets the display name for a purchase order status.
-    /// </summary>
     public static string GetDisplayName(this PurchaseOrderStatus status)
     {
         return status switch

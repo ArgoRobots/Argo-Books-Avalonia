@@ -300,7 +300,6 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             .Where(e => IsInDateRange(e.Date))
             .ToList();
 
-        // Group by category
         var revenueByCategory = GroupTransactionsByCategory(revenues);
         var expenseByCategory = GroupTransactionsByCategory(expenses);
 
@@ -1157,7 +1156,6 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         public string AccountsReceivable { get; set; } = "Accounts Receivable";
         public string AccountsPayable { get; set; } = "Accounts Payable";
 
-        // AR Aging
         public string ARAgingTitle { get; set; } = "Accounts Receivable Aging";
         public string CustomerColumn { get; set; } = "Customer";
 

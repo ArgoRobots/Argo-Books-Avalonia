@@ -27,7 +27,6 @@ public class ChartLoaderService
     // Chart text size matching WinForms version
     private const float AxisTextSize = 14f;
 
-
     // Series colors live in ArgoBooks.Core.ChartColors so the dashboard,
     // Analytics page, and PDF report renderer all share the same mapping.
 
@@ -2884,7 +2883,6 @@ public class ChartLoaderService
                 exportData.Values[i]
             };
 
-            // Add values from additional series
             foreach (var (_, values) in exportData.AdditionalSeries)
             {
                 row.Add(i < values.Length ? values[i] : 0.0);

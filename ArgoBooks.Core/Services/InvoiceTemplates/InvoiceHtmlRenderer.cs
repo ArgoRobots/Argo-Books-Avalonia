@@ -41,13 +41,11 @@ public partial class InvoiceHtmlRenderer
         var customer = companyData.GetCustomer(invoice.CustomerId);
         var companySettings = companyData.Settings;
 
-        // Get the base HTML template
         var html = InvoiceHtmlTemplates.GetTemplate(template.BaseTemplate);
 
         // Build the data context for template rendering
         var context = BuildContext(invoice, template, customer, companySettings, currencySymbol, lockAspectRatio: true, companyData.Payments, editable);
 
-        // Process the template
         html = ProcessTemplate(html, context);
 
         return html;
@@ -82,7 +80,6 @@ public partial class InvoiceHtmlRenderer
             ]
         };
 
-        // Create sample customer
         var sampleCustomer = new Models.Entities.Customer
         {
             Name = "Example Customer",
@@ -212,7 +209,6 @@ public partial class InvoiceHtmlRenderer
             sb.AppendLine();
         }
 
-        // Payment instructions
         if (template.ShowPaymentInstructions && !string.IsNullOrWhiteSpace(template.PaymentInstructions))
         {
             sb.AppendLine("PAYMENT INSTRUCTIONS:");

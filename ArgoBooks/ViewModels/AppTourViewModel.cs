@@ -174,7 +174,6 @@ public partial class AppTourViewModel : ViewModelBase
     /// </summary>
     public void ShowIfNeeded()
     {
-        // Update the current company path in TutorialService
         TutorialService.Instance.SetCurrentCompanyPath(App.CompanyManager?.CurrentFilePath);
 
         if (!TutorialService.Instance.HasCompletedAppTour &&
@@ -236,7 +235,6 @@ public partial class AppTourViewModel : ViewModelBase
             IsLastStep = CurrentStepIndex == _tourSteps.Count - 1;
             ProgressText = "{0} of {1}".TranslateFormat(CurrentStepIndex + 1, TotalSteps);
 
-            // Update step indicators
             for (int i = 0; i < StepIndicators.Count; i++)
             {
                 StepIndicators[i].IsActive = i == CurrentStepIndex;

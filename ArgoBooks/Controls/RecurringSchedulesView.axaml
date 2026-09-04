@@ -1,0 +1,138 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ArgoBooks.ViewModels"
+             xmlns:controls="using:ArgoBooks.Controls"
+             xmlns:loc="using:ArgoBooks.Localization"
+             xmlns:icons="using:ArgoBooks"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ArgoBooks.Controls.RecurringSchedulesView"
+             x:DataType="vm:RecurringSchedulesViewModel">
+
+    <Panel>
+        <Grid RowDefinitions="Auto,*" Margin="0">
+
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+                <TextBlock Text="{loc:Loc 'Entries generated on a schedule. Each one is flagged for review when it is created.'}"
+                           FontSize="13"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                <Button Grid.Column="1"
+                        Classes="primary-button"
+                        VerticalAlignment="Center"
+                        Margin="16,0,0,0"
+                        Content="{loc:Loc 'New schedule'}"
+                        Command="{Binding AddScheduleCommand}" />
+            </Grid>
+
+            <Border Grid.Row="1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    ClipToBounds="True">
+                <Panel>
+                    <StackPanel IsVisible="{Binding !HasSchedules}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8"
+                                Margin="40">
+                        <TextBlock Text="{loc:Loc 'No recurring schedules yet'}"
+                                   FontSize="16" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="{loc:Loc 'Add one for rent, a subscription, or anything else that repeats.'}"
+                                   FontSize="13"
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+
+                    <ScrollViewer IsVisible="{Binding HasSchedules}"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding Schedules}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="vm:RecurringDisplayItem">
+                                    <Border BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="0,0,0,1"
+                                            Padding="24,14">
+                                        <Grid ColumnDefinitions="2*,Auto,Auto,Auto,Auto">
+                                            <StackPanel Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Description}"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding FrequencyLabel}"
+                                                           FontSize="12"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding AmountFormatted}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,24,0"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                                            <StackPanel Grid.Column="2" Spacing="2" VerticalAlignment="Center" Margin="0,0,24,0">
+                                                <TextBlock Text="{loc:Loc 'Next'}"
+                                                           FontSize="11"
+                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
+                                                <TextBlock Text="{Binding NextDateFormatted}"
+                                                           FontSize="13"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            </StackPanel>
+
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding StatusLabel}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="0,0,16,0"
+                                                       FontSize="12"
+                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
+
+                                            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Edit'}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).EditScheduleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Edit}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{Binding PauseTooltip}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).TogglePauseCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <Panel>
+                                                        <PathIcon Data="{x:Static icons:Icons.Pause}" Width="16" Height="16"
+                                                                  IsVisible="{Binding !IsPaused}" />
+                                                        <PathIcon Data="{x:Static icons:Icons.Play}" Width="16" Height="16"
+                                                                  IsVisible="{Binding IsPaused}" />
+                                                    </Panel>
+                                                </Button>
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Skip the next occurrence'}"
+                                                        IsEnabled="{Binding IsActive}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).SkipNextCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.SkipNext}" Width="16" Height="16" />
+                                                </Button>
+                                                <Button Classes="icon-button"
+                                                        ToolTip.Tip="{loc:Loc 'Delete'}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:RecurringSchedulesViewModel)DataContext).DeleteScheduleCommand}"
+                                                        CommandParameter="{Binding}">
+                                                    <PathIcon Data="{x:Static icons:Icons.Delete}" Width="16" Height="16" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Panel>
+            </Border>
+        </Grid>
+
+    </Panel>
+</UserControl>

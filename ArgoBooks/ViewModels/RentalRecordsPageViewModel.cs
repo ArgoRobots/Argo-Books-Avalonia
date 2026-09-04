@@ -79,9 +79,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -136,18 +133,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
     partial void OnShowDepositColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Deposit", value); ColumnVisibilityHelper.Save("RentalRecords", "Deposit", value); }
     partial void OnShowPaidColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Paid", value); ColumnVisibilityHelper.Save("RentalRecords", "Paid", value); }
     partial void OnShowInvoiceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Invoice", value); ColumnVisibilityHelper.Save("RentalRecords", "Invoice", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -403,7 +388,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             var statusEnum = FilterStatus switch
@@ -420,7 +404,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply customer filter
         if (!string.IsNullOrWhiteSpace(FilterCustomer) && FilterCustomer != "All Customers")
         {
             var customer = companyData?.Customers.FirstOrDefault(c => c.Name == FilterCustomer);
@@ -430,7 +413,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply item filter
         if (!string.IsNullOrWhiteSpace(FilterItem) && FilterItem != "All Items")
         {
             // Resolve filter item name through chain: find all RentalItems whose resolved name matches
@@ -464,7 +446,6 @@ public partial class RentalRecordsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(r => r.DueDate <= FilterDueDateTo.Value);
         }
 
-        // Create display items
         var displayItems = filtered.Select(record =>
         {
             var customer = companyData?.Customers.FirstOrDefault(c => c.Id == record.CustomerId);

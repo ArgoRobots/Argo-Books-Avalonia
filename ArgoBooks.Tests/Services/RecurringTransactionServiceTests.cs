@@ -1,0 +1,359 @@
+﻿using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
+using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
+using Xunit;
+
+namespace ArgoBooks.Tests.Services;
+
+/// <summary>
+/// A schedule generates real transactions flagged for review, so the books stay complete while
+/// each occurrence is still put in front of someone.
+/// </summary>
+public class RecurringTransactionServiceTests
+{
+    private static (CompanyData data, RecurringTransaction schedule) WithMonthlyRent(DateTime start)
+    {
+        var data = new CompanyData();
+        var schedule = new RecurringTransaction
+        {
+            Id = "REC-TXN-00001",
+            Type = CategoryType.Expense,
+            Frequency = Frequency.Monthly,
+            StartDate = start,
+            NextDate = start,
+            ExpenseTemplate = new Expense { Description = "Rent", Amount = 2000m, Total = 2000m }
+        };
+        data.RecurringTransactions.Add(schedule);
+        return (data, schedule);
+    }
+
+    [Fact]
+    public void NextRecurringTransactionId_UsesTheRecTxnPrefix()
+    {
+        var data = new CompanyData();
+        var ids = new IdGenerator(data);
+
+        Assert.Equal("REC-TXN-00001", ids.NextRecurringTransactionId());
+        Assert.Equal("REC-TXN-00002", ids.NextRecurringTransactionId());
+    }
+
+    [Fact]
+    public void GenerateDue_AfterALongGap_ProducesOneEntryPerMissedOccurrence()
+    {
+        var (data, _) = WithMonthlyRent(new DateTime(2026, 1, 1));
+
+        var generated = RecurringTransactionService.GenerateDue(data, new DateTime(2026, 5, 15));
+
+        Assert.Equal(5, generated.Count);
+        Assert.Equal(5, data.Expenses.Count);
+        Assert.All(data.Expenses, e => Assert.True(e.NeedsReview));
+        Assert.Equal(new DateTime(2026, 6, 1), data.RecurringTransactions[0].NextDate);
+    }
+
+    [Fact]
+    public void GenerateDue_RunTwice_ProducesNothingTheSecondTime()
+    {
+        var (data, _) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 5, 15));
+
+        var second = RecurringTransactionService.GenerateDue(data, new DateTime(2026, 5, 15));
+
+        Assert.Empty(second);
+        Assert.Equal(5, data.Expenses.Count);
+    }
+
+    [Fact]
+    public void GenerateDue_RewoundSchedule_DoesNotDuplicateExistingOccurrences()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 5, 15));
+
+        schedule.NextDate = new DateTime(2026, 3, 1);
+        var again = RecurringTransactionService.GenerateDue(data, new DateTime(2026, 5, 15));
+
+        Assert.Empty(again);
+        Assert.Equal(5, data.Expenses.Count);
+    }
+
+    [Fact]
+    public void GenerateDue_SkippedDate_AdvancesWithoutGenerating()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        schedule.SkippedDates.Add(new DateTime(2026, 2, 1));
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 3, 15));
+
+        Assert.Equal(2, data.Expenses.Count);
+        Assert.DoesNotContain(data.Expenses, e => e.OccurrenceDate == new DateTime(2026, 2, 1));
+    }
+
+    [Fact]
+    public void GenerateDue_PastTheEndDate_MarksTheScheduleCompleted()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        schedule.EndDate = new DateTime(2026, 2, 28);
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 6, 1));
+
+        Assert.Equal(2, data.Expenses.Count);
+        Assert.Equal(RecurringTransactionStatus.Completed, schedule.Status);
+    }
+
+    [Fact]
+    public void GenerateDue_CorruptFarPastDate_StopsAtTheCap()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(1900, 1, 1));
+        schedule.Frequency = Frequency.Weekly;
+
+        var generated = RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 1));
+
+        Assert.Equal(RecurringTransactionService.MaxOccurrencesPerSchedulePerRun, generated.Count);
+    }
+
+    [Fact]
+    public void GenerateDue_RevenueSchedule_AddsToRevenues()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        schedule.Type = CategoryType.Revenue;
+        schedule.ExpenseTemplate = null;
+        schedule.RevenueTemplate = new Revenue { Description = "Retainer", Amount = 500m, Total = 500m };
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 2, 15));
+
+        Assert.Equal(2, data.Revenues.Count);
+        Assert.Empty(data.Expenses);
+    }
+
+    [Fact]
+    public void GenerateDue_PausedSchedule_GeneratesNothing()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        schedule.Status = RecurringTransactionStatus.Paused;
+
+        Assert.Empty(RecurringTransactionService.GenerateDue(data, new DateTime(2026, 5, 1)));
+    }
+
+    [Fact]
+    public void GenerateDue_DoesNotCarryReceiptOrBankMatchFromTheTemplate()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        schedule.ExpenseTemplate!.ReceiptId = "RCP-001";
+        schedule.ExpenseTemplate.BankMatched = true;
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15));
+
+        var entry = Assert.Single(data.Expenses);
+        Assert.Null(entry.ReceiptId);
+        Assert.False(entry.BankMatched);
+    }
+
+    [Fact]
+    public void SkipOccurrence_RecordsTheDateOnce()
+    {
+        var (_, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+
+        RecurringTransactionService.SkipOccurrence(schedule, new DateTime(2026, 2, 1));
+        RecurringTransactionService.SkipOccurrence(schedule, new DateTime(2026, 2, 1));
+
+        Assert.Single(schedule.SkippedDates);
+    }
+
+    [Fact]
+    public void UnskipOccurrence_RemovesTheDate()
+    {
+        var (_, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        RecurringTransactionService.SkipOccurrence(schedule, new DateTime(2026, 2, 1));
+
+        RecurringTransactionService.UnskipOccurrence(schedule, new DateTime(2026, 2, 1));
+
+        Assert.Empty(schedule.SkippedDates);
+    }
+
+    [Fact]
+    public void FindCorrectableOccurrences_ExcludesBankMatchedEntries()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 3, 15));
+        data.Expenses[0].BankMatched = true;
+
+        var correctable = RecurringTransactionService.FindCorrectableOccurrences(data, schedule);
+
+        Assert.Equal(2, correctable.Count);
+        Assert.DoesNotContain(data.Expenses[0], correctable);
+    }
+
+    [Fact]
+    public void FindCorrectableOccurrences_IgnoresEntriesFromOtherSchedules()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15));
+        data.Expenses.Add(new Expense { Id = "PUR-2026-09999", RecurringScheduleId = "REC-TXN-00002" });
+
+        Assert.Single(RecurringTransactionService.FindCorrectableOccurrences(data, schedule));
+    }
+
+    [Fact]
+    public void ApplyTemplateAmounts_UpdatesOnlyTheGivenEntries()
+    {
+        var (data, schedule) = WithMonthlyRent(new DateTime(2026, 1, 1));
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 3, 15));
+        data.Expenses[0].BankMatched = true;
+        schedule.ExpenseTemplate!.Amount = 2200m;
+        schedule.ExpenseTemplate.Total = 2200m;
+
+        var correctable = RecurringTransactionService.FindCorrectableOccurrences(data, schedule);
+        RecurringTransactionService.ApplyTemplateAmounts(schedule, correctable);
+
+        Assert.Equal(2000m, data.Expenses[0].Total);
+        Assert.Equal(2200m, data.Expenses[1].Total);
+        Assert.Equal(2200m, data.Expenses[2].Total);
+    }
+
+    private static (CompanyData data, RecurringTransaction schedule) WithForeignMonthlyRent(DateTime start)
+    {
+        var (data, schedule) = WithMonthlyRent(start);
+        schedule.ExpenseTemplate!.OriginalCurrency = "CAD";
+        schedule.ExpenseTemplate.TotalUSD = 1500m;
+        schedule.ExpenseTemplate.UnitPrice = 2000m;
+        return (data, schedule);
+    }
+
+    [Fact]
+    public void GenerateDue_ForeignCurrency_ConvertsEachOccurrenceAtItsOwnDate()
+    {
+        var (data, _) = WithForeignMonthlyRent(new DateTime(2026, 1, 1));
+
+        // A rate that moves by month, so a stale template value would be visible.
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 3, 15),
+            (decimal amount, string _, DateTime date, out decimal usd) =>
+            {
+                usd = amount * (0.70m + date.Month * 0.01m);
+                return true;
+            });
+
+        Assert.Equal(3, data.Expenses.Count);
+        Assert.Equal(2000m * 0.71m, data.Expenses[0].TotalUSD);
+        Assert.Equal(2000m * 0.72m, data.Expenses[1].TotalUSD);
+        Assert.Equal(2000m * 0.73m, data.Expenses[2].TotalUSD);
+        Assert.All(data.Expenses, e => Assert.False(e.IsPendingConversion));
+    }
+
+    [Fact]
+    public void GenerateDue_NoRateForTheOccurrence_QueuesItRatherThanGuessing()
+    {
+        var (data, _) = WithForeignMonthlyRent(new DateTime(2026, 1, 1));
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15),
+            (decimal _, string _, DateTime _, out decimal usd) =>
+            {
+                usd = 0m;
+                return false;
+            });
+
+        var entry = Assert.Single(data.Expenses);
+        Assert.True(entry.IsPendingConversion);
+
+        var queued = Assert.Single(data.PendingConversions);
+        Assert.Equal(entry.Id, queued.TransactionId);
+        Assert.Equal("Expense", queued.TransactionType);
+        Assert.Equal("CAD", queued.OriginalCurrency);
+        Assert.Equal(new DateTime(2026, 1, 1), queued.TransactionDate);
+        Assert.Equal(2000m, queued.Total);
+    }
+
+    [Fact]
+    public void GenerateDue_UsdSchedule_NeedsNoConversion()
+    {
+        var (data, _) = WithMonthlyRent(new DateTime(2026, 1, 1));
+
+        RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15),
+            (decimal _, string _, DateTime _, out decimal usd) =>
+            {
+                usd = 0m;
+                return false;
+            });
+
+        var entry = Assert.Single(data.Expenses);
+        Assert.False(entry.IsPendingConversion);
+        Assert.Empty(data.PendingConversions);
+    }
+
+    #region In-use checks
+
+    /// <summary>
+    /// A schedule outliving its counterparty keeps generating entries against a record that is
+    /// gone, so the delete guards have to see the reference even though it sits on the template
+    /// rather than on the schedule itself.
+    /// </summary>
+    [Fact]
+    public void IsCustomerInUse_SeesTheCustomerOnARevenueTemplate()
+    {
+        var data = new CompanyData();
+        data.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00001",
+            Type = CategoryType.Revenue,
+            RevenueTemplate = new Revenue { CustomerId = "CUS-001" }
+        });
+
+        Assert.True(RecurringTransactionService.IsCustomerInUse(data, "CUS-001"));
+        Assert.False(RecurringTransactionService.IsCustomerInUse(data, "CUS-002"));
+        Assert.False(RecurringTransactionService.IsCustomerInUse(data, string.Empty));
+    }
+
+    [Fact]
+    public void IsSupplierInUse_SeesTheSupplierOnAnExpenseTemplate()
+    {
+        var data = new CompanyData();
+        data.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00002",
+            Type = CategoryType.Expense,
+            ExpenseTemplate = new Expense { SupplierId = "SUP-001" }
+        });
+
+        Assert.True(RecurringTransactionService.IsSupplierInUse(data, "SUP-001"));
+        Assert.False(RecurringTransactionService.IsSupplierInUse(data, "SUP-002"));
+    }
+
+    /// <summary>A product can sit on either side, so both templates are searched.</summary>
+    [Fact]
+    public void IsProductInUse_SeesLineItemsOnEitherTemplate()
+    {
+        var expenseSide = new CompanyData();
+        expenseSide.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00003",
+            Type = CategoryType.Expense,
+            ExpenseTemplate = new Expense { LineItems = [new LineItem { ProductId = "PRD-001" }] }
+        });
+
+        var revenueSide = new CompanyData();
+        revenueSide.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00004",
+            Type = CategoryType.Revenue,
+            RevenueTemplate = new Revenue { LineItems = [new LineItem { ProductId = "PRD-001" }] }
+        });
+
+        Assert.True(RecurringTransactionService.IsProductInUse(expenseSide, "PRD-001"));
+        Assert.True(RecurringTransactionService.IsProductInUse(revenueSide, "PRD-001"));
+        Assert.False(RecurringTransactionService.IsProductInUse(expenseSide, "PRD-002"));
+    }
+
+    /// <summary>A schedule with no template at all must not be read as using everything.</summary>
+    [Fact]
+    public void InUseChecks_TolerateAnEmptySchedule()
+    {
+        var data = new CompanyData();
+        data.RecurringTransactions.Add(new RecurringTransaction { Id = "REC-TXN-00005" });
+
+        Assert.False(RecurringTransactionService.IsCustomerInUse(data, "CUS-001"));
+        Assert.False(RecurringTransactionService.IsSupplierInUse(data, "SUP-001"));
+        Assert.False(RecurringTransactionService.IsProductInUse(data, "PRD-001"));
+    }
+
+    #endregion
+}

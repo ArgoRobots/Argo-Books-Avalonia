@@ -27,8 +27,8 @@
                 BorderThickness="1"
                 CornerRadius="12"
                 Width="840"
-                MinHeight="700"
-                MaxHeight="700"
+                MinHeight="750"
+                MaxHeight="750"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 BoxShadow="0 8 32 0 #40000000">
@@ -147,13 +147,9 @@
                                     </StackPanel>
                                 </StackPanel>
 
-                                <!-- Privacy Section -->
+                                <!-- Privacy Section. No group heading: it holds a single setting,
+                                     and a heading over one row reads as a section that lost its rest. -->
                                 <StackPanel Spacing="8" Margin="0,8,0,0">
-                                    <TextBlock Text="{loc:Loc Privacy}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-
                                     <Border Classes="settings-row last">
                                         <StackPanel Spacing="12">
                                             <StackPanel Spacing="2">
@@ -301,44 +297,6 @@
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1"
                                                       IsChecked="{Binding PortalNotifyOnPayment}"
-                                                      VerticalAlignment="Center" />
-                                    </Grid>
-                                </Border>
-
-                                <!-- Payment Emails (sent by the server, so they arrive with the app closed) -->
-                                    <Border Classes="settings-row"
-                                            IsEnabled="{Binding !IsSampleCompany}">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
-                                                       FontSize="14"
-                                                       FontWeight="Medium"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-                                            <TextBlock Text="{loc:Loc 'Sends an email to your business email address each time an online payment comes in, even when Argo Books is closed'}"
-                                                       FontSize="12"
-                                                       TextWrapping="Wrap"
-                                                       Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            <!-- Amber-on-amber pill rather than amber text: the plain
-                                                 WarningBrush (#F59E0B) has poor contrast against the
-                                                 light-theme SurfaceAlt (#E9ECEF), and the Warning
-                                                 brushes are theme-invariant so no single foreground
-                                                 reads well on both. Matches the sample-company notice
-                                                 at the top of this tab. -->
-                                            <Border Background="{DynamicResource WarningLightBrush}"
-                                                    CornerRadius="6"
-                                                    Padding="8,6"
-                                                    Margin="0,4,0,0"
-                                                    HorizontalAlignment="Left"
-                                                    IsVisible="{Binding !PortalOwnerEmailVerified}">
-                                                <TextBlock Text="{loc:Loc 'Verify your business email in the Payment Portal tab to turn this on.'}"
-                                                           FontSize="12"
-                                                           TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource WarningTextBrush}" />
-                                            </Border>
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1"
-                                                      IsChecked="{Binding PortalEmailOwnerOnPayment}"
-                                                      IsEnabled="{Binding PortalOwnerEmailVerified}"
                                                       VerticalAlignment="Center" />
                                     </Grid>
                                 </Border>
@@ -640,8 +598,10 @@
                             <StackPanel Spacing="16">
                                 <controls:SampleCompanyNotice IsVisible="{Binding IsSampleCompany}" />
 
-                                <!-- Password - No password set -->
-                                <Border Classes="status-panel"
+                                <!-- Password - No password set. Plain row, not a status-panel: it sits
+                                     above Biometric Login and Auto-Lock, which are plain, and the one
+                                     boxed setting in the tab read as the odd one out. -->
+                                <Border Classes="settings-row last"
                                         IsVisible="{Binding !HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -664,7 +624,7 @@
                                 </Border>
 
                                 <!-- Password - Has password set -->
-                                <Border Classes="status-panel on"
+                                <Border Classes="settings-row last"
                                         IsVisible="{Binding HasPassword}"
                                         IsEnabled="{Binding !IsSampleCompany}">
                                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
@@ -812,26 +772,27 @@
                                                 VerticalAlignment="Stretch" />
                                     </Grid>
 
-                                    <!-- Set state: read-only display + Change button (locked, change-via-flow) -->
+                                    <!-- Set state: plain label + Change button. Not boxed like the
+                                         editable inputs, because it cannot be typed into: changing it
+                                         goes through the verified Change flow. Looking like a text box
+                                         invited people to try. -->
                                     <Grid ColumnDefinitions="*,Auto"
+                                          MinHeight="{StaticResource FormControlHeight}"
                                           IsVisible="{Binding CompanyEmail, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                        <Border Grid.Column="0"
-                                                Background="{DynamicResource AltSurfaceBrush}"
-                                                BorderBrush="{DynamicResource BorderBrush}"
-                                                BorderThickness="1" CornerRadius="4"
-                                                Padding="12,0"
-                                                HorizontalAlignment="Stretch"
-                                                MinHeight="{StaticResource FormControlHeight}">
-                                            <TextBlock Text="{Binding CompanyEmail}" FontSize="13"
-                                                       VerticalAlignment="Center" />
-                                        </Border>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding CompanyEmail}"
+                                                   FontSize="14"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center" />
                                         <Button Grid.Column="1"
                                                 Content="{loc:Loc 'Change'}"
                                                 Classes="secondary-button"
                                                 Command="{Binding OpenEmailChangeModalCommand}"
                                                 Margin="8,0,0,0"
                                                 Padding="12,6"
-                                                VerticalAlignment="Stretch" />
+                                                VerticalAlignment="Center" />
                                     </Grid>
                                 </StackPanel>
 
@@ -892,12 +853,19 @@
                                                FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />
 
-                                    <!-- Gate: a provider can't be connected until both the company name and owner email are set. -->
-                                    <TextBlock Text="{loc:Loc 'Set your company name and owner email above before connecting a payment provider.'}"
-                                               FontSize="12"
-                                               TextWrapping="Wrap"
-                                               Foreground="{DynamicResource ErrorBrush}"
-                                               IsVisible="{Binding ShowConnectRequirementsHint}" />
+                                    <!-- Gate: a provider can't be connected until both the company name and owner
+                                         email are set. Amber pill, not red text: nothing has gone wrong, there is
+                                         a step still to do. Matches the verify-email prompt in Notifications. -->
+                                    <Border Background="{DynamicResource WarningNoticeBgBrush}"
+                                            CornerRadius="6"
+                                            Padding="8,6"
+                                            HorizontalAlignment="Left"
+                                            IsVisible="{Binding ShowConnectRequirementsHint}">
+                                        <TextBlock Text="{loc:Loc 'Set your company name and owner email above before connecting a payment provider.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource WarningNoticeTextBrush}" />
+                                    </Border>
 
                                     <!-- Stripe -->
                                     <Border Classes="status-panel" Classes.on="{Binding StripeConnected}">
@@ -1020,39 +988,94 @@
                                     </Border>
                                 </StackPanel>
 
-                                <!-- Automatic overdue reminders, sent by the server. -->
-                                <Border Classes="settings-row last">
-                                    <StackPanel Spacing="8">
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16" MinHeight="40">
-                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                                <TextBlock Text="{loc:Loc 'Automatic payment reminders'}"
-                                                           FontSize="14"
-                                                           FontWeight="Medium"
-                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                <TextBlock Text="{loc:Loc 'Email customers 3, 7 and 14 days after an invoice becomes overdue. Reminders stop as soon as the invoice is paid or cancelled.'}"
-                                                           FontSize="12"
-                                                           TextWrapping="Wrap"
-                                                           Foreground="{DynamicResource TextTertiaryBrush}" />
-                                            </StackPanel>
-                                            <!-- Switch only, not the card: disabling the card would
-                                                 dim the sentence explaining why it is off. -->
-                                            <ToggleSwitch Grid.Column="1"
-                                                          IsChecked="{Binding PortalSendPaymentReminders}"
-                                                          IsEnabled="{Binding CanEditPaymentReminders}"
-                                                          VerticalAlignment="Center" />
-                                        </Grid>
-                                        <TextBlock Text="{loc:Loc 'Only invoices that fall due from now on are chased, so turning this on will not email anyone about invoices that are already overdue. Record payments you take in cash or by cheque so those customers are not chased.'}"
+                                <!-- Both switch rows live in ONE grid so the switches share a single column.
+                                     Two Borders each with their own "*,Auto" grid meant two independently
+                                     computed columns, and any difference between them put the switches at
+                                     different x. Sharing the column makes that impossible rather than merely
+                                     unlikely. Row 0 and row 3 carry a label and its switch; the conditional
+                                     sentences sit in rows of their own underneath, in column 0, so showing one
+                                     cannot change the height the switch is centred in. Row 2 is the hairline
+                                     that Border.settings-row used to draw as its bottom edge. -->
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16"
+                                      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
+                                      Margin="0,16,0,16">
+
+                                    <!-- Sent by the server, so it arrives with the app closed. Here rather than
+                                         under Notifications because it depends on the owner email verified at
+                                         the top of this tab. -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2"
+                                                MinHeight="40" VerticalAlignment="Center"
+                                                IsEnabled="{Binding !IsSampleCompany}">
+                                        <TextBlock Text="{loc:Loc 'Email me when a customer pays'}"
+                                                   FontSize="14"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Sends an email to your business email address each time an online payment comes in, even when Argo Books is closed'}"
                                                    FontSize="12"
                                                    TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   IsVisible="{Binding PortalSendPaymentReminders}" />
-                                        <TextBlock Text="{loc:Loc 'Connect a payment provider first, so customers have a way to pay from the reminder.'}"
-                                                   FontSize="12"
-                                                   TextWrapping="Wrap"
-                                                   Foreground="{DynamicResource TextTertiaryBrush}"
-                                                   IsVisible="{Binding !IsAnyPaymentProviderConnected}" />
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
                                     </StackPanel>
-                                </Border>
+                                    <ToggleSwitch Grid.Row="0" Grid.Column="1"
+                                                  Classes="settings-switch"
+                                                  Margin="0,0,16,0"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding PortalEmailOwnerOnPayment}"
+                                                  IsEnabled="{Binding PortalOwnerEmailVerified}" />
+
+                                    <!-- Amber-on-amber pill rather than amber text: the plain WarningBrush
+                                         (#F59E0B) has poor contrast against the light-theme SurfaceAlt
+                                         (#E9ECEF). -->
+                                    <Border Grid.Row="1" Grid.Column="0"
+                                            Background="{DynamicResource WarningNoticeBgBrush}"
+                                            CornerRadius="6"
+                                            Padding="8,6"
+                                            Margin="0,6,0,0"
+                                            HorizontalAlignment="Left"
+                                            IsVisible="{Binding !PortalOwnerEmailVerified}">
+                                        <TextBlock Text="{loc:Loc 'Verify your business email above to turn this on.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource WarningNoticeTextBrush}" />
+                                    </Border>
+
+                                    <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
+                                            Height="1" Margin="0,16,0,16"
+                                            Background="{DynamicResource BorderBrush}" />
+
+                                    <!-- Automatic overdue reminders, sent by the server. -->
+                                    <StackPanel Grid.Row="3" Grid.Column="0" Spacing="2"
+                                                MinHeight="40" VerticalAlignment="Center">
+                                        <TextBlock Text="{loc:Loc 'Automatic payment reminders'}"
+                                                   FontSize="14"
+                                                   FontWeight="Medium"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{loc:Loc 'Email customers 3, 7 and 14 days after an invoice becomes overdue. Reminders stop as soon as the invoice is paid or cancelled.'}"
+                                                   FontSize="12"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                                    </StackPanel>
+                                    <!-- Switch only, not the whole row: dimming the row would dim the sentence
+                                         explaining why it is off. -->
+                                    <ToggleSwitch Grid.Row="3" Grid.Column="1"
+                                                  Classes="settings-switch"
+                                                  Margin="0,0,16,0"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding PortalSendPaymentReminders}"
+                                                  IsEnabled="{Binding CanEditPaymentReminders}" />
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="{loc:Loc 'Only invoices that fall due from now on are chased, so turning this on will not email anyone about invoices that are already overdue. Record payments you take in cash or by cheque so those customers are not chased.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Margin="0,6,0,0"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding PortalSendPaymentReminders}" />
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="{loc:Loc 'Connect a payment provider first, so customers have a way to pay from the reminder.'}"
+                                               FontSize="12"
+                                               TextWrapping="Wrap"
+                                               Margin="0,6,0,0"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding !IsAnyPaymentProviderConnected}" />
+                                </Grid>
 
                                 <!-- Sync Interval -->
                                 <StackPanel Spacing="6" Margin="0,8,0,0" IsEnabled="{Binding !IsSampleCompany}">
@@ -1827,7 +1850,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                        <TextBlock TextWrapping="Wrap" Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -1957,7 +1980,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                        <TextBlock TextWrapping="Wrap" Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
@@ -2010,7 +2033,7 @@
                                 </Grid>
                             </Border>
                         </StackPanel>
-                        <TextBlock Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                        <TextBlock TextWrapping="Wrap" Text="{Binding PasswordError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                    IsVisible="{Binding PasswordError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                     <Border Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
