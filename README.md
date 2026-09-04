@@ -4,6 +4,8 @@
 
 **Argo Books** is easy-to-use accounting software with receipt scanning, predictive analytics, inventory management, and more. Everything you need to run your business. Available for Windows, macOS, and Linux. It's available for download at www.argorobots.com.
 
+Version 2.0 is a complete rewrite on [Avalonia UI](https://avaloniaui.net/). Versions 1.x were Windows-only and built on WinForms, and that codebase is preserved at [ArgoRobots/Argo-Books-WinForms](https://github.com/ArgoRobots/Argo-Books-WinForms).
+
 ## Features
 
 - **AI Receipt Scanning**: Take a photo of any receipt with your phone or upload from your computer. Our AI automatically extracts vendor, date, amount, and line items with 99% accuracy.
