@@ -18,6 +18,33 @@ public static class ImageFileLoader
     public sealed record PreparedImage(string Path, Bitmap Bitmap);
 
     /// <summary>
+    /// Where a converted copy is staged before the caller copies it into the company. The
+    /// caller keeps its own copy, so nothing here outlives the pick that produced it.
+    /// </summary>
+    private static string ConvertedDirectory { get; } = System.IO.Path.Combine(
+        System.IO.Path.GetTempPath(), "ArgoBooks", "PickedImages");
+
+    /// <summary>
+    /// Clears the staging directory. Called at startup rather than after each pick, because
+    /// the bitmap handed back is read from that file and the caller decides when it is done
+    /// with it. Every file here belongs to a pick from an earlier run and is already copied
+    /// into whichever company wanted it.
+    /// </summary>
+    public static void ClearConvertedCache()
+    {
+        try
+        {
+            if (Directory.Exists(ConvertedDirectory))
+                Directory.Delete(ConvertedDirectory, recursive: true);
+        }
+        catch
+        {
+            // A file still held open by something else is not worth failing a launch over;
+            // the next run tries again.
+        }
+    }
+
+    /// <summary>
     /// Returns null when the file cannot be turned into something drawable, which the caller
     /// must report rather than swallow.
     /// </summary>
@@ -37,12 +64,10 @@ public static class ImageFileLoader
                 return null;
 
             var converted = System.IO.Path.Combine(
-                System.IO.Path.GetTempPath(),
-                "ArgoBooks",
-                "PickedImages",
+                ConvertedDirectory,
                 $"{System.IO.Path.GetFileNameWithoutExtension(pickedPath)}_{Guid.NewGuid():N}.jpg");
 
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(converted)!);
+            Directory.CreateDirectory(ConvertedDirectory);
             File.WriteAllBytes(converted, asJpeg);
 
             return new PreparedImage(converted, new Bitmap(converted));

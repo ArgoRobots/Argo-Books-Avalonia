@@ -1555,6 +1555,10 @@ public partial class App : Application
 
             await ClearLegacyFileAssociationsAsync();
 
+            // Converted logo and avatar picks from earlier runs. Each one was copied into a
+            // company at the time, so the staged file has no reader left.
+            Helpers.ImageFileLoader.ClearConvertedCache();
+
             // Open the file the shell handed us (.argo double-click), or the last company
             // after an update restart
             await TryOpenStartupCompanyAsync();
