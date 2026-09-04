@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
@@ -51,12 +51,13 @@ public class TelemetryManager : ITelemetryManager
             left = _currentPage;
             // Active time is already idle-aware, so the difference across the visit is too.
             // Deriving it rather than running a second timer means one idle rule, not two
-            // that can disagree.
-            activeOnPage = _activeSeconds - _pageEnteredActiveSeconds;
+            // that can disagree. Subtracted as ticks and rounded once, so a visit is not
+            // charged the rounding of every input inside it.
+            activeOnPage = ToSeconds(_activeTicks - _pageEnteredActiveTicks);
             wallOnPage = (long)(now - _pageEnteredUtc).TotalSeconds;
 
             _currentPage = string.IsNullOrWhiteSpace(pageName) ? null : pageName;
-            _pageEnteredActiveSeconds = _activeSeconds;
+            _pageEnteredActiveTicks = _activeTicks;
             _pageEnteredUtc = now;
         }
 
@@ -92,15 +93,24 @@ public class TelemetryManager : ITelemetryManager
             // have been someone reading the screen rather than someone who walked away.
             // A longer gap contributes nothing at all, which is the whole point: it is why
             // an app left open overnight cannot inflate the figure.
+            //
+            // Accumulated in ticks rather than whole seconds. Clicks and keystrokes are
+            // usually a fraction of a second apart, and truncating each gap on its own
+            // threw all of that away: three keys a second measured as no activity at all,
+            // and one input every 1.5s as half the time it took. The faster someone
+            // worked, the less of their time was counted.
             var gap = now - _lastActivityUtc;
             if (gap > TimeSpan.Zero && gap <= IdleThreshold)
             {
-                _activeSeconds += (long)gap.TotalSeconds;
+                _activeTicks += gap.Ticks;
             }
 
             _lastActivityUtc = now;
         }
     }
+
+    /// <summary>Ticks to whole seconds, rounded once at the point of reporting.</summary>
+    private static long ToSeconds(long ticks) => ticks / TimeSpan.TicksPerSecond;
 
     /// <summary>
     /// How long a gap between inputs before the user is treated as away. Long enough that
@@ -113,9 +123,9 @@ public class TelemetryManager : ITelemetryManager
     private readonly object _activityLock = new();
     private DateTime _lastActivityUtc;
     private string? _currentPage;
-    private long _pageEnteredActiveSeconds;
+    private long _pageEnteredActiveTicks;
     private DateTime _pageEnteredUtc;
-    private long _activeSeconds;
+    private long _activeTicks;
     private DateTime _sessionStartTime;
     private GeoLocationData? _cachedGeoLocation;
     private bool _isInitialized;
@@ -173,7 +183,7 @@ public class TelemetryManager : ITelemetryManager
 
             _sessionStartTime = DateTime.UtcNow;
             _lastActivityUtc = _sessionStartTime;
-            _activeSeconds = 0;
+            _activeTicks = 0;
             _currentPage = null;
             _isInitialized = true;
 
@@ -242,7 +252,7 @@ public class TelemetryManager : ITelemetryManager
             long activeSeconds;
             lock (_activityLock)
             {
-                activeSeconds = _activeSeconds;
+                activeSeconds = ToSeconds(_activeTicks);
             }
 
             // finalPage, not _currentPage: flushing the last page view cleared the latter.
