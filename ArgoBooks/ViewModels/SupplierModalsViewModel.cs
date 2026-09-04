@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
@@ -801,6 +801,8 @@ public partial class SupplierModalsViewModel : ViewModelBase
                     usages.Add("Purchase Order".Translate());
                 if (cd.Returns.Any(r => r.SupplierId == item.Id))
                     usages.Add("Return".Translate());
+                if (RecurringTransactionService.IsSupplierInUse(cd, item.Id))
+                    usages.Add("Recurring Expense".Translate());
                 if (usages.Count > 0)
                 {
                     await App.ShowWarningMessageBoxAsync(

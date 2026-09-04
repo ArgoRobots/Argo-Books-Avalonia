@@ -1,5 +1,6 @@
-using ArgoBooks.Core.Data;
+﻿using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using Xunit;
@@ -278,4 +279,81 @@ public class RecurringTransactionServiceTests
         Assert.False(entry.IsPendingConversion);
         Assert.Empty(data.PendingConversions);
     }
+
+    #region In-use checks
+
+    /// <summary>
+    /// A schedule outliving its counterparty keeps generating entries against a record that is
+    /// gone, so the delete guards have to see the reference even though it sits on the template
+    /// rather than on the schedule itself.
+    /// </summary>
+    [Fact]
+    public void IsCustomerInUse_SeesTheCustomerOnARevenueTemplate()
+    {
+        var data = new CompanyData();
+        data.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00001",
+            Type = CategoryType.Revenue,
+            RevenueTemplate = new Revenue { CustomerId = "CUS-001" }
+        });
+
+        Assert.True(RecurringTransactionService.IsCustomerInUse(data, "CUS-001"));
+        Assert.False(RecurringTransactionService.IsCustomerInUse(data, "CUS-002"));
+        Assert.False(RecurringTransactionService.IsCustomerInUse(data, string.Empty));
+    }
+
+    [Fact]
+    public void IsSupplierInUse_SeesTheSupplierOnAnExpenseTemplate()
+    {
+        var data = new CompanyData();
+        data.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00002",
+            Type = CategoryType.Expense,
+            ExpenseTemplate = new Expense { SupplierId = "SUP-001" }
+        });
+
+        Assert.True(RecurringTransactionService.IsSupplierInUse(data, "SUP-001"));
+        Assert.False(RecurringTransactionService.IsSupplierInUse(data, "SUP-002"));
+    }
+
+    /// <summary>A product can sit on either side, so both templates are searched.</summary>
+    [Fact]
+    public void IsProductInUse_SeesLineItemsOnEitherTemplate()
+    {
+        var expenseSide = new CompanyData();
+        expenseSide.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00003",
+            Type = CategoryType.Expense,
+            ExpenseTemplate = new Expense { LineItems = [new LineItem { ProductId = "PRD-001" }] }
+        });
+
+        var revenueSide = new CompanyData();
+        revenueSide.RecurringTransactions.Add(new RecurringTransaction
+        {
+            Id = "REC-TXN-00004",
+            Type = CategoryType.Revenue,
+            RevenueTemplate = new Revenue { LineItems = [new LineItem { ProductId = "PRD-001" }] }
+        });
+
+        Assert.True(RecurringTransactionService.IsProductInUse(expenseSide, "PRD-001"));
+        Assert.True(RecurringTransactionService.IsProductInUse(revenueSide, "PRD-001"));
+        Assert.False(RecurringTransactionService.IsProductInUse(expenseSide, "PRD-002"));
+    }
+
+    /// <summary>A schedule with no template at all must not be read as using everything.</summary>
+    [Fact]
+    public void InUseChecks_TolerateAnEmptySchedule()
+    {
+        var data = new CompanyData();
+        data.RecurringTransactions.Add(new RecurringTransaction { Id = "REC-TXN-00005" });
+
+        Assert.False(RecurringTransactionService.IsCustomerInUse(data, "CUS-001"));
+        Assert.False(RecurringTransactionService.IsSupplierInUse(data, "SUP-001"));
+        Assert.False(RecurringTransactionService.IsProductInUse(data, "PRD-001"));
+    }
+
+    #endregion
 }

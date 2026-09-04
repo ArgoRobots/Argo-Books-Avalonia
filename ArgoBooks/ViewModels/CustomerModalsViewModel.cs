@@ -1,4 +1,4 @@
-using ArgoBooks.Controls;
+﻿using ArgoBooks.Controls;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.ViewModels;
 
@@ -855,6 +856,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
                     usages.Add("Rental".Translate());
                 if (cd.RecurringInvoices.Any(ri => ri.CustomerId == item.Id))
                     usages.Add("Recurring Invoice".Translate());
+                if (RecurringTransactionService.IsCustomerInUse(cd, item.Id))
+                    usages.Add("Recurring Revenue".Translate());
                 if (cd.Payments.Any(p => p.CustomerId == item.Id))
                     usages.Add("Payment".Translate());
                 if (cd.Returns.Any(r => r.CustomerId == item.Id))

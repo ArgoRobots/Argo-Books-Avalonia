@@ -1,4 +1,4 @@
-using ArgoBooks.Core.Data;
+﻿using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Transactions;
@@ -100,6 +100,34 @@ public static class RecurringTransactionService
 
         return generated;
     }
+
+    /// <summary>
+    /// Whether any schedule would be left pointing at nothing if this customer went away.
+    ///
+    /// <para>
+    /// The reference lives on the template rather than on the schedule, and the template is what
+    /// each occurrence is cloned from, so a schedule outliving its counterparty keeps generating
+    /// entries against a record that no longer exists. The delete guards ask through here rather
+    /// than reaching into the templates themselves, so the three of them cannot answer this
+    /// differently.
+    /// </para>
+    /// </summary>
+    public static bool IsCustomerInUse(CompanyData data, string customerId) =>
+        !string.IsNullOrEmpty(customerId) && data.RecurringTransactions.Any(
+            s => s.RevenueTemplate?.CustomerId == customerId);
+
+    /// <inheritdoc cref="IsCustomerInUse"/>
+    public static bool IsSupplierInUse(CompanyData data, string supplierId) =>
+        !string.IsNullOrEmpty(supplierId) && data.RecurringTransactions.Any(
+            s => s.ExpenseTemplate?.SupplierId == supplierId);
+
+    /// <inheritdoc cref="IsCustomerInUse"/>
+    public static bool IsProductInUse(CompanyData data, string productId) =>
+        !string.IsNullOrEmpty(productId) && data.RecurringTransactions.Any(
+            s => Uses(s.ExpenseTemplate, productId) || Uses(s.RevenueTemplate, productId));
+
+    private static bool Uses(Transaction? template, string productId) =>
+        template != null && template.LineItems.Any(li => li.ProductId == productId);
 
     /// <summary>
     /// Records an occurrence as skipped. Undoing a generated entry calls this, so undo means
