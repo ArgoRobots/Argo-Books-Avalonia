@@ -1,5 +1,7 @@
-using ArgoBooks.Core.Data;
+﻿using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
@@ -263,6 +265,102 @@ public class CompanyManagerTests : IDisposable
             var schedule = data.RecurringInvoices[0];
             Assert.Equal("CUST-2", schedule.CustomerId);
             Assert.Equal("CUST-2", schedule.Template!.CustomerId);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    /// <summary>
+    /// A recurring transaction keeps the same kind of template as a recurring invoice, and every
+    /// occurrence is cloned from it, so a counterparty left on the old id would be inherited by
+    /// every entry generated from then on.
+    /// </summary>
+    [Fact]
+    public async Task ChangeCustomerId_CascadesToRecurringTransactionTemplate()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(path, "Acme");
+            var data = _manager.CompanyData!;
+            var customer = new Customer { Id = "CUST-1", Name = "Acme Corp" };
+            data.Customers.Add(customer);
+            data.RecurringTransactions.Add(new RecurringTransaction
+            {
+                Id = "REC-TXN-00001",
+                Type = CategoryType.Revenue,
+                RevenueTemplate = new Revenue { CustomerId = "CUST-1" }
+            });
+
+            _manager.ChangeCustomerId(customer, "CUST-2");
+
+            Assert.Equal("CUST-2", data.RecurringTransactions[0].RevenueTemplate!.CustomerId);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task ChangeSupplierId_CascadesToRecurringTransactionTemplate()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(path, "Acme");
+            var data = _manager.CompanyData!;
+            var supplier = new Supplier { Id = "SUP-1", Name = "Landlord" };
+            data.Suppliers.Add(supplier);
+            data.RecurringTransactions.Add(new RecurringTransaction
+            {
+                Id = "REC-TXN-00002",
+                Type = CategoryType.Expense,
+                ExpenseTemplate = new Expense { SupplierId = "SUP-1" }
+            });
+
+            _manager.ChangeSupplierId(supplier, "SUP-2");
+
+            Assert.Equal("SUP-2", data.RecurringTransactions[0].ExpenseTemplate!.SupplierId);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    /// <summary>Line items inside either kind of schedule's template follow a product rename too.</summary>
+    [Fact]
+    public async Task ChangeProductId_CascadesIntoBothScheduleTemplates()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(path, "Acme");
+            var data = _manager.CompanyData!;
+            var product = new Product { Id = "PRD-1", Name = "Rent" };
+            data.Products.Add(product);
+            data.RecurringInvoices.Add(new RecurringInvoice
+            {
+                Id = "REC-INV-00002",
+                Template = new Invoice { LineItems = [new LineItem { ProductId = "PRD-1" }] }
+            });
+            data.RecurringTransactions.Add(new RecurringTransaction
+            {
+                Id = "REC-TXN-00003",
+                Type = CategoryType.Expense,
+                ExpenseTemplate = new Expense { LineItems = [new LineItem { ProductId = "PRD-1" }] }
+            });
+
+            _manager.ChangeProductId(product, "PRD-2");
+
+            Assert.Equal("PRD-2", data.RecurringInvoices[0].Template!.LineItems[0].ProductId);
+            Assert.Equal("PRD-2", data.RecurringTransactions[0].ExpenseTemplate!.LineItems[0].ProductId);
         }
         finally
         {
