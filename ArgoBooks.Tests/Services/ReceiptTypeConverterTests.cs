@@ -255,6 +255,75 @@ public class ReceiptTypeConverterTests
         Assert.Contains(data.Categories, c => c.Id == existing.Id);
     }
 
+    /// <summary>
+    /// A transaction entered without its date's rate carries the pending flag and a queued
+    /// conversion. The switch copies the flag onto the replacement, so the queue has to follow
+    /// or the rate arrives, finds nothing, and leaves the replacement reporting zero in USD
+    /// for good.
+    /// </summary>
+    [Fact]
+    public void Switch_MovesAQueuedConversionOntoTheNewTransaction()
+    {
+        var (data, receipt) = WithExpenseReceipt();
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = "PUR-2026-00007", TransactionType = "Expense", OriginalCurrency = "CAD"
+        });
+
+        var result = ReceiptTypeConverter.Switch(data, receipt);
+
+        var entry = Assert.Single(data.PendingConversions);
+        Assert.Equal(result.Created.Id, entry.TransactionId);
+        Assert.Equal("Revenue", entry.TransactionType);
+    }
+
+    [Fact]
+    public void Revert_PutsAQueuedConversionBackOnTheOriginal()
+    {
+        var (data, receipt) = WithExpenseReceipt();
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = "PUR-2026-00007", TransactionType = "Expense", OriginalCurrency = "CAD"
+        });
+
+        var result = ReceiptTypeConverter.Switch(data, receipt);
+        ReceiptTypeConverter.Revert(data, receipt, result);
+
+        var entry = Assert.Single(data.PendingConversions);
+        Assert.Equal("PUR-2026-00007", entry.TransactionId);
+        Assert.Equal("Expense", entry.TransactionType);
+    }
+
+    [Fact]
+    public void Reapply_MovesAQueuedConversionForwardAgain()
+    {
+        var (data, receipt) = WithExpenseReceipt();
+        data.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = "PUR-2026-00007", TransactionType = "Expense", OriginalCurrency = "CAD"
+        });
+
+        var result = ReceiptTypeConverter.Switch(data, receipt);
+        ReceiptTypeConverter.Revert(data, receipt, result);
+        ReceiptTypeConverter.Reapply(data, receipt, result);
+
+        var entry = Assert.Single(data.PendingConversions);
+        Assert.Equal(result.Created.Id, entry.TransactionId);
+        Assert.Equal("Revenue", entry.TransactionType);
+    }
+
+    /// <summary>A switch with nothing queued must not invent an entry.</summary>
+    [Fact]
+    public void Switch_LeavesTheQueueAloneWhenNothingIsPending()
+    {
+        var (data, receipt) = WithExpenseReceipt();
+
+        var result = ReceiptTypeConverter.Switch(data, receipt);
+
+        Assert.Null(result.MovedConversion);
+        Assert.Empty(data.PendingConversions);
+    }
+
     /// <summary>The reused category is still what the new products are filed under.</summary>
     [Fact]
     public void Switch_FilesNewProductsUnderTheExistingCategory()

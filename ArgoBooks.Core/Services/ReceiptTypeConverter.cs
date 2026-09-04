@@ -29,7 +29,8 @@ public sealed record ReceiptSwitchResult(
     Supplier? CreatedSupplier,
     Customer? CreatedCustomer,
     Category? CreatedCategory,
-    IReadOnlyList<Product> CreatedProducts);
+    IReadOnlyList<Product> CreatedProducts,
+    PendingConversion? MovedConversion);
 
 /// <summary>
 /// Moves the transaction behind a receipt from one side of the books to the other. A receipt only
@@ -133,9 +134,35 @@ public static class ReceiptTypeConverter
         receipt.TransactionId = created.Id;
         receipt.TransactionType = toRevenue ? Revenue : Expense;
 
+        var moved = MoveConversion(data, existing.Id, created.Id, receipt.TransactionType);
+
         return new ReceiptSwitchResult(
             existing, created, toRevenue ? Expense : Revenue,
-            createdSupplier, createdCustomer, createdCategory, createdProducts);
+            createdSupplier, createdCustomer, createdCategory, createdProducts, moved);
+    }
+
+    /// <summary>
+    /// Re-points a queued currency conversion at the transaction that replaced the one it was
+    /// raised for.
+    ///
+    /// <para>
+    /// A transaction entered without its date's rate on hand carries IsPendingConversion and a
+    /// row in the queue, and the switch copies that flag onto the replacement. The row still
+    /// named the transaction the switch deleted, so when the rate finally arrived it found
+    /// nothing, dropped the row as done, and left the replacement flagged forever. A pending
+    /// transaction reports zero in USD, so it counted as nothing in every report rather than
+    /// merely looking unfinished.
+    /// </para>
+    /// </summary>
+    private static PendingConversion? MoveConversion(
+        CompanyData data, string fromId, string toId, string toType)
+    {
+        var entry = data.PendingConversions.FirstOrDefault(p => p.TransactionId == fromId);
+        if (entry == null) return null;
+
+        entry.TransactionId = toId;
+        entry.TransactionType = toType;
+        return entry;
     }
 
     /// <summary>Puts back exactly what <see cref="Switch"/> replaced.</summary>
@@ -153,6 +180,12 @@ public static class ReceiptTypeConverter
         result.Removed.ReceiptId = receipt.Id;
         receipt.TransactionId = result.Removed.Id;
         receipt.TransactionType = result.PreviousType;
+
+        if (result.MovedConversion != null)
+        {
+            result.MovedConversion.TransactionId = result.Removed.Id;
+            result.MovedConversion.TransactionType = result.PreviousType;
+        }
     }
 
     /// <summary>Re-applies a switch that <see cref="Revert"/> undid, reusing the same records.</summary>
@@ -173,6 +206,12 @@ public static class ReceiptTypeConverter
         result.Created.ReceiptId = receipt.Id;
         receipt.TransactionId = result.Created.Id;
         receipt.TransactionType = result.PreviousType == Expense ? Revenue : Expense;
+
+        if (result.MovedConversion != null)
+        {
+            result.MovedConversion.TransactionId = result.Created.Id;
+            result.MovedConversion.TransactionType = receipt.TransactionType;
+        }
     }
 
     /// <summary>
