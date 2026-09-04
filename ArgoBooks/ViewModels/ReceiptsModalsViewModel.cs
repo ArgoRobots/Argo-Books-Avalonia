@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -851,7 +851,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // knows what to try instead.
         return added > 0
             ? $"{added} added. {skipped}."
-            : $"{skipped}. Supported formats: JPEG, PNG, WebP, PDF.";
+            : $"{skipped}. Supported formats: {FilePickerTypes.SupportedReceiptFormats}.";
     }
 
     private static async Task GenerateQueuePreviewAsync(BulkScanItem item)
@@ -3498,15 +3498,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         };
     }
 
+    /// <summary>
+    /// The content type stored on a receipt. Accepted formats come from the shared list, so a
+    /// new one is typed correctly here without a second edit. The two below are not offered by
+    /// the picker but can still arrive on a receipt carried over from an import.
+    /// </summary>
     private static string GetMimeType(string fileName)
     {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        return extension switch
+        var known = FilePickerTypes.GetReceiptContentType(fileName);
+        if (known != null) return known;
+
+        return Path.GetExtension(fileName).ToLowerInvariant() switch
         {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".webp" => "image/webp",
-            ".pdf" => "application/pdf",
             ".bmp" => "image/bmp",
             ".gif" => "image/gif",
             _ => "application/octet-stream"

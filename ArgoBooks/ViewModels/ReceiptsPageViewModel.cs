@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Portal;
@@ -367,7 +367,7 @@ public partial class ReceiptsPageViewModel : ViewModelBase, ICleanupViewModel
         {
             await App.ShowWarningMessageBoxAsync(
                 Loc.Tr("Invalid File"),
-                Loc.Tr("Please drop JPEG, PNG, WebP, or PDF files."));
+                Loc.Tr("Please drop {0} files.", FilePickerTypes.SupportedReceiptFormats));
             return;
         }
 
