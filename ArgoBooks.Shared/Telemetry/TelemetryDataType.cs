@@ -42,6 +42,12 @@ public enum TelemetryDataType
     Startup,
 
     /// <summary>
+    /// How much is in the open company file. Counts only, so unlike CompanyProfile this stays
+    /// anonymous. Separates a file someone is evaluating from one they run a business on.
+    /// </summary>
+    CompanyScale,
+
+    /// <summary>
     /// One visit to one screen, with how long it held attention. Its own type rather than a
     /// feature, because navigating is not a feature and would swamp the ones that are.
     /// </summary>

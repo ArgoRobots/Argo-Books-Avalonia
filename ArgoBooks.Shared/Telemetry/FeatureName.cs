@@ -66,6 +66,28 @@ public enum FeatureName
     CompanyCreateOpened,
     ReceiptScanOpened,
     InvoiceCreateOpened,
+    ExpenseCreateOpened,
+    RevenueCreateOpened,
+    ReportOpened,
+
+    // The import funnel. The stage or reason travels in the context string, so a new failure
+    // mode needs neither a new enum value nor a server change.
+    ImportOpened,
+    ImportPreviewShown,
+    ImportAbandoned,
+    ImportFailed,
+
+    ReceiptScanFailed,
+
+    // The paywall. Shown is the wall someone hit, opened is them acting on it; the limit or
+    // entry point is in the context on both, so the pair divides into a conversion rate.
+    UpgradePromptShown,
+    UpgradeModalOpened,
+
+    /// <summary>A list rendered with nothing in it, with the page in the context.</summary>
+    EmptyStateShown,
+
+    WelcomeShown,
 
     // Payroll reported only its exceptions, so a company could run payroll all year and file
     // its T4s without producing a single event. Zero errors read the same as nobody opening

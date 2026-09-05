@@ -91,6 +91,23 @@ public partial class App
                         companySettings.Company.Country,
                         companySettings.Localization.Currency,
                         companySettings.Localization.Language);
+
+                    var data = CompanyManager.CompanyData;
+                    if (data != null)
+                    {
+                        _ = TelemetryManager?.TrackCompanyScaleAsync(new CompanyScaleCounts(
+                            data.Expenses.Count,
+                            data.Revenues.Count,
+                            data.Invoices.Count,
+                            data.Payments.Count,
+                            data.Customers.Count,
+                            data.Suppliers.Count,
+                            data.Products.Count,
+                            data.Categories.Count,
+                            data.Receipts.Count,
+                            data.Employees.Count,
+                            data.BankImportSessions.Sum(session => session.Lines.Count)));
+                    }
                 }
 
                 var language = companySettings.Localization.Language;
@@ -1661,6 +1678,7 @@ public partial class App
             // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportFailed, $"format-unavailable:{format}");
                 await ShowInfoMessageBoxAsync("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
                 return;
             }
@@ -1687,7 +1705,11 @@ public partial class App
                 ]
             });
 
-            if (file.Count == 0) return;
+            if (file.Count == 0)
+            {
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "file-picker");
+                return;
+            }
 
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;

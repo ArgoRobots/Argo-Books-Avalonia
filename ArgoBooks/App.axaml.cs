@@ -853,8 +853,11 @@ public partial class App : Application
     /// <summary>
     /// Opens the upgrade modal from anywhere in the app.
     /// </summary>
-    public static void OpenUpgradeModal()
+    /// <param name="source">Where it was opened from, recorded so a limit someone hit is
+    /// separable from a deliberate visit.</param>
+    public static void OpenUpgradeModal(string source = "unknown")
     {
+        _ = TelemetryManager?.TrackFeatureAsync(FeatureName.UpgradeModalOpened, source);
         _appShellViewModel?.UpgradeModalViewModel.OpenCommand.Execute(null);
     }
 
@@ -1303,6 +1306,10 @@ public partial class App : Application
                 lastTrackedPage = e.PageName;
                 // Raises the PageView event for the page being left, timed and idle-aware.
                 TelemetryManager?.NoteCurrentPage(e.PageName);
+
+                // The registered page name; Reports has no PageNames constant.
+                if (e.PageName == "Reports")
+                    _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ReportOpened);
             };
 
             // Chart text (axis labels, titles, legends) is drawn by LiveCharts with
@@ -1581,6 +1588,10 @@ public partial class App : Application
             if (TelemetryManager != null)
             {
                 await TelemetryManager.InitializeAsync();
+
+                // After InitializeAsync, or the event has no session to land in.
+                if (_mainWindowViewModel?.ShowWelcomeScreen == true)
+                    MainWindowViewModel.ReportWelcomeShown();
             }
 
             // Deliver anything a previous run left behind because it didn't close
@@ -2297,6 +2308,7 @@ public partial class App : Application
             catch (Exception ex)
             {
                 _mainWindowViewModel?.HideLoading();
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportFailed, "xls-convert");
                 ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to convert legacy .xls file for import");
                 await ShowErrorMessageBoxAsync(
                     "Import Failed".Translate(),
@@ -2316,6 +2328,11 @@ public partial class App : Application
             // A populated ErrorMessage means the usage check couldn't complete (offline or
             // server unreachable) rather than a real limit being hit, so show the connection
             // error instead of a misleading "0/0" import-limit prompt.
+            // "quota" is the monthly limit; "usage-check" is the server being unreachable.
+            _ = TelemetryManager?.TrackFeatureAsync(
+                FeatureName.ImportFailed,
+                string.IsNullOrEmpty(usageCheck.ErrorMessage) ? "quota" : "usage-check");
+
             if (!string.IsNullOrEmpty(usageCheck.ErrorMessage))
             {
                 await UpgradePromptHelper.ShowUsageCheckFailedAsync(usageCheck.ErrorMessage);
@@ -2334,6 +2351,7 @@ public partial class App : Application
         if (!geminiService.IsConfigured)
         {
             _mainWindowViewModel?.HideLoading();
+            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportFailed, "not-configured");
             await ShowErrorMessageBoxAsync(
                 "AI Not Configured".Translate(),
                 "AI-powered import requires portal access. Please register your company first.".Translate());
@@ -2407,10 +2425,17 @@ public partial class App : Application
 
             // Step 2: Show mapping review dialog
             var mappingDialog = _appShellViewModel.ImportMappingDialogViewModel;
+
+            _ = TelemetryManager?.TrackFeatureAsync(
+                FeatureName.ImportPreviewShown, $"sheets:{analysis.Sheets.Count(sh => sh.IsIncluded)}");
+
             var dialogResult = await mappingDialog.ShowAsync(analysis, usageCheck.Remaining, usageCheck.MonthlyLimit);
 
             if (dialogResult == ImportMappingDialogResult.Cancel)
+            {
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "mapping");
                 return;
+            }
 
             // Get user-updated analysis (they may have changed entity types or excluded sheets)
             var updatedAnalysis = mappingDialog.GetUpdatedAnalysis();
@@ -2420,6 +2445,7 @@ public partial class App : Application
             var includedSheets = updatedAnalysis.Sheets.Where(s => s.IsIncluded).ToList();
             if (includedSheets.Count == 0)
             {
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "no-sheets");
                 await ShowInfoMessageBoxAsync("Info".Translate(), "No sheets were selected for import.".Translate());
                 return;
             }
@@ -2453,7 +2479,10 @@ public partial class App : Application
                     var currencyDialog = _appShellViewModel.CurrencyAmbiguityDialogViewModel;
                     var currencyResult = await currencyDialog.ShowAsync(currencyScan.Ambiguities, companyCurrency);
                     if (currencyResult == CurrencyAmbiguityDialogResult.Cancel)
+                    {
+                        _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "currency-prompt");
                         return;
+                    }
 
                     CurrencyImportPreparer.ApplyResolution(currencyScan, currencyDialog.Resolution);
                     importOptions.SymbolResolution = currencyDialog.Resolution
@@ -2492,6 +2521,7 @@ public partial class App : Application
                         catch (OperationCanceledException)
                         {
                             _mainWindowViewModel?.HideLoading();
+                            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "rate-fetch");
                             return; // user canceled while fetching rates
                         }
                         catch (Exception ex)
@@ -2513,7 +2543,10 @@ public partial class App : Application
                         _mainWindowViewModel?.HideLoading();
                         var choice = await _appShellViewModel.RateUnavailableDialogViewModel.ShowAsync(readiness.Reason);
                         if (choice == RateRetryResult.Cancel)
+                        {
+                            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "rates-unavailable");
                             return; // abort: nothing imported
+                        }
                         _mainWindowViewModel?.ShowLoading("Fetching exchange rates...".Translate(), null, 0, rateCts, ConfirmCancelAsync);
                     }
 
@@ -2556,13 +2589,20 @@ public partial class App : Application
                         var valResult = await validationDialog.ShowAsync(validationResult);
 
                         if (valResult == ImportValidationDialogResult.Cancel)
+                        {
+                            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "validation-prompt");
                             return;
+                        }
 
                         if (valResult == ImportValidationDialogResult.CreateMissingAndImport)
                             importOptions.AutoCreateMissingReferences = true;
 
                         if (validationResult.Errors.Count > 0)
+                        {
+                            _ = TelemetryManager?.TrackFeatureAsync(
+                                FeatureName.ImportFailed, $"validation-errors:{validationResult.Errors.Count}");
                             return;
+                        }
                     }
                 }
 
@@ -2812,10 +2852,12 @@ public partial class App : Application
         catch (OperationCanceledException)
         {
             _mainWindowViewModel?.HideLoading();
+            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "cancelled");
         }
         catch (Exception ex)
         {
             _mainWindowViewModel?.HideLoading();
+            _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportFailed, "exception");
             ErrorLogger?.LogError(ex, ErrorCategory.Import, "Failed to perform AI import");
             var errorDialog = ConfirmationDialog;
             if (errorDialog != null)

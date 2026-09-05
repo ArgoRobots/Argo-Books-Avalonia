@@ -110,7 +110,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
     [RelayCommand]
     private void Upgrade()
     {
-        App.OpenUpgradeModal();
+        App.OpenUpgradeModal("insights");
     }
 
     /// <summary>

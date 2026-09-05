@@ -73,6 +73,14 @@ public interface ITelemetryManager
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Records how much is in the open company file. Ignores repeat calls for the same company
+    /// within a session, so callers can fire it from the company-opened path, which also runs
+    /// on save and on returning from settings. Not called for the sample company: its contents
+    /// ship with the demo file and are identical on every install.
+    /// </summary>
+    Task TrackCompanyScaleAsync(CompanyScaleCounts counts, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Records how long this launch took. Called once, when the main window opens.
     /// </summary>
     Task TrackStartupAsync(

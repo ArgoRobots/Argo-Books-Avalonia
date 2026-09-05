@@ -133,6 +133,10 @@ Rules:
             {
                 // The server's own words when it gave any. It names the monthly allowance, the
                 // reset date, and which limit was hit, none of which the caller could work out.
+                _ = telemetryManager?.TrackFeatureAsync(
+                    FeatureName.ReceiptScanFailed,
+                    response.Code is { Length: > 0 } ? $"no-content:{response.Code}" : "no-content",
+                    cancellationToken: cancellationToken);
                 return ReceiptScanResult.Failed(
                     response.Message ?? "No response from the AI service. Please try again.",
                     response.Code);
@@ -154,6 +158,8 @@ Rules:
                     "GeminiReceiptScannerService.ScanReceiptAsync",
                     ErrorCategory.Api,
                     "ReceiptScanRejected");
+                _ = telemetryManager?.TrackFeatureAsync(
+                    FeatureName.ReceiptScanFailed, "rejected", cancellationToken: cancellationToken);
             }
             else if (result.LineItems.Count == 0)
             {
@@ -164,6 +170,8 @@ Rules:
                     "GeminiReceiptScannerService.ScanReceiptAsync",
                     ErrorCategory.Api,
                     "ReceiptScanNoLineItems");
+                _ = telemetryManager?.TrackFeatureAsync(
+                    FeatureName.ReceiptScanFailed, "no-line-items", cancellationToken: cancellationToken);
             }
 
             if (result.IsSuccess && result.LineItems.Count > 0)
@@ -194,16 +202,19 @@ Rules:
                 "GeminiReceiptScannerService.ScanReceiptAsync",
                 ErrorCategory.Api,
                 "ReceiptScanTimeout");
+            _ = telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanFailed, "timeout");
             return ReceiptScanResult.Failed("The scan took too long to complete. Please try again.");
         }
         catch (HttpRequestException ex)
         {
             errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan network error");
+            _ = telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanFailed, "network");
             return ReceiptScanResult.Failed("Network error: unable to reach the scanning service. Please check your internet connection.");
         }
         catch (Exception ex)
         {
             errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt scan failed");
+            _ = telemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanFailed, "exception");
             return ReceiptScanResult.Failed("Failed to scan receipt. Please try again.");
         }
         finally

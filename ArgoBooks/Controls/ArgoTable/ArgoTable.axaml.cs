@@ -5,9 +5,11 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using ArgoBooks.Controls.ColumnWidths;
+using ArgoBooks.Core.Models.Telemetry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls.ArgoTable;
@@ -550,6 +552,31 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Pages already reported this session. A list empties and refills many times in one visit
+    /// (loading, paging, deleting the last row); the signal is that it was seen, not how often.
+    /// </summary>
+    private static readonly HashSet<string> ReportedEmptyPages = new(StringComparer.Ordinal);
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        ReportEmptyStateIfNeeded();
+    }
+
+    private void ReportEmptyStateIfNeeded()
+    {
+        // No matches is not the same as no data.
+        if (!IsEmpty || !string.IsNullOrWhiteSpace(SearchQuery))
+            return;
+
+        var page = App.NavigationService?.CurrentPageName;
+        if (string.IsNullOrWhiteSpace(page) || !ReportedEmptyPages.Add(page))
+            return;
+
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.EmptyStateShown, page);
+    }
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -557,6 +584,7 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
         if (change.Property == ItemsSourceProperty)
         {
             RaisePropertyChanged(nameof(IsEmpty));
+            ReportEmptyStateIfNeeded();
 
             if (change.OldValue is INotifyCollectionChanged oldCollection)
                 oldCollection.CollectionChanged -= OnItemsCollectionChanged;
@@ -590,6 +618,7 @@ public partial class ArgoTable : UserControl, INotifyPropertyChanged
     private void OnItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         RaisePropertyChanged(nameof(IsEmpty));
+        ReportEmptyStateIfNeeded();
     }
 
     private void OnColumnWidthsPropertyChanged(object? sender, PropertyChangedEventArgs e)

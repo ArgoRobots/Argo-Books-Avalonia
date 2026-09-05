@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Models;
+using ArgoBooks.Core.Models.Telemetry;
 using Avalonia.Controls;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -452,5 +453,15 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         CurrentCompanyName = null;
         ShowWelcomeScreen = true;
+        ReportWelcomeShown();
+    }
+
+    /// <summary>
+    /// Called explicitly rather than from a property-changed hook: the property starts true, so
+    /// launch raises no notification, and telemetry is not up yet when the window first draws.
+    /// </summary>
+    public static void ReportWelcomeShown()
+    {
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.WelcomeShown);
     }
 }

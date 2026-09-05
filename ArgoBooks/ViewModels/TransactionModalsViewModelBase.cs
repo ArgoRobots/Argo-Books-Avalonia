@@ -4,6 +4,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
@@ -563,6 +564,11 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [RelayCommand]
     public void OpenAddModal()
     {
+        _ = App.TelemetryManager?.TrackFeatureAsync(
+            CategoryTypeFilter == CategoryType.Expense
+                ? FeatureName.ExpenseCreateOpened
+                : FeatureName.RevenueCreateOpened);
+
         LoadCounterpartyOptions();
         LoadCategoryOptions();
         LoadProductOptions();
@@ -882,6 +888,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (LineItems.Count == 0)
         {
+            ReportValidationBlock("no-line-items");
             ValidationMessage = "Please add at least one line item.".Translate();
             HasValidationMessage = true;
             return;
@@ -900,6 +907,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
         if (hasProductErrors)
         {
+            ReportValidationBlock("line-item-missing-product");
             ValidationMessage = "Please select a product for all line items".Translate();
             HasValidationMessage = true;
             ScrollToLineItemsRequested?.Invoke(this, EventArgs.Empty);
@@ -929,6 +937,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     if (exchangeService == null)
                     {
                         HasSaveError = true;
+                        ReportValidationBlock("no-exchange-rate-service");
                         SaveErrorMessage = "Exchange rate service is not available. Please restart the application.".Translate();
                         return;
                     }
@@ -1081,6 +1090,20 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ConvertedFee = null;
         IsPendingConversion = false;
         ClearValidationErrors();
+    }
+
+    /// <summary>
+    /// Records a save the app refused. Warning rather than Error because the server keeps the
+    /// message on a warning and drops it on an error, and the rule that fired is the point.
+    /// Carries the rule, never the value that failed it.
+    /// </summary>
+    private void ReportValidationBlock(string reason)
+    {
+        App.ErrorLogger?.LogWarning(
+            $"Save refused on the {TransactionTypeName} form: {reason}",
+            $"{TransactionTypeName}Modal.SaveTransactionAsync",
+            ErrorCategory.Validation,
+            reason);
     }
 
     protected void ClearValidationErrors()

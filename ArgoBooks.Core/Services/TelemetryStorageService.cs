@@ -516,6 +516,11 @@ public class TelemetryStorageService : ITelemetryStorageService
                 TelemetryDataType.FeatureUsage => JsonSerializer.Deserialize<FeatureUsageEvent>(json, options),
                 TelemetryDataType.CompanyProfile => JsonSerializer.Deserialize<CompanyProfileEvent>(json, options),
                 TelemetryDataType.Startup => JsonSerializer.Deserialize<StartupEvent>(json, options),
+                TelemetryDataType.PageView => JsonSerializer.Deserialize<PageViewEvent>(json, options),
+                TelemetryDataType.CompanyScale => JsonSerializer.Deserialize<CompanyScaleEvent>(json, options),
+                // Writing uses the runtime type, so a type missing here still reaches disk and
+                // is then dropped on the next launch: pending events survive a restart only if
+                // they can be read back. Add every new event type in both places.
                 _ => null
             };
         }

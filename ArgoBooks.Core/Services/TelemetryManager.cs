@@ -140,6 +140,7 @@ public class TelemetryManager : ITelemetryManager
     // reasonable refresh rate for details the user can edit at any time.
     private readonly HashSet<string> _reportedCompanyProfiles = [];
     private readonly Lock _profileGate = new();
+    private readonly HashSet<string> _reportedCompanyScales = [];
 
     /// <summary>
     /// Initializes a new instance of the TelemetryManager.
@@ -403,6 +404,42 @@ public class TelemetryManager : ITelemetryManager
         catch (Exception ex)
         {
             _errorLogger.LogDebug($"Failed to track page view: {ex.Message}");
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task TrackCompanyScaleAsync(CompanyScaleCounts counts, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Keyed on the counts themselves rather than the company, so the row is written
+            // again only when the file has actually changed size. Repeated saves that add
+            // nothing record nothing.
+            lock (_profileGate)
+            {
+                if (!_reportedCompanyScales.Add(counts.ToString()))
+                {
+                    return;
+                }
+            }
+
+            var scaleEvent = await CreateEventAsync<CompanyScaleEvent>(cancellationToken);
+            scaleEvent.Expenses = counts.Expenses;
+            scaleEvent.Revenues = counts.Revenues;
+            scaleEvent.Invoices = counts.Invoices;
+            scaleEvent.Payments = counts.Payments;
+            scaleEvent.Customers = counts.Customers;
+            scaleEvent.Suppliers = counts.Suppliers;
+            scaleEvent.Products = counts.Products;
+            scaleEvent.Categories = counts.Categories;
+            scaleEvent.Receipts = counts.Receipts;
+            scaleEvent.Employees = counts.Employees;
+            scaleEvent.BankLines = counts.BankLines;
+            await _storageService.RecordEventAsync(scaleEvent, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _errorLogger.LogDebug($"Failed to track company scale: {ex.Message}");
         }
     }
 

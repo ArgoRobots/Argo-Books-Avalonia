@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Localization;
 
 namespace ArgoBooks.ViewModels;
@@ -19,6 +20,8 @@ public static class UpgradePromptHelper
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
 
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.UpgradePromptShown, "invoice-limit");
+
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Invoice Limit Reached".Translate(),
@@ -32,7 +35,7 @@ public static class UpgradePromptHelper
 
         if (result == ConfirmationResult.Primary)
         {
-            App.OpenUpgradeModal();
+            App.OpenUpgradeModal("invoice-limit");
         }
     }
 
@@ -57,6 +60,8 @@ public static class UpgradePromptHelper
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
 
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.UpgradePromptShown, "import-limit");
+
         var resetDate = resetsAt ?? "the 1st of next month".Translate();
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
@@ -71,7 +76,7 @@ public static class UpgradePromptHelper
 
         if (result == ConfirmationResult.Primary)
         {
-            App.OpenUpgradeModal();
+            App.OpenUpgradeModal("import-limit");
         }
     }
 
@@ -85,6 +90,8 @@ public static class UpgradePromptHelper
     {
         var dialog = App.ConfirmationDialog;
         if (dialog == null) return;
+
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.UpgradePromptShown, "scan-limit");
 
         var resetDate = resetsAt ?? "the 1st of next month".Translate();
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
@@ -100,7 +107,7 @@ public static class UpgradePromptHelper
 
         if (result == ConfirmationResult.Primary)
         {
-            App.OpenUpgradeModal();
+            App.OpenUpgradeModal("scan-limit");
         }
     }
 
@@ -123,6 +130,8 @@ public static class UpgradePromptHelper
         // with the number the allowance covers rather than silently scanning the whole batch.
         if (dialog == null) return true;
 
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.UpgradePromptShown, "partial-scan");
+
         var resetDate = resetsAt ?? "the 1st of next month".Translate();
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
@@ -137,7 +146,7 @@ public static class UpgradePromptHelper
 
         if (result == ConfirmationResult.Secondary)
         {
-            App.OpenUpgradeModal();
+            App.OpenUpgradeModal("partial-scan");
             return false;
         }
 
