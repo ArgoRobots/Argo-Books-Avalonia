@@ -1,0 +1,51 @@
+Copyright (c) 2026 Evan Di Placido. All rights reserved.
+
+Argo Books is proprietary software. This repository is published for one reason
+only: so that prospective employers, competition judges, and other reviewers can
+read the source code and evaluate the work behind it.
+
+This is not open source software. No licence to use this software is granted by
+its publication here.
+
+PERMITTED
+
+  You may view and read the source code in this repository.
+
+  You may clone or fork the repository, and build and run the software locally,
+  for the sole purpose of reviewing or evaluating it.
+
+NOT PERMITTED
+
+  Without prior written permission from the copyright holder, you may not:
+
+  - Use this software, or any part of it, in any product or service, whether
+    commercial or non-commercial.
+  - Copy, modify, translate, or create derivative works from this source code.
+  - Redistribute, publish, sublicense, sell, rent, lease, or host this software
+    or any part of it.
+  - Incorporate any part of this source code into another codebase, including
+    to train or fine-tune a machine learning model.
+  - Remove or alter this notice.
+
+TRADEMARKS AND PATENTS
+
+  No licence is granted to any patent, trademark, trade name, or logo of the
+  copyright holder. "Argo Books" and "Argo Robots" are trademarks of the
+  copyright holder.
+
+THIRD-PARTY COMPONENTS
+
+  This software depends on third-party packages that are distributed under their
+  own licences. Those licences govern those components, not this notice.
+
+NO WARRANTY
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+For permission to use this software beyond the terms above, contact the
+copyright holder at https://argorobots.com/contact-us/.
