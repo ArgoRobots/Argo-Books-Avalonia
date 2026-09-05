@@ -646,7 +646,8 @@ public class PaymentPortalService : IDisposable
 
     /// <summary>
     /// Registers the company with the payment portal using a premium license key.
-    /// On success, saves the returned per-company API key to .env.
+    /// On success, activates the returned per-company API key in memory; the caller
+    /// persists it to the .argo file.
     /// </summary>
     public async Task<PortalRegisterResponse> RegisterCompanyAsync(
         string licenseKey,

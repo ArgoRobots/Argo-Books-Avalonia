@@ -5,7 +5,8 @@ namespace ArgoBooks.Core.Models.Portal;
 /// <summary>
 /// Settings for the payment portal integration.
 /// Stored in company data (persisted in .argo file).
-/// API key is loaded from .env file for security.
+/// The per-company API key is issued at portal registration and lives in that same
+/// file; on open it is copied into a process-level slot, not read from a .env file.
 /// </summary>
 public class PortalSettings
 {
