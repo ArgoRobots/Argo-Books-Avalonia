@@ -177,7 +177,7 @@ public class AiImportUsageService : IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "AI import usage check failed");
+            NetworkFailure.Report(_errorLogger, ex, "AI import usage check failed", ErrorCategory.Api);
             return new AiImportCheckResult
             {
                 CanImport = false,
@@ -244,7 +244,7 @@ public class AiImportUsageService : IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "AI import usage increment failed");
+            NetworkFailure.Report(_errorLogger, ex, "AI import usage increment failed", ErrorCategory.Api);
             return new AiImportIncrementResult
             {
                 Success = false,

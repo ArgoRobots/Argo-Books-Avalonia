@@ -105,7 +105,7 @@ public class InvoiceUsageService : IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "Invoice usage check failed");
+            NetworkFailure.Report(_errorLogger, ex, "Invoice usage check failed", ErrorCategory.Api);
 
             // Network error, allow sending if cache is fresh and shows capacity.
             // Without the expiry check a stale cache could permit sends past the server-side quota.
@@ -164,7 +164,7 @@ public class InvoiceUsageService : IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "Invoice usage increment failed");
+            NetworkFailure.Report(_errorLogger, ex, "Invoice usage increment failed", ErrorCategory.Api);
             return new InvoiceUsageResult
             {
                 Success = false,

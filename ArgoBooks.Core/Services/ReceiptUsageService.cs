@@ -158,7 +158,7 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt usage check failed");
+            NetworkFailure.Report(_errorLogger, ex, "Receipt usage check failed", ErrorCategory.Api);
             return new UsageCheckResult
             {
                 CanScan = false,
@@ -226,7 +226,7 @@ public class ReceiptUsageService : IReceiptUsageService, IDisposable
         }
         catch (Exception ex)
         {
-            _errorLogger?.LogError(ex, ErrorCategory.Api, "Receipt usage increment failed");
+            NetworkFailure.Report(_errorLogger, ex, "Receipt usage increment failed", ErrorCategory.Api);
             return new UsageIncrementResult
             {
                 Success = false,
