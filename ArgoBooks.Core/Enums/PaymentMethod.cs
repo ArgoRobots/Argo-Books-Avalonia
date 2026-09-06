@@ -38,9 +38,6 @@ public enum PaymentMethod
 /// </summary>
 public static class PaymentMethodExtensions
 {
-    /// <summary>
-    /// Gets the display name for a payment method.
-    /// </summary>
     public static string GetDisplayName(this PaymentMethod method)
     {
         return method switch

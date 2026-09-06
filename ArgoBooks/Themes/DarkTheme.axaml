@@ -77,6 +77,13 @@
     <Color x:Key="WarningIconBgColor">#78350F</Color>
     <Color x:Key="InfoIconBgColor">#164E63</Color>
 
+    <!-- Warning notice pill (a banner carrying body text, not an icon chip). The
+         WarningLight/WarningText pair in Colors.axaml is theme-invariant, so its
+         cream fill glares against a dark modal. Muted amber over the dark surface
+         instead, with light amber text on top. -->
+    <Color x:Key="WarningNoticeBgColor">#3D2B14</Color>
+    <Color x:Key="WarningNoticeTextColor">#FCD34D</Color>
+
     <!-- Brushes -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
     <SolidColorBrush x:Key="BackgroundSecondaryBrush" Color="{StaticResource BackgroundSecondaryColor}" />
@@ -130,6 +137,8 @@
     <SolidColorBrush x:Key="SuccessIconBgBrush" Color="{StaticResource SuccessIconBgColor}" />
     <SolidColorBrush x:Key="DangerIconBgBrush" Color="{StaticResource DangerIconBgColor}" />
     <SolidColorBrush x:Key="WarningIconBgBrush" Color="{StaticResource WarningIconBgColor}" />
+    <SolidColorBrush x:Key="WarningNoticeBgBrush" Color="{StaticResource WarningNoticeBgColor}" />
+    <SolidColorBrush x:Key="WarningNoticeTextBrush" Color="{StaticResource WarningNoticeTextColor}" />
     <SolidColorBrush x:Key="InfoIconBgBrush" Color="{StaticResource InfoIconBgColor}" />
 
     <!-- AI Accent (used by AI import badges) - brighter violet so it reads on dark surfaces -->

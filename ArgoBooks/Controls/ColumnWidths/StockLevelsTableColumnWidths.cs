@@ -55,7 +55,6 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 180
         }, w => ProductColumnWidth = w);
 
-        // SKU column
         RegisterColumn("Sku", new ColumnDef
         {
             StarValue = 0.8,
@@ -63,7 +62,6 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 100
         }, w => SkuColumnWidth = w);
 
-        // Category column
         RegisterColumn("Category", new ColumnDef
         {
             StarValue = 1.0,
@@ -71,7 +69,6 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 120
         }, w => CategoryColumnWidth = w);
 
-        // Location column
         RegisterColumn("Location", new ColumnDef
         {
             StarValue = 1.0,
@@ -103,7 +100,6 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 80
         }, w => AvailableColumnWidth = w);
 
-        // Reorder Point column
         RegisterColumn("ReorderPoint", new ColumnDef
         {
             StarValue = 0.8,
@@ -111,7 +107,6 @@ public partial class StockLevelsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 100
         }, w => ReorderPointColumnWidth = w);
 
-        // Status column
         RegisterColumn("Status", new ColumnDef
         {
             StarValue = 0.8,

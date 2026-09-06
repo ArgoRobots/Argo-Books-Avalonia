@@ -84,9 +84,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     public RevenueTableColumnWidths ColumnWidths => App.RevenueColumnWidths;
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -150,18 +147,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     partial void OnShowInvoiceColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Invoice", value); ColumnVisibilityHelper.Save("Revenue", "Invoice", value); }
 
     [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
-
-    [RelayCommand]
     private void ResetColumnVisibility()
     {
         ColumnWidths.ResetWidths();
@@ -204,8 +189,107 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     #region Constructor
 
-    public RevenuePageViewModel()
+        [ObservableProperty]
+    private int _selectedTabIndex;
+
+    public bool IsRecurringTab => SelectedTabIndex == 1;
+
+    partial void OnSelectedTabIndexChanged(int value) => OnPropertyChanged(nameof(IsRecurringTab));
+
+    /// <summary>Schedules for this side only, shown on the Recurring tab.</summary>
+    public RecurringSchedulesViewModel RecurringSchedules { get; } = new(CategoryType.Revenue);
+
+    [ObservableProperty]
+    private int _generatedBannerCount;
+
+    [ObservableProperty]
+    private bool _hasGeneratedBanner;
+
+    /// <summary>StringFormat cannot pluralise, so the whole sentence is built here.</summary>
+    public string GeneratedBannerText => GeneratedBannerCount == 1
+        ? "1 entry was generated from your recurring schedules and needs review.".Translate()
+        : "{0} entries were generated from your recurring schedules and need review.".TranslateFormat(GeneratedBannerCount);
+
+    partial void OnGeneratedBannerCountChanged(int value) => OnPropertyChanged(nameof(GeneratedBannerText));
+
+    /// <summary>
+    /// Subscribes for the live case and reads any pending count for the common case where
+    /// generation ran on company open, before this page existed.
+    /// </summary>
+    /// <summary>
+    /// The banner is derived from the data rather than tracked alongside it, so an undo of an
+    /// accept brings it back without every caller having to remember to.
+    /// </summary>
+    private void RefreshReviewBanner()
     {
+        var data = App.CompanyManager?.CompanyData;
+        GeneratedBannerCount = data?.Revenues.Count(e => e.NeedsReview) ?? 0;
+        HasGeneratedBanner = GeneratedBannerCount > 0;
+    }
+
+    private void WireRecurringBanner()
+    {
+        RecurringTransactionService.RevenuesGenerated += OnRecurringGenerated;
+        RefreshReviewBanner();
+    }
+
+    private void OnRecurringGenerated(int count)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            RefreshReviewBanner();
+            LoadRevenue();
+        });
+    }
+
+    [RelayCommand]
+    private void AcceptGenerated(RevenueDisplayItem? item)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null || item == null) return;
+
+        var entry = data.Revenues.FirstOrDefault(e => e.Id == item.Id);
+        if (entry == null || !entry.NeedsReview) return;
+
+        entry.NeedsReview = false;
+        item.NeedsReview = false;
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Accept {entry.Id}",
+            () => { entry.NeedsReview = true; item.NeedsReview = true; },
+            () => { entry.NeedsReview = false; item.NeedsReview = false; }));
+
+        RefreshReviewBanner();
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void MarkReviewed()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        var accepted = data.Revenues.Where(e => e.NeedsReview).ToList();
+        if (accepted.Count == 0) return;
+
+        foreach (var entry in accepted)
+            entry.NeedsReview = false;
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Accept {accepted.Count} generated entries",
+            () => { foreach (var entry in accepted) entry.NeedsReview = true; },
+            () => { foreach (var entry in accepted) entry.NeedsReview = false; }));
+
+        RecurringTransactionService.ClearPendingRevenues();
+        RefreshReviewBanner();
+        App.CompanyManager?.MarkAsChanged();
+        LoadRevenue();
+    }
+
+public RevenuePageViewModel()
+    {
+        WireRecurringBanner();
+
         // Set default sort values for revenue
         SortColumn = "Date";
         SortDirection = SortDirection.Descending;
@@ -250,6 +334,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
     public override void Cleanup()
     {
         base.Cleanup();
+        RecurringTransactionService.RevenuesGenerated -= OnRecurringGenerated;
+        RecurringSchedules.Cleanup();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
@@ -292,6 +378,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        RefreshReviewBanner();
+
         if (App.NavigationService?.CurrentPageName != PageNames.Revenue)
         {
             _needsRefresh = true;
@@ -404,17 +492,14 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             ? CurrencyService.Format(monthlyGrossDisplay - monthlyRefundsDisplay)
             : CurrencyService.PendingMarker;
 
-        // Sales count
         SalesCount = _allRevenue.Count;
 
-        // Unique customers
         UniqueCustomers = _allRevenue
             .Where(s => !string.IsNullOrEmpty(s.CustomerId))
             .Select(s => s.CustomerId)
             .Distinct()
             .Count();
 
-        // Returns count
         if (companyData?.Returns.Count > 0)
         {
             var revenueIds = new HashSet<string>(_allRevenue.Select(s => s.Id));
@@ -479,14 +564,12 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         decimal RefundedForRevenue(Revenue r) =>
             !string.IsNullOrEmpty(r.InvoiceId) && refundedByInvoiceId.TryGetValue(r.InvoiceId, out var amt) ? amt : 0m;
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             filtered = filtered.Where(s =>
                 GetStatusDisplay(s, lostDamagedIds, returnedIds, RefundedForRevenue(s)) == FilterStatus);
         }
 
-        // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
             filtered = filtered.Where(s => s.CustomerId == FilterCustomerId);
@@ -503,7 +586,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             });
         }
 
-        // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(s => s.Total >= minAmount);
@@ -513,7 +595,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(s => s.Total <= maxAmount);
         }
 
-        // Apply date filter
         if (FilterDateFrom.HasValue)
         {
             filtered = filtered.Where(s => s.Date >= FilterDateFrom.Value.DateTime);
@@ -526,7 +607,6 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
         // Materialize filtered results
         var filteredList = filtered.ToList();
 
-        // Create display items
         var displayItems = filteredList.Select(revenue =>
         {
             var customer = companyData?.GetCustomer(revenue.CustomerId ?? "");
@@ -550,6 +630,8 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
             return new RevenueDisplayItem
             {
                 Id = revenue.Id,
+                NeedsReview = revenue.NeedsReview,
+                IsRecurring = !string.IsNullOrEmpty(revenue.RecurringScheduleId),
                 AccountantName = accountant?.Name ?? "System",
                 CustomerName = customer?.Name ?? "-",
                 ProductDescription = productName,
@@ -1117,6 +1199,14 @@ public partial class RevenuePageViewModel : SortablePageViewModelBase
 /// </summary>
 public partial class RevenueDisplayItem : ObservableObject
 {
+    /// <summary>Set on entries a recurring schedule produced, until the user accepts them.</summary>
+    [ObservableProperty]
+    private bool _needsReview;
+
+    /// <summary>Stays true after the entry is accepted, so its origin is still visible.</summary>
+    [ObservableProperty]
+    private bool _isRecurring;
+
     [ObservableProperty]
     private string _id = string.Empty;
 

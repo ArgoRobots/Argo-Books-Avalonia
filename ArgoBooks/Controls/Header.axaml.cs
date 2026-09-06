@@ -106,18 +106,12 @@ public partial class Header : UserControl
         set => SetValue(PageTitleProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the page subtitle.
-    /// </summary>
     public string? PageSubtitle
     {
         get => GetValue(PageSubtitleProperty);
         set => SetValue(PageSubtitleProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the page title.
-    /// </summary>
     public bool ShowPageTitle
     {
         get => GetValue(ShowPageTitleProperty);
@@ -196,9 +190,6 @@ public partial class Header : UserControl
         set => SetValue(HasUnreadNotificationsProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the unread notification count.
-    /// </summary>
     public int UnreadNotificationCount
     {
         get => GetValue(UnreadNotificationCountProperty);
@@ -223,27 +214,18 @@ public partial class Header : UserControl
         set => SetValue(ShowSettingsProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the user menu.
-    /// </summary>
     public bool ShowUserMenu
     {
         get => GetValue(ShowUserMenuProperty);
         set => SetValue(ShowUserMenuProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the user display name.
-    /// </summary>
     public string? UserDisplayName
     {
         get => GetValue(UserDisplayNameProperty);
         set => SetValue(UserDisplayNameProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the user initials.
-    /// </summary>
     public string? UserInitials
     {
         get => GetValue(UserInitialsProperty);
@@ -286,45 +268,30 @@ public partial class Header : UserControl
         set => SetValue(UserAvatarSourceProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the search command.
-    /// </summary>
     public ICommand? SearchCommand
     {
         get => GetValue(SearchCommandProperty);
         set => SetValue(SearchCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the open quick actions command.
-    /// </summary>
     public ICommand? OpenQuickActionsCommand
     {
         get => GetValue(OpenQuickActionsCommandProperty);
         set => SetValue(OpenQuickActionsCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the open help command.
-    /// </summary>
     public ICommand? OpenHelpCommand
     {
         get => GetValue(OpenHelpCommandProperty);
         set => SetValue(OpenHelpCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the open notifications command.
-    /// </summary>
     public ICommand? OpenNotificationsCommand
     {
         get => GetValue(OpenNotificationsCommandProperty);
         set => SetValue(OpenNotificationsCommandProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the open settings command.
-    /// </summary>
     public ICommand? OpenSettingsCommand
     {
         get => GetValue(OpenSettingsCommandProperty);

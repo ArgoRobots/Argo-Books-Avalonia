@@ -24,7 +24,12 @@ public class PaymentPortalService : IDisposable
 
     private static readonly JsonSerializerOptions DeserializeOptions = new()
     {
-        PropertyNameCaseInsensitive = true
+        PropertyNameCaseInsensitive = true,
+        Converters =
+        {
+            new PortalDateTimeConverter(),
+            new PortalNullableDateTimeConverter()
+        }
     };
 
     private readonly HttpClient _httpClient;
@@ -506,7 +511,6 @@ public class PaymentPortalService : IDisposable
                 ProcessingFee = portalPayment.ProcessingFee,
             };
 
-            // Add to company data
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
 
@@ -642,7 +646,8 @@ public class PaymentPortalService : IDisposable
 
     /// <summary>
     /// Registers the company with the payment portal using a premium license key.
-    /// On success, saves the returned per-company API key to .env.
+    /// On success, activates the returned per-company API key in memory; the caller
+    /// persists it to the .argo file.
     /// </summary>
     public async Task<PortalRegisterResponse> RegisterCompanyAsync(
         string licenseKey,

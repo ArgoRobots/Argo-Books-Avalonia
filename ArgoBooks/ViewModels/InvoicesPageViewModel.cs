@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using ArgoBooks.Controls;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Data;
@@ -197,6 +197,18 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     /// <summary>Bound to the resend button's IsEnabled.</summary>
     public bool CanResendInvoice => !IsSampleCompany;
 
+    /// <summary>
+    /// Re-reads the two properties above. Reading live is not enough on its own: a binding
+    /// only looks again when told to, and Save As turns the sample company into the user's own
+    /// without closing anything or navigating, so resend stayed greyed out on the page already
+    /// on screen.
+    /// </summary>
+    public void RefreshSampleCompanyState()
+    {
+        OnPropertyChanged(nameof(IsSampleCompany));
+        OnPropertyChanged(nameof(CanResendInvoice));
+    }
+
     [ObservableProperty]
     private int _sentInvoicesThisMonthCount;
 
@@ -320,9 +332,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -363,18 +372,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
     partial void OnShowDueDateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("DueDate", value); ColumnVisibilityHelper.Save("Invoices", "DueDate", value); }
     partial void OnShowAmountColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Amount", value); ColumnVisibilityHelper.Save("Invoices", "Amount", value); }
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Invoices", "Status", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -732,7 +729,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 && i.Status != InvoiceStatus.Draft),
             i => i.Balance, i => i.OriginalCurrency, i => i.BalanceUSD, i => i.IssueDate);
 
-        // Paid this month
         PaidThisMonth = CurrencyService.FormatSumDisplayFromUSD(
             _allInvoices.Where(i => i.Status == InvoiceStatus.Paid && i.UpdatedAt >= startOfMonth),
             i => i.Total, i => i.OriginalCurrency, i => i.TotalUSD, i => i.IssueDate);
@@ -798,7 +794,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             if (Enum.TryParse<InvoiceStatus>(FilterStatus, out var status))
@@ -808,13 +803,11 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply customer filter
         if (!string.IsNullOrEmpty(FilterCustomerId))
         {
             filtered = filtered.Where(i => i.CustomerId == FilterCustomerId);
         }
 
-        // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, System.Globalization.CultureInfo.InvariantCulture, out var minAmount))
         {
             filtered = filtered.Where(i => i.Total >= minAmount);
@@ -824,7 +817,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => i.Total <= maxAmount);
         }
 
-        // Apply issue date filter
         if (FilterIssueDateFrom.HasValue)
         {
             filtered = filtered.Where(i => i.IssueDate >= FilterIssueDateFrom.Value.DateTime);
@@ -834,7 +826,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => i.IssueDate <= FilterIssueDateTo.Value.DateTime);
         }
 
-        // Apply due date filter
         if (FilterDueDateFrom.HasValue)
         {
             filtered = filtered.Where(i => i.DueDate >= FilterDueDateFrom.Value.DateTime);
@@ -929,7 +920,6 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 i => i.IssueDate);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination

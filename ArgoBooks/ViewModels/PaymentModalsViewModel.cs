@@ -951,7 +951,6 @@ public partial class PaymentModalsViewModel : ViewModelBase
     #endregion
 }
 
-
 /// <summary>
 /// Display model for payments in the UI.
 /// </summary>
@@ -1010,14 +1009,8 @@ public partial class PaymentDisplayItem : ObservableObject
     [ObservableProperty]
     private bool _isFromPortal;
 
-    /// <summary>
-    /// Gets the formatted date.
-    /// </summary>
     public string DateFormatted => Date.ToString("MMM d, yyyy");
 
-    /// <summary>
-    /// Gets the formatted amount.
-    /// </summary>
     public string AmountFormatted => AmountUSD < 0
         ? $"-{CurrencyService.FormatWithOriginal(Math.Abs(Amount), OriginalCurrency, Math.Abs(AmountUSD), Date)}"
         : CurrencyService.FormatWithOriginal(Amount, OriginalCurrency, AmountUSD, Date);

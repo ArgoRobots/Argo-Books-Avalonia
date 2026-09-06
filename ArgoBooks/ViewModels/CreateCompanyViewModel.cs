@@ -234,6 +234,9 @@ public partial class CreateCompanyViewModel : ViewModelBase
     {
         Reset();
         IsOpen = true;
+
+        // Here rather than at each caller, so every route in is counted.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.CompanyCreateOpened);
     }
 
     [RelayCommand]

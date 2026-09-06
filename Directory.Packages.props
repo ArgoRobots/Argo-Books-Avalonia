@@ -67,6 +67,15 @@
     <PackageVersion Include="Avalonia.Controls.ColorPicker" Version="12.0.5" />
     <!-- Graphics (for report rendering) -->
     <PackageVersion Include="SkiaSharp" Version="3.119.2" />
+    <!-- HEIC decoding, which Skia does not do on Windows or Linux. iPhones shoot HEIC
+         by default, so without this every photo straight off an iPhone is unreadable.
+         LibHeif.Native.Runtime rather than the LibHeif.Native.<rid> packages: those ship
+         libheif alongside separate aom and x265 DLLs that libheif imports at load time
+         and so cannot be trimmed, costing 15 MB on Windows and 16 MB on Linux for a
+         decoder that needs under 1 MB of that. This one bundles a single library:
+         12.5 MB on Windows and 2.1 MB on Linux. -->
+    <PackageVersion Include="LibHeifSharp" Version="3.2.0" />
+    <PackageVersion Include="LibHeif.Native.Runtime" Version="1.20.2" />
     <!-- PDF -->
     <PackageVersion Include="QuestPDF" Version="2026.2.4" />
     <!-- Excel -->

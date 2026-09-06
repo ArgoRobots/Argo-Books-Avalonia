@@ -306,11 +306,14 @@ public class ErrorLoggerTests
 
         public Task InitializeAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task EndSessionAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public void MarkActivity() { }
+        public void NoteCurrentPage(string? pageName) { }
         public Task TrackFeatureAsync(FeatureName featureName, string? context = null, long? durationMs = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackPageViewAsync(string pageName, long activeSeconds, long durationSeconds, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task TrackExportAsync(ExportType exportType, long durationMs, long fileSize, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task TrackApiCallAsync(ApiName apiName, long durationMs, bool success, string? model = null, int? tokensUsed = null, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task TrackCompanyProfileAsync(string? companyName, string? businessType, string? industry, string? country, string? currency, string? language, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task TrackStartupAsync(long? toFirstPaintMs, long? toReadyMs, bool coldStart, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task TrackStartupAsync(long? toFirstPaintMs, long? toServicesReadyMs, long? toViewModelsReadyMs, long? toReadyMs, bool coldStart, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default) => Task.FromResult(new TelemetryUploadResult());
         public Task ClearAllDataAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<TelemetryStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new TelemetryStatistics());

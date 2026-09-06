@@ -41,9 +41,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     #region Column Visibility
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -81,18 +78,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     partial void OnShowReorderColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Reorder", value); ColumnVisibilityHelper.Save("Products", "Reorder", value); }
     partial void OnShowOverstockColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Overstock", value); ColumnVisibilityHelper.Save("Products", "Overstock", value); }
     partial void OnShowTrackInventoryColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("TrackInventory", value); ColumnVisibilityHelper.Save("Products", "TrackInventory", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -398,9 +383,17 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
     /// </summary>
     private bool _needsRefresh;
 
+    /// <summary>
+    /// The sidebar opens this page on a tab, under its own page name, so matching only the bare
+    /// name left every navigation here unrecognised and the page never reloaded. Products a
+    /// receipt scan created stayed invisible until the company was reopened.
+    /// </summary>
+    private static bool IsThisPage(string? pageName) =>
+        pageName is PageNames.Products or PageNames.ExpenseProducts or PageNames.RevenueProducts;
+
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
-        if (App.NavigationService?.CurrentPageName != PageNames.Products)
+        if (!IsThisPage(App.NavigationService?.CurrentPageName))
         {
             _needsRefresh = true;
             return;
@@ -410,7 +403,7 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
     private void OnNavigated(object? sender, NavigationEventArgs e)
     {
-        if (e.PageName == PageNames.Products && _needsRefresh)
+        if (IsThisPage(e.PageName) && _needsRefresh)
         {
             _needsRefresh = false;
             LoadProducts();
@@ -598,7 +591,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.ItemType == FilterItemType);
         }
 
-        // Apply category filter
         if (!string.IsNullOrWhiteSpace(FilterCategory) && FilterCategory != "All Categories")
         {
             var categoryOption = AvailableCategories.FirstOrDefault(c => c.Name == FilterCategory);
@@ -608,7 +600,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrWhiteSpace(FilterSupplier) && FilterSupplier != "All Suppliers")
         {
             var supplierOption = AvailableSuppliers.FirstOrDefault(s => s.Name == FilterSupplier);
@@ -618,7 +609,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Create display items
         var displayItems = filtered.Select(product =>
         {
             var category = companyData.Categories.FirstOrDefault(c => c.Id == product.CategoryId);
@@ -659,7 +649,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
                 p => p.Name);
         }
 
-        // Navigate to highlighted item if set
         NavigateToHighlightedItem(displayItems, x => x.Id);
 
         // Calculate pagination
@@ -864,7 +853,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
 
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Edit product '{newName}'",
             () =>
@@ -946,7 +934,6 @@ public partial class ProductsPageViewModel : SortablePageViewModelBase
             companyData.Products.Remove(product);
             companyData.MarkAsModified();
 
-            // Record undo action
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Delete product '{deletedProduct.Name}'",
                 () =>

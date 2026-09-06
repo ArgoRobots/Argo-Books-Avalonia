@@ -260,4 +260,20 @@ public abstract class Transaction
     public decimal EffectiveShippingCostUSD => IsPendingConversion ? 0 : IsUSD ? ShippingCost : ShippingCostUSD;
 
     #endregion
+
+    #region Recurring
+
+    /// <summary>Set on entries produced by a recurring schedule, so an occurrence traces back.</summary>
+    [JsonPropertyName("recurringScheduleId")]
+    public string? RecurringScheduleId { get; set; }
+
+    /// <summary>The scheduled date this was generated for, which Date may later diverge from.</summary>
+    [JsonPropertyName("occurrenceDate")]
+    public DateTime? OccurrenceDate { get; set; }
+
+    /// <summary>Display-only flag. Reports and totals still include the transaction.</summary>
+    [JsonPropertyName("needsReview")]
+    public bool NeedsReview { get; set; }
+
+    #endregion
 }

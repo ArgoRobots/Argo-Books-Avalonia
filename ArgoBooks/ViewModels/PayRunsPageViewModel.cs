@@ -153,9 +153,6 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     private string _paginationText = "0 pay runs";
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private bool _showPayDateColumn = ColumnVisibilityHelper.Load("PayRuns", "PayDate", true);
 
     [ObservableProperty]
@@ -179,12 +176,6 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
     partial void OnShowGrossColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Gross", value); ColumnVisibilityHelper.Save("PayRuns", "Gross", value); }
     partial void OnShowNetColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Net", value); ColumnVisibilityHelper.Save("PayRuns", "Net", value); }
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("PayRuns", "Status", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu() => IsColumnMenuOpen = !IsColumnMenuOpen;
-
-    [RelayCommand]
-    private void CloseColumnMenu() => IsColumnMenuOpen = false;
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -335,6 +326,8 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
 
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
+
+            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.PayStubsExported);
         }
         catch (Exception ex)
         {

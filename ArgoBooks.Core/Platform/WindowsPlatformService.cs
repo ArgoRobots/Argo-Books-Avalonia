@@ -216,12 +216,5 @@ public class WindowsPlatformService : BasePlatformService
     }
 
     /// <inheritdoc />
-    public override void RegisterFileTypeAssociations(string iconPath)
-    {
-        // Register all Argo Books file types with the Windows shell
-        ArgoFiles.RegisterAllFileTypes(iconPath);
-    }
-
-    /// <inheritdoc />
     public override StringComparer PathComparer => StringComparer.OrdinalIgnoreCase;
 }

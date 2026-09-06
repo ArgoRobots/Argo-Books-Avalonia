@@ -184,6 +184,19 @@ public abstract partial class SortablePageViewModelBase : ViewModelBase, ICleanu
 
     #endregion
 
+    #region Column Menu
+
+    [ObservableProperty]
+    private bool _isColumnMenuOpen;
+
+    [RelayCommand]
+    private void ToggleColumnMenu() => IsColumnMenuOpen = !IsColumnMenuOpen;
+
+    [RelayCommand]
+    private void CloseColumnMenu() => IsColumnMenuOpen = false;
+
+    #endregion
+
     #region Transaction Highlighting
 
     /// <summary>

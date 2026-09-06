@@ -271,7 +271,6 @@ public class SpreadsheetImportService
                 // Update ID counters based on imported data
                 UpdateIdCounters(companyData);
 
-                // Mark data as modified
                 companyData.MarkAsModified();
             }, cancellationToken);
         }
@@ -769,7 +768,6 @@ public class SpreadsheetImportService
 
         var sheetAnalysis = analysis.Sheets.FirstOrDefault(s => s.SourceSheetName == sheetName);
         if (sheetAnalysis == null || !sheetAnalysis.IsIncluded) return;
-
 
         // Only process Tier 1 sheets here (Tier 2 is handled separately via ProcessedEntities)
         if (sheetAnalysis.Tier == ProcessingTier.Tier2_LlmProcessing)
@@ -3223,7 +3221,6 @@ public class SpreadsheetImportService
         if (entityJson.TryGetProperty("categoryName", out var nameElement))
             categoryName = nameElement.GetString();
 
-
         // If we have a valid categoryId that matches an existing category, nothing to do
         if (!string.IsNullOrEmpty(product.CategoryId))
         {
@@ -3275,7 +3272,6 @@ public class SpreadsheetImportService
         {
             return;
         }
-
 
         // Try AI categorization if the service is available
         if (_geminiService?.IsConfigured == true)

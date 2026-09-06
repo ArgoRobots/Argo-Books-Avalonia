@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Telemetry;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -27,6 +28,8 @@ public partial class ImportModalViewModel : ViewModelBase
     [RelayCommand]
     private void Open()
     {
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ImportOpened);
+
         SelectedFormat = null;
         IsOpen = true;
     }
@@ -37,6 +40,10 @@ public partial class ImportModalViewModel : ViewModelBase
     [RelayCommand]
     private void Close()
     {
+        // SelectFormat closes the modal too, so the format guard is what makes this an abandon.
+        if (IsOpen && string.IsNullOrEmpty(SelectedFormat))
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "format-picker");
+
         IsOpen = false;
     }
 

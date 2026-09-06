@@ -442,7 +442,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         // Wait for template to load
         await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
 
-        // Set the report name to the template name
         ReportName = templateName;
         Configuration.Title = templateName;
 
@@ -569,7 +568,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
                 return;
             }
 
-            // Record property change for undo/redo
             UndoRedoManager.RecordAction(new ElementPropertyChangeAction(
                 Configuration,
                 element.Id,
@@ -785,7 +783,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         // Record undo action before making changes
         UndoRedoManager.RecordAction(new DeletePageAction(Configuration, pageToDelete, elementsOnPage));
 
-        // Remove elements on this page
         foreach (var element in elementsOnPage)
         {
             Configuration.Elements.Remove(element);
@@ -1448,10 +1445,8 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         // If editing an existing custom template, save directly without showing modal
         if (IsEditingCustomTemplate)
         {
-            // Check if there are unsaved changes
             if (!HasUnsavedChanges)
             {
-                // Show "No changes" message
                 ShowNoChangesMessage = true;
                 await Task.Delay(2000);
                 ShowNoChangesMessage = false;
@@ -2120,7 +2115,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 
         var storage = new ReportTemplateStorage();
 
-        // Check if template exists
         if (storage.TemplateExists(SaveTemplateName))
         {
             SaveTemplateMessage = "A template with this name already exists.";
@@ -2278,7 +2272,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 
     public ReportsPageViewModel()
     {
-        // Initialize the undo/redo view model
         UndoRedoViewModel = new UndoRedoButtonGroupViewModel(UndoRedoManager);
         UndoRedoViewModel.ActionPerformed += (_, _) => OnPropertyChanged(nameof(Configuration));
 
@@ -2401,10 +2394,8 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 
     private void InitializeCollections()
     {
-        // Load custom templates
         LoadCustomTemplates();
 
-        // Load date presets
         foreach (var preset in DatePresetNames.GetAllPresets())
         {
             DatePresets.Add(new DatePresetOption(preset));
@@ -2474,28 +2465,24 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
         const string heartIcon = "M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z";
         const string rentalIcon = Icons.Bookmark;
 
-        // Revenue charts
         var revenueCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.TotalRevenue, ChartDataType.TotalRevenue.GetDisplayName(), "Revenue over time", "Revenue", lineChartIcon, revenueColor, revenueLight),
             new(ChartDataType.RevenueDistribution, ChartDataType.RevenueDistribution.GetDisplayName(), "Revenue by category", "Revenue", pieChartIcon, revenueColor, revenueLight)
         };
 
-        // Expense charts
         var expenseCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.TotalExpenses, ChartDataType.TotalExpenses.GetDisplayName(), "Expenses over time", "Expenses", lineChartIcon, expenseColor, expenseLight),
             new(ChartDataType.ExpensesDistribution, ChartDataType.ExpensesDistribution.GetDisplayName(), "Expenses by category", "Expenses", pieChartIcon, expenseColor, expenseLight)
         };
 
-        // Financial charts
         var financialCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.TotalProfits, ChartDataType.TotalProfits.GetDisplayName(), "Profit over time", "Financial", trendUpIcon, financialColor, financialLight),
             new(ChartDataType.RevenueVsExpenses, ChartDataType.RevenueVsExpenses.GetDisplayName(), "Compare revenue and costs", "Financial", compareIcon, financialColor, financialLight)
         };
 
-        // Transaction charts
         var transactionCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.AverageTransactionValue, ChartDataType.AverageTransactionValue.GetDisplayName(), "Average transaction amounts", "Transactions", transactionIcon, transactionColor, transactionLight),
@@ -2503,7 +2490,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
             new(ChartDataType.AverageShippingCosts, ChartDataType.AverageShippingCosts.GetDisplayName(), "Mean shipping cost per period", "Transactions", shippingIcon, transactionColor, transactionLight)
         };
 
-        // Geographic charts
         var geographicCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.WorldMap, ChartDataType.WorldMap.GetDisplayName(), "Sales distribution on a world map", "Geographic", globeIcon, geographicColor, geographicLight),
@@ -2513,13 +2499,11 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
             new(ChartDataType.CompaniesOfDestination, ChartDataType.CompaniesOfDestination.GetDisplayName(), "Sales by destination company", "Geographic", buildingIcon, geographicColor, geographicLight)
         };
 
-        // Accountant charts
         var accountantCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.AccountantsTransactions, ChartDataType.AccountantsTransactions.GetDisplayName(), "Volume of transactions per accountant", "Personnel", personIcon, accountantColor, accountantLight)
         };
 
-        // Customer charts
         var customerCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.TopCustomersByRevenue, ChartDataType.TopCustomersByRevenue.GetDisplayName(), "Highest revenue customers", "Customers", groupIcon, customerColor, customerLight),
@@ -2530,7 +2514,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
             new(ChartDataType.RentalsPerCustomer, ChartDataType.RentalsPerCustomer.GetDisplayName(), "Rental frequency by customer", "Customers", rentalIcon, customerColor, customerLight)
         };
 
-        // Return charts
         var returnCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.ReturnsOverTime, ChartDataType.ReturnsOverTime.GetDisplayName(), "Return trends", "Returns", returnIcon, returnColor, returnLight),
@@ -2541,7 +2524,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
             new(ChartDataType.ExpenseVsRevenueReturns, ChartDataType.ExpenseVsRevenueReturns.GetDisplayName(), "Compare expense and revenue returns", "Returns", vsIcon, returnColor, returnLight)
         };
 
-        // Loss charts
         var lossCharts = new ObservableCollection<ChartOption>
         {
             new(ChartDataType.LossesOverTime, ChartDataType.LossesOverTime.GetDisplayName(), "Loss trends", "Losses", lossIcon, lossColor, lossLight),
@@ -2674,7 +2656,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
             }
         }
 
-        // Update transaction type
         SelectedTransactionType = Configuration.Filters.TransactionType;
 
         // Check if we need to restore preserved chart selections (when going back from step 2)
@@ -2763,7 +2744,6 @@ public partial class ReportsPageViewModel : ViewModelBase, ICleanupViewModel
 
         var selectedChartTypes = Configuration.Filters.SelectedChartTypes.ToHashSet();
 
-        // Get existing chart elements
         var existingChartElements = Configuration.Elements
             .OfType<ChartReportElement>()
             .ToList();

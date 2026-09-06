@@ -44,7 +44,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
         ColumnOrder = ["Date", "Reference", "Product", "Location", "Quantity", "Previous", "New", "Reason", "Actions"
         ];
 
-        // Date column
         RegisterColumn("Date", new ColumnDef
         {
             StarValue = 0.9,
@@ -52,7 +51,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 120
         }, w => DateColumnWidth = w);
 
-        // Reference column
         RegisterColumn("Reference", new ColumnDef
         {
             StarValue = 0.8,
@@ -68,7 +66,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 160
         }, w => ProductColumnWidth = w);
 
-        // Location column
         RegisterColumn("Location", new ColumnDef
         {
             StarValue = 1.0,
@@ -100,7 +97,6 @@ public partial class StockAdjustmentsTableColumnWidths : TableColumnWidthsBase
             PreferredWidth = 80
         }, w => NewColumnWidth = w);
 
-        // Reason column
         RegisterColumn("Reason", new ColumnDef
         {
             StarValue = 1.3,

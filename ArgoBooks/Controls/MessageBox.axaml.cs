@@ -193,36 +193,24 @@ public partial class MessageBox : UserControl
         set => SetValue(ButtonsProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether to show the icon.
-    /// </summary>
     public bool ShowIcon
     {
         get => GetValue(ShowIconProperty);
         set => SetValue(ShowIconProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the primary button text.
-    /// </summary>
     public string? PrimaryButtonText
     {
         get => GetValue(PrimaryButtonTextProperty);
         set => SetValue(PrimaryButtonTextProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the secondary button text.
-    /// </summary>
     public string? SecondaryButtonText
     {
         get => GetValue(SecondaryButtonTextProperty);
         set => SetValue(SecondaryButtonTextProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the tertiary button text.
-    /// </summary>
     public string? TertiaryButtonText
     {
         get => GetValue(TertiaryButtonTextProperty);

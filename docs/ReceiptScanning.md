@@ -1,4 +1,4 @@
-# Receipt Scanning
+﻿# Receipt Scanning
 
 Argo Books extracts structured data from receipts using Google Gemini's vision model. Take a photo or drop in a PDF; the AI returns line items, totals, supplier name, date, and currency. A second AI pass then matches the supplier and category against your existing records before you review and save as an expense or revenue.
 
@@ -6,7 +6,11 @@ All AI calls route through the Argo Books server. Your device never holds a Goog
 
 ## Supported formats
 
-JPEG, PNG, WebP, PDF, BMP, TIFF.
+JPEG, PNG, HEIC, WebP, PDF.
+
+The list itself lives in `FilePickerTypes.ReceiptFormats`, which the picker filters, the drag and drop validation, the stored content type and the wording on screen are all derived from. Adding a format there is enough to have it offered and announced everywhere.
+
+HEIC is what an iPhone shoots by default. Skia has no HEIF decoder on Windows or Linux, so these are decoded separately and re-encoded as JPEG before the rest of the pre-processing runs. A file the decoder cannot read is sent on as it stands, since the vision model accepts HEIC directly; only the on-screen preview is lost.
 
 Images are pre-processed before scanning: EXIF orientation is corrected, contrast is boosted slightly, and the image is sharpened to help with faded thermal receipts.
 

@@ -109,7 +109,6 @@ public class InvoiceEmailService : IDisposable
                 InvoiceId = invoice.Id
             };
 
-            // Send the request
             return await SendEmailRequestAsync(request, emailSettings, cancellationToken);
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)

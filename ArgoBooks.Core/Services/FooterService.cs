@@ -85,7 +85,6 @@ public class FooterService
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task WriteFooterAsync(Stream stream, FileFooter footer, CancellationToken cancellationToken = default)
     {
-        // Serialize footer to JSON
         var footerJson = JsonSerializer.Serialize(footer, JsonOptions);
         var footerBytes = Encoding.UTF8.GetBytes(footerJson);
 
@@ -96,7 +95,6 @@ public class FooterService
         var lengthBytes = BitConverter.GetBytes(footerBytes.Length);
         await stream.WriteAsync(lengthBytes, cancellationToken);
 
-        // Write magic bytes
         await stream.WriteAsync(FileFormatConstants.MagicBytes, cancellationToken);
     }
 
@@ -121,7 +119,6 @@ public class FooterService
         if (!magic.SequenceEqual(FileFormatConstants.MagicBytes))
             return -1;
 
-        // Get footer length
         var footerLength = BitConverter.ToInt32(trailer, 0);
         if (footerLength <= 0 || footerLength > stream.Length - 8)
             return -1;

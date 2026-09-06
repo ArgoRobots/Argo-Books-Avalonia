@@ -53,7 +53,7 @@
                                         <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Name'}" /><Run Text=" *" Foreground="{DynamicResource ErrorBrush}" /></TextBlock>
                                         <TextBox Text="{Binding Name, Mode=TwoWay}" Classes="form-input"
                                                  PlaceholderText="{loc:Loc 'Jordan Fielding'}" />
-                                        <TextBlock Text="{Binding NameError}" FontSize="12"
+                                        <TextBlock TextWrapping="Wrap" Text="{Binding NameError}" FontSize="12"
                                                    Foreground="{DynamicResource ErrorBrush}"
                                                    IsVisible="{Binding NameError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                     </StackPanel>
@@ -121,7 +121,7 @@
                                              MaxLength="16" />
                                     <TextBlock Text="{Binding PayRateHint}" FontSize="11"
                                                Foreground="{DynamicResource TextTertiaryBrush}" />
-                                    <TextBlock Text="{Binding PayRateError}" FontSize="12"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding PayRateError}" FontSize="12"
                                                Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding PayRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
@@ -222,7 +222,7 @@
                                         <TextBlock Text="{loc:Loc 'Their last day, if they have left.'}"
                                                    FontSize="11" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
-                                        <TextBlock Text="{Binding EndDateError}" FontSize="12"
+                                        <TextBlock TextWrapping="Wrap" Text="{Binding EndDateError}" FontSize="12"
                                                    Foreground="{DynamicResource ErrorBrush}"
                                                    IsVisible="{Binding EndDateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                     </StackPanel>
@@ -248,7 +248,7 @@
                                             <TextBox Text="{Binding Sin, Mode=TwoWay}" Classes="form-input"
                                                      PasswordChar="*" MaxLength="11"
                                                      PlaceholderText="000 000 000" />
-                                            <TextBlock Text="{Binding SinError}" FontSize="12"
+                                            <TextBlock TextWrapping="Wrap" Text="{Binding SinError}" FontSize="12"
                                                        Foreground="{DynamicResource ErrorBrush}"
                                                        IsVisible="{Binding SinError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                         </StackPanel>

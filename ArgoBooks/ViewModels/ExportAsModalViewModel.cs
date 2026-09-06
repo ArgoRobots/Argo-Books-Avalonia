@@ -45,14 +45,8 @@ public partial class ExportAsModalViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isExporting;
 
-    /// <summary>
-    /// Gets whether backup tab is selected.
-    /// </summary>
     public bool IsBackupSelected => SelectedTabIndex == 0;
 
-    /// <summary>
-    /// Gets whether spreadsheet tab is selected.
-    /// </summary>
     public bool IsSpreadsheetSelected => SelectedTabIndex == 1;
 
     partial void OnSelectedTabIndexChanged(int value)

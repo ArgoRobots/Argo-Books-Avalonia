@@ -23,9 +23,6 @@ public enum InventoryStatus
 /// </summary>
 public static class InventoryStatusExtensions
 {
-    /// <summary>
-    /// Gets the display name for an inventory status.
-    /// </summary>
     public static string GetDisplayName(this InventoryStatus status)
     {
         return status switch

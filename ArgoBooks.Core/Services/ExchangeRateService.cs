@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net.Http.Json;
 
 using ArgoBooks.Core.Models.Telemetry;
@@ -12,6 +13,17 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class ExchangeRateService
 {
+    /// <summary>
+    /// The wire format for a rate date, in both the request and the key used to read the response
+    /// back. Always invariant: a plain ToString("yyyy-MM-dd") follows the machine's culture, and on
+    /// a non-Gregorian calendar it yields a different year, which would silently stop every date
+    /// matching and send the whole preload down the per-date repair path.
+    /// </summary>
+    private static string DateKey(DateTime date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    /// <summary>How many repair requests may be in flight at once. See PreloadRatesAsync.</summary>
+    private const int MaxParallelRateFetches = 6;
+
     private static readonly string BaseUrl = $"{ApiConfig.BaseUrl}/api/exchange-rates.php";
     private static readonly string BatchUrl = $"{ApiConfig.BaseUrl}/api/exchange-rates-batch.php";
     private const string BaseCurrency = "USD"; // All rates are relative to USD
@@ -294,7 +306,7 @@ public class ExchangeRateService
         foreach (var date in datesToFetch)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var dateKey = date.ToString("yyyy-MM-dd");
+            var dateKey = DateKey(date);
             if (fetched != null && fetched.TryGetValue(dateKey, out var rates))
             {
                 _cache.SetRatesFromBase(rates, BaseCurrency, date);
@@ -311,30 +323,84 @@ public class ExchangeRateService
         // a successful fetch, so the bar never reaches 100% while dates are still unpriced (which
         // would let the "could not get rates" prompt appear right after a misleading full bar).
         var stillFailed = new List<DateTime>();
-        foreach (var date in failedDates)
+        if (failedDates.Count > 0)
         {
+            // Run the repairs concurrently. One sequential request per date costs a full round trip
+            // each, which is invisible at 45 ms and adds about eight seconds at 500 ms, so a distant
+            // user paid most of the wait here. The cache is written serially once every fetch has
+            // returned, so this does not assume ExchangeRateCache is thread-safe.
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var gate = new SemaphoreSlim(MaxParallelRateFetches);
+            var rateLimited = false;
+
+            async Task<(DateTime Date, Dictionary<string, decimal>? Rates)> FetchOneAsync(DateTime date)
+            {
+                try
+                {
+                    await gate.WaitAsync(linked.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return (date, null); // never acquired, so nothing to release
+                }
+
+                try
+                {
+                    return (date, await FetchRatesForDateAsync(date, cancellationToken: linked.Token));
+                }
+                catch (RateLimitedException)
+                {
+                    // Stop the rest immediately. Letting the remaining requests fly only digs the
+                    // lockout deeper, which is the same reason the per-date path does not retry a 429.
+                    rateLimited = true;
+                    linked.Cancel();
+                    return (date, null);
+                }
+                catch (OperationCanceledException)
+                {
+                    return (date, null);
+                }
+                finally
+                {
+                    gate.Release();
+                }
+            }
+
+            var repaired = await Task.WhenAll(failedDates.Select(FetchOneAsync));
+
+            // A caller-requested cancel still wins over anything the fetches reported.
             cancellationToken.ThrowIfCancellationRequested();
-            var rates = await FetchRatesForDateAsync(date, cancellationToken: cancellationToken);
-            if (rates != null)
+
+            foreach (var (date, rates) in repaired.OrderBy(r => r.Date))
             {
-                _cache.SetRatesFromBase(rates, BaseCurrency, date);
-                cached++;
-                progress?.Report(cached * 100 / total);
+                if (rates != null)
+                {
+                    _cache.SetRatesFromBase(rates, BaseCurrency, date);
+                    cached++;
+                    progress?.Report(cached * 100 / total);
+                }
+                else
+                {
+                    stillFailed.Add(date);
+                }
             }
-            else
-            {
-                stillFailed.Add(date);
-            }
+
+            if (rateLimited)
+                throw new RateLimitedException();
         }
 
         if (stillFailed.Count > 0)
             _errorLogger?.LogError(
                 $"Rate fetch incomplete: {stillFailed.Count}/{datesToFetch.Count} dates unpriced after batch + per-date fallback: " +
-                $"{string.Join(", ", stillFailed.OrderBy(d => d).Take(40).Select(d => d.ToString("yyyy-MM-dd")))}",
+                $"{string.Join(", ", stillFailed.OrderBy(d => d).Take(40).Select(DateKey))}",
                 ErrorCategory.Api, "ExchangeRate");
         else if (failedDates.Count > 0)
             _errorLogger?.LogWarning(
-                $"Batch missed {failedDates.Count} dates; per-date fallback recovered all of them.", "ExchangeRate");
+                fetched == null
+                    ? $"Batch returned nothing; the per-date repair priced all {failedDates.Count} dates."
+                    : $"Batch returned {fetched.Count} dates but {failedDates.Count} of {datesToFetch.Count} were absent from that response; " +
+                      "the per-date repair recovered them. The server answered, so this should be rare and is worth investigating.",
+                "ExchangeRate");
 
         await _cache.SaveAsync();
     }
@@ -354,7 +420,7 @@ public class ExchangeRateService
 
         try
         {
-            var dateStrings = dates.Select(d => d.ToString("yyyy-MM-dd")).ToList();
+            var dateStrings = dates.Select(DateKey).ToList();
             var requestBody = new { dates = dateStrings };
             var json = JsonSerializer.Serialize(requestBody);
             using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -419,7 +485,7 @@ public class ExchangeRateService
         {
             stopwatch.Stop();
             _ = _telemetryManager?.TrackApiCallAsync(
-                ApiName.OpenExchangeRates,
+                ApiName.OpenExchangeRatesBatch,
                 stopwatch.ElapsedMilliseconds,
                 success);
         }
@@ -446,14 +512,14 @@ public class ExchangeRateService
                 var isToday = date.Date == DateTime.Today;
                 var endpoint = isToday
                     ? BaseUrl
-                    : $"{BaseUrl}?date={date:yyyy-MM-dd}";
+                    : $"{BaseUrl}?date={DateKey(date)}";
 
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
                 using var response = await _httpClient.SendAsync(request, cancellationToken);
                 if (!response.IsSuccessStatusCode)
                 {
-                    _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
+                    _errorLogger?.LogError($"Exchange rate API returned {response.StatusCode} (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {DateKey(date)}");
                     // Don't retry a rate-limit: hammering it 3x per date is exactly what causes the
                     // lockout. Surface it so the whole preload backs off.
                     if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
@@ -468,15 +534,21 @@ public class ExchangeRateService
                     return result.Rates;
                 }
 
-                _errorLogger?.LogError($"Exchange rate API returned invalid data (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {date:yyyy-MM-dd}");
+                _errorLogger?.LogError($"Exchange rate API returned invalid data (attempt {attempt + 1}/{maxRetries + 1})", ErrorCategory.Api, $"Date: {DateKey(date)}");
             }
             catch (RateLimitedException)
             {
                 throw; // propagate so the preload backs off instead of retrying
             }
+            catch (OperationCanceledException)
+            {
+                // A cancel is not an API failure. Retrying it would burn the backoff delays and
+                // log a fault for something the caller asked for, so hand it straight back.
+                throw;
+            }
             catch (Exception ex)
             {
-                _errorLogger?.LogError(ex, ErrorCategory.Api, $"Failed to fetch exchange rates for {date:yyyy-MM-dd} (attempt {attempt + 1}/{maxRetries + 1})");
+                _errorLogger?.LogError(ex, ErrorCategory.Api, $"Failed to fetch exchange rates for {DateKey(date)} (attempt {attempt + 1}/{maxRetries + 1})");
                 if (attempt == maxRetries) return null;
             }
             finally

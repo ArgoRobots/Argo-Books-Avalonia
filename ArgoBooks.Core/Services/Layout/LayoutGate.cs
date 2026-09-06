@@ -215,7 +215,6 @@ public static class LayoutGate
         if (token.Length == 2 && token[0] == 'q' && token[1] is >= '1' and <= '4')
             return true;
 
-        // Week: w1..w53.
         if (token.Length >= 2 && token[0] == 'w' && int.TryParse(token.AsSpan(1), out int week))
             return week is >= 1 and <= 53;
 

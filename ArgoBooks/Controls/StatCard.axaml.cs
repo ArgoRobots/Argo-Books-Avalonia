@@ -134,25 +134,18 @@ public partial class StatCard : UserControl
     public static readonly DirectProperty<StatCard, bool> IsTrendFlatProperty =
         AvaloniaProperty.RegisterDirect<StatCard, bool>(nameof(IsTrendFlat), o => o.IsTrendFlat);
 
-    /// <summary>Gets whether icon color is Primary.</summary>
     public bool IsPrimaryColor => IconColor == StatCardColor.Primary;
 
-    /// <summary>Gets whether icon color is Success.</summary>
     public bool IsSuccessColor => IconColor == StatCardColor.Success;
 
-    /// <summary>Gets whether icon color is Danger.</summary>
     public bool IsDangerColor => IconColor == StatCardColor.Danger;
 
-    /// <summary>Gets whether icon color is Warning.</summary>
     public bool IsWarningColor => IconColor == StatCardColor.Warning;
 
-    /// <summary>Gets whether icon color is Info.</summary>
     public bool IsInfoColor => IconColor == StatCardColor.Info;
 
-    /// <summary>Gets whether trend is positive (value > 0).</summary>
     public bool IsPositiveTrend => ChangeValue is > 0;
 
-    /// <summary>Gets whether trend is negative (value < 0).</summary>
     public bool IsNegativeTrend => ChangeValue is < 0;
 
     /// <summary>Gets whether trend is neutral (value == 0 or null).</summary>
@@ -196,9 +189,6 @@ public partial class StatCard : UserControl
         set => SetValue(ValueProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets the icon geometry.
-    /// </summary>
     public Geometry? Icon
     {
         get => GetValue(IconProperty);

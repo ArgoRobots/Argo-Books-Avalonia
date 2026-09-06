@@ -289,6 +289,8 @@
         <modals:RentalInventoryModals DataContext="{Binding RentalInventoryModalsViewModel}" />
         <modals:RentalAvailabilityModal DataContext="{Binding RentalAvailabilityModalViewModel}" />
 
+        <modals:RecurringScheduleModal DataContext="{Binding RecurringScheduleEditorViewModel}" />
+
         <!-- Entity creation modals (top layer, opened from other modals) -->
         <modals:CustomerModals DataContext="{Binding CustomerModalsViewModel}" />
         <modals:ProductModals DataContext="{Binding ProductModalsViewModel}" />

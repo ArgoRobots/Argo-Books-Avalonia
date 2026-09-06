@@ -117,7 +117,7 @@
                             </StackPanel>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding AdjustmentError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding AdjustmentError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AdjustmentError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -173,7 +173,7 @@
                                                             EmptyMessage="{loc:Loc 'No products available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateProductCommand}" />
-                                <TextBlock Text="{Binding AddItemProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding AddItemProductError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding AddItemProductError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -242,7 +242,7 @@
                             </StackPanel>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding AddItemError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding AddItemError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AddItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

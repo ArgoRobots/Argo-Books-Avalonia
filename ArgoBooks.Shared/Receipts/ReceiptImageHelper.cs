@@ -15,6 +15,11 @@ public static class ReceiptImageHelper
             ".jpg" or ".jpeg" => "image/jpeg",
             ".png" => "image/png",
             ".webp" => "image/webp",
+            // iPhones shoot HEIC by default. Skia cannot decode it, so these files reach
+            // the vision API as their original bytes rather than as preprocessed JPEG,
+            // which is why the content type has to survive rather than be assumed.
+            ".heic" => "image/heic",
+            ".heif" => "image/heif",
             ".pdf" => "application/pdf",
             ".bmp" => "image/bmp",
             ".tiff" or ".tif" => "image/tiff",
@@ -62,7 +67,20 @@ public static class ReceiptImageHelper
     /// PDFs are returned unchanged.
     /// </summary>
     public static byte[] PreprocessForOcr(byte[] imageData, string fileName)
+        => PreprocessForOcr(imageData, fileName, out _);
+
+    /// <summary>
+    /// As above, and reports whether the returned bytes are actually re-encoded JPEG.
+    ///
+    /// Callers rename the file to .jpg afterwards, which is only true when this says so.
+    /// A PDF passes through untouched, and so does any image Skia cannot decode, HEIC
+    /// being the one that matters: an iPhone photo renamed to .jpg would be sent to the
+    /// vision API labelled as something it is not.
+    /// </summary>
+    public static byte[] PreprocessForOcr(byte[] imageData, string fileName, out bool convertedToJpeg)
     {
+        convertedToJpeg = false;
+
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
         if (extension == ".pdf")
             return imageData;
@@ -71,7 +89,18 @@ public static class ReceiptImageHelper
         using var stream = new MemoryStream(imageData);
         using var codec = SKCodec.Create(stream);
         if (codec == null)
+        {
+            // Skia could not read it. HEIF is the case that matters, and it is detected by
+            // the decode failing rather than by the extension, so a HEIC file someone has
+            // renamed to .jpg is still handled. Converting to JPEG and starting again means
+            // orientation, contrast and sharpening all still apply, exactly as for any
+            // other photo.
+            var asJpeg = HeifImageDecoder.TryConvertToJpeg(imageData);
+            if (asJpeg != null)
+                return PreprocessForOcr(asJpeg, Path.ChangeExtension(fileName, ".jpg"), out convertedToJpeg);
+
             return imageData;
+        }
 
         var origin = codec.EncodedOrigin;
         using var original = SKBitmap.Decode(imageData);
@@ -126,6 +155,7 @@ public static class ReceiptImageHelper
         using var snapshot = surface.Snapshot();
         // Match original file size, use quality 95 to avoid inflating compressed JPEGs.
         using var encoded = snapshot.Encode(SKEncodedImageFormat.Jpeg, 95);
+        convertedToJpeg = true;
         return encoded.ToArray();
     }
 
@@ -138,7 +168,12 @@ public static class ReceiptImageHelper
         using var stream = new MemoryStream(imageData);
         using var codec = SKCodec.Create(stream);
         if (codec == null)
-            return null;
+        {
+            // As in PreprocessForOcr: a HEIF photo gets one conversion and then follows the
+            // ordinary path. Without this the receipt scans correctly but its card is blank.
+            var asJpeg = HeifImageDecoder.TryConvertToJpeg(imageData);
+            return asJpeg != null ? GenerateThumbnail(asJpeg, maxDimension) : null;
+        }
 
         var origin = codec.EncodedOrigin;
         using var original = SKBitmap.Decode(imageData);

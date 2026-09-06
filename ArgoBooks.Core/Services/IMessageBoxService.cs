@@ -113,9 +113,6 @@ public class MessageBoxOptions
     /// </summary>
     public MessageBoxButtons Buttons { get; set; } = MessageBoxButtons.Ok;
 
-    /// <summary>
-    /// Gets or sets whether to show the icon.
-    /// </summary>
     public bool ShowIcon { get; set; } = true;
 
     /// <summary>

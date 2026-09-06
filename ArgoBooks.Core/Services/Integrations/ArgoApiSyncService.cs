@@ -79,7 +79,20 @@ public class ArgoApiSyncService
             new Dictionary<string, ArgoExternalRef>());
 
         var external = await ResolveExternalRefsAsync(key, preview, ct);
-        return preview with { ExternalRefs = external };
+
+        // Appended, not prepended: Import() already walks categories, customers,
+        // suppliers and products before anything that points at them, so adding to the
+        // end of each list keeps that ordering intact. They also count toward
+        // TotalObjects, so the merchant is told these are coming rather than finding
+        // them afterwards.
+        return preview with
+        {
+            ExternalRefs = external.Refs,
+            Products   = [.. preview.Products,   .. external.Products],
+            Categories = [.. preview.Categories, .. external.Categories],
+            Customers  = [.. preview.Customers,  .. external.Customers],
+            Suppliers  = [.. preview.Suppliers,  .. external.Suppliers],
+        };
     }
 
     /// <summary>
@@ -93,9 +106,28 @@ public class ArgoApiSyncService
     /// Only distinct missing ids are fetched, so this is a handful of requests
     /// per import rather than one per row.
     /// </summary>
-    private async Task<Dictionary<string, ArgoExternalRef>> ResolveExternalRefsAsync(
+    /// <summary>
+    /// Everything a preview references but does not itself contain.
+    ///
+    /// <see cref="Refs"/> is the lookup used to match against records the merchant
+    /// already has. The typed lists are the supporting objects that exist server-side,
+    /// have never been imported, and match nothing locally: without them a revenue line
+    /// would import with an empty product link and the product would never appear at all.
+    /// </summary>
+    private sealed record ExternalResolution(
+        Dictionary<string, ArgoExternalRef> Refs,
+        List<ArgoProduct> Products,
+        List<ArgoCategory> Categories,
+        List<ArgoCustomer> Customers,
+        List<ArgoSupplier> Suppliers);
+
+    private async Task<ExternalResolution> ResolveExternalRefsAsync(
         string key, ArgoApiSyncPreview preview, CancellationToken ct)
     {
+        var extraProducts = new List<ArgoProduct>();
+        var extraCategories = new List<ArgoCategory>();
+        var extraCustomers = new List<ArgoCustomer>();
+        var extraSuppliers = new List<ArgoSupplier>();
         var known = new HashSet<string>(StringComparer.Ordinal);
         foreach (var c in preview.Customers) known.Add(c.Id);
         foreach (var x in preview.Suppliers) known.Add(x.Id);
@@ -147,9 +179,59 @@ public class ArgoApiSyncService
             }
 
             resolved[id] = new ArgoExternalRef(id, localRef, Read("name"), Read("email"));
+
+            // An object that has never been imported and carries no local record is one
+            // the merchant has no way of getting: it is not pending, so it is absent from
+            // the preview, and there is nothing local to match it against. Pull it in so
+            // it is created alongside the row that needs it.
+            //
+            // Only 'pending' qualifies. 'imported' already has a local_ref to resolve
+            // against, and 'rejected' was refused on purpose: recreating that as a side
+            // effect of accepting something else would undo the refusal silently.
+            var status = obj.Value.TryGetProperty("import", out var st)
+                         && st.TryGetProperty("status", out var sv)
+                         && sv.ValueKind == JsonValueKind.String
+                ? sv.GetString()
+                : null;
+
+            if (localRef != null || status != "pending")
+            {
+                continue;
+            }
+
+            switch (resource)
+            {
+                case "products":
+                    Add(extraProducts, obj.Value);
+                    break;
+                case "categories":
+                    Add(extraCategories, obj.Value);
+                    break;
+                case "customers":
+                    Add(extraCustomers, obj.Value);
+                    break;
+                case "suppliers":
+                    Add(extraSuppliers, obj.Value);
+                    break;
+            }
         }
 
-        return resolved;
+        static void Add<T>(List<T> into, JsonElement raw)
+        {
+            // A shape this build cannot read is skipped rather than thrown: the reference
+            // still resolves to nothing, which is exactly where it stood before.
+            try
+            {
+                var parsed = raw.Deserialize<T>();
+                if (parsed != null) into.Add(parsed);
+            }
+            catch (JsonException)
+            {
+            }
+        }
+
+        return new ExternalResolution(
+            resolved, extraProducts, extraCategories, extraCustomers, extraSuppliers);
     }
 
     /// <summary>
@@ -340,6 +422,62 @@ public class ArgoApiSyncService
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Decline everything in a preview, so the queue empties and the apps that sent it are
+    /// told they were refused.
+    ///
+    /// Declining is the missing third answer. Without it the only options are "take it" and
+    /// "not now", so an object nobody wants is re-offered on every sync forever and the
+    /// developer who pushed it can never tell refusal from inattention.
+    ///
+    /// Each object is rejected on its own because that is the shape of the endpoint, and a
+    /// failure on one is swallowed: leaving the rest queued because a single id had already
+    /// been actioned elsewhere would be a worse outcome than a partial clear.
+    /// </summary>
+    /// <returns>How many objects the server accepted a rejection for.</returns>
+    public async Task<int> RejectPreviewAsync(
+        CompanyData data,
+        ArgoApiSyncPreview preview,
+        CancellationToken ct = default)
+    {
+        var api = data.Settings.Integrations.ArgoApi;
+        if (!api.Enabled || string.IsNullOrWhiteSpace(api.DesktopKey))
+            return 0;
+
+        var key = api.DesktopKey!;
+
+        var targets = new List<(string Resource, string Id)>();
+        foreach (var c in preview.Categories) targets.Add(("categories", c.Id));
+        foreach (var c in preview.Customers) targets.Add(("customers", c.Id));
+        foreach (var x in preview.Suppliers) targets.Add(("suppliers", x.Id));
+        foreach (var x in preview.Products) targets.Add(("products", x.Id));
+        foreach (var x in preview.Expenses) targets.Add(("expenses", x.Id));
+        foreach (var x in preview.Revenue) targets.Add(("revenue", x.Id));
+        foreach (var x in preview.Refunds) targets.Add(("refunds", x.Id));
+
+        var rejected = 0;
+        foreach (var (resource, id) in targets)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (string.IsNullOrWhiteSpace(id))
+                continue;
+
+            try
+            {
+                await _client.RejectAsync(key, resource, id, ct);
+                rejected++;
+            }
+            catch (ArgoApiException)
+            {
+                // Already imported or already rejected by another client. Nothing to undo
+                // and nothing to report: the object is out of the queue either way.
+            }
+        }
+
+        return rejected;
     }
 
     public async Task<bool> TryReleaseBatchAsync(CompanyData data, string batchId, CancellationToken ct = default)

@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia.Threading;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Payroll;
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -428,6 +429,8 @@ public partial class PayRunModalsViewModel : ViewModelBase
                 PeriodStart?.DateTime.Date ?? payDate,
                 PeriodEnd?.DateTime.Date ?? payDate,
                 chosen);
+
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PayRunDrafted);
         }
         catch (Exception ex)
         {
@@ -798,6 +801,8 @@ public partial class PayRunModalsViewModel : ViewModelBase
         data.PayRuns.Add(run);
 
         List<Core.Models.Transactions.Expense> expenses = _payroll.ApproveAndRecord(data, run);
+
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PayRunApproved);
 
         App.CompanyManager?.MarkAsChanged();
 

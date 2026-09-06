@@ -373,7 +373,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
     /// <summary>The entry form is now one of three states rather than the inverse of success.</summary>
     public bool ShowKeyEntryForm => !IsVerificationSuccess && !IsEmailCaptureStep;
 
-
     /// <summary>
     /// Records the address, then closes the modal.
     ///
@@ -676,7 +675,6 @@ public partial class UpgradeModalViewModel : ViewModelBase
             IsVerifying = false;
         }
     }
-
 
     /// <summary>
     /// Redeems a license key on the server, marking it as used and binding to this device.

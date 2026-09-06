@@ -55,7 +55,7 @@
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
-                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -170,7 +170,7 @@
                                                                       Width="14" Height="14" />
                                                         </Button>
                                                     </Grid>
-                                                    <TextBlock Text="{Binding QuantityError}"
+                                                    <TextBlock TextWrapping="Wrap" Text="{Binding QuantityError}"
                                                                Foreground="{DynamicResource ErrorBrush}"
                                                                FontSize="11"
                                                                IsVisible="{Binding QuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -192,7 +192,7 @@
                                 </Border>
 
                                 <!-- Line items error -->
-                                <TextBlock Text="{Binding ModalLineItemsError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalLineItemsError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalLineItemsError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                                 <!-- Totals Row -->
@@ -274,7 +274,7 @@
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
-                                <TextBlock Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalCustomerError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -389,7 +389,7 @@
                                                                       Width="14" Height="14" />
                                                         </Button>
                                                     </Grid>
-                                                    <TextBlock Text="{Binding QuantityError}"
+                                                    <TextBlock TextWrapping="Wrap" Text="{Binding QuantityError}"
                                                                Foreground="{DynamicResource ErrorBrush}"
                                                                FontSize="11"
                                                                IsVisible="{Binding QuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -411,7 +411,7 @@
                                 </Border>
 
                                 <!-- Line items error -->
-                                <TextBlock Text="{Binding ModalLineItemsError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalLineItemsError}" Foreground="{DynamicResource ErrorBrush}" FontSize="12"
                                            IsVisible="{Binding ModalLineItemsError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
 
                                 <!-- Totals Row -->

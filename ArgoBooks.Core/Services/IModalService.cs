@@ -32,19 +32,10 @@ public class ModalOptions
     /// </summary>
     public bool CloseOnEscape { get; set; } = true;
 
-    /// <summary>
-    /// Gets or sets whether to show the close button.
-    /// </summary>
     public bool ShowCloseButton { get; set; } = true;
 
-    /// <summary>
-    /// Gets or sets the primary button text.
-    /// </summary>
     public string? PrimaryButtonText { get; set; }
 
-    /// <summary>
-    /// Gets or sets the secondary button text.
-    /// </summary>
     public string? SecondaryButtonText { get; set; }
 }
 

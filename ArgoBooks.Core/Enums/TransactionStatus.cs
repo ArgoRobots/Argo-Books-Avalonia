@@ -17,9 +17,6 @@ public enum TransactionStatus
 /// </summary>
 public static class TransactionStatusExtensions
 {
-    /// <summary>
-    /// Gets the display name for a transaction status.
-    /// </summary>
     public static string GetDisplayName(this TransactionStatus status)
     {
         return status switch

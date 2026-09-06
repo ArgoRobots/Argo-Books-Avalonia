@@ -1,4 +1,4 @@
-using ArgoBooks.Controls;
+﻿using ArgoBooks.Controls;
 using ArgoBooks.Services;
 using ArgoBooks.Localization;
 using System.Collections.ObjectModel;
@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Services;
 
 namespace ArgoBooks.ViewModels;
 
@@ -36,8 +37,15 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isHistoryFilterModalOpen;
 
-    [ObservableProperty]
-    private bool _hasValidationMessage;
+    /// <summary>
+    /// Whether the footer's "enter all required fields" line shows. Derived rather than
+    /// stored: every check in ValidateModal sets one of the field errors, so a stored copy
+    /// only added a second thing to remember to clear, and clearing a field error left the
+    /// footer behind until the next Save.
+    /// </summary>
+    public bool HasValidationMessage =>
+        ModalIdError != null || ModalFirstNameError != null || ModalLastNameError != null
+        || ModalEmailError != null || ModalPhoneError != null;
 
     [ObservableProperty]
     private string _validationMessage = string.Empty;
@@ -86,18 +94,23 @@ public partial class CustomerModalsViewModel : ViewModelBase
     private string _modalStatus = "Active";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalIdError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalFirstNameError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalLastNameError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalEmailError;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalPhoneError;
 
     partial void OnModalIdChanged(string value)
@@ -765,7 +778,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             {
                 App.ErrorLogger?.LogError(ex, ErrorCategory.Validation, "Customer.ChangeId");
                 ModalIdError = ex.Message;
-                HasValidationMessage = true;
                 return;
             }
         }
@@ -844,6 +856,8 @@ public partial class CustomerModalsViewModel : ViewModelBase
                     usages.Add("Rental".Translate());
                 if (cd.RecurringInvoices.Any(ri => ri.CustomerId == item.Id))
                     usages.Add("Recurring Invoice".Translate());
+                if (RecurringTransactionService.IsCustomerInUse(cd, item.Id))
+                    usages.Add("Recurring Revenue".Translate());
                 if (cd.Payments.Any(p => p.CustomerId == item.Id))
                     usages.Add("Payment".Translate());
                 if (cd.Returns.Any(r => r.CustomerId == item.Id))
@@ -1129,7 +1143,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             });
         }
 
-        // Apply filters
         var filtered = ApplyHistoryFiltersInternal(historyItems);
 
         // Sort by date descending and add to collection
@@ -1146,13 +1159,11 @@ public partial class CustomerModalsViewModel : ViewModelBase
     {
         var filtered = items.AsEnumerable();
 
-        // Filter by type
         if (HistoryFilterType != "All")
         {
             filtered = filtered.Where(h => h.Type == HistoryFilterType);
         }
 
-        // Filter by status
         if (HistoryFilterStatus != "All")
         {
             filtered = filtered.Where(h => h.Status == HistoryFilterStatus);
@@ -1293,7 +1304,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
         ModalLastNameError = null;
         ModalEmailError = null;
         ModalPhoneError = null;
-        HasValidationMessage = false;
     }
 
     private bool ValidateModal()
@@ -1390,7 +1400,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
             }
         }
 
-        HasValidationMessage = !isValid;
         return isValid;
     }
 

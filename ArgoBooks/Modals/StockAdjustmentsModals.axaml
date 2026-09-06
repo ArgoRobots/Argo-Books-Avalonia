@@ -144,7 +144,7 @@
                             </StackPanel>
 
                             <!-- Error Message -->
-                            <TextBlock Text="{Binding AddModalError}"
+                            <TextBlock TextWrapping="Wrap" Text="{Binding AddModalError}"
                                        FontSize="12"
                                        Foreground="{DynamicResource ErrorBrush}"
                                        IsVisible="{Binding AddModalError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

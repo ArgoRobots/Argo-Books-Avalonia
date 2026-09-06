@@ -53,7 +53,7 @@
                                                             Placeholder="{loc:Loc 'Search inventory items...'}"
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No inventory items available.'}" />
-                                <TextBlock Text="{Binding ModalInventoryItemError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalInventoryItemError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalInventoryItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -68,7 +68,7 @@
                                     <TextBlock Text="{loc:Loc 'Daily Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
-                                    <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -150,7 +150,7 @@
                                                             Placeholder="{loc:Loc 'Search inventory items...'}"
                                                             ShowAddNew="False"
                                                             EmptyMessage="{loc:Loc 'No inventory items available.'}" />
-                                <TextBlock Text="{Binding ModalInventoryItemError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalInventoryItemError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalInventoryItemError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -177,7 +177,7 @@
                                     <TextBlock Text="{loc:Loc 'Daily Rate'}" FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}" />
                                     <TextBox Text="{Binding ModalDailyRate, Mode=TwoWay}" Classes="form-input" PlaceholderText="0.00"
                                              behaviors:NumericInputBehavior.IsDecimalOnly="True" MaxLength="13" />
-                                    <TextBlock Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding ModalDailyRateError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding ModalDailyRateError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">
@@ -346,7 +346,7 @@
                                                             EmptyMessage="{loc:Loc 'No customers available.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateCustomerCommand}" />
-                                <TextBlock Text="{Binding RentOutCustomerError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding RentOutCustomerError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding RentOutCustomerError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                             </StackPanel>
 
@@ -358,7 +358,7 @@
                                     </TextBlock>
                                     <TextBox Text="{Binding RentOutQuantity, Mode=TwoWay}" Classes="form-input"
                                              behaviors:NumericInputBehavior.IsIntegerOnly="True" MaxLength="7" />
-                                    <TextBlock Text="{Binding RentOutQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding RentOutQuantityError}" FontSize="12" Foreground="{DynamicResource ErrorBrush}"
                                                IsVisible="{Binding RentOutQuantityError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Spacing="6">

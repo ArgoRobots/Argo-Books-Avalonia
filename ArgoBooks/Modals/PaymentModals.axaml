@@ -65,7 +65,7 @@
                                                             EmptyMessage="{loc:Loc 'No invoices found.'}"
                                                             EmptyCreateLinkText="{loc:Loc 'Create one'}"
                                                             EmptyCreateCommand="{Binding OpenCreateInvoiceCommand}" />
-                                <TextBlock Text="{Binding ModalInvoiceError}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalInvoiceError}"
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalInvoiceError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -81,7 +81,7 @@
                                          PlaceholderText="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                          MaxLength="13" />
-                                <TextBlock Text="{Binding ModalAmountError}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalAmountError}"
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalAmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -207,7 +207,7 @@
                                          PlaceholderText="0.00"
                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                          MaxLength="13" />
-                                <TextBlock Text="{Binding ModalAmountError}"
+                                <TextBlock TextWrapping="Wrap" Text="{Binding ModalAmountError}"
                                            FontSize="12"
                                            Foreground="{DynamicResource ErrorBrush}"
                                            IsVisible="{Binding ModalAmountError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

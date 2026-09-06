@@ -160,14 +160,12 @@ public partial class ChartSettingsService : ObservableObject
         // If no company-specific settings found, keep current defaults
         if (chartSettings == null) return;
 
-        // Load chart type
         if (!string.IsNullOrEmpty(chartSettings.ChartType) &&
             ChartTypeOptions.Contains(chartSettings.ChartType))
         {
             SelectedChartType = chartSettings.ChartType;
         }
 
-        // Load date range
         if (!string.IsNullOrEmpty(chartSettings.DateRange))
         {
             if (chartSettings.DateRange == DateRangePreset.CustomRange.GetDisplayName() &&

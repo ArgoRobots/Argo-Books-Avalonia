@@ -302,7 +302,6 @@ public class LicenseService
         }
     }
 
-
     /// <summary>
     /// Gets a machine-specific key for encryption using stable platform identifiers.
     /// </summary>

@@ -80,7 +80,7 @@ public class StripeSyncServiceTests
         Assert.Equal(1, result.RevenuesCreated);
         Assert.Single(data.Revenues);
         Assert.Equal("Premium Plan", data.Revenues[0].Description);
-        Assert.NotEmpty(data.Revenues[0].CustomerId);
+        Assert.NotEmpty(data.Revenues[0].CustomerId!);
         Assert.Single(data.Customers);
         Assert.Equal("Jane Doe", data.Customers[0].Name);
 

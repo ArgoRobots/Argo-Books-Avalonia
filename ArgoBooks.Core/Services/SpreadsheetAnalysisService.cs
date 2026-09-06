@@ -330,7 +330,6 @@ public class SpreadsheetAnalysisService(
         var systemPrompt = BuildTier2SystemPrompt(entityType, schema);
         var userPrompt = BuildTier2UserPrompt(headers, rows);
 
-
         var response = await geminiService.SendChatAsync(
             systemPrompt, userPrompt, maxTokens: 16000, temperature: 0.0, cancellationToken,
             operation: OperationKind.SpreadsheetProcess, sizeFeature: rows.Count);
@@ -517,7 +516,6 @@ Respond with valid JSON only, no markdown code blocks.";
             sb.Append(string.Join(" | ", headers.Select(_ => "---")));
             sb.AppendLine(" |");
 
-            // Sample rows
             foreach (var row in sampleRows)
             {
                 sb.Append("| ");
@@ -946,11 +944,9 @@ IMPORTANT:
 
         var indices = new HashSet<int>();
 
-        // First rows
         for (int i = 0; i < SampleFirstRows; i++)
             indices.Add(i);
 
-        // Last rows
         for (int i = totalRows - SampleLastRows; i < totalRows; i++)
             indices.Add(i);
 

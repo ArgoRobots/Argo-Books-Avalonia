@@ -347,7 +347,7 @@ public class ImportRescueTests
         var markers = new List<MixedRowMarker> { new(2, MixedRowKind.IncomeSection, "Income") };
         var buckets = InvokeBucket(5, markers);
         // rows 0,1 are before any section -> dropped; rows 3,4 -> Revenue, category falls back to section
-        Assert.False(buckets.Values.SelectMany(v => v).Any(i => i is 0 or 1 or 2));
+        Assert.DoesNotContain(buckets.Values.SelectMany(v => v), i => i is 0 or 1 or 2);
         Assert.Equal([3, 4], buckets[(SpreadsheetSheetType.Revenue, "Income")]);
     }
 

@@ -59,5 +59,47 @@ public enum FeatureName
     /// Their subsequent activity is evaluation, not real bookkeeping, and without this
     /// event the two are indistinguishable.
     /// </summary>
-    SampleCompanyOpened
+    SampleCompanyOpened,
+
+    // Attempts, so a completion can be divided by one. Without the denominator,
+    // abandonment is invisible.
+    CompanyCreateOpened,
+    ReceiptScanOpened,
+    InvoiceCreateOpened,
+    ExpenseCreateOpened,
+    RevenueCreateOpened,
+    ReportOpened,
+
+    // The import funnel. The stage or reason travels in the context string, so a new failure
+    // mode needs neither a new enum value nor a server change.
+    ImportOpened,
+    ImportPreviewShown,
+    ImportAbandoned,
+    ImportFailed,
+
+    ReceiptScanFailed,
+
+    // The paywall. Shown is the wall someone hit, opened is them acting on it; the limit or
+    // entry point is in the context on both, so the pair divides into a conversion rate.
+    UpgradePromptShown,
+    UpgradeModalOpened,
+
+    /// <summary>A list rendered with nothing in it, with the page in the context.</summary>
+    EmptyStateShown,
+
+    WelcomeShown,
+
+    // Payroll reported only its exceptions, so a company could run payroll all year and file
+    // its T4s without producing a single event. Zero errors read the same as nobody opening
+    // the page, which is the one thing worth knowing about the most complex feature here.
+    //
+    // Drafted then approved is the pair that matters: the gap between them is people who
+    // started a pay run and could not finish it.
+    PayRunDrafted,
+    PayRunApproved,
+    PayStubsExported,
+    T4SlipsGenerated,
+
+    /// <summary>The CRA submission file itself, so actually filing is separable from previewing.</summary>
+    T4XmlGenerated
 }

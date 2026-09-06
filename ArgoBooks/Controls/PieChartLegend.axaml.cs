@@ -74,9 +74,6 @@ public partial class PieChartLegend : UserControl
 
     #region Properties
 
-    /// <summary>
-    /// Gets or sets the legend items collection.
-    /// </summary>
     public ObservableCollection<PieLegendItem>? Items
     {
         get => GetValue(ItemsProperty);

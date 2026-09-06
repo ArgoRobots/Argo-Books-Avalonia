@@ -397,9 +397,6 @@ public class TutorialService
         };
     }
 
-    /// <summary>
-    /// Gets the list of completed checklist items.
-    /// </summary>
     public IReadOnlyList<string> GetCompletedChecklistItems()
     {
         return Settings.CompletedChecklistItems.AsReadOnly();
@@ -514,7 +511,6 @@ public class TutorialService
             TutorialStateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-
 
     /// <summary>
     /// Gets the first-visit hint text for a page.

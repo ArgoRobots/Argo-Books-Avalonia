@@ -533,7 +533,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         var orderId = $"PO-{companyData.IdCounters.PurchaseOrder:D5}";
         var poNumber = $"#PO-{DateTime.Now.Year}-{companyData.IdCounters.PurchaseOrder:D3}";
 
-        // Create line items
         var lineItems = LineItems.Select(li => new PurchaseOrderLineItem
         {
             ProductId = li.ProductId,
@@ -568,7 +567,6 @@ public partial class PurchaseOrdersModalsViewModel : ViewModelBase
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PurchaseOrderCreated);
         companyData.MarkAsModified();
 
-        // Record undo action
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Create order '{poNumber}'",
             () =>

@@ -39,9 +39,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string?> SelectedCategoryIdProperty =
         AvaloniaProperty.Register<CategoryInput, string?>(nameof(SelectedCategoryId), defaultBindingMode: BindingMode.TwoWay);
 
-    /// <summary>
-    /// Gets or sets the selected category ID.
-    /// </summary>
     public string? SelectedCategoryId
     {
         get => GetValue(SelectedCategoryIdProperty);
@@ -51,9 +48,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string?> SelectedCategoryNameProperty =
         AvaloniaProperty.Register<CategoryInput, string?>(nameof(SelectedCategoryName), defaultBindingMode: BindingMode.TwoWay);
 
-    /// <summary>
-    /// Gets or sets the selected category name.
-    /// </summary>
     public string? SelectedCategoryName
     {
         get => GetValue(SelectedCategoryNameProperty);
@@ -75,9 +69,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<ICommand?> OpenCategoriesPageCommandProperty =
         AvaloniaProperty.Register<CategoryInput, ICommand?>(nameof(OpenCategoriesPageCommand));
 
-    /// <summary>
-    /// Gets or sets the command to open the categories page.
-    /// </summary>
     public ICommand? OpenCategoriesPageCommand
     {
         get => GetValue(OpenCategoriesPageCommandProperty);
@@ -88,9 +79,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    /// <summary>
-    /// Gets the selected category.
-    /// </summary>
     public CategoryItem? SelectedCategory
     {
         get;
@@ -110,9 +98,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
     public bool HasCategories => Categories.Count > 0;
 
     private string _searchText = string.Empty;
-    /// <summary>
-    /// Gets or sets the search text.
-    /// </summary>
     public string SearchText
     {
         get => _searchText;
@@ -134,9 +119,6 @@ public partial class CategoryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Gets or sets whether the dropdown is open.
-    /// </summary>
     public bool IsDropdownOpen
     {
         get;

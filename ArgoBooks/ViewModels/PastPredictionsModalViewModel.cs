@@ -395,7 +395,6 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             NoPredictionsMessage = "No validated predictions yet. Predictions will appear here after forecast periods have completed and can be compared to actual results.";
         }
 
-        // Load the accuracy chart
         LoadAccuracyChart(records.Where(r => r.IsValidated && r.PeriodEndDate < today).ToList());
     }
 

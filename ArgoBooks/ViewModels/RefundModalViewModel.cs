@@ -309,7 +309,6 @@ public partial class RefundModalViewModel : ObservableObject
 
     private void BuildLineRows()
     {
-        // Line items from the invoice
         if (_invoice.LineItems != null)
         {
             foreach (var li in _invoice.LineItems)
@@ -342,7 +341,6 @@ public partial class RefundModalViewModel : ObservableObject
             LineRows.Add(row);
         }
 
-        // Custom fee
         if (_invoice.CustomFeeAmount > 0)
         {
             var label = string.IsNullOrEmpty(_invoice.CustomFeeLabel) ? "Custom fee" : _invoice.CustomFeeLabel;
@@ -358,7 +356,6 @@ public partial class RefundModalViewModel : ObservableObject
             LineRows.Add(row);
         }
 
-        // Security deposit
         if (_invoice.SecurityDeposit > 0)
         {
             var row = new RefundableLineRow

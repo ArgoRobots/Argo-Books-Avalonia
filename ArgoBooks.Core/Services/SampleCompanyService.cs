@@ -67,7 +67,6 @@ public class SampleCompanyService
 
         context.TempExcelPath = Path.Combine(context.TempRoot, "SampleData.xlsx");
 
-        // Write the stream to a temp file
         await using (var fileStream = new FileStream(context.TempExcelPath, FileMode.Create, FileAccess.Write))
         {
             await excelDataStream.CopyToAsync(fileStream, cancellationToken);
@@ -141,7 +140,6 @@ public class SampleCompanyService
             // Create receipts subdirectory
             Directory.CreateDirectory(Path.Combine(companyDir, "receipts"));
 
-            // Get the sample company file path
             var sampleFilePath = GetSampleCompanyPath();
 
             // Ensure directory exists

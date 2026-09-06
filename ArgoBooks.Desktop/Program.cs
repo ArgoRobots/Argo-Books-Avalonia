@@ -15,8 +15,10 @@ sealed class Program
         // Install crash handlers first so a failure anywhere in startup is captured.
         CrashReporter.InstallHandlers();
 
-        // Create the update service for desktop platforms
-        App.UpdateService = new NetSparkleUpdateService();
+        // A factory, not an instance. Constructing NetSparkle here would run before
+        // Avalonia is even configured, inside the window where the user is looking at
+        // nothing. App builds it once the splash is on screen.
+        App.UpdateServiceFactory = () => new NetSparkleUpdateService();
 
         BuildAvaloniaApp()
             .StartWithClassicDesktopLifetime(args);

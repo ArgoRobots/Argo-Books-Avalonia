@@ -575,7 +575,6 @@ public partial class QuickActionsViewModel : ViewModelBase
                 results.Add((new QuickActionItem($"{productName} @ {location?.Name ?? "Default"}", $"SKU: {i.Sku} · In Stock: {i.InStock}", Icons.StockLevels, QuickActionType.SearchResult, "StockLevels", entityId: i.Id), score));
         }
 
-        // Purchase Orders
         foreach (var po in companyData.PurchaseOrders)
         {
             var supplierName = companyData.Suppliers.FirstOrDefault(s => s.Id == po.SupplierId)?.Name ?? "";

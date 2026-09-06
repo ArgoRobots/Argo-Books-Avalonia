@@ -41,7 +41,7 @@
                 <StackPanel HorizontalAlignment="Center"
                             Margin="0,0,0,48">
                     <!-- App Logo -->
-                    <Image Source="avares://ArgoBooks/Assets/Argo Books icon.png"
+                    <Image Source="avares://ArgoBooks/Assets/argo-logo.png"
                            Width="80" Height="80"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,24" />
@@ -456,7 +456,6 @@
         <Style Selector="Button.text-link:pointerover">
             <Setter Property="Foreground" Value="{DynamicResource PrimaryHoverBrush}" />
         </Style>
-
 
         <!-- Footer Link -->
         <Style Selector="Button.footer-link">

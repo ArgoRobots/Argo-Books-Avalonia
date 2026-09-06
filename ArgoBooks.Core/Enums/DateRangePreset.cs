@@ -67,9 +67,6 @@ public static class DateRangePresetExtensions
         };
     }
 
-    /// <summary>
-    /// Gets the comparison period label for a date range preset.
-    /// </summary>
     public static string GetComparisonPeriodLabel(this DateRangePreset preset)
     {
         return preset switch

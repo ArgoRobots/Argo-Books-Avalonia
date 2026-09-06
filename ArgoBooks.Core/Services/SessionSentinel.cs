@@ -1,3 +1,4 @@
+using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
@@ -109,7 +110,14 @@ public sealed class SessionSentinel : IDisposable
         }
         catch (Exception ex)
         {
-            errorLogger?.LogDebug($"Could not start session sentinel: {ex.Message}");
+            // LogDebug compiles to nothing in release, so this used to fail in total
+            // silence: no sentinel means an unclean exit leaves no trace, and that machine
+            // reports session starts with no ends forever without saying why.
+            errorLogger?.LogWarning(
+                $"Could not start session sentinel: {ex.Message}",
+                nameof(SessionSentinel),
+                ErrorCategory.FileSystem,
+                "SentinelStartFailed");
             return null;
         }
     }
@@ -258,7 +266,13 @@ public sealed class SessionSentinel : IDisposable
         }
         catch (Exception ex)
         {
-            errorLogger?.LogDebug($"Could not sweep session sentinels: {ex.Message}");
+            // Same reasoning as the start path: a sweep that cannot run means unclean
+            // sessions are never reported, which is indistinguishable from there being none.
+            errorLogger?.LogWarning(
+                $"Could not sweep session sentinels: {ex.Message}",
+                nameof(SessionSentinel),
+                ErrorCategory.FileSystem,
+                "SentinelSweepFailed");
         }
 
         if (found.Count <= MaxOrphansPerSweep)

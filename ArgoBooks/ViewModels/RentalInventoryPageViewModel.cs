@@ -42,9 +42,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -79,18 +76,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
     partial void OnShowDailyRateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("DailyRate", value); ColumnVisibilityHelper.Save("RentalInventory", "DailyRate", value); }
     partial void OnShowWeeklyRateColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("WeeklyRate", value); ColumnVisibilityHelper.Save("RentalInventory", "WeeklyRate", value); }
     partial void OnShowDepositColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Deposit", value); ColumnVisibilityHelper.Save("RentalInventory", "Deposit", value); }
-
-    [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
 
     [RelayCommand]
     private void ResetColumnVisibility()
@@ -349,7 +334,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             filtered = FilterStatus switch
@@ -361,7 +345,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             };
         }
 
-        // Apply availability filter
         if (FilterAvailability != "All")
         {
             filtered = FilterAvailability switch
@@ -372,7 +355,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             };
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrWhiteSpace(FilterSupplier) && FilterSupplier != "All Suppliers")
         {
             var supplier = companyData?.Suppliers.FirstOrDefault(s => s.Name == FilterSupplier);
@@ -382,7 +364,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             }
         }
 
-        // Apply daily rate filter
         if (decimal.TryParse(FilterDailyRateMin, out var minRate))
         {
             filtered = filtered.Where(i => i.DailyRate >= minRate);
@@ -392,7 +373,6 @@ public partial class RentalInventoryPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(i => i.DailyRate <= maxRate);
         }
 
-        // Create display items
         var displayItems = filtered.Select(item =>
         {
             var inStock = ResolveInStock(item);

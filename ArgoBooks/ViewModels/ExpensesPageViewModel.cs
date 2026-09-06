@@ -6,6 +6,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Helpers;
+using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -76,9 +77,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     #region Column Visibility and Widths
 
     [ObservableProperty]
-    private bool _isColumnMenuOpen;
-
-    [ObservableProperty]
     private double _columnMenuX;
 
     [ObservableProperty]
@@ -147,18 +145,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     partial void OnShowStatusColumnChanged(bool value) { ColumnWidths.SetColumnVisibility("Status", value); ColumnVisibilityHelper.Save("Expenses", "Status", value); }
 
     [RelayCommand]
-    private void ToggleColumnMenu()
-    {
-        IsColumnMenuOpen = !IsColumnMenuOpen;
-    }
-
-    [RelayCommand]
-    private void CloseColumnMenu()
-    {
-        IsColumnMenuOpen = false;
-    }
-
-    [RelayCommand]
     private void ResetColumnVisibility()
     {
         ColumnWidths.ResetWidths();
@@ -210,8 +196,107 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     #region Constructor
 
-    public ExpensesPageViewModel()
+        [ObservableProperty]
+    private int _selectedTabIndex;
+
+    public bool IsRecurringTab => SelectedTabIndex == 1;
+
+    partial void OnSelectedTabIndexChanged(int value) => OnPropertyChanged(nameof(IsRecurringTab));
+
+    /// <summary>Schedules for this side only, shown on the Recurring tab.</summary>
+    public RecurringSchedulesViewModel RecurringSchedules { get; } = new(CategoryType.Expense);
+
+    [ObservableProperty]
+    private int _generatedBannerCount;
+
+    [ObservableProperty]
+    private bool _hasGeneratedBanner;
+
+    /// <summary>StringFormat cannot pluralise, so the whole sentence is built here.</summary>
+    public string GeneratedBannerText => GeneratedBannerCount == 1
+        ? "1 entry was generated from your recurring schedules and needs review.".Translate()
+        : "{0} entries were generated from your recurring schedules and need review.".TranslateFormat(GeneratedBannerCount);
+
+    partial void OnGeneratedBannerCountChanged(int value) => OnPropertyChanged(nameof(GeneratedBannerText));
+
+    /// <summary>
+    /// Subscribes for the live case and reads any pending count for the common case where
+    /// generation ran on company open, before this page existed.
+    /// </summary>
+    /// <summary>
+    /// The banner is derived from the data rather than tracked alongside it, so an undo of an
+    /// accept brings it back without every caller having to remember to.
+    /// </summary>
+    private void RefreshReviewBanner()
     {
+        var data = App.CompanyManager?.CompanyData;
+        GeneratedBannerCount = data?.Expenses.Count(e => e.NeedsReview) ?? 0;
+        HasGeneratedBanner = GeneratedBannerCount > 0;
+    }
+
+    private void WireRecurringBanner()
+    {
+        RecurringTransactionService.ExpensesGenerated += OnRecurringGenerated;
+        RefreshReviewBanner();
+    }
+
+    private void OnRecurringGenerated(int count)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            RefreshReviewBanner();
+            LoadExpenses();
+        });
+    }
+
+    [RelayCommand]
+    private void AcceptGenerated(ExpenseDisplayItem? item)
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null || item == null) return;
+
+        var entry = data.Expenses.FirstOrDefault(e => e.Id == item.Id);
+        if (entry == null || !entry.NeedsReview) return;
+
+        entry.NeedsReview = false;
+        item.NeedsReview = false;
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Accept {entry.Id}",
+            () => { entry.NeedsReview = true; item.NeedsReview = true; },
+            () => { entry.NeedsReview = false; item.NeedsReview = false; }));
+
+        RefreshReviewBanner();
+        App.CompanyManager?.MarkAsChanged();
+    }
+
+    [RelayCommand]
+    private void MarkReviewed()
+    {
+        var data = App.CompanyManager?.CompanyData;
+        if (data == null) return;
+
+        var accepted = data.Expenses.Where(e => e.NeedsReview).ToList();
+        if (accepted.Count == 0) return;
+
+        foreach (var entry in accepted)
+            entry.NeedsReview = false;
+
+        App.UndoRedoManager.RecordAction(new DelegateAction(
+            $"Accept {accepted.Count} generated entries",
+            () => { foreach (var entry in accepted) entry.NeedsReview = true; },
+            () => { foreach (var entry in accepted) entry.NeedsReview = false; }));
+
+        RecurringTransactionService.ClearPendingExpenses();
+        RefreshReviewBanner();
+        App.CompanyManager?.MarkAsChanged();
+        LoadExpenses();
+    }
+
+public ExpensesPageViewModel()
+    {
+        WireRecurringBanner();
+
         // Set default sort values for expenses
         SortColumn = "Date";
         SortDirection = SortDirection.Descending;
@@ -252,6 +337,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
     public override void Cleanup()
     {
         base.Cleanup();
+        RecurringTransactionService.ExpensesGenerated -= OnRecurringGenerated;
+        RecurringSchedules.Cleanup();
         App.UndoRedoManager.StateChanged -= OnUndoRedoStateChanged;
         if (App.NavigationService != null)
             App.NavigationService.Navigated -= OnNavigated;
@@ -293,6 +380,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 
     private void OnUndoRedoStateChanged(object? sender, EventArgs e)
     {
+        RefreshReviewBanner();
+
         if (App.NavigationService?.CurrentPageName != PageNames.Expenses)
         {
             _needsRefresh = true;
@@ -382,10 +471,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             _allExpenses.Where(p => p.Date >= startOfMonth),
             p => p.Total, p => p.OriginalCurrency, p => p.TotalUSD, p => p.Date);
 
-        // Transaction count
         TransactionCount = _allExpenses.Count;
 
-        // Receipts on file
         ReceiptsOnFile = _allExpenses.Count(p => !string.IsNullOrEmpty(p.ReceiptId));
 
         // Returns count (linked to returns data)
@@ -437,13 +524,11 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
                 .ToList();
         }
 
-        // Apply status filter
         if (FilterStatus != "All")
         {
             filtered = filtered.Where(p => GetStatusDisplay(p, lostDamagedIds, returnedIds) == FilterStatus);
         }
 
-        // Apply supplier filter
         if (!string.IsNullOrEmpty(FilterSupplierId))
         {
             filtered = filtered.Where(p => p.SupplierId == FilterSupplierId);
@@ -460,7 +545,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             });
         }
 
-        // Apply amount filter
         if (decimal.TryParse(FilterAmountMin, out var minAmount))
         {
             filtered = filtered.Where(p => p.Total >= minAmount);
@@ -470,7 +554,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.Total <= maxAmount);
         }
 
-        // Apply date filter
         if (FilterDateFrom.HasValue)
         {
             filtered = filtered.Where(p => p.Date >= FilterDateFrom.Value.DateTime);
@@ -480,7 +563,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             filtered = filtered.Where(p => p.Date <= FilterDateTo.Value.DateTime);
         }
 
-        // Apply receipt status filter
         if (FilterReceiptStatus != "All")
         {
             filtered = FilterReceiptStatus switch
@@ -494,7 +576,6 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
         // Materialize filtered results
         var filteredList = filtered.ToList();
 
-        // Create display items
         var displayItems = filteredList.Select(purchase =>
         {
             var supplier = companyData?.GetSupplier(purchase.SupplierId ?? "");
@@ -512,6 +593,8 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
             return new ExpenseDisplayItem
             {
                 Id = purchase.Id,
+                NeedsReview = purchase.NeedsReview,
+                IsRecurring = !string.IsNullOrEmpty(purchase.RecurringScheduleId),
                 AccountantName = accountant?.Name ?? "System",
                 ProductDescription = productName,
                 ProductMoreText = productMoreText,
@@ -705,6 +788,14 @@ public partial class ExpensesPageViewModel : SortablePageViewModelBase
 /// </summary>
 public partial class ExpenseDisplayItem : ObservableObject
 {
+    /// <summary>Set on entries a recurring schedule produced, until the user accepts them.</summary>
+    [ObservableProperty]
+    private bool _needsReview;
+
+    /// <summary>Stays true after the entry is accepted, so its origin is still visible.</summary>
+    [ObservableProperty]
+    private bool _isRecurring;
+
     [ObservableProperty]
     private string _id = string.Empty;
 

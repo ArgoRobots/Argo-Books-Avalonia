@@ -1,6 +1,7 @@
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Portal;
@@ -90,6 +91,23 @@ public partial class App
                         companySettings.Company.Country,
                         companySettings.Localization.Currency,
                         companySettings.Localization.Language);
+
+                    var data = CompanyManager.CompanyData;
+                    if (data != null)
+                    {
+                        _ = TelemetryManager?.TrackCompanyScaleAsync(new CompanyScaleCounts(
+                            data.Expenses.Count,
+                            data.Revenues.Count,
+                            data.Invoices.Count,
+                            data.Payments.Count,
+                            data.Customers.Count,
+                            data.Suppliers.Count,
+                            data.Products.Count,
+                            data.Categories.Count,
+                            data.Receipts.Count,
+                            data.Employees.Count,
+                            data.BankImportSessions.Sum(session => session.Lines.Count)));
+                    }
                 }
 
                 var language = companySettings.Localization.Language;
@@ -174,6 +192,22 @@ public partial class App
                                     : $"{recurringCount} recurring invoices were generated and need to be sent (Recurring tab).",
                                 NotificationType.Info,
                                 OpenRecurringInvoicesTab);
+                        }
+
+                        var generatedTxns = RecurringTransactionService
+                            .GenerateDue(CompanyManager.CompanyData, DateTime.UtcNow);
+                        if (generatedTxns.Count > 0)
+                        {
+                            await CompanyManager.SaveCompanyAsync();
+                            var txnExpenses = generatedTxns.Count(t => t is Core.Models.Transactions.Expense);
+                            var txnRevenues = generatedTxns.Count - txnExpenses;
+                            RecurringTransactionService.RaiseGenerated(txnExpenses, txnRevenues);
+                            AddNotification(
+                                "Recurring transactions",
+                                generatedTxns.Count == 1
+                                    ? "1 recurring transaction was generated and needs review."
+                                    : $"{generatedTxns.Count} recurring transactions were generated and need review.",
+                                NotificationType.Info);
                         }
 
                         // Remind about recurring drafts still waiting to be sent: ones generated on an
@@ -408,18 +442,22 @@ public partial class App
             {
                 Title = "Select Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
             {
-                _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(files[0].Path.LocalPath);
+                var picked = files[0].Path.LocalPath;
+                var prepared = await Task.Run(() => ImageFileLoader.TryPrepare(picked));
+                if (prepared == null)
+                {
+                    await ShowErrorMessageBoxAsync(
+                        "Logo Not Supported".Translate(),
+                        "That image could not be read. Try a PNG or JPEG.".Translate());
+                    return;
+                }
+
+                _appShellViewModel.InvoiceTemplateDesignerViewModel.SetLogoFromFile(prepared.Path);
             }
         };
 
@@ -454,7 +492,6 @@ public partial class App
 
         var fileMenu = _appShellViewModel.FileMenuPanelViewModel;
 
-        // Open Company
         fileMenu.OpenCompanyRequested += async (_, _) =>
         {
             await OpenCompanyFileDialogAsync(desktop);
@@ -495,7 +532,6 @@ public partial class App
             }
         };
 
-        // Close Company
         fileMenu.CloseCompanyRequested += async (_, _) =>
         {
             if (CompanyManager?.IsCompanyOpen == true)
@@ -535,13 +571,11 @@ public partial class App
             }
         };
 
-        // Show in Folder
         fileMenu.ShowInFolderRequested += (_, _) =>
         {
             CompanyManager?.ShowInFolder();
         };
 
-        // Open Recent Company
         fileMenu.OpenRecentCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
@@ -561,7 +595,6 @@ public partial class App
 
         createCompany.CompanyCreated += async (_, args) =>
         {
-            // Show save dialog
             var file = await ShowSaveFileDialogAsync(desktop, args.CompanyName);
             if (file == null) return;
 
@@ -660,27 +693,22 @@ public partial class App
             {
                 Title = "Select Company Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
             {
                 var path = files[0].Path.LocalPath;
-                try
+                var prepared = await Task.Run(() => ImageFileLoader.TryPrepare(path));
+                if (prepared == null)
                 {
-                    var bitmap = new Bitmap(path);
-                    createCompany.SetLogo(path, bitmap);
+                    await ShowErrorMessageBoxAsync(
+                        "Logo Not Supported".Translate(),
+                        "That image could not be read. Try a PNG or JPEG.".Translate());
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "CreateCompanyLogo");
-                }
+
+                createCompany.SetLogo(prepared.Path, prepared.Bitmap);
             }
         };
     }
@@ -705,7 +733,6 @@ public partial class App
             await OpenCompanyFileDialogAsync(desktop);
         };
 
-        // Open recent company
         _welcomeScreenViewModel.OpenRecentCompanyRequested += async (_, company) =>
         {
             if (string.IsNullOrEmpty(company.FilePath)) return;
@@ -733,7 +760,6 @@ public partial class App
             }
         };
 
-        // Open sample company
         _welcomeScreenViewModel.OpenSampleCompanyRequested += async (_, _) =>
         {
             await OpenSampleCompanyAsync();
@@ -828,7 +854,6 @@ public partial class App
 
             try
             {
-                // Update company settings
                 var settings = CompanyManager.CurrentCompanySettings;
                 if (settings != null)
                 {
@@ -961,7 +986,6 @@ public partial class App
                             settings.Company.Address = oldAddress;
                             settings.Company.ProvinceState = oldProvinceState;
 
-                            // Restore old logo
                             RestoreCompanyLogo(settings, oldLogoFileName, oldLogoBytes, logoTempDir);
 
                             // Clear pending rename (revert to original file name)
@@ -985,7 +1009,6 @@ public partial class App
                             settings.Company.Address = newAddress;
                             settings.Company.ProvinceState = newProvinceState;
 
-                            // Restore new logo
                             RestoreCompanyLogo(settings, newLogoFileName, newLogoBytes, logoTempDir);
 
                             // Re-schedule the file rename
@@ -1006,34 +1029,28 @@ public partial class App
             }
         };
 
-        // Browse logo
         editCompany.BrowseLogoRequested += async (_, _) =>
         {
             var files = await desktop.MainWindow!.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = "Select Company Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
             {
                 var path = files[0].Path.LocalPath;
-                try
+                var prepared = await Task.Run(() => ImageFileLoader.TryPrepare(path));
+                if (prepared == null)
                 {
-                    var bitmap = new Bitmap(path);
-                    editCompany.SetLogo(path, bitmap);
+                    await ShowErrorMessageBoxAsync(
+                        "Logo Not Supported".Translate(),
+                        "That image could not be read. Try a PNG or JPEG.".Translate());
+                    return;
                 }
-                catch (Exception ex)
-                {
-                    ErrorLogger?.LogWarning($"Failed to load logo image: {ex.Message}", "EditCompanyLogo");
-                }
+
+                editCompany.SetLogo(prepared.Path, prepared.Bitmap);
             }
         };
     }
@@ -1093,7 +1110,6 @@ public partial class App
             settings.SetBiometricLoginWithoutAuth(false);
         }
 
-        // Add password
         settings.AddPasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
@@ -1116,7 +1132,6 @@ public partial class App
             }
         };
 
-        // Change password
         settings.ChangePasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true || args.NewPassword == null) return;
@@ -1147,7 +1162,6 @@ public partial class App
             }
         };
 
-        // Remove password
         settings.RemovePasswordRequested += async (_, args) =>
         {
             if (CompanyManager?.IsCompanyOpen != true) return;
@@ -1178,7 +1192,6 @@ public partial class App
             }
         };
 
-        // Auto-lock settings changed
         settings.AutoLockSettingsChanged += (_, args) =>
         {
             if (_idleDetectionService != null)
@@ -1187,7 +1200,6 @@ public partial class App
                 _idleDetectionService.Configure(enabled, args.TimeoutMinutes);
             }
 
-            // Save to company settings
             if (CompanyManager?.CurrentCompanySettings != null)
             {
                 CompanyManager.CurrentCompanySettings.Security.AutoLockEnabled = args.TimeoutMinutes > 0;
@@ -1265,7 +1277,6 @@ public partial class App
         // biometric login setting changed (after successful authentication)
         settings.BiometricLoginChanged += (_, args) =>
         {
-            // Save to company settings
             if (CompanyManager?.CurrentCompanySettings != null)
             {
                 CompanyManager.CurrentCompanySettings.Security.BiometricEnabled = args.Enabled;
@@ -1320,13 +1331,7 @@ public partial class App
             {
                 Title = "Select Portal Logo".Translate(),
                 AllowMultiple = false,
-                FileTypeFilter =
-                [
-                    new FilePickerFileType("Images")
-                    {
-                        Patterns = ["*.png", "*.jpg", "*.jpeg"]
-                    }
-                ]
+                FileTypeFilter = [Utilities.FilePickerTypes.ImageFileType]
             });
 
             if (files.Count > 0)
@@ -1425,7 +1430,6 @@ public partial class App
 
         var exportModal = _appShellViewModel.ExportAsModalViewModel;
 
-        // Refresh record counts when modal opens
         exportModal.RefreshRecordCountsRequested += (_, _) =>
         {
             exportModal.RefreshRecordCounts(CompanyManager?.CompanyData);
@@ -1674,6 +1678,7 @@ public partial class App
             // Excel and CSV import supported
             if (format.ToUpperInvariant() != "EXCEL")
             {
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportFailed, $"format-unavailable:{format}");
                 await ShowInfoMessageBoxAsync("Info".Translate(), "{0} import will be available in a future update.".TranslateFormat(format));
                 return;
             }
@@ -1700,7 +1705,11 @@ public partial class App
                 ]
             });
 
-            if (file.Count == 0) return;
+            if (file.Count == 0)
+            {
+                _ = TelemetryManager?.TrackFeatureAsync(FeatureName.ImportAbandoned, "file-picker");
+                return;
+            }
 
             var filePath = file[0].Path.LocalPath;
             var companyData = CompanyManager.CompanyData;

@@ -107,5 +107,4 @@
     <!-- Selection Brushes -->
     <SolidColorBrush x:Key="SelectionHoverBrush" Color="{StaticResource SelectionHoverColor}" />
 
-
 </ResourceDictionary>

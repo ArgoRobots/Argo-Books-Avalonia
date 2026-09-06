@@ -8,13 +8,13 @@
              x:Class="ArgoBooks.Controls.SampleCompanyNotice"
              x:DataType="controls:SampleCompanyNotice">
 
-    <Border Background="{DynamicResource WarningLightBrush}"
+    <Border Background="{DynamicResource WarningNoticeBgBrush}"
             CornerRadius="8"
             Padding="12">
         <TextBlock Text="{loc:Loc 'Not available for the sample company.'}"
                    FontSize="13"
                    FontWeight="SemiBold"
-                   Foreground="{DynamicResource WarningTextBrush}"
+                   Foreground="{DynamicResource WarningNoticeTextBrush}"
                    TextWrapping="Wrap"
                    TextAlignment="Center"
                    HorizontalAlignment="Stretch" />

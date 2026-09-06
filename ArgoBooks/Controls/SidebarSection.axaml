@@ -8,9 +8,21 @@
              x:DataType="controls:SidebarSection">
 
     <StackPanel Spacing="0">
-        <!-- Section Header (from mockup: padding 15px, uppercase, 11px) -->
-        <Border Padding="15,15,15,10"
-                IsVisible="{Binding ShowHeader, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+        <!-- Section header. The whole strip is the toggle, not just the arrow: a 20px
+             target for the most-used control in the sidebar was needlessly small. Margin
+             and padding split the old 15 so the hover strip lines up with the nav items
+             below while the text stays exactly where it was. -->
+        <Button Classes="section-header"
+                HorizontalAlignment="Stretch"
+                HorizontalContentAlignment="Stretch"
+                IsVisible="{Binding ShowHeader, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}"
+                Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+            <Button.IsEnabled>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                    <Binding Path="IsCollapsible" RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}" />
+                    <Binding Path="!IsCollapsed" RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}" />
+                </MultiBinding>
+            </Button.IsEnabled>
             <Grid ColumnDefinitions="*,Auto">
                 <!-- Title (hidden when collapsed) - displayed in uppercase -->
                 <TextBlock Grid.Column="0"
@@ -19,6 +31,7 @@
                            FontWeight="SemiBold"
                            Foreground="{DynamicResource SidebarTextMutedBrush}"
                            LetterSpacing="0.5"
+                           VerticalAlignment="Center"
                            IsVisible="{Binding !IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
 
                 <!-- Divider line when collapsed -->
@@ -30,24 +43,22 @@
                         HorizontalAlignment="Stretch"
                         IsVisible="{Binding IsCollapsed, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
 
-                <!-- Collapse/Expand button with animated arrow (hidden when sidebar is collapsed) -->
-                <Button Grid.Column="1"
-                        Classes="section-toggle"
-                        Width="20" Height="20"
-                        Command="{Binding ToggleExpandedCommand, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
-                    <Button.IsVisible>
+                <!-- Decoration only now; the surrounding button carries the click. -->
+                <controls:ToggleArrow Grid.Column="1"
+                                      IconSize="12"
+                                      Width="20" Height="20"
+                                      Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                      Orientation="Vertical"
+                                      IsCollapsed="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}">
+                    <controls:ToggleArrow.IsVisible>
                         <MultiBinding Converter="{x:Static BoolConverters.And}">
                             <Binding Path="IsCollapsible" RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}" />
                             <Binding Path="!IsCollapsed" RelativeSource="{RelativeSource AncestorType=controls:SidebarSection}" />
                         </MultiBinding>
-                    </Button.IsVisible>
-                    <controls:ToggleArrow IconSize="12"
-                                          Foreground="{DynamicResource SidebarTextMutedBrush}"
-                                          Orientation="Vertical"
-                                          IsCollapsed="{Binding !IsExpanded, RelativeSource={RelativeSource AncestorType=controls:SidebarSection}}" />
-                </Button>
+                    </controls:ToggleArrow.IsVisible>
+                </controls:ToggleArrow>
             </Grid>
-        </Border>
+        </Button>
 
         <!-- Section Items with animated expand/collapse -->
         <Border x:Name="ContentBorder"
@@ -77,25 +88,38 @@
     </StackPanel>
 
     <UserControl.Styles>
-        <!-- Section Toggle Button Style (matches sidebar-toggle in Sidebar.axaml) -->
-        <Style Selector="Button.section-toggle">
+        <!-- The header is one wide toggle target, so hover covers the whole strip. -->
+        <Style Selector="Button.section-header">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="4" />
+            <Setter Property="Margin" Value="10,0" />
+            <Setter Property="Padding" Value="5,15,5,10" />
             <Setter Property="CornerRadius" Value="6" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
-        <Style Selector="Button.section-toggle /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.section-header /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent" />
         </Style>
-        <Style Selector="Button.section-toggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.section-header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
         </Style>
-        <Style Selector="Button.section-toggle:pointerover PathIcon">
+        <Style Selector="Button.section-header:pointerover PathIcon">
             <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
         </Style>
-        <Style Selector="Button.section-toggle:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="Button.section-header:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+        </Style>
+        <Style Selector="Button.section-header:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource SidebarActiveBrush}" />
+        </Style>
+        <!-- Not collapsible, or the sidebar is icons-only. Inert, and the default disabled
+             dimming must not reach the divider that shows in that state. -->
+        <Style Selector="Button.section-header:disabled">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="Cursor" Value="Arrow" />
+        </Style>
+        <Style Selector="Button.section-header:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
         </Style>
     </UserControl.Styles>
 </UserControl>

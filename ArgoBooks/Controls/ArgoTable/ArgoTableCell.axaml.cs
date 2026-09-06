@@ -46,18 +46,12 @@ public partial class ArgoTableCell : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    /// <summary>
-    /// Gets or sets the column width.
-    /// </summary>
     public double ColumnWidth
     {
         get => GetValue(ColumnWidthProperty);
         set => SetValue(ColumnWidthProperty, value);
     }
 
-    /// <summary>
-    /// Gets or sets whether the column is visible.
-    /// </summary>
     public bool IsColumnVisible
     {
         get => GetValue(IsColumnVisibleProperty);
@@ -105,9 +99,6 @@ public partial class ArgoTableCell : UserControl, INotifyPropertyChanged
     /// </summary>
     public string DisplayText => string.IsNullOrWhiteSpace(Text) ? NullValue : Text;
 
-    /// <summary>
-    /// Gets whether this cell has custom content.
-    /// </summary>
     public bool HasCustomContent => CellContent != null;
 
     #endregion

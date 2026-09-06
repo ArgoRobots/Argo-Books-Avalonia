@@ -47,54 +47,24 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
     [ObservableProperty]
     private int _selectedTabIndex;
 
-    /// <summary>
-    /// Gets whether the Dashboard tab is selected.
-    /// </summary>
     public bool IsDashboardTabSelected => SelectedTabIndex == 0;
 
-    /// <summary>
-    /// Gets whether the Geographic tab is selected.
-    /// </summary>
     public bool IsGeographicTabSelected => SelectedTabIndex == 2;
 
-    /// <summary>
-    /// Gets whether the Operational tab is selected.
-    /// </summary>
     public bool IsOperationalTabSelected => SelectedTabIndex == 3;
 
-    /// <summary>
-    /// Gets whether the Performance tab is selected.
-    /// </summary>
     public bool IsPerformanceTabSelected => SelectedTabIndex == 4;
 
-    /// <summary>
-    /// Gets whether the Customers tab is selected.
-    /// </summary>
     public bool IsCustomersTabSelected => SelectedTabIndex == 5;
 
-    /// <summary>
-    /// Gets whether the Taxes tab is selected.
-    /// </summary>
     public bool IsTaxesTabSelected => SelectedTabIndex == 6;
 
-    /// <summary>
-    /// Gets whether the Returns tab is selected.
-    /// </summary>
     public bool IsReturnsTabSelected => SelectedTabIndex == 7;
 
-    /// <summary>
-    /// Gets whether the Losses tab is selected.
-    /// </summary>
     public bool IsLossesTabSelected => SelectedTabIndex == 8;
 
-    /// <summary>
-    /// Gets whether the Refunds tab is selected.
-    /// </summary>
     public bool IsRefundsTabSelected => SelectedTabIndex == 9;
 
-    /// <summary>
-    /// Gets whether the Products tab is selected.
-    /// </summary>
     public bool IsProductsTabSelected => SelectedTabIndex == 1;
 
     partial void OnSelectedTabIndexChanged(int value)
@@ -760,9 +730,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
     [ObservableProperty]
     private bool _isMapModeOrigin = true;
 
-    /// <summary>
-    /// Gets or sets whether the map mode is Destination.
-    /// </summary>
     public bool IsMapModeDestination
     {
         get => !IsMapModeOrigin;
@@ -1873,7 +1840,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         }
     }
 
-
     private void LoadExpensesTrendsChart(CompanyData data)
     {
         var (series, dates) = ChartLoaderService.LoadExpensesOverviewChart(data, StartDate, EndDate);
@@ -1917,7 +1883,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         ProfitTrendsXAxes = ChartLoaderService.CreateDateXAxes(dates);
         ProfitTrendsYAxes = ChartLoaderService.CreateCurrencyYAxes(CurrencyService.CurrentSymbol);
         HasProfitTrendsData = series.Count > 0;
-
 
         // totalProfit is already in the display currency, converted per-day at each day's OWN date
         // (Calculations.md §3a Phase 2), so the title matches the bars and needs no today's-rate step.
@@ -2410,7 +2375,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
 
     private void LoadCustomerStatistics(CompanyData data)
     {
-        // Total customers
         var totalCustomersCount = data.Customers.Count;
         TotalCustomers = totalCustomersCount.ToString("N0");
 

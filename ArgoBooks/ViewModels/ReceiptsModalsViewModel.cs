@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -200,7 +200,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             if (!await ConfirmDiscardFiltersAsync())
                 return;
 
-            // Restore filter values to original values
             RestoreOriginalFilterValues();
         }
 
@@ -852,7 +851,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // knows what to try instead.
         return added > 0
             ? $"{added} added. {skipped}."
-            : $"{skipped}. Supported formats: JPEG, PNG, WebP, PDF.";
+            : $"{skipped}. Supported formats: {FilePickerTypes.SupportedReceiptFormats}.";
     }
 
     private static async Task GenerateQueuePreviewAsync(BulkScanItem item)
@@ -1071,9 +1070,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var fileName = item.FileName;
 
             // 2. Preprocess (CPU-bound: EXIF fix, contrast, sharpen)
-            item.PreprocessedData = await Task.Run(() =>
-                ReceiptImageHelper.PreprocessForOcr(fileData, fileName), token);
-            item.ScanFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
+            var convertedToJpeg = false;
+            item.PreprocessedData = await Task.Run(
+                () => ReceiptImageHelper.PreprocessForOcr(fileData, fileName, out convertedToJpeg), token);
+            // Only a real re-encode earns the .jpg name. HEIC comes back untouched.
+            item.ScanFileName = convertedToJpeg ? Path.ChangeExtension(fileName, ".jpg") : fileName;
 
             // 3. Generate preview (fire-and-forget, non-blocking), skip if already generated in queue
             if (string.IsNullOrEmpty(item.PreviewImagePath))
@@ -1702,6 +1703,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     /// </summary>
     public async Task OpenScanModalAsync(string filePath)
     {
+        // Before the file check: picking an unreadable file is still an attempt.
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanOpened);
+
         if (!File.Exists(filePath))
         {
             await (App.ConfirmationDialog?.ShowAsync(new ConfirmationDialogOptions
@@ -1757,10 +1761,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // The result is used for both the preview image and the API call, avoiding
         // a redundant FixOrientation decode/encode cycle. PDFs are returned unchanged.
         var isPdf = Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
-        var preprocessedData = await Task.Run(() =>
-            ReceiptImageHelper.PreprocessForOcr(imageData, fileName));
+        var convertedToJpeg = false;
+        var preprocessedData = await Task.Run(
+            () => ReceiptImageHelper.PreprocessForOcr(imageData, fileName, out convertedToJpeg));
         _currentImageData = preprocessedData;
-        _currentFileName = isPdf ? fileName : Path.ChangeExtension(fileName, ".jpg");
+        _currentFileName = convertedToJpeg ? Path.ChangeExtension(fileName, ".jpg") : fileName;
 
         // Render preview pages off the UI thread (all pages for PDFs, single image otherwise).
         _ = LoadPreviewPagesAsync(preprocessedData, fileName, isPdf, "ScanPreview");
@@ -1972,6 +1977,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Tracked separately from real scans via the context, so sample runs can be counted
         // (or filtered out) without polluting genuine scan numbers.
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ReceiptScanned, "sample");
+        App.MainWindowViewModel?.NoteSampleReceiptScan();
 
         PopulateScanResults(BuildSampleScanResult());
 
@@ -2021,7 +2027,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         try
         {
-            // Get or create scanner service
             _scannerService ??= CreateScannerService();
             _usageService ??= CreateUsageService();
 
@@ -2413,7 +2418,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         decimal.TryParse(ExtractedDiscount, out var discount);
         decimal.TryParse(ExtractedShipping, out var shipping);
 
-        // Create line items
         var lineItems = LineItems.Select(li =>
         {
             decimal.TryParse(li.Quantity, out var qty);
@@ -2448,12 +2452,10 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         if (IsRevenue)
         {
-            // Create revenue transaction
             CreateRevenueTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
         else
         {
-            // Create expense transaction
             CreateExpenseTransaction(companyData, receiptId, fileData, total, subtotal, taxAmount, discount, shipping, lineItems);
         }
 
@@ -2970,7 +2972,6 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     {
         _aiSuggestion = suggestion;
 
-        // Apply supplier suggestion
         if (!string.IsNullOrEmpty(suggestion.MatchedSupplierId))
         {
             var supplier = SupplierOptions.FirstOrDefault(s => s.Id == suggestion.MatchedSupplierId);
@@ -3497,15 +3498,18 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         };
     }
 
+    /// <summary>
+    /// The content type stored on a receipt. Accepted formats come from the shared list, so a
+    /// new one is typed correctly here without a second edit. The two below are not offered by
+    /// the picker but can still arrive on a receipt carried over from an import.
+    /// </summary>
     private static string GetMimeType(string fileName)
     {
-        var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        return extension switch
+        var known = FilePickerTypes.GetReceiptContentType(fileName);
+        if (known != null) return known;
+
+        return Path.GetExtension(fileName).ToLowerInvariant() switch
         {
-            ".jpg" or ".jpeg" => "image/jpeg",
-            ".png" => "image/png",
-            ".webp" => "image/webp",
-            ".pdf" => "application/pdf",
             ".bmp" => "image/bmp",
             ".gif" => "image/gif",
             _ => "application/octet-stream"

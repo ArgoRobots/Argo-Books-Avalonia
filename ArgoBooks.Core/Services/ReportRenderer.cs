@@ -1696,7 +1696,6 @@ public class ReportRenderer : IDisposable
                     var dotCenterY = legendY + circleRadius;
                     canvas.DrawCircle(legendX + circleRadius, dotCenterY, circleRadius, dotPaint);
 
-                    // Label text
                     var legendText = slice.Label;
                     var maxChars = chart.LegendMaxCharacters;
                     if (legendText.Length > maxChars) legendText = legendText[..maxChars] + "...";
@@ -2114,7 +2113,6 @@ public class ReportRenderer : IDisposable
         var rect = GetScaledRect(table);
         var columns = GetVisibleColumns(table);
 
-        // Get table data
         var tableData = GetTableData(table, columns);
 
         var headerRowHeight = table.HeaderRowHeight * _renderScale;
@@ -2129,7 +2127,6 @@ public class ReportRenderer : IDisposable
         using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
         using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
 
-        // Get text alignment
         var textAlign = table.TextAlignment switch
         {
             HorizontalTextAlignment.Left => SKTextAlign.Left,
@@ -2152,7 +2149,6 @@ public class ReportRenderer : IDisposable
         var maxRowsSetting = table.MaxRows > 0 ? table.MaxRows : int.MaxValue;
         var dataRowCount = Math.Min(Math.Min(tableData.Count, maxRowsSetting), Math.Max(0, maxRowsByHeight));
 
-        // Calculate column widths
         var columnWidths = CalculateColumnWidths(table, columns, tableData, rect.Width, headerFont, dataFont);
 
         // Calculate actual table height (constrained to element bounds)
@@ -2175,7 +2171,6 @@ public class ReportRenderer : IDisposable
             var titleFill = new SKPaint { Color = ParseColor(table.TitleBackgroundColor), Style = SKPaintStyle.Fill };
             canvas.DrawRect(titleRect, titleFill);
 
-            // Build title text
             var titleText = BuildTableTitle(table);
 
             using var titleTextPaint = new SKPaint();
@@ -2725,7 +2720,6 @@ public class ReportRenderer : IDisposable
 
         for (int i = 0; i < columnCount; i++)
         {
-            // Measure header text width
             var headerWidth = headerFont.MeasureText(columns[i]) + cellPadding;
             maxWidths[i] = headerWidth;
 

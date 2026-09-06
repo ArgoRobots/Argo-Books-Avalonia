@@ -363,7 +363,6 @@ public class HoltWintersTests
         {
             // Seasonal component (sinusoidal pattern)
             var seasonal = seasonalAmplitude * (decimal)Math.Sin(2 * Math.PI * t / 12.0);
-            // Trend component
             var trendComponent = trend * t;
             // Combined value
             var value = baseLevel + trendComponent + seasonal;

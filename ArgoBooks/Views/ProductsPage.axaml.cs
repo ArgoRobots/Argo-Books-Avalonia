@@ -16,7 +16,6 @@ public partial class ProductsPage : UserControl
 
     private void OnLoaded(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        // Show tutorial on first visit
         App.ProductsTutorialViewModel?.ShowIfFirstVisit();
     }
 

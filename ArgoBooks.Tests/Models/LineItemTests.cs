@@ -128,7 +128,6 @@ public class LineItemTests
         };
 
         // Subtotal = (10 * 100) - 100 = 900
-        // TaxAmount = 900 * 0.10 = 90
         Assert.Equal(90.00m, lineItem.TaxAmount);
     }
 

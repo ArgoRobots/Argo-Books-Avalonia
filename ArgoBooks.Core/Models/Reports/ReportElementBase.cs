@@ -129,9 +129,6 @@ public abstract class ReportElementBase : INotifyPropertyChanged
     [JsonIgnore]
     public abstract string DisplayName { get; }
 
-    /// <summary>
-    /// Gets the element type.
-    /// </summary>
     public abstract ReportElementType GetElementType();
 
     /// <summary>

@@ -873,7 +873,6 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     if (window.__interactionHandlersInstalled) return;
     window.__interactionHandlersInstalled = true;
 
-    // Create zoom wrapper
     var zoomWrapper = document.getElementById('__zoomWrapper');
     if (!zoomWrapper) {
         zoomWrapper = document.createElement('div');

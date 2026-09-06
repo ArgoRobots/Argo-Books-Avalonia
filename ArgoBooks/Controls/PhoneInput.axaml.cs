@@ -46,9 +46,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    /// <summary>
-    /// Gets or sets the selected country dial code.
-    /// </summary>
     public CountryDialCode? SelectedCountry
     {
         get => GetValue(SelectedCountryProperty);
@@ -110,9 +107,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
     }
 
     private string _countrySearchText = string.Empty;
-    /// <summary>
-    /// Gets or sets the country search text.
-    /// </summary>
     public string CountrySearchText
     {
         get => _countrySearchText;
@@ -157,9 +151,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Gets or sets whether the country dropdown is open.
-    /// </summary>
     public bool IsCountryDropdownOpen
     {
         get;
@@ -288,7 +279,6 @@ public partial class PhoneInput : UserControl, INotifyPropertyChanged
 
         InitializeComponent();
 
-        // Initialize with US as default
         SelectedCountry = AllDialCodes.FirstOrDefault(c => c.Code == "US");
         UpdateCountrySearchText();
         UpdateFilteredCountries();

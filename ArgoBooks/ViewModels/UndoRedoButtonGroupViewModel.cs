@@ -82,9 +82,6 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         SetUndoRedoManager(manager);
     }
 
-    /// <summary>
-    /// Sets the undo/redo manager.
-    /// </summary>
     public void SetUndoRedoManager(IUndoRedoManager manager)
     {
         if (Manager != null)
@@ -216,9 +213,6 @@ public partial class UndoRedoButtonGroupViewModel : ViewModelBase, IUndoRedoButt
         ActionPerformed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    /// Gets the undo/redo manager.
-    /// </summary>
     public IUndoRedoManager? Manager { get; private set; }
 
     // Explicit interface implementation for ICommand properties

@@ -55,7 +55,6 @@ var azureRegion = Environment.GetEnvironmentVariable("AZURE_TRANSLATOR_REGION") 
 // Fetch USD to CAD exchange rate for cost display
 var usdToCad = await GetUsdToCadRateAsync();
 
-
 Console.WriteLine($"Source directory: {sourceDir}");
 Console.WriteLine($"Output directory: {outputDir}");
 Console.WriteLine();
@@ -158,7 +157,6 @@ var sortedStrings = strings
 await File.WriteAllTextAsync(englishPath, JsonSerializer.Serialize(sortedStrings, options));
 Console.WriteLine($"Saved English strings to: {englishPath}\n");
 
-// Show sample strings
 Console.WriteLine("Sample strings found:");
 foreach (var kvp in strings.Take(10))
 {

@@ -32,9 +32,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     public static readonly StyledProperty<string> SelectedCountryNameProperty =
         AvaloniaProperty.Register<CountryInput, string>(nameof(SelectedCountryName), string.Empty, defaultBindingMode: BindingMode.TwoWay);
 
-    /// <summary>
-    /// Gets or sets the selected country name.
-    /// </summary>
     public string SelectedCountryName
     {
         get => GetValue(SelectedCountryNameProperty);
@@ -45,9 +42,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
 
     #region Properties
 
-    /// <summary>
-    /// Gets the selected country.
-    /// </summary>
     public CountryDialCode? SelectedCountry
     {
         get;
@@ -68,9 +62,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
     public IImage? SelectedCountryFlag => SelectedCountry?.FlagImage;
 
     private string _searchText = string.Empty;
-    /// <summary>
-    /// Gets or sets the search text.
-    /// </summary>
     public string SearchText
     {
         get => _searchText;
@@ -110,9 +101,6 @@ public partial class CountryInput : UserControl, INotifyPropertyChanged
         }
     }
 
-    /// <summary>
-    /// Gets or sets whether the dropdown is open.
-    /// </summary>
     public bool IsDropdownOpen
     {
         get;

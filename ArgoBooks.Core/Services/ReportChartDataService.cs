@@ -1049,9 +1049,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     #region Accountant Charts
 
-    /// <summary>
-    /// Gets transactions by accountant.
-    /// </summary>
     public List<ChartDataPoint> GetTransactionsByAccountant()
     {
         if (companyData == null)
@@ -1087,9 +1084,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     #region Customer Charts
 
-    /// <summary>
-    /// Gets top customers by revenue.
-    /// </summary>
     public List<ChartDataPoint> GetTopCustomersByRevenue(Func<decimal, DateTime, decimal>? toDisplay = null)
     {
         if (companyData?.Revenues == null)
@@ -1284,9 +1278,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     #region Returns Charts
 
-    /// <summary>
-    /// Gets returns over time.
-    /// </summary>
     public List<ChartDataPoint> GetReturnsOverTime()
     {
         if (companyData?.Returns == null || !filters.IncludeReturns)
@@ -1377,9 +1368,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .ToList();
     }
 
-    /// <summary>
-    /// Gets returns by category.
-    /// </summary>
     public List<ChartDataPoint> GetReturnsByCategory()
     {
         if (companyData?.Returns == null || !filters.IncludeReturns)
@@ -1407,9 +1395,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .ToList();
     }
 
-    /// <summary>
-    /// Gets returns by product.
-    /// </summary>
     public List<ChartDataPoint> GetReturnsByProduct()
     {
         if (companyData?.Returns == null || !filters.IncludeReturns)
@@ -1490,9 +1475,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
 
     #region Losses Charts
 
-    /// <summary>
-    /// Gets losses over time.
-    /// </summary>
     public List<ChartDataPoint> GetLossesOverTime()
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)
@@ -1513,9 +1495,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .ToList();
     }
 
-    /// <summary>
-    /// Gets loss reasons.
-    /// </summary>
     public List<ChartDataPoint> GetLossReasons()
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)
@@ -1535,9 +1514,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .ToList();
     }
 
-    /// <summary>
-    /// Gets loss financial impact.
-    /// </summary>
     public List<ChartDataPoint> GetLossFinancialImpact()
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)
@@ -1581,9 +1557,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .ToList();
     }
 
-    /// <summary>
-    /// Gets losses by category.
-    /// </summary>
     public List<ChartDataPoint> GetLossesByCategory()
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)
@@ -1609,9 +1582,6 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .ToList();
     }
 
-    /// <summary>
-    /// Gets losses by product.
-    /// </summary>
     public List<ChartDataPoint> GetLossesByProduct()
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)

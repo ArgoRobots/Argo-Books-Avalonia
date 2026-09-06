@@ -5,7 +5,8 @@ namespace ArgoBooks.Core.Models.Portal;
 /// <summary>
 /// Settings for the payment portal integration.
 /// Stored in company data (persisted in .argo file).
-/// API key is loaded from .env file for security.
+/// The per-company API key is issued at portal registration and lives in that same
+/// file; on open it is copied into a process-level slot, not read from a .env file.
 /// </summary>
 public class PortalSettings
 {
@@ -110,6 +111,17 @@ public class PortalSettings
     /// </summary>
     [JsonPropertyName("remindersEnabledAt")]
     public DateTime? RemindersEnabledAt { get; set; }
+
+    /// <summary>
+    /// The business name shown to customers on the portal.
+    /// </summary>
+    /// <remarks>
+    /// A cache of server state, like the notification flags: the server wins on load. Kept
+    /// locally because the name has to be entered before a payment provider can be connected,
+    /// and until that happens there is no server record to hold it.
+    /// </remarks>
+    [JsonPropertyName("companyName")]
+    public string? CompanyName { get; set; }
 
     /// <summary>
     /// The customer-facing portal URL for this company (returned by the server during setup).

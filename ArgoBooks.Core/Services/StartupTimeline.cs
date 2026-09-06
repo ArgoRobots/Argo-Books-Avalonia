@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 
 namespace ArgoBooks.Core.Services;
 
@@ -28,15 +30,28 @@ public static class StartupTimeline
     private static readonly DateTime? ProcessStartUtc = ReadProcessStartUtc();
 
     private static long? _toFirstPaintMs;
+    private static long? _toServicesReadyMs;
+    private static long? _toViewModelsReadyMs;
     private static bool _reported;
 
     /// <summary>
-    /// True when no sibling instance was already running as this one started. A relaunch
-    /// while the first instance is live reads everything from the OS file cache, so its
-    /// timings are not comparable with a genuine cold start and averaging the two together
-    /// would hide the slow launches we are looking for.
+    /// True when this launch had to read from disk rather than from a warm OS file cache.
+    ///
+    /// Decided by how long ago the previous launch was, recorded on disk. The earlier test
+    /// asked whether a sibling instance was already running, which is a different question
+    /// and one whose answer is almost always the same: two copies at once effectively never
+    /// happens, so every launch on record was reported as cold and the split measured
+    /// nothing. Relaunching soon after quitting is the case that reads from cache, and it
+    /// is now the case this detects.
     /// </summary>
     public static bool IsColdStart { get; } = ReadIsColdStart();
+
+    /// <summary>
+    /// A relaunch within this window is treated as warm. Generous, because the file cache
+    /// survives well past a quick restart and the point is to separate "opened it again"
+    /// from "first launch of the day".
+    /// </summary>
+    private static readonly TimeSpan WarmWindow = TimeSpan.FromHours(4);
 
     /// <summary>
     /// Call the instant the splash window is actually on screen. Records the dead time the
@@ -52,6 +67,33 @@ public static class StartupTimeline
     /// marked (the splash failed to open) or the process start time was unreadable.
     /// </summary>
     public static long? ToFirstPaintMs => _toFirstPaintMs;
+
+    /// <summary>
+    /// Call once the service graph is constructed, before any view model is built.
+    /// </summary>
+    public static void MarkServicesReady()
+    {
+        _toServicesReadyMs ??= ElapsedSinceProcessStartMs();
+    }
+
+    /// <summary>
+    /// Milliseconds from process start to the services being ready. Null if the launch
+    /// failed before that point.
+    /// </summary>
+    public static long? ToServicesReadyMs => _toServicesReadyMs;
+
+    /// <summary>
+    /// Call once the view models exist, immediately before the main window is built.
+    /// </summary>
+    public static void MarkViewModelsReady()
+    {
+        _toViewModelsReadyMs ??= ElapsedSinceProcessStartMs();
+    }
+
+    /// <summary>
+    /// Milliseconds from process start to the view models being ready.
+    /// </summary>
+    public static long? ToViewModelsReadyMs => _toViewModelsReadyMs;
 
     /// <summary>
     /// Milliseconds from process start to now. Called when the main window opens, so it
@@ -109,19 +151,52 @@ public static class StartupTimeline
         }
     }
 
+    /// <summary>
+    /// Reads the previous launch time, decides warm or cold from it, then stamps this
+    /// launch for the next one to read.
+    ///
+    /// A plain file with a timestamp in it, because this runs before any service exists:
+    /// IsColdStart is a static initialiser and fires long before settings are loaded.
+    /// </summary>
     private static bool ReadIsColdStart()
     {
         try
         {
-            var current = Process.GetCurrentProcess();
-            return !Process.GetProcessesByName(current.ProcessName)
-                .Any(p => p.Id != current.Id);
+            var stampPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ArgoBooks",
+                "last-launch.txt");
+
+            var isCold = true;
+
+            if (File.Exists(stampPath)
+                && DateTime.TryParse(
+                       File.ReadAllText(stampPath).Trim(),
+                       CultureInfo.InvariantCulture,
+                       DateTimeStyles.RoundtripKind,
+                       out var previous))
+            {
+                // A clock moved backwards would otherwise make every launch look warm
+                // forever, so a negative gap is treated as cold rather than trusted.
+                var sincePrevious = DateTime.UtcNow - previous.ToUniversalTime();
+                isCold = sincePrevious < TimeSpan.Zero || sincePrevious > WarmWindow;
+            }
+
+            var directory = Path.GetDirectoryName(stampPath);
+            if (!string.IsNullOrEmpty(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            File.WriteAllText(stampPath, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+
+            return isCold;
         }
         catch (Exception)
         {
-            // Unreadable, so don't claim either way. Reporting this as cold would put
-            // warm relaunches into the cold bucket, which is the comparison we care about.
-            return false;
+            // No stamp readable or writable, so the split is unknowable for this launch.
+            // Cold is the safer default: it keeps an unmeasurable launch out of the warm
+            // bucket, where it would drag the warm figure up and hide a real regression.
+            return true;
         }
     }
 }

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,6 +8,7 @@
              xmlns:behaviors="using:ArgoBooks.Behaviors"
              xmlns:local="using:ArgoBooks.Converters"
              xmlns:icons="using:ArgoBooks"
+             xmlns:utilities="using:ArgoBooks.Utilities"
              mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
              x:Class="ArgoBooks.Modals.ReceiptsModals"
              x:DataType="vm:ReceiptsModalsViewModel">
@@ -485,7 +486,7 @@
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
-                                                <TextBlock Text="{Binding TotalErrorMessage}"
+                                                <TextBlock TextWrapping="Wrap" Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource ErrorBrush}"
                                                            IsVisible="{Binding HasTotalError}" />
@@ -755,7 +756,7 @@
                                         </Border>
 
                                         <!-- Line Items Error -->
-                                        <TextBlock Text="{Binding LineItemsErrorMessage}"
+                                        <TextBlock TextWrapping="Wrap" Text="{Binding LineItemsErrorMessage}"
                                                    FontSize="13"
                                                    Foreground="{DynamicResource ErrorBrush}"
                                                    IsVisible="{Binding HasLineItemsError}"
@@ -1062,7 +1063,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}"
                                                    HorizontalAlignment="Center" />
-                                        <TextBlock Text="JPEG, PNG, WebP, or PDF"
+                                        <TextBlock Text="{x:Static utilities:FilePickerTypes.SupportedReceiptFormats}"
                                                    FontSize="13"
                                                    Foreground="{DynamicResource TextTertiaryBrush}"
                                                    HorizontalAlignment="Center" />
@@ -1747,7 +1748,7 @@
                                                          BorderBrush="{Binding HasTotalError, Converter={x:Static local:BoolConverters.ToErrorBorderBrush}}"
                                                          behaviors:NumericInputBehavior.IsDecimalOnly="True"
                                                          MaxLength="13" />
-                                                <TextBlock Text="{Binding TotalErrorMessage}"
+                                                <TextBlock TextWrapping="Wrap" Text="{Binding TotalErrorMessage}"
                                                            FontSize="12"
                                                            Foreground="{DynamicResource ErrorBrush}"
                                                            IsVisible="{Binding HasTotalError}" />

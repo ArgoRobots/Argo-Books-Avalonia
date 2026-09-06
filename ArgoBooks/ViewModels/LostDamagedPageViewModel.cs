@@ -330,7 +330,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
             );
         }
 
-        // Apply type filter
         if (filterType != "All")
         {
             filtered = filterType switch
@@ -346,14 +345,12 @@ public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
             };
         }
 
-        // Apply reason filter
         if (filterReason != "All")
         {
             var reason = Enum.TryParse<LostDamagedReason>(filterReason, out var r) ? r : LostDamagedReason.Other;
             filtered = filtered.Where(item => item.Reason == reason);
         }
 
-        // Apply date filter
         if (filterDateFrom.HasValue)
         {
             filtered = filtered.Where(item => item.DateDiscovered >= filterDateFrom.Value.DateTime);
@@ -366,7 +363,6 @@ public partial class LostDamagedPageViewModel : ViewModelBase, ICleanupViewModel
         // Sort by date descending (newest first)
         filtered = filtered.OrderByDescending(item => item.DateDiscovered);
 
-        // Create display items
         var displayItems = filtered.Select(CreateDisplayItem).ToList();
 
         // Calculate pagination

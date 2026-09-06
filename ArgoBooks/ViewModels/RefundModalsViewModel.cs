@@ -108,13 +108,15 @@ public partial class RefundModalsViewModel : ObservableObject
         string currentOwnerEmail,
         bool fileIsEncrypted,
         Func<string, bool> verifyFilePassword,
-        Action<string>? onCompleted = null)
+        Action<string>? onCompleted = null,
+        bool currentEmailVerified = true)
     {
         var refundService = App.RefundService;
         if (refundService == null) return;
 
         ActiveEmailChangeVm?.Dispose();
-        ActiveEmailChangeVm = new EmailChangeModalViewModel(refundService, currentOwnerEmail, fileIsEncrypted, verifyFilePassword)
+        ActiveEmailChangeVm = new EmailChangeModalViewModel(
+            refundService, currentOwnerEmail, fileIsEncrypted, verifyFilePassword, currentEmailVerified)
         {
             // Close runs through CloseEmailChangeModalAsync via fire-and-forget so
             // we get the same "abort in-flight + invoke onCompleted" semantics
