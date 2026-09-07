@@ -73,6 +73,21 @@ file whose every figure is correct.
 `T4XmlWriter` names the version it was written against at the top. Update that when you check,
 so the next person can tell whether anyone has looked since.
 
+### The XML schemas
+
+Reading the What's new section tells you what changed. It does not tell you whether the export
+still validates, and that is the part that decides whether a submission is accepted.
+
+CRA publishes the schemas as a downloadable package, and a copy lives in
+`ArgoBooks.Tests/Schemas/Cra`. `T4XmlSchemaTests` builds a return, exports it and validates the
+result against them, so a schema change that breaks the writer fails the build rather than the
+February deadline. The Quebec branch is covered separately, because QPP replaces CPP there and
+that changes which elements appear and in what order.
+
+Replace the package when you do the January edition, following the README in that folder. The
+schema version and the specification version named in `T4XmlWriter` are asserted against each
+other, so updating one without the other fails a test.
+
 ### The RL-1 guide
 
 Revenu Québec reissues

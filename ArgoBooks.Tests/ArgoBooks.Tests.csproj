@@ -25,4 +25,8 @@
         <ProjectReference Include="..\ArgoBooks.Core\ArgoBooks.Core.csproj" />
         <ProjectReference Include="..\ArgoBooks\ArgoBooks.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Schemas\Cra\*.xsd" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
 </Project>
