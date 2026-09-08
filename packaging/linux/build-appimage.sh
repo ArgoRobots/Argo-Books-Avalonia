@@ -87,7 +87,8 @@ ln -sf usr/bin/"Argo Books" "$APPDIR/AppRun"
 chmod +x "$APPDIR/usr/bin/Argo Books"
 
 # Build the AppImage
-OUTPUT_FILE="$ROOT_DIR/ArgoBooks-${VERSION}-linux-x64.AppImage"
+OUTPUT_FILE="$ROOT_DIR/publish/ArgoBooks-${VERSION}-linux-x64.AppImage"
+mkdir -p "$ROOT_DIR/publish"
 echo "Building AppImage..."
 ARCH="$ARCH" appimagetool "$APPDIR" "$OUTPUT_FILE"
 

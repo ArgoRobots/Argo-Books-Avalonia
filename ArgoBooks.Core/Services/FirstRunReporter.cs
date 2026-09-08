@@ -11,8 +11,10 @@ namespace ArgoBooks.Core.Services;
 /// Token sources, by platform:
 ///   Windows: Advanced Installer writes the token to
 ///            %LOCALAPPDATA%\ArgoBooks\install_token.txt during install.
-///   Mac:     parses the .app bundle's parent directory name for the
-///            _xxxxxxxx token (less reliable; users often rename .app files).
+///   Mac:     reads the ?t= parameter out of the download URL macOS records on
+///            the bundle as com.apple.metadata:kMDItemWhereFroms. The archive's
+///            own filename can't be used: the user expands the .zip and the
+///            extracted "Argo Books.app" carries none of its name.
 ///   Linux:   parses the AppImage filename for the _xxxxxxxx token.
 ///
 /// Idempotency: once a first-run POST succeeds, a marker file
@@ -126,10 +128,11 @@ public sealed class FirstRunReporter
     }
 
     /// <summary>
-    /// Looks up the 8-char hex install token. Returns null if there's nothing
-    /// to report (token file missing on Windows, or filename has no token
-    /// suffix on Mac/Linux). A null token still produces a "first_run without
-    /// attribution" event server-side, so the funnel sees the install.
+    /// Looks up the 8-char hex install token. Returns null if there's nothing to
+    /// report (token file missing on Windows, no recorded download URL on Mac, or
+    /// filename has no token suffix on Linux). A null token still produces a
+    /// "first_run without attribution" event server-side, so the funnel sees the
+    /// install either way.
     /// </summary>
     private string? ResolveInstallToken()
     {
@@ -149,12 +152,24 @@ public sealed class FirstRunReporter
                 return null;
             }
 
-            // Mac + Linux: extract from the running executable's filename.
             var processPath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
             if (string.IsNullOrEmpty(processPath))
             {
                 return null;
             }
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                // The download is a .zip the user expands, so by the time we run,
+                // the executable sits at "Argo Books.app/Contents/MacOS/Argo Books"
+                // and nothing in that path came from the archive's name. The one
+                // surviving trace of where it came from is the source URL the
+                // browser stamped onto the file, which is where the token lives.
+                return TryReadTokenFromWhereFroms(GetAppBundlePath(processPath));
+            }
+
+            // Linux: the AppImage is itself the executable, so it still carries
+            // the downloaded filename.
             return ExtractTokenFromPath(processPath);
         }
         catch (Exception ex)
@@ -162,6 +177,76 @@ public sealed class FirstRunReporter
             _errorLogger?.LogWarning(
                 $"FirstRunReporter token resolution failed: {ex.Message}",
                 context: "FirstRunReporter.ResolveInstallToken");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Walks up from the running executable to the enclosing .app bundle.
+    /// Returns the executable's own directory when there isn't one, which is the
+    /// case for an unbundled build run straight out of the publish folder.
+    /// </summary>
+    private static string GetAppBundlePath(string exePath)
+    {
+        var dir = Path.GetDirectoryName(exePath);
+        while (!string.IsNullOrEmpty(dir))
+        {
+            if (dir.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
+            {
+                return dir;
+            }
+            dir = Path.GetDirectoryName(dir);
+        }
+        return Path.GetDirectoryName(exePath) ?? exePath;
+    }
+
+    /// <summary>
+    /// Reads the download URL macOS records on a downloaded file and pulls the
+    /// ?t= install token out of it.
+    ///
+    /// The attribute holds a binary plist, but the URL inside it is plain ASCII,
+    /// so the value is read as raw bytes (Latin1 maps them 1:1, where UTF-8 would
+    /// mangle the surrounding plist framing) and matched directly. That avoids
+    /// taking a plist parser dependency for one string.
+    ///
+    /// Returns null whenever the attribute is missing, which is the normal case
+    /// for a build that wasn't downloaded through a browser.
+    /// </summary>
+    private static string? TryReadTokenFromWhereFroms(string bundlePath)
+    {
+        try
+        {
+            using var process = new System.Diagnostics.Process();
+            process.StartInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "/usr/bin/xattr",
+                ArgumentList = { "-p", "com.apple.metadata:kMDItemWhereFroms", bundlePath },
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                StandardOutputEncoding = System.Text.Encoding.Latin1
+            };
+
+            process.Start();
+            var output = process.StandardOutput.ReadToEnd();
+            if (!process.WaitForExit(5000))
+            {
+                return null;
+            }
+            if (process.ExitCode != 0 || string.IsNullOrEmpty(output))
+            {
+                return null;
+            }
+
+            var match = System.Text.RegularExpressions.Regex.Match(
+                output, @"[?&]t=([0-9a-f]{8})\b",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[1].Value.ToLowerInvariant() : null;
+        }
+        catch
+        {
+            // xattr missing, or the attribute isn't set. Reported as unattributed.
             return null;
         }
     }

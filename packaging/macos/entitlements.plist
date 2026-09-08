@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Notarization requires the hardened runtime, which blocks by default the
+         three things a self-contained .NET app has to do. Without these the app
+         is killed at launch with SIGKILL (Code Signature Invalid) and there is no
+         useful error message. -->
+
+    <!-- The CLR JIT-compiles anything PublishReadyToRun did not precompile. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- The bundle carries its own native libraries (SkiaSharp, HarfBuzz, SQLite).
+         They are signed with our Developer ID, not Apple's, so library validation
+         has to be off for the runtime to load them. -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- The .NET host reads DOTNET_* variables at startup. -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+
+    <!-- Not sandboxed: this is Developer ID distribution from our own site, not the
+         Mac App Store, and the app needs arbitrary read/write access to wherever the
+         user keeps their company file. -->
+</dict>
+</plist>

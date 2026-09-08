@@ -4,6 +4,11 @@
 *.xlsx binary
 *.xls  binary
 
+# Shell scripts must keep LF endings. Checked out with CRLF on Windows and then
+# copied to a Mac or Linux box, the shebang line becomes "/bin/bash\r" and the
+# kernel reports "bad interpreter: /bin/bash^M".
+*.sh text eol=lf
+
 # Advanced Installer writes the .aip with CRLF and rewrites the whole file on
 # save. Pinning the endings keeps a checkout on any machine from showing all
 # 1219 lines as changed the first time the project is opened.
