@@ -62,6 +62,19 @@ public class RoeService
         _ => weeklyHours * 2m,
     };
 
+    /// <summary>A single-word contact name is a surname, which is the half Service Canada matches on.</summary>
+    private static string? FirstWord(string? name)
+    {
+        string[] parts = (name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 1 ? parts[0] : null;
+    }
+
+    private static string? LastWord(string? name)
+    {
+        string[] parts = (name ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 0 ? parts[^1] : null;
+    }
+
     public RoeWorksheet Build(CompanyData data, string employeeId)
     {
         ArgumentNullException.ThrowIfNull(data);
@@ -83,6 +96,12 @@ public class RoeService
             FirstDayWorked = employee.StartDate,
             HoursPeriodCount = HoursPeriodCount(employee.PayFrequency),
             EarningsPeriodCount = EarningsPeriodCount(employee.PayFrequency),
+
+            // Block 16's contact, seeded from the payroll contact already held for the T4 so it
+            // is confirmed rather than retyped. Block 16 itself stays null: see RoeReason.
+            ContactPhone = company.PayrollContactPhone,
+            ContactFirstName = FirstWord(company.PayrollContactName),
+            ContactLastName = LastWord(company.PayrollContactName),
         };
 
         // Everything except drafts, so a voided run and its reversal cancel. Ordered most

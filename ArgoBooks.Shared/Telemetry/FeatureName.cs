@@ -101,5 +101,12 @@ public enum FeatureName
     T4SlipsGenerated,
 
     /// <summary>The CRA submission file itself, so actually filing is separable from previewing.</summary>
-    T4XmlGenerated
+    T4XmlGenerated,
+
+    /// <summary>The worksheet somebody reads off while ROE Web is open in a browser.</summary>
+    RoeWorksheetGenerated,
+
+    /// <summary>The ROE Web payroll extract. Separable from the worksheet for the same reason
+    /// the T4 XML is separable from the slips: one is a filing and one is a preview.</summary>
+    RoeXmlGenerated
 }

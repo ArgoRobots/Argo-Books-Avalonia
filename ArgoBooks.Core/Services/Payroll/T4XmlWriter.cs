@@ -124,20 +124,6 @@ public static class T4XmlWriter
         return builder.ToString();
     }
 
-    /// <summary>
-    /// A StringWriter that reports UTF-8, because the declaration is taken from the writer.
-    ///
-    /// Save(TextWriter) asks the writer what encoding it is, and a plain StringWriter answers
-    /// UTF-16 whatever is done with the characters afterwards. The export then wrote those
-    /// characters out as UTF-8 bytes, so the file announced an encoding it was not in. Nothing
-    /// in this app would notice; the parser at CRA's end is what notices.
-    /// </summary>
-    private sealed class Utf8StringWriter(StringBuilder builder)
-        : StringWriter(builder, CultureInfo.InvariantCulture)
-    {
-        public override Encoding Encoding => Encoding.UTF8;
-    }
-
     private static XElement BuildSlip(T4Return t4, T4Slip slip)
     {
         var name = new XElement("EMPE_NM", Required("snm", Name(slip.Surname, 20)));

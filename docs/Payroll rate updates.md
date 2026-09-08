@@ -88,6 +88,37 @@ Replace the package when you do the January edition, following the README in tha
 schema version and the specification version named in `T4XmlWriter` are asserted against each
 other, so updating one without the other fails a test.
 
+### The fixtures captured from CRA's calculator
+
+`PayrollAgainstCraCalculatorTests` holds twelve cases whose expected figures were read off CRA's
+Payroll Deductions Online Calculator, and one off Revenu Québec's WebRAS. They are the only tests
+here that check the engine against the authority rather than against our own reading of T4127.
+
+They are dated, because the tables change on 1 January. Recapture all twelve with pay dates in
+the new year when you do the January edition. A row whose figures have not been captured fails
+with a message naming what to enter, so an empty one is visible rather than looking like coverage.
+
+Assume the engine is wrong before assuming the calculator is, and never edit an expected value to
+make a test pass: that turns a check against CRA into a check against nothing.
+
+### The ROE payroll extract
+
+The Record of Employment export follows
+[Appendix D of the ROE Web user requirements](https://www.canada.ca/en/employment-social-development/programs/ei/ei-list/ei-roe/user-requirements/appendix-d.html),
+XML file layout Version 2.0, which has been mandatory since September 2016 and so moves far less
+than the CRA specifications above. Read it when you do the January edition anyway, and update the
+version named in `RoeXmlWriter`.
+
+Service Canada distributes the validating schema, `PayrollExtractXmlV2.xsd`, through ROE Web
+rather than publishing it, so there is no copy in the repo and `RoeXmlTests` asserts the layout by
+hand instead. If you download it, drop it into `ArgoBooks.Tests/Schemas/ServiceCanada` and
+`ValidatesAgainstTheServiceCanadaSchema` starts checking properly with no other change. That is
+worth doing once.
+
+The other thing worth doing once: export a real ROE as a draft (`Issue="D"`), upload it through
+ROE Web and read it back in their screen. A draft is not submitted, so it costs nothing and it is
+the only way to find out what their business validations think of the file.
+
 ### The RL-1 guide
 
 Revenu Québec reissues

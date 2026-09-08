@@ -28,5 +28,6 @@
 
     <ItemGroup>
         <None Include="Schemas\Cra\*.xsd" CopyToOutputDirectory="PreserveNewest" />
+        <None Include="Schemas\ServiceCanada\*.xsd" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>

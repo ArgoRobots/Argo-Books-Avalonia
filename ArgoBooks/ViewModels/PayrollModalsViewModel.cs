@@ -15,6 +15,12 @@ public partial class PayrollModalsViewModel : ViewModelBase
 {
     private Employee? _editing;
 
+    /// <summary>
+    /// The Record of Employment form. Lives here rather than at year end because an ROE is due
+    /// five days after the pay period in which someone stops being paid.
+    /// </summary>
+    public RoeModalViewModel Roe { get; } = new();
+
     [ObservableProperty]
     private bool _isEmployeeModalOpen;
 

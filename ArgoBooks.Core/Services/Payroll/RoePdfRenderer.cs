@@ -13,9 +13,9 @@ namespace ArgoBooks.Core.Services.Payroll;
 /// It is deliberately not a facsimile of the ROE form: an ROE is issued by Service Canada and a
 /// printed sheet is not one, so looking like the real thing would be worse than useless.
 ///
-/// Block 16, the reason for issuing, is absent on purpose. The app knows an employee left; it
-/// does not know whether they quit, were dismissed or went on leave, and those are different
-/// legal statements with different consequences for the employee's claim.
+/// Block 16, the reason for issuing, is absent on purpose. It is chosen on the export screen
+/// rather than derived, and whoever is reading this sheet into ROE Web has just chosen it, so
+/// printing it back at them adds a field to check without adding anything to know.
 /// </summary>
 public static class RoePdfRenderer
 {
