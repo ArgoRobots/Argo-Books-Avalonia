@@ -25,7 +25,7 @@ A Rider Release build is still fine for local testing, it just won't have the st
 
 The Windows `.exe` installer is built using [Advanced Installer Professional Edition](https://www.advancedinstaller.com/).
 
-1. Open `Argo Books.aip` Advanced Installer.
+1. Open `packaging/windows/Argo Books.aip` in Advanced Installer.
 2. In the **Product Details** tab, update the version number.
 3. Click any other tab. A "Generate new product code?" message box appears: choose **Generate New**.
 4. Click **Build** in the top left.

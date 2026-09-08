@@ -1,10 +1,30 @@
 # Advanced Installer project setup
 
 Recovery guide for the Windows installer project. The `.aip` file lives at
-`C:\Users\<you>\Documents\Advanced Installer\Projects\Argo Books\Argo Books.aip`.
-The `.aip` is backed up, so this doc is mostly here for reference. A full rebuild from scratch (about an hour) is only needed if both the working copy and the backups are lost.
+`Argo-Books-Avalonia/packaging/windows/Argo Books.aip` and is tracked in git, so
+recovering it is a checkout, not a rebuild. This doc is mostly here for reference.
+A full rebuild from scratch (about an hour) is only needed if the project file is
+lost from the repo as well.
 
 > FYI: "AI" in this doc always means **Advanced Installer**, not artificial intelligence.
+
+## Path conventions
+
+Every file the `.aip` references is a path relative to `packaging/windows/`, and
+Advanced Installer resolves those against the `.aip`'s own location. Moving the
+file breaks all of them at once, silently, so it needs to stay where it is.
+
+| Reference | Resolves to |
+|---|---|
+| `..\..\publish\win-x64\` | the `dotnet publish` output, gitignored |
+| `..\..\ArgoBooks\Assets\argo-logo.ico` | the app icon, shared with `ArgoBooks.Desktop.csproj` |
+| bare filenames | the dialog logos sitting beside the `.aip` |
+
+Nothing points outside the repo. A fresh clone plus a `dotnet publish` is enough
+to build the installer.
+
+Advanced Installer regenerates `Setup Files/`, `Argo Books-cache/` and its own
+`Advanced Installer/` folder beside the project. All three are gitignored.
 
 ## Step 1: Install required tooling
 
@@ -44,11 +64,30 @@ Run the command from the solution root (`Argo-Books-Avalonia`), because `-o` is 
 Publish output ends up at `Argo-Books-Avalonia/publish/win-x64/`, alongside `ArgoBooks.Desktop`, not inside it. The folder is gitignored. Advanced Installer's synchronized folder (set up in Step 4) points at this path.
 
 ### Icon and logo files
-Should already exist at `C:\Users\<you>\Desktop\Argo logos\Third\`. Double-check these three are there:
+All three are tracked in the repo, so a clone already has them:
 
-- `Argo Books icon.ico`
-- `Argo Books icon transparent.png`
-- `Argo Books icon white background.png`
+| File | Used for |
+|---|---|
+| `ArgoBooks/Assets/argo-logo.ico` | setup.exe icon, Control Panel entry, shortcuts, and the `.argo` file association |
+| `packaging/windows/Argo Books icon transparent square.png` | install dialog logo, light theme |
+| `packaging/windows/Argo Books icon white background.png` | install dialog logo, dark theme |
+
+The `.ico` is the same file `ArgoBooks.Desktop.csproj` sets as its
+`ApplicationIcon`, referenced rather than duplicated so the installer and the
+built exe can never drift apart.
+
+**Both dialog logos must be square.** The AppInstaller theme draws the logo into
+a fixed 70x70 box and stretches whatever it is given to fill it, without
+preserving proportions, so a wide image comes out visibly stretched vertically.
+The masters in the brand library are 480x355, which is why the light-theme file
+here is a separate 590x590 version with the artwork centered on a transparent
+square. It matches the proportions of the dark-theme file, so the logo is the
+same size in both themes.
+
+These are copies of files in the brand library at
+`Desktop\Argo Books assets\Third\Logo\`, which is not version controlled. The
+repo copies are what ship, so treat them as authoritative and re-copy
+deliberately if the artwork changes.
 
 ## Step 2: Create the project
 
@@ -99,7 +138,10 @@ The wizard has nine screens. Click **Next** between each.
 - **Dialog Theme**: pick **App Installer**.
 - Click **Finish**.
 
-When prompted to save, save the project as `Argo Books.aip`.
+When prompted to save, save the project as `Argo Books.aip` inside
+`Argo-Books-Avalonia/packaging/windows/`. The location matters: every file
+reference in the project is relative to that folder, and Advanced Installer
+resolves them against wherever the `.aip` sits.
 
 ## Step 3: Product Details
 
@@ -112,7 +154,7 @@ In the **Product Details** page:
 | Publisher | `Argo Books` |
 | Support link | `https://argorobots.com/documentation/` |
 | Contact | `https://argorobots.com/contact-us/` |
-| Control Panel Icon | `C:\Users\<you>\Desktop\Argo logos\Third\Argo Books icon.ico` (this is the icon Windows shows in Apps & features / Add or Remove Programs) |
+| Control Panel Icon | `..\..\ArgoBooks\Assets\argo-logo.ico` (this is the icon Windows shows in Apps & features / Add or Remove Programs) |
 
 | **Upgrade Code** | `{56B4BFD1-ED8C-4FBE-9562-14EB8B82623C}`. This GUID is how Windows recognizes Argo Books across versions. Use this exact value so future installs can upgrade existing copies. |
 
@@ -130,7 +172,7 @@ If it's missing, or right-click **Application Folder** → **Add Folder** and po
 The shortcuts need their icons pointed at the Argo Books `.ico`:
 
 1. In **Resources → Files and Folders**, look at the tree on the left.
-2. Click **Application Shortcut Folder**. In the file list on the right, right-click the `Argo Books` shortcut → **Properties** → set the **Icon** to `Argo Books icon.ico`.
+2. Click **Application Shortcut Folder**. In the file list on the right, right-click the `Argo Books` shortcut → **Properties** → set the **Icon** to `..\..\ArgoBooks\Assets\argo-logo.ico`.
 3. Click **Desktop** in the tree. Do the same for the shortcut here.
 
 ## Step 6: AppInstaller theme logos
@@ -139,8 +181,11 @@ Set the two logos that the AppInstaller theme shows on the install dialog:
 
 1. Go to **User Interface → Themes** in the left sidebar.
 2. On the right side of the page you'll see two fields: **App Logo Icon** and **App Logo Icon Dark**.
-3. Click the **...** button next to **App Logo Icon** and pick `C:\Users\<you>\Desktop\Argo logos\Third\Argo Books icon transparent.png`.
-4. Click the **...** button next to **App Logo Icon Dark** and pick `C:\Users\<you>\Desktop\Argo logos\Third\Argo Books icon white background.png`.
+3. Click the **...** button next to **App Logo Icon** and pick `Argo Books icon transparent square.png` from `packaging/windows/`.
+4. Click the **...** button next to **App Logo Icon Dark** and pick `Argo Books icon white background.png` from the same folder.
+
+Both must be square. See "Icon and logo files" in Step 1 for why: the theme
+stretches the image to fill a square box, so a wide logo comes out distorted.
 
 ## Step 7: File associations
 
@@ -217,7 +262,7 @@ In the left sidebar under **Package Definition**:
 | Setting | Value |
 |---|---|
 | Package type | Single EXE setup (resources inside) |
-| EXE icon | `Argo Books icon.ico` |
+| EXE icon | `..\..\ArgoBooks\Assets\argo-logo.ico` |
 
 ## Step 10: Digital Signature
 
@@ -236,7 +281,7 @@ This signs against the Azure-hosted Microsoft Trusted Signing certificate so Sma
 ## Step 11: Verify a build
 
 1. Save the project and click **Build**.
-2. Output lands at `C:\Users\<you>\Documents\Advanced Installer\Projects\Argo Books\Setup Files\Argo Books Installer V.{version}.exe`.
+2. Output lands at `Argo-Books-Avalonia/packaging/windows/Setup Files/Argo Books Installer V.{version}.exe`. That folder is gitignored.
 3. Rename to add a fake token, e.g. `Argo Books Installer V.{version}_abcdef12.exe`.
 4. Delete `%LOCALAPPDATA%\ArgoBooks\first_run_reported.marker` if present (the desktop app skips reporting if the marker exists).
 5. Run the installer.

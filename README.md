@@ -69,7 +69,7 @@ of the codebase.
 |---|---|
 | [Integrations](docs/Integrations.md) | Wiring up an external service |
 | [Azure Setup](docs/setup/AzureSetup.md) | Setting up Azure from scratch for builds and signing |
-| [Advanced Installer project setup](docs/Advanced%20Installer%20project%20setup.md) | Rebuilding or repairing the Windows installer project |
+| [Advanced Installer project setup](docs/setup/Advanced%20Installer%20project%20setup.md) | Rebuilding or repairing the Windows installer project |
 
 ### Sub-projects
 

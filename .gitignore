@@ -464,3 +464,10 @@ docs/superpowers/
 *.pfx
 *.p12
 argo-recovery-private*
+
+# Advanced Installer working files next to packaging/windows/Argo Books.aip.
+# The .aip itself is tracked; these are regenerated on every build.
+packaging/windows/*-cache/
+packaging/windows/Setup Files/
+packaging/windows/Advanced Installer/
+packaging/windows/*.back(*).aip

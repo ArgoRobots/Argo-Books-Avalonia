@@ -3,3 +3,8 @@
 *.pdf  binary
 *.xlsx binary
 *.xls  binary
+
+# Advanced Installer writes the .aip with CRLF and rewrites the whole file on
+# save. Pinning the endings keeps a checkout on any machine from showing all
+# 1219 lines as changed the first time the project is opened.
+*.aip text eol=crlf
