@@ -507,6 +507,22 @@ public class TelemetryStorageService : ITelemetryStorageService
             var dataType = Enum.Parse<TelemetryDataType>(dataTypeElement.GetString()!, ignoreCase: true);
             var json = root.GetRawText();
 
+            // One unreadable event used to fail the whole List<TelemetryEvent>, taking every
+            // other event in the file with it. That is reachable whenever a build reads a file
+            // written by a newer one: an enum value it does not have, such as a FeatureName
+            // added since, throws here. Losing one event is acceptable, losing the batch is not.
+            try
+            {
+                return Deserialize(dataType, json, options);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        private static TelemetryEvent? Deserialize(TelemetryDataType dataType, string json, JsonSerializerOptions options)
+        {
             return dataType switch
             {
                 TelemetryDataType.Session => JsonSerializer.Deserialize<SessionEvent>(json, options),
