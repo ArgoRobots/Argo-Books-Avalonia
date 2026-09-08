@@ -99,9 +99,31 @@ public static class PayrollCalculator
         // same pay gets the same tax in period 1 and period 7, with year-to-date CPP of 808.74
         // on the second. Adding it makes the projection creep up to the annual maximum partway
         // through the year and pin there, quietly under-withholding from that point on.
-        decimal annualCpp = Math.Min(cppUncapped * periods, rates.Cpp.MaxContributionEmployee)
+        // Annualise the RECURRING pay only. cppUncapped and eiUncapped are computed on the whole
+        // period including any bonus, and a bonus is paid once: annualising it projects a year of
+        // contributions nobody will make, which pins the credit at its maximum and under-withholds
+        // every remaining period. Verified against PDOC, which puts the periodic federal tax on a
+        // 2,000 biweekly with a 5,000 bonus at 163.09; annualising the full 7,000 gives 155.59.
+        decimal recurring = Math.Max(0m, gross - Math.Clamp(input.NonPeriodicPay, 0m, Math.Max(0m, gross)));
+        decimal recurringCppUncapped = cppUncapped;
+        decimal recurringEiUncapped = eiUncapped;
+
+        if (recurring < gross)
+        {
+            CppForPeriod(recurring, periods, ytd, rates, input.IsCppExempt, out _, out recurringCppUncapped);
+            EiForPeriod(recurring, ytd, rates, input.IsEiExempt, out recurringEiUncapped);
+        }
+
+        decimal annualCpp = Math.Min(recurringCppUncapped * periods, rates.Cpp.MaxContributionEmployee)
                             * (1 - enhancedShare);
-        decimal annualEi = Math.Min(eiUncapped * periods, rates.Ei.MaxPremiumEmployee);
+        decimal annualEi = Math.Min(recurringEiUncapped * periods, rates.Ei.MaxPremiumEmployee);
+
+        // The contributions the bonus itself attracts, NOT annualised, because it is paid once.
+        // They belong in K2 for the with-bonus step only, which is what makes the two steps
+        // differ by more than the bonus. Leaving them out over-taxed a 5,000 bonus by 46.06
+        // federal, the difference between the engine and PDOC that found this.
+        decimal bonusCpp = Math.Max(0m, (cppUncapped - recurringCppUncapped)) * (1 - enhancedShare);
+        decimal bonusEi = Math.Max(0m, eiUncapped - recurringEiUncapped);
 
         decimal federalAnnual = Math.Max(0, FederalTaxForYear(annual, annualCpp, annualEi, input, rates));
         decimal provincialAnnual = Math.Max(0, ProvincialTaxForYear(annual, annualCpp, annualEi, input, rates, province));
@@ -135,15 +157,20 @@ public static class PayrollCalculator
             {
                 // Against the step 2 figure, not the periodic one. They are only the same when
                 // there are no prior bonuses.
+                decimal bonusCppCredit = Math.Min(annualCpp + bonusCpp,
+                    rates.Cpp.MaxContributionEmployee * (1 - enhancedShare));
+                decimal bonusEiCredit = Math.Min(annualEi + bonusEi, rates.Ei.MaxPremiumEmployee);
+
                 decimal federalBase =
                     Math.Max(0, FederalTaxForYear(bonusBase, annualCpp, annualEi, input, rates));
                 decimal provincialBase =
                     Math.Max(0, ProvincialTaxForYear(bonusBase, annualCpp, annualEi, input, rates, province));
 
                 federal += Round(
-                    Math.Max(0, FederalTaxForYear(withBonus, annualCpp, annualEi, input, rates)) - federalBase);
+                    Math.Max(0, FederalTaxForYear(withBonus, bonusCppCredit, bonusEiCredit, input, rates))
+                    - federalBase);
                 provincial += Round(
-                    Math.Max(0, ProvincialTaxForYear(withBonus, annualCpp, annualEi, input, rates, province))
+                    Math.Max(0, ProvincialTaxForYear(withBonus, bonusCppCredit, bonusEiCredit, input, rates, province))
                     - provincialBase);
             }
         }
