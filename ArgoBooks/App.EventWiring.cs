@@ -1765,12 +1765,6 @@ public partial class App
                 // Close the company - this will trigger navigation back to welcome screen
                 await CompanyManager.CloseCompanyAsync();
 
-                // Show notification
-                _appShellViewModel.AddNotification(
-                    "Session Locked",
-                    "Your session was locked due to inactivity. Please reopen your company file.",
-                    NotificationType.Warning);
-
                 // Re-enable idle detection for next session
                 _idleDetectionService.ResetIdleTimer();
             });
