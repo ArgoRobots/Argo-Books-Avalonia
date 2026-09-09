@@ -159,14 +159,37 @@ public partial class AppShell : UserControl
     {
         base.OnKeyDown(e);
 
-        // Handle Ctrl+K to open quick actions panel
-        if (e.Key == Key.K && e.KeyModifiers.HasCommand())
+        // A page that already acted on the key keeps it. The reports designer binds its own
+        // Ctrl+S to saving a template, and on that page saving the template is what the key
+        // should do.
+        if (e.Handled)
+            return;
+
+        if (DataContext is not AppShellViewModel vm)
+            return;
+
+        switch (e.Key)
         {
-            if (DataContext is AppShellViewModel vm)
-            {
+            // Quick actions panel.
+            case Key.K when e.KeyModifiers.HasCommand():
                 vm.OpenQuickActionsCommand.Execute(null);
                 e.Handled = true;
-            }
+                break;
+
+            // Save, routed through the same command as the header's save button so it
+            // answers the same way: "Saved" when something changed, "No changes found"
+            // when nothing did. Saving is never silent, which is the point: a shortcut
+            // that does nothing visible reads as a shortcut that did not work.
+            //
+            // The File menu has advertised Ctrl+S since before this handler existed, with
+            // nothing outside the reports designer implementing it, so the key really did
+            // nothing anywhere else in the app.
+            //
+            // Shift is excluded so Ctrl+Shift+S stays available for Save As.
+            case Key.S when e.KeyModifiers.HasCommand() && !e.KeyModifiers.HasFlag(KeyModifiers.Shift):
+                vm.HeaderViewModel.SaveCommand.Execute(null);
+                e.Handled = true;
+                break;
         }
     }
 }
