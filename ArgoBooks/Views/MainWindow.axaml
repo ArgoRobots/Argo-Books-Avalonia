@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:ArgoBooks"
         xmlns:vm="using:ArgoBooks.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -211,8 +212,10 @@
                             VerticalAlignment="Center"
                             FontSize="13"
                             Command="{Binding DismissSampleBannerCommand}"
-                            ToolTip.Tip="{loc:Loc 'Dismiss'}"
-                            Content="&#x2715;" />
+                            ToolTip.Tip="{loc:Loc 'Dismiss'}">
+                        <PathIcon Data="{x:Static local:Icons.Close}"
+                                  Width="12" Height="12" />
+                    </Button>
                 </Grid>
             </Border>
 

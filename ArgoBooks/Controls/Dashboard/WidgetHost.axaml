@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:ArgoBooks"
              xmlns:vm="using:ArgoBooks.ViewModels.Dashboard"
              x:Class="ArgoBooks.Controls.Dashboard.WidgetHost"
              x:DataType="vm:WidgetHostViewModel">
@@ -69,7 +70,8 @@
             <Button Classes="widget-overlay-btn remove-btn"
                     x:Name="RemoveButton"
                     ToolTip.Tip="Remove widget">
-                <TextBlock Text="&#x2715;" FontSize="12" />
+                <PathIcon Data="{x:Static local:Icons.Close}"
+                          Width="12" Height="12" />
             </Button>
         </StackPanel>
     </Panel>
