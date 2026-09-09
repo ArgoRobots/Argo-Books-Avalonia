@@ -970,6 +970,12 @@ public partial class App : Application
     // lifetime is not reachable from there.
     private static string[] _startupArgs = [];
 
+    // macOS hands a double-clicked document to a running app as an Apple Event rather than
+    // on the command line, so _startupArgs is always empty there. The event can arrive
+    // before the shell is built, which is what _macActivationFile holds it for.
+    private static string? _macActivationFile;
+    private static bool _startupCompanyHandled;
+
     // Cached page ViewModels to improve performance and prevent memory leaks from event subscriptions
     private static DashboardPageViewModel? _dashboardPageViewModel;
     private static AnalyticsPageViewModel? _analyticsPageViewModel;
@@ -1129,6 +1135,7 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             _startupArgs = desktop.Args ?? [];
+            WireMacFileActivation();
 
             // Initialize error logging first so it's available for all services
             var errorLogger = new ErrorLogger();
@@ -1859,6 +1866,64 @@ public partial class App : Application
     }
 
     /// <summary>
+    /// Routes a .argo file double-clicked in Finder to the same open path the file menu uses.
+    ///
+    /// Windows and Linux pass the path in argv, which StartupFileArgs already reads. macOS
+    /// does not: Launch Services sends an Apple Event instead, both for a cold launch and for
+    /// a file opened while the app is already running, so without this the app came up on the
+    /// welcome screen and the CFBundleDocumentTypes entry in Info.plist advertised a handler
+    /// that did nothing.
+    /// </summary>
+    private void WireMacFileActivation()
+    {
+        if (!OperatingSystem.IsMacOS())
+            return;
+
+        if (ApplicationLifetime is not IActivatableLifetime activatable)
+            return;
+
+        activatable.Activated += (_, e) =>
+        {
+            if (e is not FileActivatedEventArgs fileArgs)
+                return;
+
+            string? path = null;
+            foreach (var file in fileArgs.Files)
+            {
+                // Reuse the argv validation: extension, full path, and existence.
+                path = StartupFileArgs.GetCompanyFilePath([file.Path.LocalPath]);
+                if (path != null)
+                    break;
+            }
+
+            if (path == null)
+                return;
+
+            // A cold launch fires this before the shell exists, and OpenCompanyWithRetryAsync
+            // silently no-ops until then, so hold the path for TryOpenStartupCompanyAsync.
+            if (!_startupCompanyHandled)
+            {
+                _macActivationFile = path;
+                return;
+            }
+
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = OpenFromFinderAsync(path); });
+        };
+    }
+
+    private static async Task OpenFromFinderAsync(string path)
+    {
+        try
+        {
+            await OpenCompanyWithRetryAsync(path);
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Failed to open company from Finder: {ex.Message}", "Startup");
+        }
+    }
+
+    /// <summary>
     /// Opens a company at startup instead of landing on the welcome screen, from either
     /// source: a file path the Windows shell passed for a double-clicked .argo file, or the
     /// AutoOpenRecentAfterUpdate flag set before an update restart. The command-line file
@@ -1866,7 +1931,11 @@ public partial class App : Application
     /// </summary>
     private static async Task TryOpenStartupCompanyAsync()
     {
-        var requestedFile = StartupFileArgs.GetCompanyFilePath(_startupArgs);
+        var requestedFile = StartupFileArgs.GetCompanyFilePath(_startupArgs) ?? _macActivationFile;
+
+        // Past this point the shell is up, so an Apple Event that lands later opens directly
+        // instead of being parked in _macActivationFile where nothing would read it.
+        _startupCompanyHandled = true;
 
         var reopenAfterUpdate = false;
         if (SettingsService != null)
