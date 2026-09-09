@@ -680,7 +680,6 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         _webView.IsVisible = true;
         _webView.NavigationCompleted += OnNavigationCompleted;
         _webView.WebMessageReceived += OnWebMessageReceived;
-        _ = StartOutboxPollingIfNeededAsync();
 
         if (_zoomToolbar != null)
             _zoomToolbar.IsVisible = true;
@@ -753,7 +752,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             return;
         }
 
-        if (usesNativeBridge || _webView == null || !_webViewReady)
+        if (usesNativeBridge || _webView == null)
             return;
 
         _outboxTimer = new DispatcherTimer { Interval = OutboxPollInterval };
@@ -794,6 +793,12 @@ window.__totalsConfig = __TOTALS_CONFIG__;
 
     private void OnNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
     {
+        // Only now does the page exist to be asked which channel it chose. Asking in
+        // ActivateWebView instead reads __argoNative off a page that has not loaded, which
+        // answers "no native bridge" everywhere and would start polling on Windows too,
+        // delivering every edit twice: once by postMessage and again from the drain.
+        _ = StartOutboxPollingIfNeededAsync();
+
         if (_hasPendingScroll && _webView != null)
         {
             var sx = _pendingScrollX.ToString(System.Globalization.CultureInfo.InvariantCulture);
