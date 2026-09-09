@@ -68,6 +68,36 @@ public partial class MainWindow : Window
             if (e.Property == WindowStateProperty)
                 UpdateMaximizeIcon();
         };
+
+        ConfigureMacOsChrome();
+    }
+
+    /// <summary>
+    /// Swaps the custom Windows-style chrome for the native macOS title bar.
+    ///
+    /// The caption buttons this window draws are Windows through and through: right
+    /// aligned, 46x30, a rectangle for maximise and the Windows accent red on close
+    /// hover. On macOS the same three actions belong in traffic lights at the top left,
+    /// so rather than restyling the custom buttons per platform this hands the job back
+    /// to AppKit, which also restores double-click-to-zoom and the green fullscreen
+    /// button for free.
+    ///
+    /// Hiding the custom title bar costs nothing: Title is already bound to WindowTitle
+    /// ("Company - Argo Books"), which is exactly what the native bar renders.
+    /// </summary>
+    private void ConfigureMacOsChrome()
+    {
+        if (!OperatingSystem.IsMacOS())
+            return;
+
+        ExtendClientAreaToDecorationsHint = false;
+        WindowDecorations = WindowDecorations.Full;
+
+        if (this.FindControl<Border>("TitleBar") is { } titleBar)
+            titleBar.IsVisible = false;
+
+        if (this.FindControl<StackPanel>("WindowControls") is { } windowControls)
+            windowControls.IsVisible = false;
     }
 
     /// <summary>
