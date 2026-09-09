@@ -1879,7 +1879,13 @@ public partial class App : Application
         if (!OperatingSystem.IsMacOS())
             return;
 
-        if (ApplicationLifetime is not IActivatableLifetime activatable)
+        // Not a cast on ApplicationLifetime: ClassicDesktopStyleApplicationLifetime implements
+        // IClassicDesktopStyleApplicationLifetime, IControlledApplicationLifetime,
+        // IApplicationLifetime and IDisposable, and none of them is IActivatableLifetime. That
+        // cast fails on every platform, which is what left this handler unsubscribed and a
+        // double-clicked file opening the app onto the welcome screen. Activation is a platform
+        // feature, and on macOS it resolves to Avalonia.Native.MacOSActivatableLifetime.
+        if (TryGetFeature(typeof(IActivatableLifetime)) is not IActivatableLifetime activatable)
             return;
 
         activatable.Activated += (_, e) =>
