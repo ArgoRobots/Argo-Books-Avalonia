@@ -68,7 +68,7 @@ public partial class ReceiptsPage : UserControl
                 if (!props.IsLeftButtonPressed) return;
 
                 var keyMods = e.KeyModifiers;
-                if (keyMods.HasFlag(KeyModifiers.Control) || keyMods.HasFlag(KeyModifiers.Shift))
+                if (keyMods.HasCommand() || keyMods.HasFlag(KeyModifiers.Shift))
                 {
                     // Ctrl/Shift+click: toggle selection
                     viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
@@ -100,7 +100,7 @@ public partial class ReceiptsPage : UserControl
             if (DataContext is ReceiptsPageViewModel viewModel)
             {
                 var keyMods = e.KeyModifiers;
-                if (keyMods.HasFlag(KeyModifiers.Control) || keyMods.HasFlag(KeyModifiers.Shift))
+                if (keyMods.HasCommand() || keyMods.HasFlag(KeyModifiers.Shift))
                 {
                     viewModel.ToggleReceiptSelectionCommand.Execute(receipt);
                 }

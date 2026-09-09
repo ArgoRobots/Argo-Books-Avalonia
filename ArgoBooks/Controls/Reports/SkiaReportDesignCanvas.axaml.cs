@@ -988,7 +988,7 @@ public partial class SkiaReportDesignCanvas : UserControl
     private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         // Only zoom when Ctrl is held; otherwise let ScrollViewer handle it for panning
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (!e.KeyModifiers.HasZoomModifier())
             return;
 
         if (_scrollViewer == null || _canvasImage == null)
@@ -1284,7 +1284,7 @@ public partial class SkiaReportDesignCanvas : UserControl
 
             if (element != null)
             {
-                var isMultiSelect = e.KeyModifiers.HasFlag(KeyModifiers.Control) ||
+                var isMultiSelect = e.KeyModifiers.HasCommand() ||
                                     e.KeyModifiers.HasFlag(KeyModifiers.Shift);
 
                 if (isMultiSelect)
@@ -2018,7 +2018,7 @@ public partial class SkiaReportDesignCanvas : UserControl
                 e.Handled = true;
                 break;
 
-            case Key.A when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+            case Key.A when e.KeyModifiers.HasCommand():
                 SelectAll();
                 e.Handled = true;
                 break;

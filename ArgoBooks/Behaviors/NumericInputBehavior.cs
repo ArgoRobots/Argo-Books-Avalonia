@@ -133,7 +133,7 @@ public static partial class NumericInputBehavior
             return true;
 
         // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X, Ctrl+Z
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (e.KeyModifiers.HasCommand())
         {
             if (e.Key == Key.A || e.Key == Key.C || e.Key == Key.V ||
                 e.Key == Key.X || e.Key == Key.Z)

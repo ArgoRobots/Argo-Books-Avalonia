@@ -160,7 +160,7 @@ public partial class AppShell : UserControl
         base.OnKeyDown(e);
 
         // Handle Ctrl+K to open quick actions panel
-        if (e.Key == Key.K && e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (e.Key == Key.K && e.KeyModifiers.HasCommand())
         {
             if (DataContext is AppShellViewModel vm)
             {
