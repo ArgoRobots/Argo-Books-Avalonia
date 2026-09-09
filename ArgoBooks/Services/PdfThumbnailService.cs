@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -17,6 +18,12 @@ public sealed class PdfThumbnailService
     private Window? _offscreenWindow;
     private readonly SemaphoreSlim _renderLock = new(1, 1);
     private bool _pdfJsReady;
+
+    /// <summary>
+    /// True when the page's replies have to be polled instead of arriving on their own.
+    /// Decided once per session by whichever channel delivers the ready signal first.
+    /// </summary>
+    private bool _useOutboxPolling;
     private TaskCompletionSource<string>? _renderTcs;
     private (Dictionary<int, byte[]> Pages, TaskCompletionSource<bool> Done, Action<int, byte[]>? OnPage)? _allPagesCollector;
 
@@ -96,9 +103,8 @@ public sealed class PdfThumbnailService
 
             await _webView.InvokeScript($"window.__renderAndPost('{pdfBase64}')");
 
-            System.Diagnostics.Debug.WriteLine("PdfThumbnail: waiting for postMessage result...");
-            var completed = await Task.WhenAny(_renderTcs.Task, Task.Delay(15000));
-            if (completed != _renderTcs.Task)
+            System.Diagnostics.Debug.WriteLine("PdfThumbnail: waiting for render result...");
+            if (!await WaitWhileDrainingAsync(_renderTcs.Task, 15000))
             {
                 System.Diagnostics.Debug.WriteLine("PdfThumbnail: TIMEOUT waiting for render result");
                 return null;
@@ -166,7 +172,7 @@ public sealed class PdfThumbnailService
 
             // Scale timeout with size: base 20s + 4s per 100KB, capped at 120s.
             var timeoutMs = Math.Min(120_000, 20_000 + pdfData.Length / 1024 / 100 * 4_000);
-            await Task.WhenAny(doneTcs.Task, Task.Delay(timeoutMs));
+            await WaitWhileDrainingAsync(doneTcs.Task, timeoutMs);
 
             // Return whatever rendered (null only if nothing succeeded).
             var ordered = PdfRenderMessageParser.ToOrderedArray(pages);
@@ -192,10 +198,18 @@ public sealed class PdfThumbnailService
         // Dispose any previous failed init to avoid leaking windows
         CleanupWebView();
 
+        // macOS treats a fully offscreen window as occluded and suspends its web view, and a
+        // suspended WKWebView never finishes a canvas render: pdf.js still reports ready and
+        // getPage still resolves, then page.render() hangs and nothing is ever posted back.
+        // Parked at -30000 it stalls every time; anywhere still on screen it renders in about
+        // a quarter second. So on macOS the window stays on screen and hides by being a single
+        // pixel in the corner instead.
+        var hideBySize = OperatingSystem.IsMacOS();
+
         _offscreenWindow = new Window
         {
-            Width = 800,
-            Height = 600,
+            Width = hideBySize ? 1 : 800,
+            Height = hideBySize ? 1 : 600,
             ShowInTaskbar = false,
             WindowDecorations = WindowDecorations.None,
             ShowActivated = false,
@@ -215,7 +229,7 @@ public sealed class PdfThumbnailService
         // because this window is undecorated and cached for the rest of the session, a single
         // slip leaves the faint edge of an 800x600 rectangle floating above every other
         // application until Argo Books is minimised or closed.
-        var offscreen = new PixelPoint(-30000, -30000);
+        var offscreen = hideBySize ? new PixelPoint(0, 0) : new PixelPoint(-30000, -30000);
         _offscreenWindow.Position = offscreen;
 
         // Re-assert once the platform window actually exists, since a position set before then
@@ -262,15 +276,172 @@ public sealed class PdfThumbnailService
         }
         System.Diagnostics.Debug.WriteLine("PdfThumbnail INIT: navigation succeeded, waiting for pdf.js...");
 
-        var readyCompleted = await Task.WhenAny(readyTcs.Task, Task.Delay(15000));
+        _pdfJsReady = await WaitForReadyAsync(readyTcs.Task);
+
         _webView.WebMessageReceived -= OnReadyMessage;
-        _pdfJsReady = readyCompleted == readyTcs.Task;
-        System.Diagnostics.Debug.WriteLine($"PdfThumbnail INIT: pdfJsReady={_pdfJsReady}");
+        System.Diagnostics.Debug.WriteLine(
+            $"PdfThumbnail INIT: pdfJsReady={_pdfJsReady}, outboxPolling={_useOutboxPolling}");
     }
 
-    private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
+    /// <summary>How often the outbox is drained while waiting on a render.</summary>
+    private const int PollIntervalMs = 100;
+
+    /// <summary>
+    /// Waits for pdf.js to report ready over whichever channel this platform actually has.
+    ///
+    /// Sets <see cref="_useOutboxPolling"/> when the answer came out of the outbox, which
+    /// means postMessage is not delivering and every later result has to be polled too.
+    /// Deciding it from observed behaviour rather than an OS check means a fixed WebView
+    /// silently goes back to the direct path with no code change here.
+    /// </summary>
+    private async Task<bool> WaitForReadyAsync(Task postMessageReady)
     {
-        var body = e.Body;
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        var pdfJsReady = false;
+
+        // Readiness is read as page state rather than waited for as a message. The post
+        // announcing it goes out during load, before anything here could be listening, so
+        // asking the page whether it is ready is the only question that survives the race.
+        while (DateTime.UtcNow < deadline && !pdfJsReady && !postMessageReady.IsCompleted)
+        {
+            pdfJsReady = await ReadBooleanAsync("window.__pdfjsReady === true");
+            if (!pdfJsReady)
+                await Task.Delay(PollIntervalMs);
+        }
+
+        if (!pdfJsReady && !postMessageReady.IsCompleted)
+            return false;
+
+        // pdf.js is up. Which channel carried the news decides how every later result comes
+        // back, so give postMessage a moment: the signal it would carry has already fired.
+        if (!postMessageReady.IsCompleted)
+            await Task.WhenAny(postMessageReady, Task.Delay(1500));
+
+        _useOutboxPolling = !postMessageReady.IsCompleted;
+
+        if (!_useOutboxPolling)
+        {
+            // The bridge delivers, so stop queueing: a long session would otherwise
+            // accumulate page data URLs that nothing is ever going to read.
+            await InvokeSafeAsync("window.__outboxEnabled = false; window.__outbox = [];");
+        }
+
+        return true;
+    }
+
+    /// <summary>Evaluates a JS predicate, treating anything unreadable as false.</summary>
+    private async Task<bool> ReadBooleanAsync(string script)
+    {
+        var result = await InvokeSafeAsync(script);
+        return result != null && result.Contains("true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Waits for <paramref name="completion"/>, feeding anything polled meanwhile through the
+    /// same handler postMessage would have used. A plain timeout wait when polling is off.
+    /// </summary>
+    private async Task<bool> WaitWhileDrainingAsync(Task completion, int timeoutMs)
+    {
+        if (!_useOutboxPolling)
+            return await Task.WhenAny(completion, Task.Delay(timeoutMs)) == completion;
+
+        var deadline = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+
+        while (DateTime.UtcNow < deadline)
+        {
+            if (completion.IsCompleted)
+                return true;
+
+            foreach (var message in await DrainOutboxAsync())
+                DispatchMessage(message);
+
+            if (completion.IsCompleted)
+                return true;
+
+            await Task.Delay(PollIntervalMs);
+        }
+
+        return completion.IsCompleted;
+    }
+
+    /// <summary>Takes whatever the page has queued since the last call.</summary>
+    private async Task<IReadOnlyList<string>> DrainOutboxAsync() =>
+        ParseOutbox(await InvokeSafeAsync("window.__drainOutbox()"));
+
+    /// <summary>
+    /// Runs a script, treating a dead or missing web view as "no answer" rather than as an
+    /// error: every caller here already degrades onto a failed render.
+    /// </summary>
+    private async Task<string?> InvokeSafeAsync(string script)
+    {
+        if (_webView == null)
+            return null;
+
+        try
+        {
+            return await _webView.InvokeScript(script);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"PdfThumbnail InvokeScript failed: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Reads the JSON array the page hands back. InvokeScript returns the JS value already
+    /// JSON encoded, so a string return arrives wrapped one level deeper than it was sent,
+    /// and both shapes have to be accepted.
+    /// </summary>
+    internal static IReadOnlyList<string> ParseOutbox(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return [];
+
+        try
+        {
+            using var document = JsonDocument.Parse(raw);
+
+            if (document.RootElement.ValueKind != JsonValueKind.String)
+                return ReadStringArray(document.RootElement);
+
+            var inner = document.RootElement.GetString();
+            if (string.IsNullOrWhiteSpace(inner))
+                return [];
+
+            using var innerDocument = JsonDocument.Parse(inner);
+            return ReadStringArray(innerDocument.RootElement);
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static IReadOnlyList<string> ReadStringArray(JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Array)
+            return [];
+
+        var values = new List<string>(element.GetArrayLength());
+        foreach (var item in element.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.String && item.GetString() is { } value)
+                values.Add(value);
+        }
+
+        return values;
+    }
+
+    private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e) =>
+        DispatchMessage(e.Body);
+
+    /// <summary>
+    /// Handles one message from the page, whether it arrived by postMessage or was polled
+    /// out of the outbox.
+    /// </summary>
+    private void DispatchMessage(string? body)
+    {
         if (string.IsNullOrEmpty(body))
             return;
 
@@ -311,6 +482,7 @@ public sealed class PdfThumbnailService
         _offscreenWindow = null;
         _webView = null;
         _pdfJsReady = false;
+        _useOutboxPolling = false;
     }
 
     public void Dispose() => CleanupWebView();
@@ -359,9 +531,34 @@ public sealed class PdfThumbnailService
 <script>__PDFJS_LIB__</script>
 <script type="text/plain" id="pdfjs-worker-src">__PDFJS_WORKER__</script>
 <script>
+    // Avalonia.Controls.WebView 12.0.1 registers no WKScriptMessageHandler on macOS, so
+    // window.webkit.messageHandlers is empty and both posts below land in their own catch.
+    // The outbox is the way back: InvokeScript does work there, so C# drains this instead.
+    // It only fills once C# switches it on, so where postMessage works nothing queues.
+    // On from the start. pdf.js reports ready the moment the page loads, well before C#
+    // can flip a switch, so anything gated on a later enable would miss that first message.
+    window.__outboxEnabled = true;
+    window.__outbox = [];
+    window.__pdfjsReady = false;
+
+    window.__drainOutbox = function() {
+        var pending = window.__outbox;
+        window.__outbox = [];
+        return JSON.stringify(pending);
+    };
+
     function postMsg(msg) {
         try { window.chrome.webview.postMessage(msg); } catch(e) {}
         try { window.webkit.messageHandlers.webview.postMessage(msg); } catch(e) {}
+        try {
+            if (window.__outboxEnabled) {
+                // Each rendered page is a data URL, so an undrained queue is a memory
+                // problem long before it is a message-count problem. Dropping the oldest
+                // keeps a stalled drain bounded.
+                if (window.__outbox.length > 400) window.__outbox.shift();
+                window.__outbox.push(msg);
+            }
+        } catch(e) {}
     }
 
     function initPdfJs() {
@@ -369,6 +566,8 @@ public sealed class PdfThumbnailService
             var workerSrc = document.getElementById('pdfjs-worker-src').textContent;
             var workerBlob = new Blob([workerSrc], { type: 'text/javascript' });
             pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob);
+            // Readable at any time, unlike the post below, which is gone once sent.
+            window.__pdfjsReady = true;
             postMsg('pdfjs-ready');
         } else {
             setTimeout(initPdfJs, 200);
