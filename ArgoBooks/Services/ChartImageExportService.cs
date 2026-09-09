@@ -183,9 +183,20 @@ public static class ChartImageExportService
     /// <summary>
     /// Creates a file-safe name from a chart title.
     /// </summary>
+    /// <summary>
+    /// Characters no common desktop platform accepts in a file name: the Windows reserved set,
+    /// which is a superset of what macOS and Linux reject, plus the control characters.
+    /// </summary>
+    private static readonly char[] InvalidFileNameChars =
+        [.. "<>:\"/\\|?*", .. Enumerable.Range(0, 32).Select(c => (char)c)];
+
     public static string CreateSafeFileName(string chartName)
     {
-        var safeName = string.Join("_", chartName.Split(Path.GetInvalidFileNameChars()));
+        // A fixed set, not Path.GetInvalidFileNameChars(): that returns only '/' and NUL on
+        // macOS and Linux, so a chart called "Q1: Revenue" exported there kept its colon and
+        // produced a file Windows cannot open. Exports get shared between machines, so the
+        // name has to be legal everywhere rather than merely legal where it was written.
+        var safeName = string.Join("_", chartName.Split(InvalidFileNameChars));
         safeName = safeName.Replace(" ", "_");
         return $"{safeName}_{DateTime.Now:yyyy-MM-dd}";
     }
@@ -276,7 +287,7 @@ public static class ChartImageExportService
         const int labelPercentGap = 16;
         const float fontSize = 13f;
 
-        using var typeface = SKTypeface.FromFamilyName("Segoe UI") ?? SKTypeface.Default;
+        using var typeface = Core.Services.PlatformTypefaces.Default;
         using var font = new SKFont(typeface, fontSize);
         // Legend text follows the theme so it stays readable on the solid export background.
         var isDark = ThemeService.Instance.IsDarkTheme;

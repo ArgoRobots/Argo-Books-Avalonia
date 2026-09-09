@@ -486,7 +486,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             new Axis
             {
                 TextSize = 12,
-                LabelsPaint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") },
+                LabelsPaint = new SolidColorPaint(textColor) { SKTypeface = Core.Services.PlatformTypefaces.Default },
                 MinLimit = minDate - padding,
                 MaxLimit = maxDate + padding,
                 Labeler = value =>
@@ -513,7 +513,7 @@ public partial class PastPredictionsModalViewModel : ViewModelBase
             new Axis
             {
                 TextSize = 12,
-                LabelsPaint = new SolidColorPaint(textColor) { SKTypeface = SKTypeface.FromFamilyName("Segoe UI") },
+                LabelsPaint = new SolidColorPaint(textColor) { SKTypeface = Core.Services.PlatformTypefaces.Default },
                 SeparatorsPaint = new SolidColorPaint(gridColor) { StrokeThickness = 1 },
                 MinLimit = 0,
                 MaxLimit = 105, // Slightly above 100 for visual padding

@@ -190,6 +190,14 @@ public partial class AppShell : UserControl
                 vm.HeaderViewModel.SaveCommand.Execute(null);
                 e.Handled = true;
                 break;
+
+            // Save As, the other shortcut the File menu advertises without anything
+            // implementing it. Routed through the menu's own command so it shares the sample
+            // company redirect and the save-location dialog.
+            case Key.S when e.KeyModifiers.HasCommand() && e.KeyModifiers.HasFlag(KeyModifiers.Shift):
+                vm.FileMenuPanelViewModel.SaveAsCommand.Execute(null);
+                e.Handled = true;
+                break;
         }
     }
 }

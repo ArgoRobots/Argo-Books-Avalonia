@@ -2,6 +2,7 @@ using System.Windows.Input;
 using ArgoBooks.Services;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Threading;
 using Avalonia.Interactivity;
 
 namespace ArgoBooks.Controls;
@@ -186,9 +187,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     document.head.appendChild(style);
 
     function post(obj) {
-        var msg = JSON.stringify(obj);
-        try { window.chrome.webview.postMessage(msg); }
-        catch(e) { try { window.webkit.messageHandlers.webview.postMessage(msg); } catch(e2) {} }
+        window.__argoPost(JSON.stringify(obj));
     }
 
     // Restrict a numeric field to digits and a single decimal point, blocking the keystroke or paste
@@ -681,6 +680,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         _webView.IsVisible = true;
         _webView.NavigationCompleted += OnNavigationCompleted;
         _webView.WebMessageReceived += OnWebMessageReceived;
+        _ = StartOutboxPollingIfNeededAsync();
 
         if (_zoomToolbar != null)
             _zoomToolbar.IsVisible = true;
@@ -697,6 +697,8 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             _webView.WebMessageReceived -= OnWebMessageReceived;
             _webView.IsVisible = false;
         }
+
+        StopOutboxPolling();
 
         _webViewReady = false;
         // Next activation should auto-fit fresh rather than restore a stale zoom.
@@ -716,6 +718,80 @@ window.__totalsConfig = __TOTALS_CONFIG__;
             _fallbackPanel.IsVisible = true;
     }
 
+    /// <summary>
+    /// How often the page is asked for anything it queued. Zoom steps and field edits are both
+    /// things the user is watching for, so this is short enough to read as immediate while
+    /// staying far cheaper than the render it sits beside.
+    /// </summary>
+    private static readonly TimeSpan OutboxPollInterval = TimeSpan.FromMilliseconds(150);
+
+    private DispatcherTimer? _outboxTimer;
+    private bool _draining;
+
+    /// <summary>
+    /// Starts polling only where the page had to queue instead of post.
+    ///
+    /// The page decides that at load and reports it through __argoNative, so a platform whose
+    /// bridge works is never polled and no message is delivered twice. See
+    /// <see cref="Services.WebViewOutbox"/> for why the bridge is missing on macOS.
+    /// </summary>
+    private async Task StartOutboxPollingIfNeededAsync()
+    {
+        if (_outboxTimer != null || _webView == null)
+            return;
+
+        bool usesNativeBridge;
+        try
+        {
+            var answer = await _webView.InvokeScript(Services.WebViewOutbox.NativeProbe);
+            usesNativeBridge = answer != null && answer.Contains("true", StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception)
+        {
+            // The page is not up yet, or the view is already gone. Either way the next
+            // activation asks again, and polling a dead view would answer nothing anyway.
+            return;
+        }
+
+        if (usesNativeBridge || _webView == null || !_webViewReady)
+            return;
+
+        _outboxTimer = new DispatcherTimer { Interval = OutboxPollInterval };
+        _outboxTimer.Tick += async (_, _) => await DrainOutboxAsync();
+        _outboxTimer.Start();
+    }
+
+    private void StopOutboxPolling()
+    {
+        _outboxTimer?.Stop();
+        _outboxTimer = null;
+        _draining = false;
+    }
+
+    private async Task DrainOutboxAsync()
+    {
+        // A drain that outruns its own reply would interleave two reads of the same queue and
+        // deliver an edit twice, so a tick that arrives mid-drain is skipped instead.
+        if (_draining || _webView == null)
+            return;
+
+        _draining = true;
+        try
+        {
+            var raw = await _webView.InvokeScript(Services.WebViewOutbox.Drain);
+            foreach (var message in Services.WebViewOutbox.Parse(raw))
+                DispatchMessage(message);
+        }
+        catch (Exception)
+        {
+            // Navigating, reloading or tearing down: nothing to report and nothing to fix.
+        }
+        finally
+        {
+            _draining = false;
+        }
+    }
+
     private void OnNavigationCompleted(object? sender, WebViewNavigationCompletedEventArgs e)
     {
         if (_hasPendingScroll && _webView != null)
@@ -727,11 +803,17 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         }
     }
 
-    private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e)
+    private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e) =>
+        DispatchMessage(e.Body);
+
+    /// <summary>
+    /// Handles one message from the page, whether it arrived by postMessage or was polled out
+    /// of the outbox.
+    /// </summary>
+    private void DispatchMessage(string? message)
     {
         try
         {
-            var message = e.Body;
             if (string.IsNullOrEmpty(message))
                 return;
 
@@ -914,13 +996,7 @@ window.__totalsConfig = __TOTALS_CONFIG__;
     }
 
     function notifyZoom(scale) {
-        try {
-            window.chrome.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: scale }));
-        } catch(e) {
-            try {
-                window.webkit.messageHandlers.webview.postMessage(JSON.stringify({ type: 'zoomUpdate', zoom: scale }));
-            } catch(e2) {}
-        }
+        window.__argoPost(JSON.stringify({ type: 'zoomUpdate', zoom: scale }));
     }
 
     function updateZoom(newScale, originX, originY) {
@@ -1150,7 +1226,10 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         var restoreScript = $"<script>window.__restoreScale = {restoreScale};</script>";
 
         // Editing mode adds contenteditable + the edit->postMessage bridge on top of the interaction script.
-        var injected = restoreScript + (IsEditable ? interactionScript + BuildEditingScript() : interactionScript);
+        // Ahead of everything else: both scripts below post through window.__argoPost.
+        var injected = Services.WebViewOutbox.Script
+                       + restoreScript
+                       + (IsEditable ? interactionScript + BuildEditingScript() : interactionScript);
 
         // Insert script before closing body tag, or at end if no body tag
         var html = Html!;

@@ -67,8 +67,9 @@
                     Padding="4,2"
                     MinWidth="28" MinHeight="28"
                     Cursor="SizeAll">
-                <TextBlock Text="&#x2817;" FontSize="14"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <PathIcon Data="{x:Static local:Icons.DragHandle}"
+                          Width="14" Height="14"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <Button x:Name="AddWidgetToRowButton"
                     Classes="row-action-btn"

@@ -58,14 +58,16 @@
                     Padding="4"
                     MinWidth="28" MinHeight="28"
                     Cursor="SizeAll">
-                <TextBlock Text="&#x2817;" FontSize="14"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <PathIcon Data="{x:Static local:Icons.DragHandle}"
+                          Width="14" Height="14"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <Button x:Name="SettingsButton"
                     Classes="widget-overlay-btn"
                     Command="{Binding ToggleConfigCommand}"
                     ToolTip.Tip="Settings">
-                <TextBlock Text="&#x2699;" FontSize="12" />
+                <PathIcon Data="{x:Static local:Icons.Settings}"
+                          Width="12" Height="12" />
             </Button>
             <Button Classes="widget-overlay-btn remove-btn"
                     x:Name="RemoveButton"

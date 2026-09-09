@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
@@ -389,49 +388,10 @@ public sealed class PdfThumbnailService
     }
 
     /// <summary>
-    /// Reads the JSON array the page hands back. InvokeScript returns the JS value already
-    /// JSON encoded, so a string return arrives wrapped one level deeper than it was sent,
-    /// and both shapes have to be accepted.
+    /// Reads the messages out of a drain. Shared with the invoice preview, which answers over
+    /// the same channel for the same reason.
     /// </summary>
-    internal static IReadOnlyList<string> ParseOutbox(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-            return [];
-
-        try
-        {
-            using var document = JsonDocument.Parse(raw);
-
-            if (document.RootElement.ValueKind != JsonValueKind.String)
-                return ReadStringArray(document.RootElement);
-
-            var inner = document.RootElement.GetString();
-            if (string.IsNullOrWhiteSpace(inner))
-                return [];
-
-            using var innerDocument = JsonDocument.Parse(inner);
-            return ReadStringArray(innerDocument.RootElement);
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static IReadOnlyList<string> ReadStringArray(JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Array)
-            return [];
-
-        var values = new List<string>(element.GetArrayLength());
-        foreach (var item in element.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.String && item.GetString() is { } value)
-                values.Add(value);
-        }
-
-        return values;
-    }
+    internal static IReadOnlyList<string> ParseOutbox(string? raw) => WebViewOutbox.Parse(raw);
 
     private void OnWebMessageReceived(object? sender, WebMessageReceivedEventArgs e) =>
         DispatchMessage(e.Body);

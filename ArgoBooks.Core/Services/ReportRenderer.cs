@@ -94,28 +94,6 @@ public class ReportRenderer : IDisposable
     private decimal ToDisplayCurrency(decimal amountUSD, DateTime date)
         => (decimal)ConvertFromUSD((double)amountUSD, date);
 
-    /// <summary>
-    /// Resolves the best available default typeface for the current platform.
-    /// Tries platform-specific fonts before falling back to SKTypeface.Default.
-    /// </summary>
-    private static SKTypeface ResolveDefaultTypeface(SKFontStyle? fontStyle = null)
-    {
-        // Platform font candidates in priority order
-        string[] candidates = ["Segoe UI", ".AppleSystemUIFont", "San Francisco", "DejaVu Sans", "Liberation Sans", "Noto Sans"];
-
-        foreach (var fontName in candidates)
-        {
-            var typeface = fontStyle != null
-                ? SKTypeface.FromFamilyName(fontName, fontStyle)
-                : SKTypeface.FromFamilyName(fontName);
-
-            if (typeface != null && typeface.FamilyName != SKTypeface.Default.FamilyName)
-                return typeface;
-        }
-
-        return SKTypeface.Default;
-    }
-
     public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f, ITranslationProvider? translationProvider = null, IErrorLogger? errorLogger = null)
     {
         _config = config;
@@ -134,8 +112,8 @@ public class ReportRenderer : IDisposable
             _chartDataService = new ReportChartDataService(companyData, config.Filters);
         }
 
-        _defaultTypeface = ResolveDefaultTypeface();
-        _boldTypeface = ResolveDefaultTypeface(SKFontStyle.Bold);
+        _defaultTypeface = PlatformTypefaces.Default;
+        _boldTypeface = PlatformTypefaces.Bold;
 
         _defaultFont = new SKFont(_defaultTypeface, 12 * renderScale);
         _headerFont = new SKFont(_boldTypeface, (float)config.TitleFontSize * renderScale);
@@ -1014,7 +992,7 @@ public class ReportRenderer : IDisposable
         // Draw chart title
         if (chart.ShowTitle)
         {
-            var chartTitleTypeface = SKTypeface.FromFamilyName(chart.TitleFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
+            var chartTitleTypeface = PlatformTypefaces.Resolve(chart.TitleFontFamily, SKFontStyle.Bold);
             using var titleFont = new SKFont(chartTitleTypeface, (float)chart.TitleFontSize * _renderScale);
             using var titlePaint = new SKPaint();
             titlePaint.Color = SKColors.Black;
@@ -1278,7 +1256,7 @@ public class ReportRenderer : IDisposable
         if (dataPoints.Count == 0) return;
 
         // Get typeface for chart labels
-        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+        var chartTypeface = PlatformTypefaces.Resolve(chart.FontFamily);
 
         // Calculate value range
         var maxValue = dataPoints.Max(p => p.Value);
@@ -1395,7 +1373,7 @@ public class ReportRenderer : IDisposable
         if (dataPoints.Count == 0) return;
 
         // Get typeface for chart labels
-        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+        var chartTypeface = PlatformTypefaces.Resolve(chart.FontFamily);
 
         // Calculate value range
         var maxValue = dataPoints.Max(p => p.Value);
@@ -1599,7 +1577,7 @@ public class ReportRenderer : IDisposable
         if (dataPoints.Count == 0) return;
 
         // Get typeface for chart labels
-        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+        var chartTypeface = PlatformTypefaces.Resolve(chart.FontFamily);
 
         // Calculate total value for percentages
         var total = dataPoints.Sum(p => Math.Abs(p.Value));
@@ -1722,7 +1700,7 @@ public class ReportRenderer : IDisposable
         if (seriesData.Count == 0) return;
 
         // Get typeface for chart labels
-        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+        var chartTypeface = PlatformTypefaces.Resolve(chart.FontFamily);
 
         // Get all data points and find max value
         var allDataPoints = seriesData.SelectMany(s => s.DataPoints).ToList();
@@ -1854,7 +1832,7 @@ public class ReportRenderer : IDisposable
         if (seriesData.Count == 0) return;
 
         // Get typeface for chart labels
-        var chartTypeface = SKTypeface.FromFamilyName(chart.FontFamily) ?? _defaultTypeface;
+        var chartTypeface = PlatformTypefaces.Resolve(chart.FontFamily);
 
         // Get all data points and find max/min values
         var allDataPoints = seriesData.SelectMany(s => s.DataPoints).ToList();
@@ -2120,9 +2098,9 @@ public class ReportRenderer : IDisposable
         var titleRowHeight = headerRowHeight; // Title uses same height as header
 
         // Create fonts using table's font settings
-        var titleTypeface = SKTypeface.FromFamilyName(table.TitleFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
-        var headerTypeface = SKTypeface.FromFamilyName(table.HeaderFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
-        var dataTypeface = SKTypeface.FromFamilyName(table.FontFamily) ?? _defaultTypeface;
+        var titleTypeface = PlatformTypefaces.Resolve(table.TitleFontFamily, SKFontStyle.Bold);
+        var headerTypeface = PlatformTypefaces.Resolve(table.HeaderFontFamily, SKFontStyle.Bold);
+        var dataTypeface = PlatformTypefaces.Resolve(table.FontFamily);
         using var titleFont = new SKFont(titleTypeface, (float)table.TitleFontSize * _renderScale);
         using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
         using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
@@ -2351,9 +2329,9 @@ public class ReportRenderer : IDisposable
         var continuedIndicatorHeight = dataRowHeight * 0.8f;
 
         // Create fonts using table's font settings
-        var titleTypeface = SKTypeface.FromFamilyName(table.TitleFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
-        var headerTypeface = SKTypeface.FromFamilyName(table.HeaderFontFamily, SKFontStyle.Bold) ?? _boldTypeface;
-        var dataTypeface = SKTypeface.FromFamilyName(table.FontFamily) ?? _defaultTypeface;
+        var titleTypeface = PlatformTypefaces.Resolve(table.TitleFontFamily, SKFontStyle.Bold);
+        var headerTypeface = PlatformTypefaces.Resolve(table.HeaderFontFamily, SKFontStyle.Bold);
+        var dataTypeface = PlatformTypefaces.Resolve(table.FontFamily);
         using var titleFont = new SKFont(titleTypeface, (float)table.TitleFontSize * _renderScale);
         using var headerFont = new SKFont(headerTypeface, (float)table.HeaderFontSize * _renderScale);
         using var dataFont = new SKFont(dataTypeface, (float)table.FontSize * _renderScale);
@@ -3036,7 +3014,7 @@ public class ReportRenderer : IDisposable
         else if (label.IsItalic)
             style = SKFontStyle.Italic;
 
-        var typeface = SKTypeface.FromFamilyName(label.FontFamily, style) ?? _defaultTypeface;
+        var typeface = PlatformTypefaces.Resolve(label.FontFamily, style);
         using var font = new SKFont(typeface, (float)label.FontSize * _renderScale);
         using var paint = new SKPaint();
         paint.Color = ParseColor(label.TextColor);
@@ -3214,7 +3192,7 @@ public class ReportRenderer : IDisposable
         else if (dateRange.IsItalic)
             style = SKFontStyle.Italic;
 
-        var typeface = SKTypeface.FromFamilyName(dateRange.FontFamily, style) ?? _defaultTypeface;
+        var typeface = PlatformTypefaces.Resolve(dateRange.FontFamily, style);
         using var font = new SKFont(typeface, (float)dateRange.FontSize * _renderScale);
         using var paint = new SKPaint();
         paint.Color = ParseColor(dateRange.TextColor);
@@ -3298,7 +3276,7 @@ public class ReportRenderer : IDisposable
         }
 
         // Draw summary statistics
-        var summaryTypeface = SKTypeface.FromFamilyName(summary.FontFamily) ?? _defaultTypeface;
+        var summaryTypeface = PlatformTypefaces.Resolve(summary.FontFamily);
         using var font = new SKFont(summaryTypeface, (float)summary.FontSize * _renderScale);
         using var textPaint = new SKPaint();
         textPaint.Color = SKColors.Black;
@@ -3391,9 +3369,9 @@ public class ReportRenderer : IDisposable
         canvas.DrawRect(rect, new SKPaint { Color = SKColors.White, Style = SKPaintStyle.Fill });
 
         // Create typefaces and fonts
-        var typeface = SKTypeface.FromFamilyName(element.FontFamily) ?? _defaultTypeface;
-        var boldTypeface = SKTypeface.FromFamilyName(element.FontFamily, SKFontStyle.Bold) ?? _defaultTypeface;
-        var italicTypeface = SKTypeface.FromFamilyName(element.FontFamily, SKFontStyle.Italic) ?? _defaultTypeface;
+        var typeface = PlatformTypefaces.Resolve(element.FontFamily);
+        var boldTypeface = PlatformTypefaces.Resolve(element.FontFamily, SKFontStyle.Bold);
+        var italicTypeface = PlatformTypefaces.Resolve(element.FontFamily, SKFontStyle.Italic);
 
         var titleFontSize = (float)element.TitleFontSize * _renderScale;
         var headerFontSize = (float)element.HeaderFontSize * _renderScale;

@@ -64,7 +64,11 @@ File-based, not database. Company data lives in encrypted `.argo` files (AES-256
 - **Compiled bindings** enabled by default (`AvaloniaUseCompiledBindingsByDefault=true`)
 - **Platform abstraction** via `PlatformServiceFactory` with platform-specific implementations (Windows Hello, etc.)
 - **Central package versioning** in `Directory.Packages.props`; app version in `Directory.Build.props`
-- **Conditional compilation:** `WINDOWS` constant defined when targeting `net10.0-windows`; WebView2 is Windows-only
+- **Conditional compilation:** `WINDOWS` constant defined when targeting `net10.0-windows`
+- **Web views are cross-platform.** `Avalonia.Controls.WebView` backs the invoice preview and PDF
+  rendering on every desktop. On macOS it registers no `WKScriptMessageHandler`, so nothing the page
+  posts arrives; both callers answer through `WebViewOutbox` instead, and new page code must post via
+  `window.__argoPost` rather than `postMessage` directly
 
 ### Service Layer
 
@@ -86,4 +90,4 @@ Organized by domain: `Entities/`, `Transactions/`, `Invoices/`, `Inventory/`, `R
 
 ## Multi-Target Builds
 
-ArgoBooks, ArgoBooks.Core and ArgoBooks.Desktop target both `net10.0` and `net10.0-windows10.0.17763.0`. ArgoBooks.Shared and ArgoBooks.Tests are `net10.0` only, and ArgoBooks.Mobile is `net10.0-android`. Windows-specific code (WebView2, Windows Hello, DPAPI) is gated behind the `WINDOWS` compilation constant or target framework conditions in csproj files.
+ArgoBooks, ArgoBooks.Core and ArgoBooks.Desktop target both `net10.0` and `net10.0-windows10.0.17763.0`. ArgoBooks.Shared and ArgoBooks.Tests are `net10.0` only, and ArgoBooks.Mobile is `net10.0-android`. Windows-specific code (Windows Hello, DPAPI) is gated behind the `WINDOWS` compilation constant or target framework conditions in csproj files. The web view is not Windows-specific: it uses WebView2 there and WKWebView on macOS.

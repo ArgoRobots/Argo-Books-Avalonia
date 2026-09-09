@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
@@ -1136,6 +1137,7 @@ public partial class App : Application
         {
             _startupArgs = desktop.Args ?? [];
             WireMacFileActivation();
+            _ = InstallMacApplicationMenuAsync();
 
             // Initialize error logging first so it's available for all services
             var errorLogger = new ErrorLogger();
@@ -1863,6 +1865,63 @@ public partial class App : Application
         {
             ErrorLogger?.LogWarning($"Background update check failed: {ex.Message}", "AutoUpdate");
         }
+    }
+
+
+    /// <summary>
+    /// Gives macOS the application menu it expects.
+    ///
+    /// Avalonia supplies a bare default with little more than Quit, which leaves the app with
+    /// no About item, no Settings under its own name where every Mac app keeps it, and no File
+    /// menu at all. The commands are the ones the in-app UI already uses, so the menu is
+    /// another way in rather than a second implementation.
+    ///
+    /// Deferred until the shell exists: the view models it binds to are built during startup,
+    /// and a menu wired to nulls would be a row of dead items.
+    /// </summary>
+    private async Task InstallMacApplicationMenuAsync()
+    {
+        if (!OperatingSystem.IsMacOS())
+            return;
+
+        // Poll rather than hook a "ready" event, because the shell is assembled across several
+        // async steps and there is no single point that means "all of these exist".
+        for (var attempt = 0; attempt < 100 && _appShellViewModel == null; attempt++)
+            await Task.Delay(100);
+
+        if (_appShellViewModel is not { } shell)
+            return;
+
+        NativeMenuItem Item(string header, string? gesture, Action action)
+        {
+            var item = new NativeMenuItem(header.Translate());
+            if (gesture != null)
+                item.Gesture = KeyGesture.Parse(gesture);
+            item.Click += (_, _) => action();
+            return item;
+        }
+
+        var appMenu = new NativeMenuItem("Argo Books")
+        {
+            Menu =
+            [
+                // No About item: the app has no About screen to open, and a menu entry that
+                // opens something else would be worse than its absence.
+                Item("Settings...", "Cmd+,", () => shell.SettingsModalViewModel.OpenCommand.Execute(null)),
+            ],
+        };
+
+        var fileMenu = new NativeMenuItem("File".Translate())
+        {
+            Menu =
+            [
+                Item("New Company", null, () => _ = RequestCreateNewCompanyAsync()),
+                Item("Save", "Cmd+S", () => shell.HeaderViewModel.SaveCommand.Execute(null)),
+                Item("Save As...", "Cmd+Shift+S", () => shell.FileMenuPanelViewModel.SaveAsCommand.Execute(null)),
+            ],
+        };
+
+        NativeMenu.SetMenu(this, [appMenu, fileMenu]);
     }
 
     /// <summary>

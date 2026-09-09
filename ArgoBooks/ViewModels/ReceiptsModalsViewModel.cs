@@ -1894,9 +1894,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 Style = SKPaintStyle.Stroke
             };
 
-            using var headerFont = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold), 42f);
-            using var bodyFont = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Normal), body);
-            using var totalFont = new SKFont(SKTypeface.FromFamilyName("Arial", SKFontStyle.Bold), 34f);
+            using var headerFont = new SKFont(Core.Services.PlatformTypefaces.Resolve("Arial", SKFontStyle.Bold), 42f);
+            using var bodyFont = new SKFont(Core.Services.PlatformTypefaces.Resolve("Arial", SKFontStyle.Normal), body);
+            using var totalFont = new SKFont(Core.Services.PlatformTypefaces.Resolve("Arial", SKFontStyle.Bold), 34f);
 
             var mid = width / 2f;
             const float left = margin;
