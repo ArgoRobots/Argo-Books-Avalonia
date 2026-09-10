@@ -153,6 +153,16 @@
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                HorizontalAlignment="Center" />
                                 </StackPanel>
+                                <!-- Without this the state is a dead end. Opening the modal and
+                                     letting it find an update leaves HasUpdate true and nothing
+                                     to press: the download only ever started from the banner, or
+                                     from reopening the modal after a background check had already
+                                     set HasUpdate. -->
+                                <Button Classes="primary-button"
+                                        Content="{loc:Loc 'Download Update'}"
+                                        Command="{Binding DownloadUpdateCommand}"
+                                        HorizontalAlignment="Center"
+                                        Margin="0,4,0,0" />
                             </StackPanel>
 
                             <!-- Downloading State -->
