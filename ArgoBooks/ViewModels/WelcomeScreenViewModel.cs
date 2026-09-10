@@ -176,14 +176,14 @@ public partial class WelcomeScreenViewModel : ViewModelBase
     #region Public Methods
 
     /// <summary>
-    /// Initializes the tutorial mode state based on whether this is a first-time user.
-    /// Don't show tutorial card if a tutorial is already in progress on a specific company.
+    /// Re-evaluated each time the welcome screen is shown, so the first-run layout gives way to
+    /// the normal one once the user has created or opened a company of their own, and comes back
+    /// after Restart Tutorial, which clears both of these.
     /// </summary>
     public void InitializeTutorialMode()
     {
-        if (IsTutorialMode) return;
         var tutorialService = TutorialService.Instance;
-        IsTutorialMode = tutorialService.IsFirstTimeUser && !tutorialService.IsTutorialInProgressOnCompany;
+        IsTutorialMode = !tutorialService.HasCompletedWelcomeTutorial && !tutorialService.IsTutorialInProgressOnCompany;
     }
 
     /// <summary>

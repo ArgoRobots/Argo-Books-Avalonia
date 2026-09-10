@@ -143,12 +143,6 @@ public class TutorialService
         _globalSettingsService?.GetSettings()?.Tutorial ?? new TutorialSettings();
 
     /// <summary>
-    /// Gets whether this is the user's first time using the app (no tutorial completed).
-    /// </summary>
-    public bool IsFirstTimeUser =>
-        !Settings.HasCompletedWelcomeTutorial && Settings.FirstLaunchDate == null;
-
-    /// <summary>
     /// Gets whether a tutorial is currently in progress on a specific company.
     /// </summary>
     public bool IsTutorialInProgressOnCompany =>
