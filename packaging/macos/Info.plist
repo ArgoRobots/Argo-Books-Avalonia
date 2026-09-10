@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Argo Books</string>
+    <key>CFBundleDisplayName</key>
+    <string>Argo Books</string>
+
+    <!-- Matches the Linux appid in packaging/linux/. Changing it after a release
+         makes macOS treat the update as a different app, so it stays fixed. -->
+    <key>CFBundleIdentifier</key>
+    <string>com.argobooks.ArgoBooks</string>
+
+    <!-- Must match the AssemblyName in ArgoBooks.Desktop.csproj. The updater walks
+         up from Environment.ProcessPath looking for a .app parent, so the layout
+         has to be Argo Books.app/Contents/MacOS/Argo Books. -->
+    <key>CFBundleExecutable</key>
+    <string>Argo Books</string>
+
+    <key>CFBundleIconFile</key>
+    <string>argo-logo</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <!-- Both substituted by build-app.sh from Directory.Build.props -->
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleVersion</key>
+    <string>__VERSION__</string>
+
+    <!-- The downloads page already advertises "macOS 14 Sonoma and later". -->
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.finance</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright (c) Argo Robots. All rights reserved.</string>
+
+    <!-- Company files, the macOS counterpart of the application/x-argo MIME type
+         registered in packaging/linux/com.argobooks.ArgoBooks.xml. -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Argo Books Company File</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.argobooks.company-file</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>argo-logo</string>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>com.argobooks.company-file</string>
+            <key>UTTypeDescription</key>
+            <string>Argo Books Company File</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeIconFile</key>
+            <string>argo-logo</string>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>argo</string>
+                </array>
+                <key>public.mime-type</key>
+                <array>
+                    <string>application/x-argo</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>

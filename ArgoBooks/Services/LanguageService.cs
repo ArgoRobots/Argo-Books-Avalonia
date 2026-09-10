@@ -435,7 +435,30 @@ public partial class LanguageService
     /// </summary>
     /// <param name="text">The English text to translate.</param>
     /// <returns>The translated text, or the original if no translation is found.</returns>
-    public string Translate(string text)
+    public string Translate(string text) => LocalizeShortcutModifier(TranslateCore(text));
+
+    /// <summary>
+    /// Rewrites the shortcut modifier in a translated string for the running platform, so
+    /// a label reads "Cmd+S" on macOS and "Ctrl+S" everywhere else.
+    ///
+    /// Done here rather than at each label because the modifier appears inside otherwise
+    /// ordinary sentences ("Toggle Grid (Ctrl+G)", "Ctrl+Scroll to zoom") that are
+    /// translated as a whole. Catching it at the one point every localized string passes
+    /// through covers every language without a parallel set of keys per platform.
+    ///
+    /// A no-op on Windows and Linux, where the modifier is already Ctrl.
+    /// </summary>
+    private static string LocalizeShortcutModifier(string text)
+    {
+        if (!OperatingSystem.IsMacOS() || string.IsNullOrEmpty(text))
+            return text;
+
+        return text.Contains("Ctrl+", StringComparison.Ordinal)
+            ? text.Replace("Ctrl+", PlatformKeys.CommandLabel, StringComparison.Ordinal)
+            : text;
+    }
+
+    private string TranslateCore(string text)
     {
         if (string.IsNullOrEmpty(text))
             return text;

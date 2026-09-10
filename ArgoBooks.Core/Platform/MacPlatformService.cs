@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using ArgoBooks.Core.Platform.Mac;
 
 namespace ArgoBooks.Core.Platform;
 
@@ -48,7 +49,38 @@ public class MacPlatformService : BasePlatformService
     }
 
     /// <inheritdoc />
-    public override bool SupportsBiometrics => false; // Touch ID not yet implemented
+    public override bool SupportsBiometrics => true;
+
+    /// <inheritdoc />
+    public override async Task<bool> IsBiometricAvailableAsync() =>
+        await Task.Run(() => MacKeychain.IsAvailable() && MacAuthenticator.IsAvailable());
+
+    /// <inheritdoc />
+    public override async Task<string> GetBiometricAvailabilityDetailsAsync() =>
+        await Task.Run(MacAuthenticator.DescribeAvailability);
+
+    /// <inheritdoc />
+    public override async Task<bool> AuthenticateWithBiometricAsync(string reason) =>
+        await MacAuthenticator.AuthenticateAsync(reason);
+
+    /// <summary>
+    /// Stores the password in the login keychain, which is what the Touch ID prompt is
+    /// guarding: the prompt proves the person is there, and this is what they get access to.
+    ///
+    /// The keychain binds an item to the code signature of the app that wrote it, so a
+    /// password saved by a local unsigned build and then read by a signed one prompts for
+    /// permission the first time rather than failing outright.
+    /// </summary>
+    public override void StorePasswordForBiometric(string fileId, string password) =>
+        MacKeychain.Store(fileId, password);
+
+    /// <inheritdoc />
+    public override string? GetPasswordForBiometric(string fileId) =>
+        MacKeychain.Lookup(fileId);
+
+    /// <inheritdoc />
+    public override void ClearPasswordForBiometric(string fileId) =>
+        MacKeychain.Clear(fileId);
 
     /// <inheritdoc />
     public override bool SupportsAutoUpdate => true;

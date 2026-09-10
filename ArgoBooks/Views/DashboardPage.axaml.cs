@@ -905,7 +905,7 @@ public partial class DashboardPage : UserControl
             return;
 
         // If CTRL or Shift is held, allow LiveCharts to handle zooming
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        if (e.KeyModifiers.HasZoomModifier() || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
         {
             return; // Don't intercept - let LiveCharts zoom
         }

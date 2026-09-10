@@ -427,7 +427,7 @@ public partial class ReportsPage : UserControl
     private void OnCanvasPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         // Only zoom when Ctrl is held; otherwise let ScrollViewer handle it for panning
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (!e.KeyModifiers.HasZoomModifier())
             return;
 
         // Zoom at cursor position
@@ -493,7 +493,7 @@ public partial class ReportsPage : UserControl
     private void OnPreviewPointerWheelChanged(object? sender, PointerWheelEventArgs e)
     {
         // Only zoom when Ctrl is held; otherwise let ScrollViewer handle it for panning
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (!e.KeyModifiers.HasZoomModifier())
             return;
 
         // Zoom at cursor position
@@ -823,18 +823,18 @@ public partial class ReportsPage : UserControl
 
         switch (e.Key)
         {
-            case Key.G when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+            case Key.G when e.KeyModifiers.HasCommand():
                 // Toggle grid
                 vm.ShowGrid = !vm.ShowGrid;
                 e.Handled = true;
                 break;
 
-            case Key.S when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+            case Key.S when e.KeyModifiers.HasCommand():
                 vm.OpenSaveTemplateCommand.Execute(null);
                 e.Handled = true;
                 break;
 
-            case Key.Z when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+            case Key.Z when e.KeyModifiers.HasCommand():
                 // Undo
                 if (e.KeyModifiers.HasFlag(KeyModifiers.Shift))
                     vm.RedoCommand.Execute(null);
@@ -843,13 +843,13 @@ public partial class ReportsPage : UserControl
                 e.Handled = true;
                 break;
 
-            case Key.Y when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+            case Key.Y when e.KeyModifiers.HasCommand():
                 // Redo
                 vm.RedoCommand.Execute(null);
                 e.Handled = true;
                 break;
 
-            case Key.D when e.KeyModifiers.HasFlag(KeyModifiers.Control):
+            case Key.D when e.KeyModifiers.HasCommand():
                 vm.DuplicateSelectedElementsCommand.Execute(null);
                 e.Handled = true;
                 break;
