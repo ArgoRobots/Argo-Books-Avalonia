@@ -109,6 +109,27 @@ public class PendingConversionService
     }
 
     /// <summary>
+    /// Makes the queue agree with the company file for the given transactions. Processing converts
+    /// whatever amount the queue holds and does not check the row is still wanted, so a row changed
+    /// or dropped in the company file has to change or leave here too, or the stale one converts.
+    /// The queue is updated before the first await, so a caller on the UI thread reads the company
+    /// file's rows on that thread.
+    /// </summary>
+    public async Task MirrorAsync(CompanyData companyData, IEnumerable<string> transactionIds)
+    {
+        var ids = new HashSet<string>(transactionIds);
+        if (ids.Count == 0) return;
+
+        lock (_lock)
+        {
+            _queue.RemoveAll(p => ids.Contains(p.TransactionId));
+            _queue.AddRange(companyData.PendingConversions.Where(p => ids.Contains(p.TransactionId)));
+        }
+
+        await SaveToDiskAsync();
+    }
+
+    /// <summary>
     /// Loads the queue from the app-data directory file.
     /// </summary>
     public async Task LoadAsync()

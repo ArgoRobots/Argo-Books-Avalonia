@@ -334,7 +334,8 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         else
         {
             var before = Capture(existing);
-            var amountChanged = existing.Template != null && existing.Template.Total != amount;
+            var oldAmount = existing.Template?.Total ?? 0m;
+            var amountChanged = existing.Template != null && oldAmount != amount;
 
             existing.Frequency = (Frequency)FrequencyIndex;
             existing.StartDate = start;
@@ -369,7 +370,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             Saved?.Invoke();
 
             if (amountChanged)
-                await OfferRetroactiveCorrection(existing);
+                await OfferRetroactiveCorrection(existing, oldAmount);
         }
     }
 
@@ -486,15 +487,16 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
     /// <summary>
     /// A schedule edit changes future occurrences. Ones already generated are only touched when
-    /// the user says so, and never when they have been matched against a bank line.
+    /// the user says so, and never when they have been matched against a bank line or changed by
+    /// hand.
     /// </summary>
-    private async Task OfferRetroactiveCorrection(RecurringTransaction schedule)
+    private async Task OfferRetroactiveCorrection(RecurringTransaction schedule, decimal oldAmount)
     {
         var data = App.CompanyManager?.CompanyData;
         var dialog = App.ConfirmationDialog;
         if (data == null || dialog == null) return;
 
-        var correctable = RecurringTransactionService.FindCorrectableOccurrences(data, schedule);
+        var correctable = RecurringTransactionService.FindCorrectableOccurrences(data, schedule, oldAmount);
         if (correctable.Count == 0) return;
 
         var earliest = correctable.Min(t => t.Date);
@@ -503,7 +505,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         var result = await dialog.ShowAsync(new ConfirmationDialogOptions
         {
             Title = "Update past entries?".Translate(),
-            Message = "{0} entries from {1} to {2} were generated at the old amount. Update them too? Entries matched to a bank line are left alone."
+            Message = "{0} entries from {1} to {2} were generated at the old amount. Update them too? Entries matched to a bank line or changed by hand are left alone."
                 .TranslateFormat(correctable.Count, earliest.ToString("MMM d, yyyy"), latest.ToString("MMM d, yyyy")),
             PrimaryButtonText = "Update them".Translate(),
             CancelButtonText = "Leave them".Translate()
@@ -511,32 +513,52 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
         if (result != ConfirmationResult.Primary) return;
 
-        var before = correctable
-            .Select(t => (Target: t, t.Amount, t.UnitPrice, t.TaxAmount, t.Total))
-            .ToList();
-
-        RecurringTransactionService.ApplyTemplateAmounts(schedule, correctable);
+        var correction = RecurringTransactionService.CorrectOccurrences(data, schedule, correctable);
+        var ids = correctable.Select(t => t.Id).ToList();
+        MirrorPendingQueue(data, ids);
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Update {correctable.Count} past entries for {schedule.Id}",
             () =>
             {
-                foreach (var (target, amount, unitPrice, taxAmount, total) in before)
-                {
-                    target.Amount = amount;
-                    target.UnitPrice = unitPrice;
-                    target.TaxAmount = taxAmount;
-                    target.Total = total;
-                }
+                correction.Revert(data);
+                MirrorPendingQueue(data, ids);
                 Saved?.Invoke();
             },
             () =>
             {
-                RecurringTransactionService.ApplyTemplateAmounts(schedule, correctable);
+                correction.Reapply(data);
+                MirrorPendingQueue(data, ids);
                 Saved?.Invoke();
             }));
 
         App.CompanyManager?.MarkAsChanged();
         Saved?.Invoke();
+    }
+
+    /// <summary>
+    /// The conversion service works from its own copy of the queue, so a correction that changed
+    /// or cleared a queued row in the company file has to be repeated there. Called on the UI
+    /// thread: MirrorAsync reads the company file's rows before it first awaits.
+    /// </summary>
+    private static void MirrorPendingQueue(Core.Data.CompanyData data, IReadOnlyList<string> ids)
+    {
+        var service = PendingConversionService.Instance;
+        if (service == null) return;
+
+        _ = MirrorPendingQueueAsync(service, data, ids);
+    }
+
+    private static async Task MirrorPendingQueueAsync(
+        PendingConversionService service, Core.Data.CompanyData data, IReadOnlyList<string> ids)
+    {
+        try
+        {
+            await service.MirrorAsync(data, ids);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogWarning($"Failed to update queued conversions: {ex.Message}", "RecurringSchedule");
+        }
     }
 }
