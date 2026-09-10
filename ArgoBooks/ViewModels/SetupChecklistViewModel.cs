@@ -262,7 +262,10 @@ public partial class SetupChecklistViewModel : ViewModelBase
     [RelayCommand]
     private void DismissChecklist()
     {
+        // Skipping the tour leaves guidance on, so closing the checklist is where someone opts out
+        // of it, page hints included.
         TutorialService.Instance.HideSetupChecklist();
+        TutorialService.Instance.DisableFirstVisitHints();
         IsVisible = false;
     }
 

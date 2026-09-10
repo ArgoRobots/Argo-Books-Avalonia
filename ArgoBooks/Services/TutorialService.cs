@@ -339,8 +339,9 @@ public class TutorialService
             _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingCompleted);
         }
 
-        // Only show completion guidance if tutorial is active on current company
-        if (ShouldShowTutorialOnCurrentCompany())
+        // Only while the checklist is on screen: the guidance points the user back to its next step,
+        // and closing the checklist is how someone says they are done being guided.
+        if (ShouldShowTutorialOnCurrentCompany() && !IsSetupChecklistDismissed)
         {
             // Show completion guidance for main tutorial tasks
             if (itemId == ChecklistItems.ScanReceipt ||
