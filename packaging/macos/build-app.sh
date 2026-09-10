@@ -22,7 +22,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-RID="osx-arm64"
+# Apple Silicon by default. RID=osx-x64 builds the Intel one; both ship, and the updater
+# picks by architecture, so a release means running this twice.
+RID="${RID:-osx-arm64}"
+# Release by default. CONFIGURATION=Debug builds the sandbox-facing variant, which is what
+# the auto-update test needs: ApiConfig points a Debug build at dev.argorobots.com.
+CONFIGURATION="${CONFIGURATION:-Release}"
 PUBLISH_DIR="$ROOT_DIR/publish/$RID"
 # Finished artefacts sit in publish/, alongside the per-RID folders holding the
 # raw compile output this script consumes as input.
@@ -53,7 +58,7 @@ if [ -f "$ROOT_DIR/ArgoBooks.Desktop/ArgoBooks.Desktop.csproj" ] && command -v d
     # net10.0, not the net10.0-windows TFM. PublishReadyToRun applies here too,
     # which is why this is a publish and not a build (see docs/Publishing.md).
     dotnet publish "$ROOT_DIR/ArgoBooks.Desktop" \
-        -c Release \
+        -c "$CONFIGURATION" \
         -f net10.0 \
         -r "$RID" \
         --self-contained \
@@ -128,16 +133,61 @@ fi
 # codesign fails on a bundle that has them.
 xattr -cr "$APP_BUNDLE"
 
+# Debug symbols first: they are not code the app runs, and the .dwarf is itself Mach-O, so
+# leaving them in means codesign demanding a signature for something that should never ship.
+find "$APP_BUNDLE/Contents/MacOS" \( -name "*.pdb" -o -name "*.dwarf" \) -delete
+
 # Sign inside out. `codesign --deep` is documented as unsuitable for anything but
 # the simplest bundles and silently misses nested .NET native libraries, so each
 # one is signed explicitly before the bundle itself.
-echo "Signing native libraries..."
-find "$APP_BUNDLE/Contents/MacOS" \( -name "*.dylib" -o -name "*.so" \) -print0 \
-    | xargs -0 -I {} codesign --force --timestamp --options runtime \
-        --sign "$APPLE_SIGN_IDENTITY" {}
+#
+# That means the managed assemblies too, not just the native libraries. Everything a
+# self-contained .NET publish emits lands in Contents/MacOS, codesign treats that directory
+# as nested code, and it recognises .NET assemblies as code objects because they are PE
+# files. Signing only the .dylibs leaves roughly 260 assemblies unsigned, and sealing the
+# bundle then fails on the first one it reaches:
+#     Argo Books.app: code object is not signed at all
+#     In subcomponent: .../Contents/MacOS/System.Net.Security.dll
+NESTED_CODE=$(mktemp)
+trap 'rm -f "$NESTED_CODE" "$NESTED_CODE.err"' EXIT
 
+find "$APP_BUNDLE/Contents/MacOS" -type f \
+    \( -name "*.dylib" -o -name "*.so" -o -name "*.dll" \) -print >> "$NESTED_CODE"
+
+# Native executables such as createdump carry no extension, so they are found by content.
+#
+# The bundle's own main executable is excluded. Signing it by path makes codesign resolve it
+# to the bundle that contains it and sign that instead, which fails before the libraries are
+# ready:
+#     Argo Books: code object is not signed at all
+#     In subcomponent: .../Argo Books.runtimeconfig.json
+# It gets its signature from the bundle signing below, which is the only correct way to sign
+# a main executable.
+find "$APP_BUNDLE/Contents/MacOS" -type f \
+    ! -name "*.dylib" ! -name "*.so" ! -name "*.dll" ! -name "$APP_NAME" \
+    -exec sh -c 'file -b "$1" | grep -q "Mach-O" && printf "%s\n" "$1"' _ {} \; >> "$NESTED_CODE"
+
+echo "Signing $(wc -l < "$NESTED_CODE" | tr -d ' ') nested code files..."
+while IFS= read -r NESTED_FILE; do
+    if ! codesign --force --timestamp --options runtime \
+        --sign "$APPLE_SIGN_IDENTITY" "$NESTED_FILE" 2>"$NESTED_CODE.err"; then
+        echo "Failed to sign: $NESTED_FILE"
+        cat "$NESTED_CODE.err"
+        exit 1
+    fi
+done < "$NESTED_CODE"
+
+# --deep here, despite the warning above, and only as the sealing pass. Everything that can
+# carry its own signature already got one explicitly in the loop above, which is what that
+# warning is really about. What is left is that a self-contained .NET publish drops data files
+# next to the executable in Contents/MacOS, codesign treats that directory as code, and a
+# plain seal refuses to finish on a file that cannot be signed at all:
+#     Argo Books.app: code object is not signed at all
+#     In subcomponent: .../Contents/MacOS/Argo Books.runtimeconfig.json
+# A .json cannot be signed and .NET requires it beside the executable, so the seal has to
+# tolerate it. Entitlements still apply to the bundle, which is what the hardened runtime reads.
 echo "Signing the bundle..."
-codesign --force --timestamp --options runtime \
+codesign --force --deep --timestamp --options runtime \
     --entitlements "$SCRIPT_DIR/entitlements.plist" \
     --sign "$APPLE_SIGN_IDENTITY" \
     "$APP_BUNDLE"
