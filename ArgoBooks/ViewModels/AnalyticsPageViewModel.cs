@@ -1192,6 +1192,12 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
     private bool _showFinancialDateRangeMessage;
 
     /// <summary>
+    /// True when the company has no income or expenses at all, so every chart is empty.
+    /// </summary>
+    [ObservableProperty]
+    private bool _hasNoTransactions;
+
+    /// <summary>
     /// True when return data exists in all time but the current date range filter is excluding it.
     /// </summary>
     [ObservableProperty]
@@ -1723,6 +1729,13 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         LoadAllCharts();
     }
 
+    [RelayCommand]
+    private void AddExpense()
+    {
+        App.NavigationService?.NavigateTo("Expenses");
+        App.ExpenseModalsViewModel?.OpenAddModal();
+    }
+
     #endregion
 
     #region Chart Loading
@@ -1759,6 +1772,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
             ShowRentalDateRangeMessage = isFiltered && data.Rentals.Count > 0;
             ShowTaxDateRangeMessage = isFiltered && (data.Revenues.Any(r => r.TaxAmount > 0 || r.TaxAmountUSD > 0) ||
                                                       data.Expenses.Any(e => e.TaxAmount > 0 || e.TaxAmountUSD > 0));
+            HasNoTransactions = data.Expenses.Count == 0 && data.Revenues.Count == 0;
 
             // Load statistics for stat cards
             LoadAllStatistics(data);
