@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Core.Platform;
 
 namespace ArgoBooks.Core.Services;
 
@@ -11,10 +12,11 @@ namespace ArgoBooks.Core.Services;
 /// Token sources, by platform:
 ///   Windows: Advanced Installer writes the token to
 ///            %LOCALAPPDATA%\ArgoBooks\install_token.txt during install.
-///   Mac:     reads the ?t= parameter out of the download URL macOS records on
-///            the bundle as com.apple.metadata:kMDItemWhereFroms. The archive's
-///            own filename can't be used: the user expands the .zip and the
-///            extracted "Argo Books.app" carries none of its name.
+///   Mac:     no token is available. The download is a .zip the browser expands,
+///            so "Argo Books.app" carries neither the archive's name nor any
+///            record of where it came from: macOS no longer stores the source URL
+///            in the quarantine event (verified on 15.x, every URL column empty).
+///            Mac installs are instead linked by the welcome page opened below.
 ///   Linux:   parses the AppImage filename for the _xxxxxxxx token.
 ///
 /// Idempotency: once a first-run POST succeeds, a marker file
@@ -97,6 +99,18 @@ public sealed class FirstRunReporter
             if (response.IsSuccessStatusCode)
             {
                 await WriteMarker(markerPath, token != null ? "token" : "no_token", cancellationToken);
+
+                // Without a token this install is anonymous, and on macOS that is every
+                // install. Opening the welcome page in the default browser is the only
+                // exact link left: that browser still holds the argo_visitor_id cookie
+                // from the visit that produced the download, so the server sees the
+                // machine id and the visitor in one request and joins them. Ordered
+                // after the POST because the page attaches to the row it just created.
+                if (token == null)
+                {
+                    OpenWelcomePage(machineUuid);
+                }
+
                 // Clean up the install token file so it doesn't sit around
                 TryDeleteInstallToken();
                 // Clean up the attempts counter
@@ -158,14 +172,12 @@ public sealed class FirstRunReporter
                 return null;
             }
 
+            // macOS has no route: the .zip is expanded before first launch, so the
+            // bundle carries neither the archive's name nor a recorded source URL.
+            // Attribution there happens through the welcome page instead.
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                // The download is a .zip the user expands, so by the time we run,
-                // the executable sits at "Argo Books.app/Contents/MacOS/Argo Books"
-                // and nothing in that path came from the archive's name. The one
-                // surviving trace of where it came from is the source URL the
-                // browser stamped onto the file, which is where the token lives.
-                return TryReadTokenFromWhereFroms(GetAppBundlePath(processPath));
+                return null;
             }
 
             // Linux: the AppImage is itself the executable, so it still carries
@@ -182,72 +194,20 @@ public sealed class FirstRunReporter
     }
 
     /// <summary>
-    /// Walks up from the running executable to the enclosing .app bundle.
-    /// Returns the executable's own directory when there isn't one, which is the
-    /// case for an unbundled build run straight out of the publish folder.
+    /// Opens the welcome page so the browser can link this install to the visit that
+    /// downloaded it. Best-effort: a failure here costs attribution, never the launch.
     /// </summary>
-    private static string GetAppBundlePath(string exePath)
-    {
-        var dir = Path.GetDirectoryName(exePath);
-        while (!string.IsNullOrEmpty(dir))
-        {
-            if (dir.EndsWith(".app", StringComparison.OrdinalIgnoreCase))
-            {
-                return dir;
-            }
-            dir = Path.GetDirectoryName(dir);
-        }
-        return Path.GetDirectoryName(exePath) ?? exePath;
-    }
-
-    /// <summary>
-    /// Reads the download URL macOS records on a downloaded file and pulls the
-    /// ?t= install token out of it.
-    ///
-    /// The attribute holds a binary plist, but the URL inside it is plain ASCII,
-    /// so the value is read as raw bytes (Latin1 maps them 1:1, where UTF-8 would
-    /// mangle the surrounding plist framing) and matched directly. That avoids
-    /// taking a plist parser dependency for one string.
-    ///
-    /// Returns null whenever the attribute is missing, which is the normal case
-    /// for a build that wasn't downloaded through a browser.
-    /// </summary>
-    private static string? TryReadTokenFromWhereFroms(string bundlePath)
+    private void OpenWelcomePage(string machineUuid)
     {
         try
         {
-            using var process = new System.Diagnostics.Process();
-            process.StartInfo = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "/usr/bin/xattr",
-                ArgumentList = { "-p", "com.apple.metadata:kMDItemWhereFroms", bundlePath },
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                StandardOutputEncoding = System.Text.Encoding.Latin1
-            };
-
-            process.Start();
-            var output = process.StandardOutput.ReadToEnd();
-            if (!process.WaitForExit(5000))
-            {
-                return null;
-            }
-            if (process.ExitCode != 0 || string.IsNullOrEmpty(output))
-            {
-                return null;
-            }
-
-            var match = System.Text.RegularExpressions.Regex.Match(
-                output, @"[?&]t=([0-9a-f]{8})\b",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-            return match.Success ? match.Groups[1].Value.ToLowerInvariant() : null;
+            UrlHelper.SafeOpenUrl($"{ApiConfig.BaseUrl}/welcome/?m={Uri.EscapeDataString(machineUuid)}");
         }
-        catch
+        catch (Exception ex)
         {
-            // xattr missing, or the attribute isn't set. Reported as unattributed.
-            return null;
+            _errorLogger?.LogWarning(
+                $"Could not open the welcome page: {ex.Message}",
+                context: "FirstRunReporter.OpenWelcomePage");
         }
     }
 
