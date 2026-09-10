@@ -77,7 +77,7 @@
                 IsVisible="{Binding HasNoTransactions}">
             <controls:InfoBanner ShowBanner="{Binding HasNoTransactions}"
                                  BannerMargin="0"
-                                 Message="{loc:Loc 'Your charts fill in as you record income and expenses.'}"
+                                 Message="{loc:Loc 'Your charts fill in as you record revenue and expenses.'}"
                                  ActionText="{loc:Loc 'Add Expense'}"
                                  ActionCommand="{Binding AddExpenseCommand}"
                                  IconData="{x:Static icons:Icons.Info}"
