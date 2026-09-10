@@ -160,7 +160,8 @@ public class TutorialService
     public bool HasCompletedWelcomeTutorial => Settings.HasCompletedWelcomeTutorial;
 
     /// <summary>
-    /// Gets whether the user explicitly skipped the tutorial.
+    /// Gets whether the user skipped the tutorial in an older build, where skipping also
+    /// switched off the setup checklist and first-visit hints. Nothing sets it any more.
     /// </summary>
     public bool HasSkippedTutorial => Settings.HasSkippedTutorial;
 
@@ -177,7 +178,11 @@ public class TutorialService
     /// <summary>
     /// Gets whether first-visit hints should be shown.
     /// </summary>
-    public bool ShowFirstVisitHints => !_hintsDisabledThisSession && Settings.ShowFirstVisitHints;
+    public bool ShowFirstVisitHints => !_hintsDisabledThisSession && Settings.ShowFirstVisitHints && !IsSampleCompanyOpen;
+
+    // Tutorial progress is stored per install, not per company, so anything spent in the
+    // sample (a checklist tick, a page hint) is already used up when the user opens their own.
+    private static bool IsSampleCompanyOpen => App.CompanyManager?.IsSampleCompany == true;
 
     /// <summary>
     /// Sets the global settings service for tutorial persistence.
@@ -197,12 +202,12 @@ public class TutorialService
 
     /// <summary>
     /// Checks if the tutorial should be shown on the current company.
-    /// Returns false if the tutorial was skipped, if no company is set,
-    /// or if we're on a different company than where the tutorial was started.
+    /// Returns false if the tutorial was skipped, if no company is set, if the sample
+    /// company is open, or if we're on a different company than where the tutorial was started.
     /// </summary>
     public bool ShouldShowTutorialOnCurrentCompany()
     {
-        if (string.IsNullOrEmpty(_currentCompanyPath))
+        if (string.IsNullOrEmpty(_currentCompanyPath) || IsSampleCompanyOpen)
             return false;
 
         if (Settings.HasSkippedTutorial)
@@ -276,23 +281,15 @@ public class TutorialService
     }
 
     /// <summary>
-    /// Marks the tutorial as skipped by the user.
+    /// Skips the welcome overlay and the app tour. The setup checklist and first-visit hints
+    /// stay on: the checklist is what leads a new user to their first transaction, and
+    /// declining a tour is not a request to stop being shown where things are.
     /// </summary>
-    public void SkipTutorial()
+    public void SkipTour()
     {
-        var settings = _globalSettingsService?.GetSettings();
-        if (settings?.Tutorial != null)
-        {
-            var wasSkipped = settings.Tutorial.HasSkippedTutorial;
-            settings.Tutorial.HasSkippedTutorial = true;
-            SaveSettings();
-            // Anonymous onboarding telemetry: the user opted out of guided setup.
-            if (!wasSkipped)
-            {
-                _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingSkipped);
-            }
-            TutorialStateChanged?.Invoke(this, EventArgs.Empty);
-        }
+        CompleteWelcomeTutorial();
+        CompleteAppTour();
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.OnboardingSkipped);
     }
 
     /// <summary>
@@ -319,7 +316,7 @@ public class TutorialService
             return;
 
         // Don't process checklist items if the tutorial was skipped
-        if (settings.Tutorial.HasSkippedTutorial)
+        if (settings.Tutorial.HasSkippedTutorial || IsSampleCompanyOpen)
             return;
 
         // Check if previous items in sequence are completed

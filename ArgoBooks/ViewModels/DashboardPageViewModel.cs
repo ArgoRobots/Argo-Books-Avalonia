@@ -365,8 +365,10 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
     public void RefreshSourceSurveyBanner()
     {
         var tutorial = TutorialService.Instance;
+        // Someone working through the checklist is asked when they finish it; this banner is
+        // for everyone the checklist will never reach.
         ShowSourceSurveyBanner =
-            tutorial.HasSkippedTutorial &&
+            (tutorial.HasSkippedTutorial || tutorial.IsSetupChecklistDismissed) &&
             tutorial.ShouldShowSourceSurvey();
     }
 
