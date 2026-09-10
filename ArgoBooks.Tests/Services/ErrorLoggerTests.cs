@@ -315,7 +315,6 @@ public class ErrorLoggerTests
         public Task TrackCompanyProfileAsync(string? companyName, string? businessType, string? industry, string? country, string? currency, string? language, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task TrackCompanyScaleAsync(CompanyScaleCounts counts, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task TrackStartupAsync(long? toFirstPaintMs, long? toServicesReadyMs, long? toViewModelsReadyMs, long? toReadyMs, bool coldStart, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task TrackCompanyScaleAsync(CompanyScaleCounts counts, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<TelemetryUploadResult> UploadPendingDataAsync(CancellationToken cancellationToken = default) => Task.FromResult(new TelemetryUploadResult());
         public Task ClearAllDataAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task<TelemetryStatistics> GetStatisticsAsync(CancellationToken cancellationToken = default) => Task.FromResult(new TelemetryStatistics());
