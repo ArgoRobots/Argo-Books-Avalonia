@@ -25,6 +25,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
     protected override string CounterpartyName => "Supplier";
     protected override CategoryType CategoryTypeFilter => CategoryType.Expense;
     protected override bool UseCostPrice => true;
+    protected override bool AllowsTypedItems => true;
 
     #endregion
 
