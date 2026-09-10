@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using ArgoBooks.Core.Services;
 using NetSparkleUpdater;
 using NetSparkleUpdater.Enums;
+using System.Runtime.InteropServices;
 using NetSparkleUpdater.SignatureVerifiers;
 
 namespace ArgoBooks.Desktop.Services;
@@ -16,15 +17,33 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
 {
     /// <summary>
     /// AppCast URL, separate from the WinForms app since version tracks diverge.
+    ///
+    /// The sandbox reads its own file. avalonia-update-dev.xml already existed in the website
+    /// repo pointing at dev URLs, but nothing requested it: both builds asked for
+    /// avalonia-update.xml and only the host differed. Testing an update therefore meant
+    /// editing the file production reads, which is the one file that must never be a scratch
+    /// pad. Naming them apart makes a sandbox appcast unable to reach real users even if both
+    /// hosts serve the same directory.
     /// </summary>
-    private static readonly string AppCastUrl = $"{ApiConfig.BaseUrl}/avalonia-update.xml";
+    private static readonly string AppCastUrl =
+        $"{ApiConfig.BaseUrl}/" + (ApiConfig.IsSandbox ? "avalonia-update-dev.xml" : "avalonia-update.xml");
 
     /// <summary>
     /// Ed25519 public key used to verify the signature of downloaded updates.
-    /// The matching private key lives only on the release machine and is used to
-    /// sign each release file (see docs/Publishing.md, "Sign the release files").
+    ///
+    /// Split the same way <see cref="ApiConfig"/> splits the host it talks to, and for the
+    /// same reason: a Debug build checks the sandbox appcast, so it has to trust whatever
+    /// signed the files on the sandbox server. Pairing the two means a dev build never needs
+    /// the production private key, which stays on the release machine and only ever signs
+    /// what real users download (see docs/Publishing.md, "Sign the release files").
+    ///
+    /// Release builds are unaffected: they check production and trust the production key.
     /// </summary>
+#if DEBUG
+    private const string UpdatePublicKey = "6Px9qRRWnEcMB4dH9xbYT0X6Hb6JNWcqLbqQgmJmPrk=";
+#else
     private const string UpdatePublicKey = "Of6Zmn6HdF02vdJCJB6nutS4ceAPmIpC7fOAXZrb4no=";
+#endif
 
     /// <summary>
     /// Download timeout for the update package.
@@ -325,7 +344,29 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
     /// </summary>
     private static AppCastItem? FindBestUpdate(List<AppCastItem> items)
     {
-        // First try to find an OS-specific entry
+        // macOS ships a build per processor, and handing an Intel Mac the Apple Silicon zip
+        // produces an app that will not launch. NetSparkle has no concept of architecture, but
+        // sparkle:os is a free-form string it preserves, so the appcast qualifies the macOS
+        // entries as macos-arm64 and macos-x64 and both still read as macOS updates.
+        //
+        // Matched by name rather than by position: the parser does not return items in file
+        // order, so "the first macOS entry" is not a stable thing to rely on.
+        if (OperatingSystem.IsMacOS())
+        {
+            var suffix = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+                ? "arm64"
+                : "x64";
+
+            var forThisMac = items.FirstOrDefault(item =>
+                item.IsMacOSUpdate &&
+                item.OperatingSystem?.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) == true);
+
+            if (forThisMac != null)
+                return forThisMac;
+        }
+
+        // An unqualified entry for this OS, which is what every appcast looked like before the
+        // second macOS build existed and is still what Windows and Linux use.
         foreach (var item in items)
         {
             if (OperatingSystem.IsWindows() && item.IsWindowsUpdate)
@@ -371,7 +412,11 @@ public sealed class NetSparkleUpdateService : IUpdateService, IDisposable
         if (OperatingSystem.IsWindows())
             return $"ArgoBooks-{version}-win-x64.exe";
         if (OperatingSystem.IsMacOS())
-            return $"ArgoBooks-{version}-osx-arm64.zip";
+        {
+            // Must match the architecture actually running, or the downloaded app will not open.
+            var arch = RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "arm64" : "x64";
+            return $"ArgoBooks-{version}-osx-{arch}.zip";
+        }
         if (OperatingSystem.IsLinux())
             return $"ArgoBooks-{version}-linux-x64.AppImage";
         return $"ArgoBooks-{version}-update";
