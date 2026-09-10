@@ -37,6 +37,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
     protected override string CounterpartyName => "Customer";
     protected override CategoryType CategoryTypeFilter => CategoryType.Revenue;
     protected override bool UseCostPrice => false;
+    protected override bool AllowsTypedItems => true;
 
     #endregion
 
