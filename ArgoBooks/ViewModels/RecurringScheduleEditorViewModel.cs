@@ -336,6 +336,8 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         {
             var before = Capture(existing);
             var statusBefore = existing.Status;
+            var dateBefore = existing.NextDate;
+            var startChanged = existing.StartDate.Date != start;
             var oldAmount = existing.Template?.Total ?? 0m;
             var amountChanged = existing.Template != null && oldAmount != amount;
 
@@ -343,6 +345,19 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             existing.StartDate = start;
             existing.EndDate = end;
             await ApplyTemplateAsync(existing, amount, start);
+
+            // The next date came from the old start. Until something is generated it is simply the
+            // start. After that, everything before the next date is already booked, so the new
+            // start's dates pick up from there and a moved start cannot book a period twice.
+            if (startChanged)
+            {
+                var hasGenerated = existing.Type == CategoryType.Revenue
+                    ? data.Revenues.Any(r => r.RecurringScheduleId == existing.Id)
+                    : data.Expenses.Any(e => e.RecurringScheduleId == existing.Id);
+                existing.NextDate = hasGenerated
+                    ? RecurrenceSchedule.FirstOnOrAfter(start, existing.Frequency, start.Day, dateBefore)
+                    : start;
+            }
 
             // Generation only runs Active schedules, and resuming refuses a Completed one, so an end
             // date moved past the next occurrence would otherwise never produce it.
@@ -352,7 +367,6 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
             var after = Capture(existing);
 
-            var dateBefore = existing.NextDate;
             var generated = OwnEntries(GenerateDueNow(data), existing);
             var queued = QueueGenerated(data, generated);
             var dateAfter = existing.NextDate;

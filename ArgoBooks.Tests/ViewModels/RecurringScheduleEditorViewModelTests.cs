@@ -148,6 +148,64 @@ public class RecurringScheduleEditorViewModelTests : ModalViewModelTestBase
         Assert.Equal(restarted, (schedule.Status, schedule.NextDate, Company.Expenses.Count));
     }
 
+    private RecurringTransaction Rent(DateTime start)
+    {
+        var schedule = new RecurringTransaction
+        {
+            Id = "REC-TXN-00001",
+            Type = CategoryType.Expense,
+            Frequency = Frequency.Monthly,
+            StartDate = start,
+            NextDate = start,
+            ExpenseTemplate = new Expense
+            {
+                Description = "Rent", Amount = 2000m, Total = 2000m, OriginalCurrency = "USD",
+                SupplierId = "SUP-001"
+            }
+        };
+        Company.RecurringTransactions.Add(schedule);
+        return schedule;
+    }
+
+    /// <summary>Created ahead of its start, so nothing is generated and the start is still the next date.</summary>
+    [Theory]
+    [InlineData(50)]
+    [InlineData(20)]
+    public async Task Save_StartDateMovedBeforeAnythingIsGenerated_NextDateFollowsIt(int newStartInDays)
+    {
+        var schedule = Rent(DateTime.Today.AddDays(35));
+        var vm = new RecurringScheduleEditorViewModel();
+        vm.ShowEdit(schedule);
+        vm.StartDate = new DateTimeOffset(DateTime.Today.AddDays(newStartInDays));
+
+        await vm.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal(DateTime.Today.AddDays(newStartInDays), schedule.NextDate);
+    }
+
+    /// <summary>
+    /// Rent booked on the 1st for months, then moved to the 15th. This month is already booked, so
+    /// the next one is the 15th of next month, not a second entry this month.
+    /// </summary>
+    [Fact]
+    public async Task Save_StartDateMovedAfterEntriesExist_MovesToTheNewDayWithoutRepeatingAMonth()
+    {
+        var start = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(-3);
+        var schedule = Rent(start);
+        RecurringTransactionService.GenerateDue(Company, DateTime.Today);
+        var (nextBefore, entriesBefore) = (schedule.NextDate, Company.Expenses.Count);
+        var vm = new RecurringScheduleEditorViewModel();
+        vm.ShowEdit(schedule);
+        vm.StartDate = new DateTimeOffset(start.AddDays(14));
+
+        await vm.SaveCommand.ExecuteAsync(null);
+        var saved = (schedule.NextDate, Company.Expenses.Count);
+        Undo();
+
+        Assert.Equal((nextBefore.AddDays(14), entriesBefore), saved);
+        Assert.Equal((start, nextBefore), (schedule.StartDate, schedule.NextDate));
+    }
+
     private sealed class NoDiskPlatform : IPlatformService
     {
         public PlatformType Platform => PlatformType.Linux;
