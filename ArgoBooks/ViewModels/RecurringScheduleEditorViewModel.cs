@@ -307,6 +307,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
             var dateBefore = created.NextDate;
             var generated = OwnEntries(GenerateDueNow(data), created);
+            var queued = QueueGenerated(data, generated);
             var dateAfter = created.NextDate;
 
             App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -321,7 +322,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 () =>
                 {
                     data.RecurringTransactions.Add(created);
-                    RestoreGenerated(data, generated);
+                    RestoreGenerated(data, generated, queued);
                     created.NextDate = dateAfter;
                     Saved?.Invoke();
                 }));
@@ -346,6 +347,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
 
             var dateBefore = existing.NextDate;
             var generated = OwnEntries(GenerateDueNow(data), existing);
+            var queued = QueueGenerated(data, generated);
             var dateAfter = existing.NextDate;
 
             App.UndoRedoManager.RecordAction(new DelegateAction(
@@ -360,7 +362,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                 () =>
                 {
                     Restore(existing, after);
-                    RestoreGenerated(data, generated);
+                    RestoreGenerated(data, generated, queued);
                     existing.NextDate = dateAfter;
                     Saved?.Invoke();
                 }));
@@ -396,6 +398,19 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         IReadOnlyList<Transaction> generated, RecurringTransaction schedule) =>
         generated.Where(t => t.RecurringScheduleId == schedule.Id).ToList();
 
+    /// <summary>
+    /// Generation queues an entry it has no rate for in the company file only. A conversion pass
+    /// copies the service's queue back over that list, so anything missing there is dropped and
+    /// the entry stays pending for good.
+    /// </summary>
+    private static IReadOnlyList<Core.Models.Common.PendingConversion> QueueGenerated(
+        Core.Data.CompanyData data, IReadOnlyList<Transaction> generated)
+    {
+        var ids = generated.Select(t => t.Id).ToList();
+        MirrorPendingQueue(data, ids);
+        return data.PendingConversions.Where(p => ids.Contains(p.TransactionId)).ToList();
+    }
+
     private static void RemoveGenerated(Core.Data.CompanyData data, IReadOnlyList<Transaction> generated)
     {
         foreach (var entry in generated)
@@ -403,15 +418,24 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             if (entry is Expense expense) data.Expenses.Remove(expense);
             else if (entry is Revenue revenue) data.Revenues.Remove(revenue);
         }
+
+        var ids = generated.Select(t => t.Id).ToList();
+        data.PendingConversions.RemoveAll(p => ids.Contains(p.TransactionId));
+        MirrorPendingQueue(data, ids);
     }
 
-    private static void RestoreGenerated(Core.Data.CompanyData data, IReadOnlyList<Transaction> generated)
+    private static void RestoreGenerated(
+        Core.Data.CompanyData data, IReadOnlyList<Transaction> generated, IReadOnlyList<Core.Models.Common.PendingConversion> queued)
     {
         foreach (var entry in generated)
         {
             if (entry is Expense expense && !data.Expenses.Contains(expense)) data.Expenses.Add(expense);
             else if (entry is Revenue revenue && !data.Revenues.Contains(revenue)) data.Revenues.Add(revenue);
         }
+
+        foreach (var row in queued.Where(row => !data.PendingConversions.Contains(row)))
+            data.PendingConversions.Add(row);
+        MirrorPendingQueue(data, generated.Select(t => t.Id).ToList());
     }
 
     /// <summary>
