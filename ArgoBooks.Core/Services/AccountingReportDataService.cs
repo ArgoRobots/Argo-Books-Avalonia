@@ -512,7 +512,21 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             .Sum(e => ToDisplay(e.EffectiveTotalUSD - e.EffectiveSubtotalUSD, e.Date));
         var salesTaxPayable = taxCollected - taxRefunded - taxPaidOnExpenses;
 
-        var totalLiabilities = accountsPayable + salesTaxPayable;
+        // A security deposit isn't earned (docs/Calculations.md §4), but the invoice total carrying it
+        // is in cash or receivables from the day it is issued, so it is owed back until it is given
+        // back or kept. Priced at the invoice's rate, as its refunds and kept deposit are.
+        var paymentsToDate = companyData.Payments.Where(p => IsOnOrBeforeEndDate(p.Date)).ToList();
+        var revenuesToDate = companyData.Revenues.Where(r => IsOnOrBeforeEndDate(r.Date)).ToList();
+        var securityDeposits = companyData.Invoices
+            .Where(i => i.SecurityDeposit > 0 && i.Total > 0
+                        && i.Status != InvoiceStatus.Cancelled
+                        && i.Status != InvoiceStatus.Draft
+                        && IsOnOrBeforeEndDate(i.IssueDate))
+            .Sum(i => ToDisplay(
+                SecurityDeposits.StillHeld(i, paymentsToDate, revenuesToDate) * i.EffectiveTotalUSD / i.Total,
+                i.IssueDate));
+
+        var totalLiabilities = accountsPayable + salesTaxPayable + securityDeposits;
 
         // Retained Earnings derived as balancing figure so Assets = Liabilities + Equity.
         // This is standard for simplified bookkeeping systems without full double-entry.
@@ -603,6 +617,17 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             {
                 Label = t.TaxPayableLabel,
                 Values = [FormatCurrencyWithSign(salesTaxPayable)],
+                IndentLevel = 1,
+                RowType = AccountingRowType.DataRow
+            });
+        }
+
+        if (securityDeposits != 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Security Deposits",
+                Values = [FormatCurrency(securityDeposits)],
                 IndentLevel = 1,
                 RowType = AccountingRowType.DataRow
             });

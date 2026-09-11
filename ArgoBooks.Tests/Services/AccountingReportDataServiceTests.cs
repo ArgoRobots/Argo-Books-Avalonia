@@ -166,6 +166,59 @@ public class AccountingReportDataServiceTests
         Assert.Equal(0m, AmountOf(result, "TOTAL LIABILITIES"));
     }
 
+    // $500 rent + $200 deposit = $700, paid Mar 1. The deposit is owed back to the customer until it
+    // is given back or kept, so only the $500 of rent is retained earnings.
+    [Theory]
+    [InlineData(null, false, 200, 500)]          // still held at the end date
+    [InlineData("2025-01-15", false, 200, 500)]  // given back after the end date, so held on it
+    [InlineData("2024-12-01", false, 0, 500)]    // given back before the end date
+    [InlineData("2024-12-01", true, 0, 700)]     // kept, which made it revenue
+    public void GetReportData_BalanceSheet_OwesBackTheSecurityDepositsItStillHolds(
+        string? settledOn, bool kept, int owed, int retained)
+    {
+        var data = new CompanyData();
+        var invoice = new Invoice
+        {
+            Id = "INV-S", InvoiceNumber = "INV-S", CustomerId = "C1", OriginalCurrency = "USD",
+            IssueDate = new DateTime(2024, 3, 1), Subtotal = 500m, SecurityDeposit = 200m,
+            Total = 700m, TotalUSD = 700m, Status = InvoiceStatus.Sent
+        };
+        data.Invoices.Add(invoice);
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-S", InvoiceId = "INV-S", Date = new DateTime(2024, 3, 1), OriginalCurrency = "USD",
+            Subtotal = 500m, Total = 500m, TotalUSD = 500m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-S1", InvoiceId = "INV-S", OriginalCurrency = "USD", Date = new DateTime(2024, 3, 1),
+            Amount = 700m, AmountUSD = 700m
+        });
+        if (settledOn != null && kept)
+        {
+            data.Revenues.Add(new Revenue
+            {
+                Id = "REV-K", InvoiceId = "INV-S", IsKeptDeposit = true, Date = DateTime.Parse(settledOn),
+                OriginalCurrency = "USD", Subtotal = 200m, Total = 200m, TotalUSD = 200m
+            });
+        }
+        else if (settledOn != null)
+        {
+            data.Payments.Add(new Payment
+            {
+                Id = "PAY-S2", InvoiceId = "INV-S", OriginalCurrency = "USD", Date = DateTime.Parse(settledOn),
+                Amount = -200m, AmountUSD = -200m, IsRefund = true, DepositAmount = 200m
+            });
+        }
+        InvoiceTotalsService.Recalculate(invoice, data.Payments);
+
+        var result = new AccountingReportDataService(data, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.BalanceSheet);
+
+        Assert.Equal(owed, AmountOf(result, "TOTAL LIABILITIES"));
+        Assert.Equal(retained, AmountOf(result, "Retained Earnings"));
+    }
+
     [Fact]
     public void GetReportData_BalanceSheet_NoInventory_OmitsInventoryRow()
     {
