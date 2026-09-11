@@ -53,8 +53,17 @@ public static class RefundAggregator
     }
 
     /// <summary>
+    /// The share of an invoice's refund that was revenue before tax: total less tax, over total,
+    /// which is what the invoice's revenue counted (EffectiveTotalUSD - EffectiveTaxAmountUSD).
+    /// Not Subtotal/Total: Subtotal is the line sum before an invoice discount and without
+    /// shipping, fees or a deposit, so it took the wrong amount off profit whenever an invoice
+    /// had any of those. Callers guard Total &gt; 0.
+    /// </summary>
+    public static decimal PreTaxShare(Invoice invoice) => (invoice.Total - invoice.TaxAmount) / invoice.Total;
+
+    /// <summary>
     /// Pre-tax USD portion of refunds inside [start, end], for profit math.
-    /// Each refund is scaled by its invoice's Subtotal/Total ratio so the
+    /// Each refund is scaled by its invoice's <see cref="PreTaxShare"/> so the
     /// tax part of the refund, which was never profit on the revenue side,
     /// isn't subtracted again. Falls back to the full refund amount when
     /// the invoice link is missing.
@@ -73,7 +82,7 @@ public static class RefundAggregator
                 && invoicesById.TryGetValue(p.InvoiceId, out var invoice)
                 && invoice.Total > 0)
             {
-                sum += refundTotalUSD * (invoice.Subtotal / invoice.Total);
+                sum += refundTotalUSD * PreTaxShare(invoice);
             }
             else
             {
@@ -102,7 +111,7 @@ public static class RefundAggregator
                 && invoicesById.TryGetValue(p.InvoiceId, out var invoice)
                 && invoice.Total > 0)
             {
-                preTaxUSD = refundTotalUSD * (invoice.Subtotal / invoice.Total);
+                preTaxUSD = refundTotalUSD * PreTaxShare(invoice);
             }
             else
             {

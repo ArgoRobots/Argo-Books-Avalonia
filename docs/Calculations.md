@@ -222,6 +222,8 @@ Heuristics:
 
 Use `RevenueAggregator.IsCollected(revenue)` everywhere, never inline the enum comparison. If a new status should count as collected, add it to that helper in one place. The spreadsheet importer's `NormalizePaymentStatus` maps free-form text to the enum and is the only place that should parse strings.
 
+**Revenue created from an invoice** counts as collected once the invoice is paid in full, and stays collected after a refund, because the refund is subtracted on its own date (§8). `InvoiceTotalsService.SyncLinkedRevenueStatus` sets it whenever a payment is recorded or removed, by hand or through the payment portal, so both count the same.
+
 `Payment.Source` is similarly the `PaymentSource` enum (`Manual` / `Online`), also with a permissive JSON converter for legacy data.
 
 ---
@@ -243,12 +245,14 @@ Helper: `RefundAggregator.GetRefundedInDateRangeUSD(...)`.
 
 ### Effect on profit (pre-tax)
 
-Subtract the **pre-tax portion** of the refund. Because a refund both reverses revenue *and* reverses the tax we owed on that revenue, the net profit impact is only the subtotal portion:
+Subtract the **pre-tax portion** of the refund. Because a refund both reverses revenue *and* reverses the tax we owed on that revenue, the net profit impact is only the pre-tax portion:
 
 ```
-Per refund:   profit reduction = |Payment.EffectiveAmountUSD| × (Invoice.Subtotal / Invoice.Total)
+Per refund:   profit reduction = |Payment.EffectiveAmountUSD| × ((Invoice.Total − Invoice.TaxAmount) / Invoice.Total)
 Fallback:     if invoice link missing → full refund amount
 ```
+
+The share is total less tax, which is what the invoice's revenue counted before tax. It is not `Subtotal / Total`: `Subtotal` is the line sum before an invoice-level discount and without shipping, fees or a deposit (§4), so it disagrees whenever an invoice has any of those. Helper: `RefundAggregator.PreTaxShare`.
 
 Helper: `RefundAggregator.GetRefundedPreTaxInDateRangeUSD(payments, invoicesById, start, end)`. `ProfitCalculator` already calls this; new profit surfaces should reuse `ProfitCalculator.CalculateNetProfitUSD` or `CalculateNetProfitByDayUSD` rather than re-deriving the formula.
 

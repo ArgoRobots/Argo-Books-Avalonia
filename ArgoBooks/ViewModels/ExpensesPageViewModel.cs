@@ -464,11 +464,13 @@ public ExpensesPageViewModel()
     {
         var now = DateTime.Now;
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var endOfThisMonth = startOfMonth.AddMonths(1).AddTicks(-1);
 
         // Total monthly expenses: convert each at its OWN date before summing (Calculations.md
-        // §3a Phase 2), so a non-USD display total isn't re-priced at today's rate.
+        // §3a Phase 2), so a non-USD display total isn't re-priced at today's rate. Capped at the
+        // month's end like the Revenue page, so a future-dated expense isn't counted this month.
         TotalMonthlyExpenses = CurrencyService.FormatSumDisplayFromUSD(
-            _allExpenses.Where(p => p.Date >= startOfMonth),
+            _allExpenses.Where(p => p.Date >= startOfMonth && p.Date <= endOfThisMonth),
             p => p.Total, p => p.OriginalCurrency, p => p.TotalUSD, p => p.Date);
 
         TransactionCount = _allExpenses.Count;

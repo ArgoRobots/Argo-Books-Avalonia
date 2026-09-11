@@ -2229,11 +2229,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var margin = totalRevenuePreTaxUSD > 0 ? (netProfitUSD / totalRevenuePreTaxUSD) * 100 : 0;
 
         // Calculate previous period for comparison (guard against overflow for very large date ranges like "All Time")
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         var prevPurchasesUSD = ExpenseAggregator.SumExpensesUSD(data.Expenses, prevStartDate, prevEndDate);
         var prevGrossRevenueUSD = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, prevStartDate, prevEndDate);
@@ -2288,11 +2284,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var totalTransactions = purchases.Count + sales.Count;
 
         // Calculate previous period for comparison
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         var prevPurchasesCount = data.Expenses.Count(p => p.Date >= prevStartDate && p.Date <= prevEndDate);
         var prevSalesCount = data.Revenues.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate);
@@ -2341,11 +2333,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var avgShipping = purchases.Count > 0 ? purchases.Average(p => p.ShippingCost) : 0;
 
         // Calculate previous period for comparison
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         var prevSales = data.Revenues
             .Where(s => s.Date >= prevStartDate && s.Date <= prevEndDate)
@@ -2397,11 +2385,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         NewCustomers = newCustomersCount.ToString("N0");
 
         // Calculate previous period for comparison
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         // Previous new customers
         var prevNewCustomers = data.Customers.Count(c => c.CreatedAt >= prevStartDate && c.CreatedAt <= prevEndDate);
@@ -2448,11 +2432,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var returnRate = salesTransactions > 0 ? ((double)totalReturnsCount / salesTransactions) * 100 : 0;
 
         // Calculate previous period for comparison
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         var prevReturns = data.Returns.Where(r => r.ReturnDate >= prevStartDate && r.ReturnDate <= prevEndDate).ToList();
         var prevReturnsCount = prevReturns.Count;
@@ -2502,11 +2482,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var insuranceClaimsCount = losses.Count(l => l.InsuranceClaim);
 
         // Calculate previous period for comparison
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         var prevLosses = data.LostDamaged.Where(l => l.DateDiscovered >= prevStartDate && l.DateDiscovered <= prevEndDate).ToList();
         var prevLossesCount = prevLosses.Count;
@@ -2564,11 +2540,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var effectiveRate = totalPreTax > 0 ? (totalTax / totalPreTax) * 100 : 0;
 
         // Calculate previous period for comparison
-        var periodLength = EndDate - StartDate;
-        var prevStartDate = periodLength.TotalDays < StartDate.Subtract(DateTime.MinValue).TotalDays
-            ? StartDate - periodLength
-            : DateTime.MinValue;
-        var prevEndDate = StartDate > DateTime.MinValue ? StartDate.AddDays(-1) : DateTime.MinValue;
+        var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
 
         var prevRevenues = data.Revenues.Where(r => r.Date >= prevStartDate && r.Date <= prevEndDate).ToList();
         var prevExpenses = data.Expenses.Where(e => e.Date >= prevStartDate && e.Date <= prevEndDate).ToList();

@@ -106,7 +106,7 @@ public static class ProfitCalculator
                 && invoicesById.TryGetValue(p.InvoiceId, out var invoice)
                 && invoice.Total > 0)
             {
-                preTax = refundTotalUSD * (invoice.Subtotal / invoice.Total);
+                preTax = refundTotalUSD * RefundAggregator.PreTaxShare(invoice);
             }
             else
             {

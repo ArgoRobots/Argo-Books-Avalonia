@@ -251,8 +251,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private string? _currentFileName;
     private bool _suppressAiSuggestions;
 
-    // Track entities created during receipt flow for undo
-    private Supplier? _createdSupplierForUndo;
+    // Track entities created during receipt flow for undo. A bulk review creates suppliers for
+    // several receipts, so every one is kept, not just the latest.
+    private readonly List<Supplier> _createdSuppliersForUndo = new();
     private Category? _createdCategoryForUndo;
     private readonly List<Product> _createdProductsForUndo = new();
 
@@ -394,27 +395,28 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         });
     }
 
-    private static async Task<List<string>> RenderPreviewPagesAsync(byte[] data, string fileName, bool isPdf, string tempSubdir)
+    internal static async Task<List<string>> RenderPreviewPagesAsync(byte[] data, string fileName, bool isPdf, string tempSubdir)
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "ArgoBooks", tempSubdir);
         Directory.CreateDirectory(tempDir);
         var paths = new List<string>();
 
+        // Keyed by content as well as name: scanned files often share a name (Scan.pdf).
+        var key = ReceiptPageRenderer.ContentKey(fileName, data);
         if (isPdf)
         {
             var pages = await PdfThumbnailService.Instance.RenderPdfAllPagesAsync(data);
             if (pages == null) return paths;
-            var nameNoExt = Path.GetFileNameWithoutExtension(fileName);
             for (var i = 0; i < pages.Length; i++)
             {
-                var p = Path.Combine(tempDir, $"{nameNoExt}_p{i + 1}.jpg");
+                var p = Path.Combine(tempDir, $"{key}_p{i + 1}.jpg");
                 await File.WriteAllBytesAsync(p, pages[i]);
                 paths.Add(p);
             }
         }
         else
         {
-            var p = Path.Combine(tempDir, Path.ChangeExtension(fileName, ".jpg"));
+            var p = Path.Combine(tempDir, $"{key}.jpg");
             await File.WriteAllBytesAsync(p, data);
             paths.Add(p);
         }
@@ -1624,6 +1626,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             createdReceipts.Add(receipt);
         }
 
+        RemoveCreatedEntitiesNotUsedBy(companyData, createdExpenses, createdRevenues);
+        var createdEntities = CaptureCreatedEntities();
+        var transactionIds = createdExpenses.Select(e => e.Id).Concat(createdRevenues.Select(r => r.Id)).ToHashSet();
+        List<PendingConversion> withdrawn = [];
+
         var action = new DelegateAction(
             $"Bulk scan {approvedItems.Count} receipts",
             () =>
@@ -1631,13 +1638,20 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 foreach (var e in createdExpenses) companyData.Expenses.Remove(e);
                 foreach (var r in createdRevenues) companyData.Revenues.Remove(r);
                 foreach (var r in createdReceipts) companyData.Receipts.Remove(r);
+                withdrawn = WithdrawPendingConversions(companyData, transactionIds);
+                createdEntities.Remove(companyData);
             },
             () =>
             {
+                createdEntities.Restore(companyData);
                 foreach (var e in createdExpenses) companyData.Expenses.Add(e);
                 foreach (var r in createdRevenues) companyData.Revenues.Add(r);
                 foreach (var r in createdReceipts) companyData.Receipts.Add(r);
+                RequeuePendingConversions(companyData, withdrawn);
             });
+
+        // The auto-created entities now belong to the undo action, so closing must not roll them back.
+        _createdEntitiesCommitted = true;
 
         App.UndoRedoManager.RecordAction(action);
         App.CompanyManager?.MarkAsChanged();
@@ -1654,6 +1668,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _bulkSucceededItemsCache = null;
         BulkItems.Clear();
         CurrentBulkItem = null;
+
+        // As in the single scan, what the review created from suggestions only stays once the
+        // approved receipts are saved.
+        if (!_createdEntitiesCommitted)
+            RollbackUncommittedCreatedEntities();
+
         ResetScanModal();
     }
 
@@ -2258,22 +2278,65 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        var removedAny = false;
+        if (CaptureCreatedEntities().Remove(companyData))
+            companyData.MarkAsModified();
+    }
 
-        foreach (var product in _createdProductsForUndo)
+    private CreatedEntities CaptureCreatedEntities()
+        => new(_createdSuppliersForUndo.ToList(), _createdCategoryForUndo, _createdProductsForUndo.ToList());
+
+    /// <summary>
+    /// Removes the suggestion-created supplier/products/category that no saved transaction uses, such
+    /// as ones created while viewing a receipt that was then skipped.
+    /// </summary>
+    private void RemoveCreatedEntitiesNotUsedBy(CompanyData companyData, List<Expense> expenses, List<Revenue> revenues)
+    {
+        var supplierIds = expenses.Select(e => e.SupplierId).OfType<string>().ToHashSet();
+        var productIds = expenses.SelectMany(e => e.LineItems).Concat(revenues.SelectMany(r => r.LineItems))
+            .Select(li => li.ProductId).OfType<string>().ToHashSet();
+
+        var unusedSuppliers = _createdSuppliersForUndo.Where(s => !supplierIds.Contains(s.Id)).ToList();
+        var unusedProducts = _createdProductsForUndo.Where(p => !productIds.Contains(p.Id)).ToList();
+        _createdSuppliersForUndo.RemoveAll(unusedSuppliers.Contains);
+        _createdProductsForUndo.RemoveAll(unusedProducts.Contains);
+
+        var unusedCategory = _createdCategoryForUndo is { } category
+                             && _createdProductsForUndo.All(p => p.CategoryId != category.Id)
+            ? category
+            : null;
+        if (unusedCategory != null) _createdCategoryForUndo = null;
+
+        new CreatedEntities(unusedSuppliers, unusedCategory, unusedProducts).Remove(companyData);
+    }
+
+    /// <summary>
+    /// The supplier/category/products auto-created from suggestions during a review, captured so
+    /// the undo of the transactions they were created for removes them and redo puts them back.
+    /// </summary>
+    private sealed record CreatedEntities(List<Supplier> Suppliers, Category? Category, List<Product> Products)
+    {
+        /// <summary>Returns true when anything was removed.</summary>
+        public bool Remove(CompanyData companyData)
         {
-            if (companyData.Products?.Remove(product) == true)
-                removedAny = true;
+            var removedAny = false;
+            foreach (var product in Products)
+                removedAny |= companyData.Products?.Remove(product) == true;
+            if (Category != null)
+                removedAny |= companyData.Categories.Remove(Category);
+            foreach (var supplier in Suppliers)
+                removedAny |= companyData.Suppliers.Remove(supplier);
+            return removedAny;
         }
 
-        if (_createdCategoryForUndo != null && companyData.Categories.Remove(_createdCategoryForUndo))
-            removedAny = true;
-
-        if (_createdSupplierForUndo != null && companyData.Suppliers.Remove(_createdSupplierForUndo))
-            removedAny = true;
-
-        if (removedAny)
-            companyData.MarkAsModified();
+        public void Restore(CompanyData companyData)
+        {
+            foreach (var supplier in Suppliers)
+                companyData.Suppliers.Add(supplier);
+            if (Category != null)
+                companyData.Categories.Add(Category);
+            foreach (var product in Products)
+                companyData.Products?.Add(product);
+        }
     }
 
     [RelayCommand]
@@ -2540,6 +2603,54 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         _ = PendingConversionService.Instance?.AddPendingConversionAsync(entry);
     }
 
+    /// <summary>
+    /// Takes an undone row's conversion out of the company's queue and the conversion service's copy.
+    /// Processing an entry whose row is gone drops it for good, so if it stayed queued while the row
+    /// was undone, redo would bring the row back pending with nothing left to convert it.
+    /// </summary>
+    private static List<PendingConversion> WithdrawPendingConversions(
+        CompanyData companyData, IReadOnlyCollection<string> transactionIds)
+    {
+        var withdrawn = companyData.PendingConversions.Where(p => transactionIds.Contains(p.TransactionId)).ToList();
+        if (withdrawn.Count == 0) return withdrawn;
+
+        companyData.PendingConversions.RemoveAll(withdrawn.Contains);
+        MirrorPendingQueue(companyData, transactionIds);
+        return withdrawn;
+    }
+
+    private static void RequeuePendingConversions(CompanyData companyData, List<PendingConversion> entries)
+    {
+        if (entries.Count == 0) return;
+
+        companyData.PendingConversions.AddRange(entries);
+        MirrorPendingQueue(companyData, entries.Select(p => p.TransactionId).ToList());
+    }
+
+    /// <summary>
+    /// Called on the UI thread: MirrorAsync reads the company file's rows before it first awaits.
+    /// </summary>
+    private static void MirrorPendingQueue(CompanyData companyData, IReadOnlyCollection<string> transactionIds)
+    {
+        var service = PendingConversionService.Instance;
+        if (service == null) return;
+
+        _ = MirrorPendingQueueAsync(service, companyData, transactionIds);
+    }
+
+    private static async Task MirrorPendingQueueAsync(
+        PendingConversionService service, CompanyData companyData, IReadOnlyCollection<string> transactionIds)
+    {
+        try
+        {
+            await service.MirrorAsync(companyData, transactionIds);
+        }
+        catch (Exception ex)
+        {
+            App.ErrorLogger?.LogWarning($"Failed to update queued conversions: {ex.Message}", "ReceiptScan");
+        }
+    }
+
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
         decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
@@ -2589,9 +2700,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Capture auto-created entities for undo
         var capturedReceipt = receipt;
         var capturedExpense = expense;
-        var capturedSupplier = _createdSupplierForUndo;
-        var capturedCategory = _createdCategoryForUndo;
-        var capturedProducts = _createdProductsForUndo.ToList();
+        var createdEntities = CaptureCreatedEntities();
+        List<PendingConversion> withdrawn = [];
 
         var action = new DelegateAction(
             $"AI scan expense {expenseId}",
@@ -2599,27 +2709,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 companyData.Expenses.Remove(capturedExpense);
                 companyData.Receipts.Remove(capturedReceipt);
-
-                // Also undo auto-created entities
-                foreach (var product in capturedProducts)
-                    companyData.Products?.Remove(product);
-                if (capturedCategory != null)
-                    companyData.Categories.Remove(capturedCategory);
-                if (capturedSupplier != null)
-                    companyData.Suppliers.Remove(capturedSupplier);
+                withdrawn = WithdrawPendingConversions(companyData, [expenseId]);
+                createdEntities.Remove(companyData);
             },
             () =>
             {
-                // Re-add auto-created entities
-                if (capturedSupplier != null)
-                    companyData.Suppliers.Add(capturedSupplier);
-                if (capturedCategory != null)
-                    companyData.Categories.Add(capturedCategory);
-                foreach (var product in capturedProducts)
-                    companyData.Products?.Add(product);
-
+                createdEntities.Restore(companyData);
                 companyData.Expenses.Add(capturedExpense);
                 companyData.Receipts.Add(capturedReceipt);
+                RequeuePendingConversions(companyData, withdrawn);
             });
 
         companyData.Expenses.Add(expense);
@@ -2678,9 +2776,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Capture auto-created entities for undo
         var capturedReceipt = receipt;
         var capturedRevenue = revenue;
-        var capturedSupplier = _createdSupplierForUndo;
-        var capturedCategory = _createdCategoryForUndo;
-        var capturedProducts = _createdProductsForUndo.ToList();
+        var createdEntities = CaptureCreatedEntities();
+        List<PendingConversion> withdrawn = [];
 
         var action = new DelegateAction(
             $"AI scan revenue {revenueId}",
@@ -2688,27 +2785,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             {
                 companyData.Revenues.Remove(capturedRevenue);
                 companyData.Receipts.Remove(capturedReceipt);
-
-                // Also undo auto-created entities
-                foreach (var product in capturedProducts)
-                    companyData.Products?.Remove(product);
-                if (capturedCategory != null)
-                    companyData.Categories.Remove(capturedCategory);
-                if (capturedSupplier != null)
-                    companyData.Suppliers.Remove(capturedSupplier);
+                withdrawn = WithdrawPendingConversions(companyData, [revenueId]);
+                createdEntities.Remove(companyData);
             },
             () =>
             {
-                // Re-add auto-created entities
-                if (capturedSupplier != null)
-                    companyData.Suppliers.Add(capturedSupplier);
-                if (capturedCategory != null)
-                    companyData.Categories.Add(capturedCategory);
-                foreach (var product in capturedProducts)
-                    companyData.Products?.Add(product);
-
+                createdEntities.Restore(companyData);
                 companyData.Revenues.Add(capturedRevenue);
                 companyData.Receipts.Add(capturedReceipt);
+                RequeuePendingConversions(companyData, withdrawn);
             });
 
         companyData.Revenues.Add(revenue);
@@ -3301,7 +3386,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         companyData.Suppliers.Add(newSupplier);
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.SupplierCreated);
-        _createdSupplierForUndo = newSupplier;
+        _createdSuppliersForUndo.Add(newSupplier);
 
         // Add to options and select
         var option = new SupplierOption { Id = newId, Name = newSupplier.Name };
@@ -3381,7 +3466,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         SuggestedSupplierName = string.Empty;
 
         // Reset undo tracking for auto-created entities
-        _createdSupplierForUndo = null;
+        _createdSuppliersForUndo.Clear();
         _createdCategoryForUndo = null;
         _createdProductsForUndo.Clear();
         _createdEntitiesCommitted = false;

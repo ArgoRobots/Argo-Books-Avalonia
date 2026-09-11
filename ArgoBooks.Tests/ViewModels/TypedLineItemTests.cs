@@ -1,5 +1,7 @@
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.ViewModels;
 using Xunit;
 
@@ -166,6 +168,36 @@ public class TypedLineItemTests : ModalViewModelTestBase
         Assert.Empty(Company.Expenses);
         Assert.True(vm.HasValidationMessage);
         Assert.Single(Company.Products, p => p.Name.Equals("Consulting", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// A phone capture matches a line to a product by name on either side, so an expense line can
+    /// hold a revenue product the expense form does not list. Loaded as plain text, its own name
+    /// then read as a new item clashing with that product, and the expense could not be saved.
+    /// </summary>
+    [Fact]
+    public async Task EditingAnEntryWhoseProductTheFormDoesNotList_KeepsThatProduct()
+    {
+        var vm = NewVm();
+        Company.Expenses.Add(new Expense
+        {
+            Id = "PUR-1",
+            Date = new DateTime(2026, 3, 1),
+            OriginalCurrency = "USD",
+            Amount = 90m,
+            Total = 90m,
+            LineItems = [new LineItem { ProductId = "P-CONSULT", Description = "Consulting", Quantity = 1, UnitPrice = 90m }]
+        });
+
+        vm.OpenEditModal(new ExpenseDisplayItem { Id = "PUR-1" });
+        vm.ModalNotes = "edited";
+        await vm.SaveExpenseCommand.ExecuteAsync(null);
+
+        var expense = Assert.Single(Company.Expenses);
+        Assert.False(vm.HasValidationMessage);
+        Assert.Equal("edited", expense.Notes);
+        Assert.Equal("P-CONSULT", expense.LineItems[0].ProductId);
+        Assert.Single(Company.Products, p => p.Name == "Consulting");
     }
 
     #endregion

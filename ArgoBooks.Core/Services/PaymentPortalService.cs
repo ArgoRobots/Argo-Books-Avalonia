@@ -436,17 +436,9 @@ public class PaymentPortalService : IDisposable
                 // AmountPaid is also > 0, see InvoiceTotalsService.
                 InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
-                // Mirror the linked-Revenue update the regular-payment path
-                // does, so a fully-refunded invoice doesn't keep showing as
-                // collected revenue in cash-basis aggregations.
-                var refundLinkedRevenues = companyData.Revenues
-                    .Where(r => r.InvoiceId == invoice.Id);
-                foreach (var revenue in refundLinkedRevenues)
-                {
-                    revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid
-                        ? RevenuePaymentStatus.Paid
-                        : RevenuePaymentStatus.Unpaid;
-                }
+                // The refund is subtracted from revenue on its own date (Calculations.md §8), so the
+                // revenue it refunds stays counted rather than dropping out as well.
+                InvoiceTotalsService.SyncLinkedRevenueStatus(invoice, companyData.Revenues);
 
                 invoice.History.Add(new InvoiceHistoryEntry
                 {
@@ -517,15 +509,7 @@ public class PaymentPortalService : IDisposable
             // Recalc invoice totals + status from the full Payments list.
             InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
-            // Update linked revenue records
-            var linkedRevenues = companyData.Revenues
-                .Where(r => r.InvoiceId == invoice.Id);
-            foreach (var revenue in linkedRevenues)
-            {
-                revenue.PaymentStatus = invoice.Status == InvoiceStatus.Paid
-                    ? RevenuePaymentStatus.Paid
-                    : RevenuePaymentStatus.Unpaid;
-            }
+            InvoiceTotalsService.SyncLinkedRevenueStatus(invoice, companyData.Revenues);
 
             invoice.UpdatedAt = DateTime.UtcNow;
         }

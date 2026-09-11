@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -812,6 +812,19 @@ public partial class App : Application
                 "{0} is running low on stock.".TranslateFormat(productName),
                 NotificationType.Warning);
         }
+    }
+
+    /// <summary>
+    /// Like <see cref="CheckAndNotifyStockStatus(InventoryItem)"/>, but only alerts when this change
+    /// lowered stock into a new status. Transactions call this on every stock change, so without the
+    /// check each sale from an already-low item would repeat the same alert.
+    /// </summary>
+    public static void CheckAndNotifyStockStatus(InventoryItem item, int previousStock)
+    {
+        if (item.InStock >= previousStock || item.CalculateStatus(previousStock) == item.CalculateStatus())
+            return;
+
+        CheckAndNotifyStockStatus(item);
     }
 
     /// <summary>
@@ -3519,8 +3532,20 @@ public partial class App : Application
                            && await SaveCompanyAsDialogAsync(desktop);
                 }
 
-                await CompanyManager.SaveCompanyAsync();
-                return true;
+                try
+                {
+                    return await SaveCompanyWithSecurityGuidanceAsync();
+                }
+                catch (Exception ex)
+                {
+                    // What the security guidance does not cover, such as a drive that has gone.
+                    // Staying on the open company keeps the changes; carrying on would discard them.
+                    ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, "Save before leaving the company failed");
+                    await ShowWarningMessageBoxAsync(
+                        "Could Not Save".Translate(),
+                        "Your changes could not be saved, so the company is still open with them. {0}".TranslateFormat(ex.Message));
+                    return false;
+                }
             case UnsavedChangesResult.DontSave:
                 return true;
             default:

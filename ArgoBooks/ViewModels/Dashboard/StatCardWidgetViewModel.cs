@@ -305,8 +305,10 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
 
     private void LoadOverdueInvoices(CompanyData data)
     {
+        // Overdue is worked out from the due date, and nothing stores the Overdue status, so
+        // counting only that status read "0 overdue" beside the Invoices page's overdue list.
         var overdue = data.Invoices
-            .Where(i => i.Status == InvoiceStatus.Overdue)
+            .Where(i => (i.IsOverdue || i.Status == InvoiceStatus.Overdue) && i.Status != InvoiceStatus.Draft && i.Balance > 0)
             .ToList();
         // Convert each invoice balance at its OWN issue date before summing (Calculations.md §3a Phase 2).
         Value = CurrencyService.FormatSumDisplayFromUSD(

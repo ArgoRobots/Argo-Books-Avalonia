@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
@@ -720,7 +720,7 @@ public class CompanyManager : IDisposable
     /// Current version of the invoice-totals healing logic. Bump this when the
     /// healing rules change so the pass re-runs once on the next open.
     /// </summary>
-    public const string InvoiceTotalsHealVersion = "1";
+    public const string InvoiceTotalsHealVersion = "2";
 
     /// <summary>
     /// One-time recalc that heals any historic drift between Invoice totals and
@@ -764,6 +764,21 @@ public class CompanyManager : IDisposable
                     invoice.BalanceUSD, invoice.Status);
                 if (!before.Equals(after))
                     healed = true;
+            }
+        }
+
+        // Version 2: an invoice paid in full counts its revenue as collected. Payments recorded by
+        // hand never marked it, and a portal refund took a paid invoice's revenue out. Only ever
+        // upgrades, so nothing a user marked collected is taken out of the totals.
+        foreach (var revenue in data.Revenues)
+        {
+            if (string.IsNullOrEmpty(revenue.InvoiceId) || RevenueAggregator.IsCollected(revenue))
+                continue;
+
+            if (data.GetInvoice(revenue.InvoiceId) is { } invoice && InvoiceTotalsService.IsPaidInFull(invoice))
+            {
+                revenue.PaymentStatus = RevenuePaymentStatus.Paid;
+                healed = true;
             }
         }
 

@@ -810,6 +810,7 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
         inventoryItem.InStock -= rentQty;
         inventoryItem.Status = inventoryItem.CalculateStatus();
         inventoryItem.LastUpdated = DateTime.UtcNow;
+        App.CheckAndNotifyStockStatus(inventoryItem, oldInStock);
 
         // Create stock adjustment audit record
         companyData.IdCounters.StockAdjustment++;
@@ -850,8 +851,10 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
             () =>
             {
                 companyData.Rentals.Add(rentalToUndo);
+                var stockBeforeRedo = invItemToUpdate.InStock;
                 invItemToUpdate.InStock -= rentQty;
                 invItemToUpdate.Status = invItemToUpdate.CalculateStatus();
+                App.CheckAndNotifyStockStatus(invItemToUpdate, stockBeforeRedo);
                 companyData.StockAdjustments.Add(adjToUndo);
                 companyData.MarkAsModified();
                 RentalCreated?.Invoke(this, EventArgs.Empty);

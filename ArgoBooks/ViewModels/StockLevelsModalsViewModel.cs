@@ -263,6 +263,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
         inventoryItem.InStock = newStock;
         inventoryItem.Status = inventoryItem.CalculateStatus();
         inventoryItem.LastUpdated = DateTime.UtcNow;
+        App.CheckAndNotifyStockStatus(inventoryItem, oldInStock);
 
         // Create stock adjustment record
         if (companyData != null)
@@ -302,6 +303,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
                 {
                     inventoryItem.InStock = oldInStock;
                     inventoryItem.Status = oldStatus;
+                    App.CheckAndNotifyStockStatus(inventoryItem, newStock);
                     companyData.StockAdjustments.Remove(adjustmentRecord);
                     companyData.MarkAsModified();
                     ItemSaved?.Invoke(this, EventArgs.Empty);
@@ -310,6 +312,7 @@ public partial class StockLevelsModalsViewModel : ViewModelBase
                 {
                     inventoryItem.InStock = newStock;
                     inventoryItem.Status = inventoryItem.CalculateStatus();
+                    App.CheckAndNotifyStockStatus(inventoryItem, oldInStock);
                     companyData.StockAdjustments.Add(adjustmentRecord);
                     companyData.MarkAsModified();
                     ItemSaved?.Invoke(this, EventArgs.Empty);

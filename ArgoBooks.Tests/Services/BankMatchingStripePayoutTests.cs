@@ -48,4 +48,42 @@ public class BankMatchingStripePayoutTests
 
         Assert.NotEqual(BankLineMatchStatus.Ignored, line.MatchStatus);
     }
+
+    // A payout accounts for one deposit. A customer's transfer of the same amount a day later is a
+    // different deposit and must stay open for matching.
+    [Fact]
+    public void OnePayout_IgnoresOnlyTheClosestDeposit()
+    {
+        var data = new CompanyData();
+        data.Settings.Integrations.Stripe.ImportedPayouts.Add(
+            new StripePayoutRecord { StripePayoutId = "po_1", AmountCents = 50000, Date = new DateTime(2026, 1, 3) });
+
+        var transfer = new BankStatementLine { Id = "T", Date = new DateTime(2026, 1, 4), Description = "E-TRANSFER J SMITH", Amount = 500m };
+        var payout = new BankStatementLine { Id = "P", Date = new DateTime(2026, 1, 3), Description = "STRIPE", Amount = 500m };
+
+        new BankMatchingService().MatchDeterministic(new[] { transfer, payout }, data, new BankMatchingOptions());
+
+        Assert.Equal(BankLineMatchStatus.Ignored, payout.MatchStatus);
+        Assert.NotEqual(BankLineMatchStatus.Ignored, transfer.MatchStatus);
+    }
+
+    // Matching reruns every time the page loads, so a payout already spent on one line must stay
+    // spent; otherwise the next statement's deposit of the same amount is ignored as well.
+    [Fact]
+    public void SpentPayout_IsNotReusedByALaterRun()
+    {
+        var data = new CompanyData();
+        data.Settings.Integrations.Stripe.ImportedPayouts.Add(
+            new StripePayoutRecord { StripePayoutId = "po_1", AmountCents = 50000, Date = new DateTime(2026, 1, 3) });
+        var matcher = new BankMatchingService();
+
+        var payout = new BankStatementLine { Id = "P", Date = new DateTime(2026, 1, 3), Description = "STRIPE", Amount = 500m };
+        matcher.MatchDeterministic(new[] { payout }, data, new BankMatchingOptions());
+
+        var later = new BankStatementLine { Id = "T", Date = new DateTime(2026, 1, 4), Description = "E-TRANSFER J SMITH", Amount = 500m };
+        matcher.MatchDeterministic(new[] { payout, later }, data, new BankMatchingOptions());
+
+        Assert.Equal(BankLineMatchStatus.Ignored, payout.MatchStatus);
+        Assert.NotEqual(BankLineMatchStatus.Ignored, later.MatchStatus);
+    }
 }
