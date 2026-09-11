@@ -327,6 +327,65 @@ public class SpreadsheetRoundTripFidelityTests : IDisposable
         Assert.Equal(315m, Assert.Single(target.Revenues, r => r.InvoiceId == "INV-2025-00001").Total);
     }
 
+    public static TheoryData<string[]> SheetOrdersWithLines => new()
+    {
+        new[] { "Customers", "Products", "Revenue", "Invoices", "Invoice Line Items" },
+        new[] { "Customers", "Products", "Invoices", "Invoice Line Items", "Revenue" },
+    };
+
+    [Theory]
+    [MemberData(nameof(SheetOrdersWithLines))]
+    public async Task RevenueFromAMultiLineInvoice_KeepsTheInvoicesLinesInsteadOfMakingAProduct(string[] sheets)
+    {
+        // Its description only summarises the lines, "Widget (+2 more)", and the importer took
+        // that for a product name and created a product and a category called that.
+        CompanyData source = PaidInvoiceSource(withLinkedRevenue: true);
+        source.Products.Add(new Product { Id = "PRD-001", Name = "Widget" });
+        source.Products.Add(new Product { Id = "PRD-002", Name = "Gadget" });
+        source.Products.Add(new Product { Id = "PRD-003", Name = "Gizmo" });
+        List<LineItem> lines =
+        [
+            new() { ProductId = "PRD-001", Description = "Widget", Quantity = 1m, UnitPrice = 100m },
+            new() { ProductId = "PRD-002", Description = "Gadget", Quantity = 1m, UnitPrice = 100m },
+            new() { ProductId = "PRD-003", Description = "Gizmo", Quantity = 1m, UnitPrice = 100m },
+        ];
+        source.Invoices.Single().LineItems = lines;
+        Revenue fromInvoice = source.Revenues.Single(r => r.Id == "REV-2025-00001");
+        fromInvoice.Description = "Widget (+2 more)";
+        fromInvoice.LineItems = [.. lines];
+
+        CompanyData target = await RoundTripAsync(source, sheets);
+
+        Assert.DoesNotContain(target.Products, p => p.Name == "Widget (+2 more)");
+        Assert.DoesNotContain(target.Categories, c => c.Name == "Widget (+2 more)");
+        Revenue revenue = target.Revenues.Single(r => r.Id == "REV-2025-00001");
+        Assert.Equal(["PRD-001", "PRD-002", "PRD-003"], revenue.LineItems.Select(li => li.ProductId ?? "").ToArray());
+    }
+
+    [Fact]
+    public async Task ARevenueNamingAnInvoiceThatIsNotThere_ImportsAsAPlainSale()
+    {
+        var source = new CompanyData();
+        source.Settings.Localization.Currency = "USD";
+        source.Revenues.Add(new Revenue
+        {
+            Id = "REV-2025-00009",
+            Date = new DateTime(2025, 5, 6),
+            Description = "Widget",
+            InvoiceId = "1001",
+            Quantity = 1m,
+            UnitPrice = 40m,
+            Total = 40m,
+        });
+
+        CompanyData target = await RoundTripAsync(source, ["Revenue"]);
+
+        Revenue revenue = Assert.Single(target.Revenues);
+        Assert.Null(revenue.InvoiceId);
+        Product widget = Assert.Single(target.Products, p => p.Name == "Widget");
+        Assert.Equal(widget.Id, Assert.Single(revenue.LineItems).ProductId);
+    }
+
     #endregion
 
     #region Quantities

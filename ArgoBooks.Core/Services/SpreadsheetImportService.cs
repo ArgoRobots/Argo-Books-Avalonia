@@ -1352,15 +1352,56 @@ public class SpreadsheetImportService
     /// <summary>Paid invoices brought in by the current import, given their revenue by <see cref="FinishImport"/>.</summary>
     private readonly List<Invoice> _invoicesAwaitingRevenue = [];
 
+    /// <summary>Imported revenue rows that named an invoice, settled by <see cref="FinishImport"/>.</summary>
+    private readonly List<Revenue> _revenuesNamingAnInvoice = [];
+
     /// <summary>
-    /// Closes out an import: brings the id counters up to date, then gives each paid invoice it
-    /// brought in a revenue unless one came in with it. Held until every sheet is in because the
-    /// Revenue sheet can come after the Invoices sheet, and so the new revenue is numbered past
-    /// every imported id rather than from a counter that has not caught up with them.
+    /// Closes out an import: brings the id counters up to date, settles revenue that named an
+    /// invoice, then gives each paid invoice it brought in a revenue unless one came in with it.
+    /// Held until every sheet is in because the Revenue sheet can come before or after the
+    /// Invoices sheet, and so the new revenue is numbered past every imported id rather than
+    /// from a counter that has not caught up with them.
     /// </summary>
     private void FinishImport(CompanyData data)
     {
         UpdateIdCounters(data);
+
+        foreach (var revenue in _revenuesNamingAnInvoice)
+        {
+            if (!data.Revenues.Contains(revenue))
+                continue;
+
+            var invoice = data.Invoices.FirstOrDefault(i => i.Id == revenue.InvoiceId)
+                          ?? data.Invoices.FirstOrDefault(i => i.InvoiceNumber == revenue.InvoiceId);
+
+            // No such invoice, so it is an ordinary sale, the way a payment naming a missing
+            // invoice has its reference cleared.
+            if (invoice == null)
+            {
+                revenue.InvoiceId = null;
+                if (!revenue.IsKeptDeposit)
+                    LinkRevenueProduct(data, revenue);
+                continue;
+            }
+
+            revenue.InvoiceId = invoice.Id;
+
+            // Its description only summarises the invoice's lines ("Widget (+2 more)"), so the
+            // lines come from the invoice. A kept deposit has none, as when the app records one.
+            if (!revenue.IsKeptDeposit && invoice.LineItems.Count > 0)
+            {
+                revenue.LineItems = invoice.LineItems.Select(li => new LineItem
+                {
+                    ProductId = li.ProductId,
+                    Description = li.Description,
+                    Quantity = li.Quantity,
+                    UnitPrice = li.UnitPrice,
+                    TaxRate = li.TaxRate,
+                    Discount = li.Discount
+                }).ToList();
+            }
+        }
+        _revenuesNamingAnInvoice.Clear();
 
         foreach (var awaiting in _invoicesAwaitingRevenue)
         {
@@ -1748,9 +1789,14 @@ public class SpreadsheetImportService
                     if (revenue.Amount == 0)
                         revenue.Amount = revenue.Quantity * revenue.UnitPrice;
 
-                    // Link product by name and auto-create if missing
+                    // Link product by name and auto-create if missing. Revenue from an invoice takes
+                    // the invoice's lines instead, once every sheet is in.
                     var productName = revenue.Description;
-                    if (!string.IsNullOrEmpty(productName))
+                    if (!string.IsNullOrEmpty(revenue.InvoiceId))
+                    {
+                        _revenuesNamingAnInvoice.Add(revenue);
+                    }
+                    else if (!string.IsNullOrEmpty(productName))
                     {
                         var revCategory = entityJson.TryGetProperty("categoryName", out var rc) ? rc.GetString() : null;
                         var revenueProduct = FindProductByName(data, productName, CategoryType.Revenue)
@@ -4031,24 +4077,12 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Per-row currency detected from the amount cells, else the company currency.
             ApplyTransactionCurrency(revenue, rowIndex, data);
 
-            // Link product by looking up by name and creating a LineItem
-            // Prefer products with Revenue-type categories when there are duplicate names
-            // Auto-create the product if it doesn't exist
-            if (!string.IsNullOrEmpty(description))
-            {
-                var product = FindProductByName(data, description, CategoryType.Revenue)
-                              ?? AutoCreateProduct(data, description, unitPrice, CategoryType.Revenue);
-
-                var lineItem = new LineItem
-                {
-                    ProductId = product.Id,
-                    Description = description,
-                    Quantity = quantity,
-                    UnitPrice = unitPrice,
-                    TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
-                };
-                revenue.LineItems = [lineItem];
-            }
+            // Revenue from an invoice takes its lines from the invoice, which may be on a later
+            // sheet, so it is settled once every sheet is in.
+            if (!string.IsNullOrEmpty(revenue.InvoiceId))
+                _revenuesNamingAnInvoice.Add(revenue);
+            else
+                LinkRevenueProduct(data, revenue);
 
             if (existing == null)
                 data.Revenues.Add(revenue);
@@ -4145,6 +4179,31 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             fallback ??= p;
         }
         return fallback;
+    }
+
+    /// <summary>
+    /// Gives a revenue one line for the product its description names, found by name (preferring
+    /// a revenue-type product) or created. Leaves a revenue with no description alone.
+    /// </summary>
+    private void LinkRevenueProduct(CompanyData data, Revenue revenue)
+    {
+        if (string.IsNullOrEmpty(revenue.Description))
+            return;
+
+        var product = FindProductByName(data, revenue.Description, CategoryType.Revenue)
+                      ?? AutoCreateProduct(data, revenue.Description, revenue.UnitPrice, CategoryType.Revenue);
+
+        revenue.LineItems =
+        [
+            new LineItem
+            {
+                ProductId = product.Id,
+                Description = revenue.Description,
+                Quantity = revenue.Quantity,
+                UnitPrice = revenue.UnitPrice,
+                TaxRate = revenue.Amount > 0 ? revenue.TaxAmount / revenue.Amount : 0
+            }
+        ];
     }
 
     /// <summary>
