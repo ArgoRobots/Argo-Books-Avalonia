@@ -50,6 +50,13 @@ public class PortalPublishResponse
 
     [JsonPropertyName("errorCode")]
     public string? ErrorCode { get; set; }
+
+    /// <summary>
+    /// A failed publish that leaves open whether the portal saved the invoice and emailed the
+    /// customer: a timeout, a dropped connection, a server fault. Not part of the response body.
+    /// </summary>
+    [JsonIgnore]
+    public bool MayHavePublished { get; set; }
 }
 
 /// <summary>

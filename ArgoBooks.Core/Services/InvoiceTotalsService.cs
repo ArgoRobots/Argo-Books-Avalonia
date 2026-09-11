@@ -88,10 +88,58 @@ public static class InvoiceTotalsService
     }
 
     /// <summary>
-    /// Recompute the invoice's stored Status from AmountPaid / AmountRefunded.
-    /// Touches Paid / Partial / PartiallyRefunded / Refunded only. Lifecycle
-    /// states (Draft / Pending / Sent / Viewed / Cancelled / Overdue) are
-    /// owned by the surfaces that drive them and are not overwritten here.
+    /// Recompute the invoice's stored Status from AmountPaid / AmountRefunded,
+    /// as Paid / Partial / PartiallyRefunded / Refunded. Lifecycle states
+    /// (Draft / Pending / Sent / Viewed / Cancelled / Overdue) are owned by the
+    /// surfaces that drive them: one is left only once a payment or refund has
+    /// happened, and is remembered in <see cref="Invoice.StatusBeforePayment"/>
+    /// so the invoice goes back to it when every payment is removed again.
+    /// </summary>
+    public static void RecalculateStatus(Invoice invoice)
+    {
+        if (invoice == null) return;
+        var hasPayments = invoice.AmountPaid > 0 || invoice.AmountRefunded > 0;
+        if (invoice.Status == InvoiceStatus.Draft
+            || invoice.Status == InvoiceStatus.Pending
+            || invoice.Status == InvoiceStatus.Sent
+            || invoice.Status == InvoiceStatus.Viewed
+            || invoice.Status == InvoiceStatus.Cancelled
+            || invoice.Status == InvoiceStatus.Overdue)
+        {
+            // Lifecycle states are external, only re-evaluate once a
+            // payment or refund has actually happened.
+            if (!hasPayments)
+                return;
+            invoice.StatusBeforePayment = invoice.Status;
+        }
+        else if (!hasPayments && invoice.StatusBeforePayment is { } before)
+        {
+            // Every payment was deleted, undone or moved to another invoice, so it is owed again.
+            invoice.Status = before;
+            invoice.StatusBeforePayment = null;
+            return;
+        }
+
+        if (invoice.AmountRefunded > 0 && invoice.AmountPaid > 0)
+        {
+            invoice.Status = RefundedStatus(invoice);
+            return;
+        }
+
+        if (invoice.Balance <= 0 && invoice.AmountPaid > 0)
+        {
+            invoice.Status = InvoiceStatus.Paid;
+            return;
+        }
+
+        if (invoice.AmountPaid > 0)
+        {
+            invoice.Status = InvoiceStatus.Partial;
+        }
+    }
+
+    /// <summary>
+    /// Which refund status an invoice with refunds has (docs/Calculations.md §6).
     ///
     /// The refund-status rule has two competing inputs:
     ///   (a) Processing fees make AmountPaid &gt; Total even when a single
@@ -106,51 +154,18 @@ public static class InvoiceTotalsService
     /// over again on top of the refund (case b).
     /// Tiny epsilon for cent-level float drift.
     /// </summary>
-    public static void RecalculateStatus(Invoice invoice)
+    public static InvoiceStatus RefundedStatus(Invoice invoice)
     {
-        if (invoice == null) return;
-        if (invoice.Status == InvoiceStatus.Draft
-            || invoice.Status == InvoiceStatus.Pending
-            || invoice.Status == InvoiceStatus.Sent
-            || invoice.Status == InvoiceStatus.Viewed
-            || invoice.Status == InvoiceStatus.Cancelled
-            || invoice.Status == InvoiceStatus.Overdue)
-        {
-            // Lifecycle states are external, only re-evaluate once a
-            // payment or refund has actually happened.
-            if (invoice.AmountPaid <= 0 && invoice.AmountRefunded <= 0)
-                return;
-        }
+        if (invoice.AmountRefunded + 0.01m < invoice.Total)
+            return InvoiceStatus.PartiallyRefunded;
 
-        if (invoice.AmountRefunded > 0 && invoice.AmountPaid > 0)
-        {
-            if (invoice.AmountRefunded + 0.01m >= invoice.Total)
-            {
-                // Refund covers a full invoice value. Distinguish "single
-                // pay + fee, fully refunded" from "pay → refund → pay again":
-                // the latter leaves a net of at least one invoice value.
-                var netPaid = invoice.AmountPaid - invoice.AmountRefunded;
-                invoice.Status = netPaid + 0.01m < invoice.Total
-                    ? InvoiceStatus.Refunded
-                    : InvoiceStatus.PartiallyRefunded;
-            }
-            else
-            {
-                invoice.Status = InvoiceStatus.PartiallyRefunded;
-            }
-            return;
-        }
-
-        if (invoice.Balance <= 0 && invoice.AmountPaid > 0)
-        {
-            invoice.Status = InvoiceStatus.Paid;
-            return;
-        }
-
-        if (invoice.AmountPaid > 0)
-        {
-            invoice.Status = InvoiceStatus.Partial;
-        }
+        // Refund covers a full invoice value. Distinguish "single
+        // pay + fee, fully refunded" from "pay → refund → pay again":
+        // the latter leaves a net of at least one invoice value.
+        var netPaid = invoice.AmountPaid - invoice.AmountRefunded;
+        return netPaid + 0.01m < invoice.Total
+            ? InvoiceStatus.Refunded
+            : InvoiceStatus.PartiallyRefunded;
     }
 
     /// <summary>

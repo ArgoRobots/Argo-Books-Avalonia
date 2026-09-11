@@ -877,7 +877,12 @@ public partial class PaymentModalsViewModel : ViewModelBase
         if (companyData?.Invoices == null)
             return;
 
-        foreach (var invoice in companyData.Invoices.OrderByDescending(i => i.IssueDate))
+        // Payments are recorded on sent invoices, as the invoice row offers. A payment on a draft
+        // marked it paid while its revenue, created when it is sent, never existed. A draft that
+        // already has a payment keeps it linked when that payment is edited.
+        foreach (var invoice in companyData.Invoices
+                     .Where(i => i.Status != InvoiceStatus.Draft || i.Id == _editingPayment?.InvoiceId)
+                     .OrderByDescending(i => i.IssueDate))
         {
             var customer = companyData.GetCustomer(invoice.CustomerId);
             var customerName = customer?.Name ?? "Unknown";

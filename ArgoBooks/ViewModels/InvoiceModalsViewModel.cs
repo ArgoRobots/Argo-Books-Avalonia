@@ -172,6 +172,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     private string _editingInvoiceId = string.Empty;
 
+    /// <summary>
+    /// A new invoice whose send ended without an answer (a timeout, say). The portal may already have
+    /// published and emailed it, and it updates an invoice it holds rather than adding a second, so a
+    /// resend to the same customer keeps this number. Cleared when the form resets.
+    /// </summary>
+    private (string Id, string Number, string CustomerId)? _unansweredSend;
+
     [ObservableProperty]
     private CustomerOption? _selectedCustomer;
 
@@ -1974,6 +1981,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         var isContinuingDraft = !string.IsNullOrEmpty(_editingInvoiceId) && AllowPreview;
         Invoice invoice;
         Invoice? existingDraft;
+        Action? restoreDraft = null;
+        int? takenInvoiceCounter = null;
 
         if (isContinuingDraft)
         {
@@ -1984,6 +1993,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                 await ShowSendErrorAsync("Could not find the draft invoice.".Translate());
                 return;
             }
+
+            // A failed send puts the draft back, so discarding afterwards drops the edits rather
+            // than leaving them in the draft for the next save to keep.
+            restoreDraft = CaptureDraft(existingDraft, companyData);
 
             // Update the existing invoice
             invoice = existingDraft;
@@ -2021,10 +2034,19 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         }
         else
         {
-            // Generate new invoice ID using IdGenerator
-            var idGenerator = new IdGenerator(companyData);
-            var invoiceId = idGenerator.NextInvoiceId();
-            var invoiceNumber = idGenerator.NextInvoiceNumber();
+            string invoiceId, invoiceNumber;
+            if (_unansweredSend is { } unanswered && unanswered.CustomerId == SelectedCustomer!.Id)
+            {
+                (invoiceId, invoiceNumber, _) = unanswered;
+            }
+            else
+            {
+                // Generate new invoice ID using IdGenerator
+                var idGenerator = new IdGenerator(companyData);
+                invoiceId = idGenerator.NextInvoiceId();
+                invoiceNumber = idGenerator.NextInvoiceNumber();
+                takenInvoiceCounter = companyData.IdCounters.Invoice;
+            }
 
             invoice = new Invoice
             {
@@ -2085,6 +2107,23 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         // the Payment list" is preserved. See docs/Calculations.md §5.
         InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
 
+        // Undoes what this attempt changed and says why it failed. The number goes back only when the
+        // portal can't hold it: reusing one it published would put another invoice behind the link
+        // that customer was emailed.
+        async Task SendFailedAsync(string message, bool mayHavePublished)
+        {
+            restoreDraft?.Invoke();
+            if (!isContinuingDraft)
+            {
+                if (mayHavePublished)
+                    _unansweredSend = (invoice.Id, invoice.InvoiceNumber, invoice.CustomerId);
+                else if (takenInvoiceCounter is { } taken && companyData.IdCounters.Invoice == taken)
+                    companyData.IdCounters.Invoice = taken - 1;
+            }
+
+            await ShowSendErrorAsync(message);
+        }
+
         // Publish and send: portal handles both publishing and email delivery via sendEmail: true.
         // When portal is not configured, fall back to desktop email sending.
         if (PortalSettings.IsConfigured)
@@ -2120,16 +2159,18 @@ public partial class InvoiceModalsViewModel : ViewModelBase
                         var detail = !string.IsNullOrEmpty(publishResponse.Message)
                             ? publishResponse.Message
                             : "The payment portal did not return a payment link.";
-                        await ShowSendErrorAsync(
-                            $"{"Failed to publish invoice to payment portal:".Translate()} {detail}");
+                        await SendFailedAsync(
+                            $"{"Failed to publish invoice to payment portal:".Translate()} {detail}",
+                            publishResponse.MayHavePublished);
                         return;
                     }
                 }
             }
             catch (Exception ex)
             {
-                await ShowSendErrorAsync(
-                    $"{"Failed to publish invoice to payment portal:".Translate()} {ex.Message}");
+                await SendFailedAsync(
+                    $"{"Failed to publish invoice to payment portal:".Translate()} {ex.Message}",
+                    mayHavePublished: true);
                 return;
             }
         }
@@ -2152,17 +2193,18 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
                 if (!response.Success)
                 {
-                    await ShowSendErrorAsync(response.Message);
+                    await SendFailedAsync(response.Message, mayHavePublished: false);
                     return;
                 }
             }
             catch (Exception ex)
             {
-                await ShowSendErrorAsync($"{"Failed to send invoice:".Translate()} {ex.Message}");
+                await SendFailedAsync($"{"Failed to send invoice:".Translate()} {ex.Message}", mayHavePublished: true);
                 return;
             }
         }
 
+        _unansweredSend = null;
         invoice.Status = InvoiceStatus.Sent;
         invoice.History.Add(new InvoiceHistoryEntry
         {
@@ -2225,6 +2267,27 @@ public partial class InvoiceModalsViewModel : ViewModelBase
         IsShowingSuccess = true;
     }
 
+    /// <summary>
+    /// Returns an action that puts <paramref name="draft"/> back as it is now, with its entries in the
+    /// conversion queue. Every settable property is copied so nothing a send writes is missed; the send
+    /// replaces the line item list rather than editing it, so holding the old list is enough.
+    /// </summary>
+    private static Action CaptureDraft(Invoice draft, CompanyData companyData)
+    {
+        var properties = typeof(Invoice).GetProperties().Where(p => p.CanWrite).ToArray();
+        var values = properties.Select(p => p.GetValue(draft)).ToArray();
+        var conversions = companyData.PendingConversions.Where(p => p.TransactionId == draft.Id).ToList();
+
+        return () =>
+        {
+            for (var i = 0; i < properties.Length; i++)
+                properties[i].SetValue(draft, values[i]);
+            companyData.PendingConversions.RemoveAll(p => p.TransactionId == draft.Id);
+            companyData.PendingConversions.AddRange(conversions);
+            _ = PendingConversionService.Instance?.MirrorAsync(companyData, [draft.Id]);
+        };
+    }
+
     private string PeekNextInvoiceNumber()
     {
         var companyData = App.CompanyManager?.CompanyData;
@@ -2238,6 +2301,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             if (draft != null)
                 return draft.InvoiceNumber;
         }
+
+        if (_unansweredSend is { } unanswered && unanswered.CustomerId == SelectedCustomer?.Id)
+            return unanswered.Number;
 
         var idGenerator = new IdGenerator(companyData);
         return idGenerator.PeekNextInvoice().Number;
@@ -2828,6 +2894,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     private void ResetForm()
     {
         _editingInvoiceId = string.Empty;
+        _unansweredSend = null;
         _paperLogo = null;
         IsFromRental = false;
         IsFromRevenue = false;

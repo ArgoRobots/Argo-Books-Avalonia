@@ -150,6 +150,112 @@ public class PaymentModalsViewModelTests : ModalViewModelTestBase
         Assert.Equal(RevenuePaymentStatus.Unpaid, revenue.PaymentStatus);
     }
 
+    /// <summary>
+    /// Undoing the only payment left the invoice Paid with its whole balance owing, so it dropped out
+    /// of Outstanding and could never go overdue. It goes back to Sent, and its revenue with it.
+    /// </summary>
+    [Fact]
+    public async Task SaveNewPayment_ThenUndo_ReturnsTheInvoiceToSent()
+    {
+        var invoice = AddInvoice("USD", 100m);
+        var revenue = AddInvoiceRevenue(invoice);
+        await NewPaymentFor(invoice.Id, "100").SaveNewPayment();
+
+        Undo();
+        Assert.Equal(InvoiceStatus.Sent, invoice.Status);
+        Assert.Equal(RevenuePaymentStatus.Unpaid, revenue.PaymentStatus);
+
+        Redo();
+        Assert.Equal(InvoiceStatus.Paid, invoice.Status);
+    }
+
+    [Fact]
+    public async Task SaveEditedPayment_MovingTheOnlyPaymentToAnotherInvoice_ReturnsTheFirstToSent()
+    {
+        var first = AddInvoice("USD", 100m);
+        var second = new Invoice
+        {
+            Id = "INV-002",
+            InvoiceNumber = "INV-002",
+            CustomerId = "CUST-1",
+            OriginalCurrency = "USD",
+            Total = 100m,
+            TotalUSD = 100m,
+            Balance = 100m,
+            Status = InvoiceStatus.Sent,
+            IssueDate = new DateTime(2026, 1, 6),
+            DueDate = new DateTime(2026, 2, 6)
+        };
+        Company.Invoices.Add(second);
+        await NewPaymentFor(first.Id, "100").SaveNewPayment();
+        var payment = Assert.Single(Company.Payments);
+
+        var vm = new PaymentModalsViewModel();
+        vm.OpenEditModal(new PaymentDisplayItem { Id = payment.Id });
+        vm.SelectedInvoice = vm.InvoiceOptions.First(o => o.Id == second.Id);
+        await vm.SaveEditedPayment();
+
+        Assert.Equal(InvoiceStatus.Sent, first.Status);
+        Assert.Equal(100m, first.Balance);
+        Assert.Equal(InvoiceStatus.Paid, second.Status);
+
+        Undo();
+        Assert.Equal(InvoiceStatus.Paid, first.Status);
+        Assert.Equal(InvoiceStatus.Sent, second.Status);
+    }
+
+    /// <summary>
+    /// Payments are recorded on invoices that have been sent, which is when the invoice row offers it.
+    /// A draft in this list could be paid, turning it Paid without its revenue ever being created.
+    /// </summary>
+    [Fact]
+    public void OpenAddModal_DoesNotOfferDrafts()
+    {
+        var sent = AddInvoice("USD", 100m);
+        Company.Invoices.Add(new Invoice
+        {
+            Id = "INV-002",
+            InvoiceNumber = "INV-002",
+            CustomerId = "CUST-1",
+            Total = 50m,
+            Balance = 50m,
+            Status = InvoiceStatus.Draft,
+            IssueDate = new DateTime(2026, 1, 6),
+            DueDate = new DateTime(2026, 2, 6)
+        });
+
+        var vm = new PaymentModalsViewModel();
+        vm.OpenAddModal();
+
+        Assert.Contains(vm.InvoiceOptions, o => o.Id == sent.Id);
+        Assert.DoesNotContain(vm.InvoiceOptions, o => o.Id == "INV-002");
+    }
+
+    /// <summary>
+    /// A draft paid before drafts left the list keeps its payment linked when that payment is edited.
+    /// </summary>
+    [Fact]
+    public void OpenEditModal_PaymentAlreadyOnADraft_KeepsThatInvoice()
+    {
+        var draft = AddInvoice("USD", 100m);
+        draft.Status = InvoiceStatus.Draft;
+        Company.Payments.Add(new Payment
+        {
+            Id = "PAY-001",
+            InvoiceId = draft.Id,
+            CustomerId = "CUST-1",
+            Amount = 100m,
+            AmountUSD = 100m,
+            OriginalCurrency = "USD",
+            Date = new DateTime(2026, 1, 10)
+        });
+
+        var vm = new PaymentModalsViewModel();
+        vm.OpenEditModal(new PaymentDisplayItem { Id = "PAY-001" });
+
+        Assert.Equal(draft.Id, vm.SelectedInvoice?.Id);
+    }
+
     private sealed class Restore(Action restore) : IDisposable
     {
         public void Dispose() => restore();

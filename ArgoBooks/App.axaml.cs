@@ -759,8 +759,9 @@ public partial class App : Application
         // Check for overdue invoices
         if (settings.InvoiceOverdueAlert)
         {
+            // A never-sent draft isn't owed, as on the Invoices page and dashboard.
             var overdueInvoices = companyData.Invoices
-                .Where(invoice => invoice.IsOverdue)
+                .Where(invoice => invoice.IsOverdue && invoice.Status != InvoiceStatus.Draft)
                 .ToList();
 
             if (overdueInvoices.Count > 0)

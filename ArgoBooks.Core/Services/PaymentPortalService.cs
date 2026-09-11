@@ -188,25 +188,35 @@ public class PaymentPortalService : IDisposable
                 };
             }
 
-            var errorResponse = DeserializeResponse<PortalPublishResponse>(content);
-            return errorResponse ?? new PortalPublishResponse
+            var errorResponse = DeserializeResponse<PortalPublishResponse>(content) ?? new PortalPublishResponse
             {
                 Success = false,
                 Message = $"Portal returned status {(int)response.StatusCode}",
                 ErrorCode = ((int)response.StatusCode).ToString()
             };
+            // A rejection comes before anything is saved; a server fault can come after the save and email.
+            errorResponse.MayHavePublished = (int)response.StatusCode >= 500;
+            return errorResponse;
         }
         catch (TaskCanceledException)
         {
-            return new PortalPublishResponse { Success = false, Message = "Request timed out.", ErrorCode = "TIMEOUT" };
+            return new PortalPublishResponse { Success = false, Message = "Request timed out.", ErrorCode = "TIMEOUT", MayHavePublished = true };
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
-            return new PortalPublishResponse { Success = false, Message = await ConnectivityMessage.ResolveAsync(), ErrorCode = "NETWORK_ERROR" };
+            return new PortalPublishResponse
+            {
+                Success = false,
+                Message = await ConnectivityMessage.ResolveAsync(),
+                ErrorCode = "NETWORK_ERROR",
+                // Only failing to connect at all means the portal never received the invoice.
+                MayHavePublished = ex.HttpRequestError is not (HttpRequestError.NameResolutionError
+                    or HttpRequestError.ConnectionError or HttpRequestError.SecureConnectionError)
+            };
         }
         catch (Exception)
         {
-            return new PortalPublishResponse { Success = false, Message = "An unexpected error occurred. Please try again.", ErrorCode = "UNKNOWN_ERROR" };
+            return new PortalPublishResponse { Success = false, Message = "An unexpected error occurred. Please try again.", ErrorCode = "UNKNOWN_ERROR", MayHavePublished = true };
         }
     }
 

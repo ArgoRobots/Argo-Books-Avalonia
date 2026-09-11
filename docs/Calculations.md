@@ -160,7 +160,9 @@ A payment can instead be linked to a revenue (`Payment.RevenueId`) rather than a
 | `BalanceUSD` | `max(0, TotalUSD − sumOfPaymentsUSD)` | USD-normalized balance for cross-currency aggregation. |
 | `NetPaid` *(computed)* | `AmountPaid − AmountRefunded` | Cash kept from this invoice. Used in revenue/profit aggregation. |
 
-`InvoiceTotalsService.RecalculateStatus` separately recomputes the stored `Status` from `AmountPaid` / `AmountRefunded`, flipping between Paid / Partial / PartiallyRefunded / Refunded as appropriate. Lifecycle states (Draft / Pending / Sent / Viewed / Cancelled / Overdue) are owned by the surfaces that drive them and are not overwritten by this service.
+`InvoiceTotalsService.RecalculateStatus` separately recomputes the stored `Status` from `AmountPaid` / `AmountRefunded`, flipping between Paid / Partial / PartiallyRefunded / Refunded as appropriate. Lifecycle states (Draft / Pending / Sent / Viewed / Cancelled / Overdue) are owned by the surfaces that drive them. This service leaves one only when a payment or refund arrives, and remembers it in `Invoice.StatusBeforePayment`. When every payment is removed again (deleted, undone, or moved to another invoice), the invoice goes back to that status, so it is outstanding again and can go overdue. An invoice that reached a payment status some other way (an import marked Paid) has no earlier status to return to and keeps its own.
+
+Payments are recorded on invoices that have been sent. The payment form does not offer drafts, because an invoice's revenue is only created when it is sent (§7); a draft's existing payment stays linked when edited.
 
 A one-time recalc pass runs on `CompanyData` load (`CompanyManager.OpenCompanyAsync`) to heal any historic drift, scoped to invoices that actually have Payment rows, invoices imported from spreadsheets without payments keep the stored `AmountPaid` value the import gave them.
 
@@ -187,7 +189,7 @@ If you find code that subtracts refunds from a `Payment.Amount` before displayin
 | `Viewed` | Recipient opened it. | Portal tracking signal. |
 | `Partial` | Customer paid some, owes more. | `0 < AmountPaid < Total`. |
 | `Paid` | `AmountPaid >= Total`. | First positive payment that closes the balance. |
-| `Overdue` | Today is past `DueDate` and not fully paid / cancelled. | Derived (`IsOverdue` getter), not a stored transition. |
+| `Overdue` | Today is past `DueDate` and something is still owed: not Paid, Refunded, Cancelled, or paid in full and then partly refunded. | Derived (`IsOverdue` getter), not a stored transition. |
 | `Cancelled` | Invoice voided. | Explicit user action. |
 | `PartiallyRefunded` | Was paid, then some (but not all) was refunded, or was fully refunded and then paid again. | See refund rule below. |
 | `Refunded` | Was paid, then fully refunded with no subsequent payment. | See refund rule below. |
@@ -202,8 +204,8 @@ The discriminator is **net paid** (`AmountPaid − AmountRefunded`). If it is le
 Owned by `InvoiceTotalsService.RecalculateStatus`.
 
 Heuristics:
-- `Overdue` is a *display state*, not a write. Always compute it from `DueDate` and `Status != Paid/Cancelled` rather than storing it.
-- Refund statuses (`PartiallyRefunded` / `Refunded`) supersede `Paid` as soon as a refund row exists for the invoice. The display layer self-heals using `AmountRefunded` vs `Total` rather than relying on the stored status, if the stored status disagrees, the computed one wins.
+- `Overdue` is a *display state*, not a write. Always compute it with `Invoice.IsOverdue` (past `DueDate`, not Paid / Refunded / Cancelled, and not paid in full) rather than storing it. A partly paid invoice that was then partly refunded still owes its balance, so it can be overdue.
+- Refund statuses (`PartiallyRefunded` / `Refunded`) supersede `Paid` as soon as a refund row exists for the invoice. The display layer self-heals with the same net-paid rule (`InvoiceTotalsService.RefundedStatus`) rather than relying on the stored status, if the stored status disagrees, the computed one wins.
 
 ---
 
@@ -276,7 +278,7 @@ Worked example:
 
 ### Effect on invoice status
 
-See §6. The status flips to `PartiallyRefunded` or `Refunded` based on `AmountRefunded` vs `Total`.
+See §6. The status flips to `PartiallyRefunded` or `Refunded` by the refund status rule there (net paid vs `Total`).
 
 ---
 
