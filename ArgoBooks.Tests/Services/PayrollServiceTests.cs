@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Models.Transactions;
@@ -359,6 +361,59 @@ public class PayrollServiceTests
         data.PayRuns.Add(draft);
 
         Assert.Equal(0m, new PayrollService().YearToDateFor(data, "EMP-001").CppEmployee);
+    }
+
+    #endregion
+
+    #region TD1 claims
+
+    private static (decimal Federal, decimal Provincial) TaxFor(Employee employee)
+    {
+        var data = new CompanyData { Employees = { employee } };
+        PayRun run = new PayrollService().CreateDraft(data, PayDate, PayDate.AddDays(-13), PayDate)!;
+        return (run.Lines[0].FederalTax, run.Lines[0].ProvincialTax);
+    }
+
+    [Fact]
+    public void AZeroClaim_ReachesTheCalculator()
+    {
+        Employee claimsNothing = DataWithEmployee().Employees[0];
+        claimsNothing.FederalClaimIsZero = true;
+        claimsNothing.ProvincialClaimIsZero = true;
+
+        (decimal federal, decimal provincial) = TaxFor(claimsNothing);
+        (decimal basicFederal, decimal basicProvincial) = TaxFor(DataWithEmployee().Employees[0]);
+
+        Assert.True(federal > basicFederal);
+        Assert.True(provincial > basicProvincial);
+    }
+
+    [Fact]
+    public void AnEmployeeFromAFileWrittenBeforeZeroClaims_StillGetsTheBasicPersonalAmount()
+    {
+        // Every existing file stores 0 for "no TD1 on file". Reading one must not turn that into
+        // a claim of nothing, which would raise the tax of every such employee on the next run.
+        // The options are the ones FileService reads a company file with.
+        const string json = """
+            {"id":"EMP-001","name":"Test Person","province":"AB","payType":"Salary","payRate":52000,
+             "payFrequency":"Biweekly","federalClaimAmount":0,"provincialClaimAmount":0}
+            """;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonStringEnumConverter() },
+        };
+
+        Employee loaded = JsonSerializer.Deserialize<Employee>(json, options)!;
+
+        PayrollRateTable rates = new PayrollRateService().GetForDate(PayDate)!;
+        Employee explicitBasic = DataWithEmployee().Employees[0];
+        explicitBasic.FederalClaimAmount = rates.Federal.BasicPersonalAmount.Maximum;
+        explicitBasic.ProvincialClaimAmount = rates.Provinces["AB"].BasicPersonalAmount.Maximum;
+
+        Assert.False(loaded.FederalClaimIsZero);
+        Assert.False(loaded.ProvincialClaimIsZero);
+        Assert.Equal(TaxFor(explicitBasic), TaxFor(loaded));
     }
 
     #endregion

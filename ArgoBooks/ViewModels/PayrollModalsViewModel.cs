@@ -229,7 +229,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
 
     private string EmployeeFormSnapshot() => string.Join('\u001f',
         Name, EmployeeNumber, Province, IsSalaried, Parse(PayRate), PayFrequency,
-        Parse(StandardHoursPerWeek), Parse(FederalClaimAmount), Parse(ProvincialClaimAmount),
+        Parse(StandardHoursPerWeek), Parse(FederalClaimAmount), IsTypedZero(FederalClaimAmount),
+        Parse(ProvincialClaimAmount), IsTypedZero(ProvincialClaimAmount),
         OntarioDependants, IsCppExempt, IsEiExempt, StartDate, EndDate,
         Sin, AddressStreet, AddressCity, AddressProvince, AddressPostalCode, AddressCountry,
         DentalBenefit, Notes);
@@ -259,8 +260,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
         PayRate = employee.PayRate == 0m ? string.Empty : CurrencyService.Format(employee.PayRate);
         PayFrequency = employee.PayFrequency;
         StandardHoursPerWeek = employee.StandardHoursPerWeek?.ToString("0.##") ?? string.Empty;
-        FederalClaimAmount = Money(employee.FederalClaimAmount);
-        ProvincialClaimAmount = Money(employee.ProvincialClaimAmount);
+        FederalClaimAmount = Claim(employee.FederalClaimAmount, employee.FederalClaimIsZero);
+        ProvincialClaimAmount = Claim(employee.ProvincialClaimAmount, employee.ProvincialClaimIsZero);
         OntarioDependants = employee.OntarioDependants == 0 ? string.Empty : employee.OntarioDependants.ToString();
         IsCppExempt = employee.IsCppExempt;
         IsEiExempt = employee.IsEiExempt;
@@ -491,6 +492,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
 
         employee.FederalClaimAmount = Parse(FederalClaimAmount);
         employee.ProvincialClaimAmount = Parse(ProvincialClaimAmount);
+        employee.FederalClaimIsZero = IsTypedZero(FederalClaimAmount);
+        employee.ProvincialClaimIsZero = IsTypedZero(ProvincialClaimAmount);
         employee.OntarioDependants = int.TryParse(OntarioDependants, out int dependants) && dependants > 0 ? dependants : 0;
         employee.IsCppExempt = IsCppExempt;
         employee.IsEiExempt = IsEiExempt;
@@ -518,6 +521,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
         StandardHoursPerWeek = e.StandardHoursPerWeek,
         FederalClaimAmount = e.FederalClaimAmount,
         ProvincialClaimAmount = e.ProvincialClaimAmount,
+        FederalClaimIsZero = e.FederalClaimIsZero,
+        ProvincialClaimIsZero = e.ProvincialClaimIsZero,
         OntarioDependants = e.OntarioDependants,
         IsCppExempt = e.IsCppExempt,
         IsEiExempt = e.IsEiExempt,
@@ -549,6 +554,8 @@ public partial class PayrollModalsViewModel : ViewModelBase
         target.StandardHoursPerWeek = from.StandardHoursPerWeek;
         target.FederalClaimAmount = from.FederalClaimAmount;
         target.ProvincialClaimAmount = from.ProvincialClaimAmount;
+        target.FederalClaimIsZero = from.FederalClaimIsZero;
+        target.ProvincialClaimIsZero = from.ProvincialClaimIsZero;
         target.OntarioDependants = from.OntarioDependants;
         target.IsCppExempt = from.IsCppExempt;
         target.IsEiExempt = from.IsEiExempt;
@@ -744,6 +751,19 @@ public partial class PayrollModalsViewModel : ViewModelBase
     /// <summary>Blank rather than "0.00", so an unset optional amount shows its placeholder.</summary>
     private static string Money(decimal value) =>
         value == 0 ? string.Empty : value.ToString("0.00", CultureInfo.CurrentCulture);
+
+    /// <summary>
+    /// A TD1 total. A claim of nothing shows as zero rather than blank, because blank is what
+    /// means no TD1 on file and the basic personal amount.
+    /// </summary>
+    private static string Claim(decimal amount, bool claimsZero) =>
+        claimsZero && amount == 0 ? 0m.ToString("0.00", CultureInfo.CurrentCulture) : Money(amount);
+
+    /// <summary>A zero actually typed into a TD1 box, as opposed to the box being left empty.</summary>
+    private static bool IsTypedZero(string text) =>
+        !string.IsNullOrWhiteSpace(text)
+        && Behaviors.CurrencyInputBehavior.TryParse(text, out decimal d)
+        && d == 0m;
 
     /// <summary>
     /// Reads an amount back from a box that may be showing it formatted. Goes through the same

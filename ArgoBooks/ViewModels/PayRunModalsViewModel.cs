@@ -772,7 +772,8 @@ public partial class PayRunModalsViewModel : ViewModelBase
             Warnings.Add($"{employee.Name} has reached the QPIP maximum for the year.");
         }
 
-        if (employee.FederalClaimAmount == 0 && employee.ProvincialClaimAmount == 0)
+        if (employee.FederalClaimAmount == 0 && employee.ProvincialClaimAmount == 0
+            && !employee.FederalClaimIsZero && !employee.ProvincialClaimIsZero)
         {
             Warnings.Add($"{employee.Name} has no TD1 on file, so the basic personal amount is used.");
         }

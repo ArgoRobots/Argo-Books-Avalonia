@@ -141,6 +141,8 @@ public class PayrollService(PayrollRateService? rateService = null)
                     PayPeriodsPerYear = employee.PayFrequency.PeriodsPerYear(),
                     FederalClaimAmount = employee.FederalClaimAmount,
                     ProvincialClaimAmount = employee.ProvincialClaimAmount,
+                    FederalClaimIsZero = employee.FederalClaimIsZero,
+                    ProvincialClaimIsZero = employee.ProvincialClaimIsZero,
 
                     // Ontario's tax reduction is the only one that reads this. Everywhere else
                     // the term is absent from the formula, so it costs nothing to pass through.

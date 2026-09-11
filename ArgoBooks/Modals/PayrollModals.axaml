@@ -147,8 +147,9 @@
                                         <TextBlock Text="{loc:Loc 'Tax credits'}" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource TextPrimaryBrush}" />
                                         <!-- Left blank, the basic personal amount is used. An employer applies
-                                             whatever the employee wrote on their TD1. -->
-                                        <TextBlock Text="{loc:Loc 'Leave blank to use the basic personal amount. Enter the totals from the employee''s TD1 forms if they claim more.'}"
+                                             whatever the employee wrote on their TD1, and a typed 0 is a real
+                                             claim of nothing, which blank cannot say. -->
+                                        <TextBlock Text="{loc:Loc 'Leave blank to use the basic personal amount. Enter the totals from the employee''s TD1 forms if they claim more, or 0 if a form claims nothing, as it does when another employer already applies their credits.'}"
                                                    FontSize="11" TextWrapping="Wrap"
                                                    Foreground="{DynamicResource TextTertiaryBrush}" />
                                         <Grid ColumnDefinitions="*,16,*">

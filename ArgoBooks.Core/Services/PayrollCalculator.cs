@@ -340,9 +340,8 @@ public static class PayrollCalculator
         // Deliberately not phased down for income: an employer applies the figure the employee
         // wrote on their TD1, and reflecting the high-income reduction is the employee's job
         // when completing that form. CRA's own calculator behaves this way.
-        decimal claim = input.FederalClaimAmount > 0
-            ? input.FederalClaimAmount
-            : federal.BasicPersonalAmount.Maximum;
+        decimal claim = ClaimOrBasic(input.FederalClaimAmount, input.FederalClaimIsZero,
+                                     federal.BasicPersonalAmount.Maximum);
 
         decimal k1 = lowest * claim;
         decimal k2 = lowest * (annualCpp + annualEi);
@@ -362,9 +361,8 @@ public static class PayrollCalculator
         (decimal rate, decimal k) = BracketFor(province.Brackets, annual);
         decimal lowest = province.Brackets.Count > 0 ? province.Brackets[0].Rate : 0m;
 
-        decimal claim = input.ProvincialClaimAmount > 0
-            ? input.ProvincialClaimAmount
-            : province.BasicPersonalAmount.Maximum;
+        decimal claim = ClaimOrBasic(input.ProvincialClaimAmount, input.ProvincialClaimIsZero,
+                                     province.BasicPersonalAmount.Maximum);
 
         // Yukon alone grants a provincial Canada Employment Amount. Elsewhere the amount is
         // zero, so this term is zero and costs nothing.
@@ -428,6 +426,13 @@ public static class PayrollCalculator
         return tax;
     }
 
+    /// <summary>
+    /// The TD1 claim, or the basic personal amount when none was filed. Shared with the Quebec
+    /// calculator. A zero amount means no TD1 unless the form itself claims nothing.
+    /// </summary>
+    internal static decimal ClaimOrBasic(decimal claim, bool claimsZero, decimal basic) =>
+        claim > 0 ? claim : claimsZero ? 0m : basic;
+
     private static decimal HealthPremiumFor(decimal annual, List<HealthPremiumBand> bands)
     {
         foreach (HealthPremiumBand band in bands)
@@ -480,6 +485,12 @@ public class PayrollInput
 
     /// <summary>TD1P total. Zero means use the basic personal amount.</summary>
     public decimal ProvincialClaimAmount { get; set; }
+
+    /// <summary>The TD1 claims nothing, so a zero <see cref="FederalClaimAmount"/> is a real zero.</summary>
+    public bool FederalClaimIsZero { get; set; }
+
+    /// <summary>The provincial TD1 claims nothing.</summary>
+    public bool ProvincialClaimIsZero { get; set; }
 
     /// <summary>
     /// T4127's B: the part of <see cref="GrossPay"/> that is a bonus, retroactive pay increase,
