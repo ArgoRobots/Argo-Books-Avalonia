@@ -105,4 +105,38 @@ public class ReportRendererTests
         Assert.True(plan.Pages.Count >= 3);
         Assert.Equal(plan.CachedTableData[table.Id].Rows.Count, renderer.AccountingRowsDrawn);
     }
+
+    [Fact]
+    public void TableContinuation_HeaderHidden_UsesTheSpaceTheHeaderWouldTake()
+    {
+        var data = new CompanyData();
+        for (var i = 0; i < 200; i++)
+            data.Revenues.Add(new Revenue { Id = $"REV-{i:D3}", Date = new DateTime(2024, 6, 1).AddHours(i), Total = 10m, OriginalCurrency = "USD" });
+
+        var table = new TableReportElement { TransactionType = TransactionType.Revenue, MaxRows = 0, X = 40, Y = 40, Width = 700, Height = 200 };
+        var config = new ReportConfiguration
+        {
+            ShowHeader = false,
+            Filters = new ReportFilters
+            {
+                DatePresetName = DatePresetNames.Custom,
+                StartDate = new DateTime(2024, 1, 1),
+                EndDate = new DateTime(2024, 12, 31)
+            }
+        };
+        config.Elements.Add(table);
+
+        using var renderer = new ReportRenderer(config, data);
+        renderer.ComputeContinuationPlan();
+        var firstContinuation = renderer.GetContinuationPlan()!.Pages[1];
+
+        // With no header, a continuation page runs from the top margin to the footer.
+        var (_, pageHeight) = PageDimensions.GetDimensions(config.PageSize, config.PageOrientation);
+        var contentHeight = pageHeight - config.PageMargins.Top - PageDimensions.FooterHeight - config.PageMargins.Bottom;
+        var continuedIndicatorAndHeaders = table.DataRowHeight * 0.8 + table.HeaderRowHeight;
+        var expectedRows = (int)Math.Floor((contentHeight - continuedIndicatorAndHeaders) / table.DataRowHeight);
+
+        Assert.False(firstContinuation.IsLastContinuationPage);
+        Assert.Equal(expectedRows, firstContinuation.RowCount);
+    }
 }

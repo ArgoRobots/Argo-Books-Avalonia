@@ -740,6 +740,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             CategoryName = category?.Name ?? "Unknown",
             Quantity = returnRecord.Items.Sum(i => i.Quantity),
             RefundAmount = returnRecord.RefundAmount,
+            Currency = ReturnLossAmounts.CurrencyOf(companyData!, returnRecord),
             Reason = firstItem?.Reason ?? "Not specified",
             Status = returnRecord.Status.ToString(),
             Notes = returnRecord.Notes
@@ -794,6 +795,7 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
             CategoryName = category?.Name ?? "Unknown",
             Quantity = lossRecord.Quantity,
             EstimatedValue = lossRecord.ValueLost,
+            Currency = ReturnLossAmounts.CurrencyOf(companyData!, lossRecord),
             Reason = lossRecord.Reason.ToString(),
             Location = "", // Not available in model
             Notes = lossRecord.Notes
@@ -1062,7 +1064,9 @@ public class ReturnTableRow
     public string ProductName { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
     public int Quantity { get; set; }
+    /// <summary>In <see cref="Currency"/>, the currency of the sale it came from; not USD-normalized.</summary>
     public decimal RefundAmount { get; set; }
+    public string Currency { get; set; } = "USD";
     public string Reason { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;
@@ -1079,7 +1083,9 @@ public class LossTableRow
     public string ProductName { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
     public int Quantity { get; set; }
+    /// <summary>In <see cref="Currency"/>, the currency of the sale or purchase it came from; not USD-normalized.</summary>
     public decimal EstimatedValue { get; set; }
+    public string Currency { get; set; } = "USD";
     public string Reason { get; set; } = string.Empty;
     public string Location { get; set; } = string.Empty;
     public string Notes { get; set; } = string.Empty;

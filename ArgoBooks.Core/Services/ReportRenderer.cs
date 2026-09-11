@@ -94,6 +94,28 @@ public class ReportRenderer : IDisposable
     private decimal ToDisplayCurrency(decimal amountUSD, DateTime date)
         => (decimal)ConvertFromUSD((double)amountUSD, date);
 
+    private string PendingText => Tr("Pending");
+
+    /// <summary>
+    /// An amount recorded in <paramref name="currency"/> rather than USD (a return's refund, a loss's
+    /// value), formatted in the display currency at its own date, or pending when that date's rate is
+    /// unavailable. See docs/Calculations.md §10, Returns and Losses.
+    /// </summary>
+    private string FormatRecordedAmount(decimal amount, string currency, DateTime date)
+    {
+        if (string.Equals(currency, _currencyCode, StringComparison.OrdinalIgnoreCase))
+            return FormatCurrency(amount);
+
+        var rates = ExchangeRateService.Instance;
+        if (rates == null)
+            return FormatCurrency(amount);
+
+        return rates.TryConvertToUsdBase(amount, currency, date, out var usd)
+               && rates.TryConvertFromUSD(usd, _currencyCode, date, out var converted)
+            ? FormatCurrency(converted)
+            : PendingText;
+    }
+
     public ReportRenderer(ReportConfiguration config, CompanyData? companyData, float renderScale = 1f, ITranslationProvider? translationProvider = null, IErrorLogger? errorLogger = null)
     {
         _config = config;
@@ -523,9 +545,12 @@ public class ReportRenderer : IDisposable
     /// Top and bottom of the content area on a continuation page. The planner and the renderer both
     /// use this, so the rows planned for a page are the rows that fit when it is drawn.
     /// </summary>
-    private (float Top, float Bottom) GetContinuationContentBounds(float scaledPageHeight) =>
-        ((PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) + (float)_config.PageMargins.Top) * _renderScale,
-         scaledPageHeight - (PageDimensions.FooterHeight + (float)_config.PageMargins.Bottom) * _renderScale);
+    private (float Top, float Bottom) GetContinuationContentBounds(float scaledPageHeight)
+    {
+        var headerHeight = _config.ShowHeader ? PageDimensions.GetHeaderHeight(_config.ShowCompanyDetails) : 0;
+        return ((headerHeight + (float)_config.PageMargins.Top) * _renderScale,
+            scaledPageHeight - (PageDimensions.FooterHeight + (float)_config.PageMargins.Bottom) * _renderScale);
+    }
 
     /// <summary>
     /// Computes the continuation plan for all accounting tables that may overflow.
@@ -2658,12 +2683,19 @@ public class ReportRenderer : IDisposable
                 continue;
 
             decimal sum = 0;
+            var pending = false;
             for (int rowIndex = 0; rowIndex < rowCount && rowIndex < tableData.Count; rowIndex++)
             {
                 var row = tableData[rowIndex];
                 if (colIndex < row.Count)
                 {
                     var text = row[colIndex];
+                    // A partial total would understate the column, so it waits on the rate too.
+                    if (text == PendingText)
+                    {
+                        pending = true;
+                        continue;
+                    }
                     // Strip the company's actual currency symbol (plus the common ones) and grouping
                     // separators, then parse invariantly. The old code only stripped $, €, and £, so a
                     // company on any other currency (¥, ₹, CHF, ...) produced an unparseable string and
@@ -2679,7 +2711,9 @@ public class ReportRenderer : IDisposable
             }
 
             // Format based on column type
-            if (colName == "Qty")
+            if (pending)
+                totals[colName] = PendingText;
+            else if (colName == "Qty")
                 totals[colName] = sum.ToString("#,0.##", System.Globalization.CultureInfo.InvariantCulture);
             else
                 totals[colName] = FormatCurrency(sum);
@@ -2887,7 +2921,7 @@ public class ReportRenderer : IDisposable
                         "Product" => r.ProductName,
                         "Category" => r.CategoryName,
                         "Qty" => r.Quantity.ToString("N0"),
-                        "Total" => FormatCurrency(r.RefundAmount),
+                        "Total" => FormatRecordedAmount(r.RefundAmount, r.Currency, r.ReturnDate),
                         "Reason" => r.Reason,
                         "Status" => r.Status,
                         _ => ""
@@ -2901,7 +2935,7 @@ public class ReportRenderer : IDisposable
                         "Product" => r.ProductName,
                         "Category" => r.CategoryName,
                         "Qty" => r.Quantity.ToString("N0"),
-                        "Total" => FormatCurrency(r.EstimatedValue),
+                        "Total" => FormatRecordedAmount(r.EstimatedValue, r.Currency, r.ReportedDate),
                         "Reason" => r.Reason,
                         _ => ""
                     }).ToList());
