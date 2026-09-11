@@ -1663,7 +1663,20 @@ public class CompanyManager : IDisposable
                 return;
 
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
-            await _fileService.WriteJsonAsync(companyDir, "appSettings.json", CompanyData.Settings, cancellationToken);
+
+            // These markers record work done on the other files: the open-time repairs and the
+            // forecast backtest. This save writes none of those files, so the markers stay as the
+            // temp copy has them; writing the new ones would make the next open skip that work.
+            var onDisk = await _fileService.ReadJsonAsync<CompanySettings>(companyDir, "appSettings.json", cancellationToken);
+            var settings = System.Text.Json.JsonSerializer.Deserialize<CompanySettings>(
+                System.Text.Json.JsonSerializer.Serialize(CompanyData.Settings, FileService.JsonOptions),
+                FileService.JsonOptions)!;
+            settings.InvoiceTotalsHealedVersion = onDisk?.InvoiceTotalsHealedVersion;
+            settings.RevenuePaymentsMigratedVersion = onDisk?.RevenuePaymentsMigratedVersion;
+            settings.BacktestVersion = onDisk?.BacktestVersion;
+            settings.LastBacktestedMonth = onDisk?.LastBacktestedMonth;
+
+            await _fileService.WriteJsonAsync(companyDir, "appSettings.json", settings, cancellationToken);
 
             ReleaseFileLock();
             try

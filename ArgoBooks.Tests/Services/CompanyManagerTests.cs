@@ -240,6 +240,49 @@ public class CompanyManagerTests : IDisposable
 
     #endregion
 
+    #region SaveSettingsOnly Tests
+
+    /// <summary>
+    /// The open-time repairs change invoices and payments in memory and stamp their markers in the
+    /// settings. A settings-only save must not write those markers while the repaired rows stay
+    /// unsaved, or the next open skips the repair and the file is never fixed.
+    /// </summary>
+    [Fact]
+    public async Task SaveSettingsOnly_AfterOpenTimeRepair_RepairStillRunsOnNextOpen()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(path, "Acme");
+            var data = _manager.CompanyData!;
+            data.Invoices.Add(new Invoice { Id = "INV-1", Total = 100m, OriginalCurrency = "USD" });
+            data.Payments.Add(new Payment { Id = "PAY-1", InvoiceId = "INV-1", Amount = 40m, OriginalCurrency = "USD" });
+            data.Revenues.Add(new Revenue { Id = "REV-1", PaymentStatus = RevenuePaymentStatus.Pending });
+            data.Payments.Add(new Payment { Id = "PAY-2", RevenueId = "REV-1", Amount = 10m, OriginalCurrency = "USD" });
+            await _manager.SaveCompanyAsync();
+            await _manager.CloseCompanyAsync();
+
+            await _manager.OpenCompanyAsync(path);
+            Assert.Equal(40m, _manager.CompanyData!.Invoices[0].AmountPaid);
+            _manager.CompanyData.Settings.Notifications.UnsavedChangesReminderMinutes = 17;
+            await _manager.SaveSettingsOnlyAsync();
+            await _manager.CloseCompanyAsync();
+
+            await _manager.OpenCompanyAsync(path);
+            var reopened = _manager.CompanyData!;
+            Assert.Equal(40m, reopened.Invoices[0].AmountPaid);
+            Assert.DoesNotContain(reopened.Payments, p => p.Id == "PAY-2");
+            Assert.Equal(17, reopened.Settings.Notifications.UnsavedChangesReminderMinutes);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    #endregion
+
     #region ChangeCustomerId Cascade Tests
 
     [Fact]
