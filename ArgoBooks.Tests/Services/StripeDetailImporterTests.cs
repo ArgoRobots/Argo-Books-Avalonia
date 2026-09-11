@@ -50,6 +50,18 @@ public class StripeDetailImporterTests
         Assert.Equal(2, data.Revenues.Count);
     }
 
+    /// <summary>Stripe gives JPY, KRW and the like in whole units, so dividing by 100 files 1000 yen as 10.</summary>
+    [Fact]
+    public void Import_ZeroDecimalCurrency_IsNotDividedBy100()
+    {
+        var data = new CompanyData();
+        new StripeDetailImporter().ImportCharges(data,
+            new[] { new StripeChargeDetail("ch_1", 1700000000, 1000, 40, "jpy", null, null, "Tea", 0, 0, 0) });
+
+        Assert.Equal(1000m, data.Revenues.Single().Total);
+        Assert.Equal(40m, data.Expenses.Single().Total);
+    }
+
     [Fact]
     public void Import_NoCustomer_LeavesCustomerEmpty()
     {

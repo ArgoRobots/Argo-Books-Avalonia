@@ -105,6 +105,69 @@ public class StripeSyncServiceTests
         Assert.Empty(preview2.NewPayouts);
     }
 
+    /// <summary>
+    /// A EUR charge settled into a USD balance. Stripe states the balance transaction's fee in
+    /// the balance transaction's own currency (the settlement currency), not the charge's.
+    /// </summary>
+    private sealed class SettlementCurrencyHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            var url = request.RequestUri!.ToString();
+            string body;
+            if (url.Contains("/v1/payouts"))
+                body = "{\"has_more\":false,\"data\":[]}";
+            else if (url.Contains("/v1/balance_transactions"))
+                body = "{\"has_more\":false,\"data\":[" +
+                       "{\"id\":\"txn_1\",\"type\":\"charge\",\"source\":\"ch_1\",\"amount\":5400,\"currency\":\"usd\",\"fee\":175}" +
+                       "]}";
+            else
+                body = "{\"has_more\":false,\"data\":[{" +
+                       "\"id\":\"ch_1\",\"status\":\"succeeded\",\"paid\":true,\"amount\":5000,\"amount_refunded\":0,\"currency\":\"eur\",\"created\":1700000000," +
+                       "\"balance_transaction\":{\"id\":\"txn_1\",\"amount\":5400,\"currency\":\"usd\",\"fee\":175,\"net\":5225}" +
+                       "}]}";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent(body, Encoding.UTF8, "application/json") });
+        }
+    }
+
+    [Fact]
+    public async Task Import_FeeIsRecordedInTheSettlementCurrency()
+    {
+        var svc = new StripeSyncService(new StripeApiClient(new HttpClient(new SettlementCurrencyHandler())));
+        var data = ConnectedData();
+
+        svc.ImportPreview(data, await svc.PreviewAsync(data));
+
+        Assert.Equal("EUR", data.Revenues.Single().OriginalCurrency);
+        var fee = Assert.Single(data.Expenses);
+        Assert.Equal("USD", fee.OriginalCurrency);
+        Assert.Equal(1.75m, fee.Total);
+    }
+
+    /// <summary>
+    /// Undo must not hand back an id something else took after the import. A phone capture or
+    /// portal sync has no undo of its own, so its record is still in the books when the import is
+    /// undone, and a lowered counter would give the next new record that same id.
+    /// </summary>
+    [Fact]
+    public async Task Undo_DoesNotLowerACounterPastAnIdIssuedAfterTheImport()
+    {
+        var svc = MakeService();
+        var data = ConnectedData();
+        var creation = svc.ImportPreview(data, await svc.PreviewAsync(data));
+
+        data.IdCounters.Revenue++;
+        data.Revenues.Add(new ArgoBooks.Core.Models.Transactions.Revenue { Id = $"REV-2026-{data.IdCounters.Revenue:D5}" });
+        var afterwards = data.IdCounters.Revenue;
+
+        creation.Undo(data);
+        Assert.Equal(afterwards, data.IdCounters.Revenue);
+
+        creation.Redo(data);
+        Assert.Equal(afterwards, data.IdCounters.Revenue);
+    }
+
     [Fact]
     public async Task Preview_NoKey_ReturnsNoActivity()
     {

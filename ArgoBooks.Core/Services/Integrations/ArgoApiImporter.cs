@@ -322,7 +322,11 @@ public class ArgoApiImporter
         var localRevenueId = ResolveRef(data, _revenues, api.Revenue, MatchRevenue)
             ?? data.Revenues.FirstOrDefault(r => r.ReferenceNumber == api.Revenue)?.Id;
 
-        if (localRevenueId == null)
+        // The id the server remembers for an earlier import can name a sale the merchant has
+        // since deleted, which is as good as having no sale.
+        var revenue = localRevenueId == null ? null : data.Revenues.FirstOrDefault(r => r.Id == localRevenueId);
+
+        if (revenue == null)
         {
             // No sale to return against: book it as a standalone expense rather
             // than dropping it, so the money movement is still in the books.
@@ -347,8 +351,6 @@ public class ArgoApiImporter
             Claim(creation, api.Id, expense.Id);
             return;
         }
-
-        var revenue = data.Revenues.First(r => r.Id == localRevenueId);
 
         data.IdCounters.Return++;
         var ret = new Return

@@ -2332,6 +2332,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     {
                         creation.Redo(data);
                         App.CompanyManager?.MarkAsChanged();
+                        _ = ReclaimAfterRedoAsync(svc, data, creation);
                     }));
             }
 
@@ -2354,6 +2355,27 @@ public partial class SettingsModalViewModel : ViewModelBase
             IsSyncingArgoApi = false;
             ArgoApiSyncStatus = string.Empty;
         }
+    }
+
+    /// <summary>
+    /// Claim a redone import's objects again. Undo handed them back to the queue, so without this
+    /// the next sync imports every one of them a second time. Same as the Revenue page's redo.
+    /// </summary>
+    private static async Task ReclaimAfterRedoAsync(ArgoApiSyncService svc, CompanyData data, ArgoApiImportCreation creation)
+    {
+        if (await svc.TryReclaimBatchAsync(data, creation) || creation.BatchId == null)
+            return;
+
+        // Redo re-recorded the old batch id, which names a batch the server has reverted.
+        data.Settings.Integrations.ArgoApi.ImportedBatches.Remove(creation.BatchId);
+        creation.BatchId = null;
+        App.CompanyManager?.MarkAsChanged();
+
+        await App.ShowWarningMessageBoxAsync(
+            "Argo Books API".Translate(),
+            ("The restored items are back in your books, but the server could not be told they were taken. " +
+             "They may still show as waiting on your next sync. Importing them again would create duplicates, " +
+             "so check before you do.").Translate());
     }
 
     private void RefreshArgoApiLastSynced(ArgoApiIntegrationSettings? api)

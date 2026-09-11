@@ -40,6 +40,17 @@ public class StripeRefundReturnTests
     }
 
     [Fact]
+    public void Refund_ZeroDecimalCurrency_IsNotDividedBy100()
+    {
+        var data = new CompanyData();
+        var made = new StripeDetailImporter().ApplyRefunds(data,
+            new[] { new StripeChargeDetail("ch_old", 1700000000, 1000, 0, "jpy", null, null, "Tea", 0, 0, 1000) });
+
+        Assert.Equal(1, made);
+        Assert.Equal(1000m, data.Expenses.Single().Total);
+    }
+
+    [Fact]
     public void Refund_OfUnimportedCharge_FallsBackToExpense()
     {
         var data = new CompanyData();

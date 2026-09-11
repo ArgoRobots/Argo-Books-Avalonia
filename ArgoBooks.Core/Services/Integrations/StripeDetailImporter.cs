@@ -29,13 +29,13 @@ public class StripeDetailImporter
             var customerId = ResolveCustomer(data, ch);
             var productId = ResolveProduct(data, ch.ProductName);
 
-            var gross = ch.GrossCents / 100m;
-            var tax = ch.TaxCents / 100m;
-            var discount = ch.DiscountCents / 100m;
+            var currency = string.IsNullOrWhiteSpace(ch.Currency) ? "USD" : ch.Currency.ToUpperInvariant();
+            var gross = ArgoMoney.ToDecimal(ch.GrossCents, currency);
+            var tax = ArgoMoney.ToDecimal(ch.TaxCents, currency);
+            var discount = ArgoMoney.ToDecimal(ch.DiscountCents, currency);
             var subtotal = gross - tax;
             var taxRate = subtotal > 0 ? tax / subtotal : 0m;
             var date = DateTimeOffset.FromUnixTimeSeconds(ch.CreatedUnix).LocalDateTime;
-            var currency = string.IsNullOrWhiteSpace(ch.Currency) ? "USD" : ch.Currency.ToUpperInvariant();
 
             data.IdCounters.Revenue++;
             var rev = new Revenue
@@ -76,7 +76,8 @@ public class StripeDetailImporter
             if (ch.FeeCents > 0)
             {
                 data.IdCounters.Expense++;
-                var feeAmount = ch.FeeCents / 100m;
+                var feeCurrency = string.IsNullOrWhiteSpace(ch.FeeCurrency) ? currency : ch.FeeCurrency.ToUpperInvariant();
+                var feeAmount = ArgoMoney.ToDecimal(ch.FeeCents, feeCurrency);
                 var fee = new Expense
                 {
                     Id = $"PUR-{date:yyyy}-{data.IdCounters.Expense:D5}",
@@ -89,9 +90,9 @@ public class StripeDetailImporter
                     // Same reference as the sale's Revenue, so the fee is linked to the charge it came from.
                     ReferenceNumber = ch.ChargeId,
                     Notes = $"Processing fee for Stripe sale {ch.ChargeId}",
-                    OriginalCurrency = currency
+                    OriginalCurrency = feeCurrency
                 };
-                IntegrationRates.ApplyUsdAmounts(fee, currency, data);
+                IntegrationRates.ApplyUsdAmounts(fee, feeCurrency, data);
                 data.Expenses.Add(fee);
                 exps++;
             }
@@ -157,8 +158,8 @@ public class StripeDetailImporter
         foreach (var ch in charges)
         {
             if (ch.AmountRefundedCents <= 0) continue;
-            var amount = ch.AmountRefundedCents / 100m;
             var currency = string.IsNullOrWhiteSpace(ch.Currency) ? "USD" : ch.Currency.ToUpperInvariant();
+            var amount = ArgoMoney.ToDecimal(ch.AmountRefundedCents, currency);
 
             var rev = data.Revenues.FirstOrDefault(r => r.ReferenceNumber == ch.ChargeId);
             if (rev != null)

@@ -590,8 +590,8 @@ public partial class App : Application
                     var tx = System.Text.Json.JsonSerializer.Deserialize<CapturedTransaction>(plain);
                     var newId = CaptureIngestService.Ingest(companyData, tx!);
                     if (newId == null)
-                        // Already ingested (and its ScanUid persisted) in a prior cycle - nothing new
-                        // to save, so it's safe to ack immediately regardless of this cycle's save.
+                        // Already ingested in a prior cycle: nothing new to add, but see below for
+                        // when it is safe to ack.
                         duplicateIds.Add(item.Id);
                     else
                         ingestedIds.Add(item.Id);
@@ -610,25 +610,38 @@ public partial class App : Application
             // PERSIST before ACK: an item that added new data must never be acknowledged (and thus
             // deleted server-side) before that data is actually saved locally. If the save is skipped
             // (the user has unsaved edits in memory) or throws, the newly-ingested items must NOT be
-            // acked - they stay in the server queue and will be re-delivered next cycle, where
-            // CaptureIngestService's ScanUid check safely no-ops the ones already saved and retries
-            // the rest.
+            // acked - they stay in the server queue and are re-delivered each cycle, where
+            // CaptureIngestService's ScanUid check no-ops them, until a save has written them.
             var saved = false;
-            if (ingestedIds.Count > 0 && CompanyManager != null && !CompanyManager.HasUnsavedChanges)
+            if (ingestedIds.Count > 0 && CompanyManager != null)
             {
-                try
+                if (!CompanyManager.HasUnsavedChanges)
                 {
-                    await CompanyManager.SavePaymentSyncAsync();
-                    saved = true;
+                    try
+                    {
+                        await CompanyManager.SavePaymentSyncAsync();
+                        saved = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        ErrorLogger?.LogWarning($"Failed to persist mobile-sync captures: {ex.Message}", "MobileSync");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    ErrorLogger?.LogWarning($"Failed to persist mobile-sync captures: {ex.Message}", "MobileSync");
-                }
+
+                // Left in memory, the captures go out with the user's next save, so the file must read
+                // as changed: that is what makes quitting ask, and what the duplicate check below reads.
+                if (!saved)
+                    companyData.MarkAsModified();
             }
 
+            // A duplicate is only known to be a duplicate from its ScanUid in memory, which may come
+            // from an earlier cycle whose save was skipped. Acking deletes the server's copy, so wait
+            // until nothing is unsaved: from then on the capture is in the file.
             var toAck = new List<int>(malformedIds);
-            toAck.AddRange(duplicateIds);
+            if (saved || CompanyManager is { HasUnsavedChanges: false })
+            {
+                toAck.AddRange(duplicateIds);
+            }
             if (saved)
             {
                 toAck.AddRange(ingestedIds);
@@ -641,11 +654,14 @@ public partial class App : Application
 
             mobileSync.LastSyncTime = DateTime.UtcNow;
 
-            var ingestedCount = saved ? ingestedIds.Count : 0;
+            var ingestedCount = ingestedIds.Count;
             if (ingestedCount > 0)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
+                    if (!saved)
+                        CompanyManager?.MarkAsChanged();
+
                     _receiptsPageViewModel?.RefreshReceiptsCommand.Execute(null);
                     _expensesPageViewModel?.RefreshExpensesCommand.Execute(null);
                     _revenuePageViewModel?.RefreshRevenueCommand.Execute(null);

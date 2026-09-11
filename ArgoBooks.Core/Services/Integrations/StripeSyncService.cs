@@ -41,9 +41,11 @@ public class StripeSyncService
         // from the balance-transactions list (the reliable source), keyed by charge id.
         var feeMap = rawCharges.Count > 0
             ? await _client.FetchChargeFeesAsync(stripe.ApiKey!, ct)
-            : (IReadOnlyDictionary<string, long>)new Dictionary<string, long>();
+            : (IReadOnlyDictionary<string, StripeFee>)new Dictionary<string, StripeFee>();
         var charges = rawCharges
-            .Select(c => feeMap.TryGetValue(c.ChargeId, out var fee) && fee > c.FeeCents ? c with { FeeCents = fee } : c)
+            .Select(c => feeMap.TryGetValue(c.ChargeId, out var fee) && fee.Cents > c.FeeCents
+                ? c with { FeeCents = fee.Cents, FeeCurrency = fee.Currency ?? c.FeeCurrency }
+                : c)
             .ToList();
 
         var payouts = await _client.FetchPayoutsAsync(stripe.ApiKey!, ct);
@@ -52,8 +54,8 @@ public class StripeSyncService
             .Where(p => !known.Contains(p.Id) && p.Status is not ("canceled" or "failed"))
             .ToList();
 
-        var totalRevenue = charges.Sum(c => c.GrossCents) / 100m;
-        var totalFees = charges.Sum(c => c.FeeCents) / 100m;
+        var totalRevenue = charges.Sum(c => ArgoMoney.ToDecimal(c.GrossCents, c.Currency));
+        var totalFees = charges.Sum(c => ArgoMoney.ToDecimal(c.FeeCents, c.FeeCurrency ?? c.Currency));
 
         return new StripeSyncPreview(charges, totalRevenue, totalFees, newCursor, newPayouts);
     }
@@ -70,8 +72,8 @@ public class StripeSyncService
         IProgress<int>? rateProgress = null, CancellationToken ct = default)
     {
         await IntegrationRates.EnsureAsync(
-            preview.Charges.Select(c =>
-                (DateTimeOffset.FromUnixTimeSeconds(c.CreatedUnix).LocalDateTime, c.Currency)),
+            preview.Charges.SelectMany(c => new[] { c.Currency, c.FeeCurrency ?? c.Currency }.Select(currency =>
+                (DateTimeOffset.FromUnixTimeSeconds(c.CreatedUnix).LocalDateTime, currency))),
             data.Settings.Localization.Currency,
             rateProgress,
             ct: ct);
