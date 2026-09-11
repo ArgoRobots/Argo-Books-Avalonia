@@ -372,6 +372,12 @@ public class CompanyManager : IDisposable
     public string? GetSupplierAvatarPath(Supplier supplier) => GetEntityAvatarPath(supplier);
 
     /// <summary>
+    /// Whether another running instance has <paramref name="filePath"/> open. False for the
+    /// company this instance has open.
+    /// </summary>
+    public bool IsOpenInAnotherInstance(string filePath) => _instanceLock.IsHeldByAnotherInstance(filePath);
+
+    /// <summary>
     /// Schedules a file rename to be applied on the next save.
     /// The rename is deferred so that closing without saving leaves the original file untouched.
     /// </summary>

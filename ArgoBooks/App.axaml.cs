@@ -3069,13 +3069,22 @@ public partial class App : Application
 
         var destPath = saveFile.Path.LocalPath;
 
+        // Both come before the copy. After it, saving the open company's changes, or another
+        // window's save, would write over the file just restored.
+        if (CompanyManager.IsOpenInAnotherInstance(destPath))
+        {
+            await ShowCompanyAlreadyOpenAsync();
+            return;
+        }
+        if (!await ConfirmLeavingCompanyAsync()) return;
+
         try
         {
             // Copy the backup file to the new .argo path
             File.Copy(backupPath, destPath, overwrite: true);
 
             // Open it as a new company (this closes the current one)
-            await OpenCompanyWithRetryAsync(destPath);
+            await OpenCompanyWithRetryAsync(destPath, leavingConfirmed: true);
             _ = TelemetryManager?.TrackFeatureAsync(FeatureName.BackupRestored);
         }
         catch (Exception ex)
@@ -3557,10 +3566,12 @@ public partial class App : Application
     /// Opens a company file with password retry support.
     /// Shows password modal on encrypted files and retries on wrong password.
     /// </summary>
-    private static async Task OpenCompanyWithRetryAsync(string filePath)
+    /// <param name="filePath">The company file to open.</param>
+    /// <param name="leavingConfirmed">True when the caller has already asked about unsaved changes.</param>
+    private static async Task OpenCompanyWithRetryAsync(string filePath, bool leavingConfirmed = false)
     {
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null) return;
-        if (!await ConfirmLeavingCompanyAsync()) return;
+        if (!leavingConfirmed && !await ConfirmLeavingCompanyAsync()) return;
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
