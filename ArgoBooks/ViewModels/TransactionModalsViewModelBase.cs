@@ -351,19 +351,44 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     public decimal FeeAmount => ModalFee;
     public decimal Total => Subtotal + TaxAmount + ShippingAmount + FeeAmount - DiscountAmount;
 
-    public string SubtotalFormatted => CurrencyService.Format(Subtotal);
-    public string TaxAmountFormatted => CurrencyService.Format(TaxAmount);
+    /// <summary>
+    /// The currency of the entry being edited when it isn't the company's, otherwise null. An entry
+    /// keeps its own currency, so its amounts load and save as recorded.
+    /// </summary>
+    private string? _entryCurrency;
+
+    /// <summary>The currency the form's amounts are in.</summary>
+    protected string FormCurrencyCode => _entryCurrency ?? CurrencyService.CurrentCurrencyCode;
+
+    /// <summary>
+    /// Follows the tax label. Another currency is named by its code, since several share a symbol.
+    /// </summary>
+    public string TaxCurrencyLabel => $" ({_entryCurrency ?? CurrencyService.CurrentSymbol})";
+
+    private void SetEntryCurrency(string? currency)
+    {
+        _entryCurrency = currency;
+        OnPropertyChanged(nameof(TaxCurrencyLabel));
+    }
+
+    private string FormatAmount(decimal amount) =>
+        _entryCurrency == null ? CurrencyService.Format(amount) : CurrencyInfo.GetByCode(_entryCurrency).Format(amount);
+
+    public string SubtotalFormatted => FormatAmount(Subtotal);
+    public string TaxAmountFormatted => FormatAmount(TaxAmount);
     // Only show the leading "-" (and the green "savings" colour, via HasDiscount) when there's an
     // actual discount; a zero discount reads as a plain neutral amount like the other lines.
     public string DiscountAmountFormatted => DiscountAmount > 0
-        ? $"-{CurrencyService.Format(DiscountAmount)}"
-        : CurrencyService.Format(DiscountAmount);
+        ? $"-{FormatAmount(DiscountAmount)}"
+        : FormatAmount(DiscountAmount);
 
     /// <summary>True when a discount is applied, used to colour the discount amount green.</summary>
     public bool HasDiscount => DiscountAmount > 0;
-    public string ShippingAmountFormatted => CurrencyService.Format(ShippingAmount);
-    public string FeeAmountFormatted => CurrencyService.Format(FeeAmount);
-    public string TotalFormatted => CurrencyService.Format(Total);
+    public string ShippingAmountFormatted => FormatAmount(ShippingAmount);
+    public string FeeAmountFormatted => FormatAmount(FeeAmount);
+    public string TotalFormatted => _entryCurrency == null
+        ? CurrencyService.Format(Total)
+        : CurrencyInfo.GetByCode(_entryCurrency).Format(Total, includeCode: true);
 
     partial void OnModalQuantityChanged(decimal value) => UpdateTotals();
     partial void OnModalUnitPriceChanged(decimal value) => UpdateTotals();
@@ -424,13 +449,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             HasTotalMismatchWarning = true;
             TotalMismatchWarningMessage = string.Format(
                 "Line items ({0}) + tax ({1}) + shipping ({2}) + fee ({3}) - discount ({4}) = {5}, but the stored total is {6}. Some values may be incorrect.".Translate(),
-                CurrencyService.Format(Subtotal),
-                CurrencyService.Format(TaxAmount),
-                CurrencyService.Format(ShippingAmount),
-                CurrencyService.Format(FeeAmount),
-                CurrencyService.Format(DiscountAmount),
-                CurrencyService.Format(Total),
-                CurrencyService.Format(storedTotal));
+                FormatAmount(Subtotal),
+                FormatAmount(TaxAmount),
+                FormatAmount(ShippingAmount),
+                FormatAmount(FeeAmount),
+                FormatAmount(DiscountAmount),
+                FormatAmount(Total),
+                FormatAmount(storedTotal));
         }
     }
 
@@ -618,31 +643,15 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var product = productId != null ? App.CompanyManager?.CompanyData?.GetProduct(productId) : null;
         SelectedCategory = CategoryOptions.FirstOrDefault(c => c.Id == product?.CategoryId);
 
-        // Convert monetary values to current display currency if needed
-        var txCurrency = transaction.OriginalCurrency ?? "USD";
-        var currentCurrency = CurrencyService.CurrentCurrencyCode;
-        var needsConversion = !string.Equals(txCurrency, currentCurrency, StringComparison.OrdinalIgnoreCase);
+        // Amounts load as recorded, in the entry's own currency. Converting them into the company
+        // currency made saving an untouched EUR 100 entry relabel it as a company-currency 125.
+        var txCurrency = string.IsNullOrEmpty(transaction.OriginalCurrency) ? "USD" : transaction.OriginalCurrency.ToUpperInvariant();
+        SetEntryCurrency(string.Equals(txCurrency, CurrencyService.CurrentCurrencyCode, StringComparison.OrdinalIgnoreCase) ? null : txCurrency);
 
-        if (needsConversion)
-        {
-            // Convert from original currency amounts using their USD equivalents (with fallback for legacy data)
-            var taxUSD = transaction.TaxAmountUSD > 0 ? transaction.TaxAmountUSD : transaction.TaxAmount;
-            var shippingUSD = transaction.ShippingCostUSD > 0 ? transaction.ShippingCostUSD : transaction.ShippingCost;
-            var discountUSD = transaction.DiscountUSD > 0 ? transaction.DiscountUSD : transaction.Discount;
-            var feeUSD = transaction.FeeUSD > 0 ? transaction.FeeUSD : transaction.Fee;
-
-            ModalTaxAmount = CurrencyService.GetDisplayAmount(taxUSD, transaction.Date);
-            ModalShipping = CurrencyService.GetDisplayAmount(shippingUSD, transaction.Date);
-            ModalDiscount = CurrencyService.GetDisplayAmount(discountUSD, transaction.Date);
-            ModalFee = CurrencyService.GetDisplayAmount(feeUSD, transaction.Date);
-        }
-        else
-        {
-            ModalTaxAmount = transaction.TaxAmount;
-            ModalShipping = transaction.ShippingCost;
-            ModalDiscount = transaction.Discount;
-            ModalFee = transaction.Fee;
-        }
+        ModalTaxAmount = transaction.TaxAmount;
+        ModalShipping = transaction.ShippingCost;
+        ModalDiscount = transaction.Discount;
+        ModalFee = transaction.Fee;
 
         SelectedPaymentMethod = transaction.PaymentMethod.ToString();
         ModalNotes = transaction.Notes;
@@ -652,18 +661,15 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         {
             foreach (var li in transaction.LineItems)
             {
-                var unitPrice = needsConversion
-                    ? CurrencyService.GetDisplayAmount(LineUnitPriceUSD(transaction, li), transaction.Date)
-                    : li.UnitPrice;
-
                 var selectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId) ?? StoredProductOption(li.ProductId);
                 var lineItem = new TLineItem
                 {
+                    CurrencyCode = _entryCurrency,
                     SelectedProduct = selectedProduct,
                     SelectedCategory = CategoryOptionFor(selectedProduct),
                     Description = li.Description,
                     Quantity = li.Quantity,
-                    UnitPrice = unitPrice
+                    UnitPrice = li.UnitPrice
                 };
                 // Fill each box's text along with its selection, so what the box shows never depends
                 // on which of its two bindings the dropdown applies first.
@@ -676,16 +682,13 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         else
         {
             // Fallback for old data without line items
-            var unitPrice = needsConversion
-                ? CurrencyService.GetDisplayAmount(transaction.EffectiveUnitPriceUSD, transaction.Date)
-                : transaction.UnitPrice;
-
             var lineItem = new TLineItem
             {
+                CurrencyCode = _entryCurrency,
                 Description = transaction.Description,
                 ItemText = transaction.Description,
                 Quantity = transaction.Quantity,
-                UnitPrice = unitPrice
+                UnitPrice = transaction.UnitPrice
             };
             lineItem.PropertyChanged += OnLineItemPropertyChanged;
             LineItems.Add(lineItem);
@@ -716,10 +719,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ClearValidationErrors();
 
         // Check if stored total matches recomputed total (catches AI receipt scan mismatches)
-        var storedTotal = needsConversion
-            ? CurrencyService.GetDisplayAmount(transaction.TotalUSD > 0 ? transaction.TotalUSD : transaction.Total, transaction.Date)
-            : transaction.Total;
-        ValidateTotalMismatch(storedTotal);
+        ValidateTotalMismatch(transaction.Total);
 
         // Capture original values for change detection
         CaptureOriginalValues();
@@ -992,7 +992,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             await Task.Delay(1);
 
             // Perform USD conversion if currency is not USD
-            var currentCurrency = CurrencyService.CurrentCurrencyCode;
+            var currentCurrency = FormCurrencyCode;
             var transactionDate = ModalDate?.DateTime ?? DateTime.Now;
 
             IsPendingConversion = false;
@@ -1014,11 +1014,11 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     var rate = await exchangeService.GetExchangeRateAsync(currentCurrency, "USD", transactionDate, fetchIfMissing: true);
                     if (rate > 0)
                     {
-                        ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, transactionDate);
-                        ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, transactionDate);
-                        ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, transactionDate);
-                        ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, transactionDate);
-                        ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, transactionDate);
+                        ConvertedTotal = await CurrencyService.CreateMonetaryValueAsync(Total, currentCurrency, transactionDate);
+                        ConvertedTaxAmount = await CurrencyService.CreateMonetaryValueAsync(TaxAmount, currentCurrency, transactionDate);
+                        ConvertedShippingCost = await CurrencyService.CreateMonetaryValueAsync(ShippingAmount, currentCurrency, transactionDate);
+                        ConvertedDiscount = await CurrencyService.CreateMonetaryValueAsync(DiscountAmount, currentCurrency, transactionDate);
+                        ConvertedFee = await CurrencyService.CreateMonetaryValueAsync(FeeAmount, currentCurrency, transactionDate);
                     }
                     else
                     {
@@ -1371,15 +1371,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     }
 
     /// <summary>
-    /// A line's unit price in USD. The row keeps a single USD unit price, the average over its
-    /// lines, so each line takes the row's own USD-to-native ratio instead.
-    /// </summary>
-    private static decimal LineUnitPriceUSD(Transaction transaction, LineItem line) =>
-        transaction.Total != 0
-            ? line.UnitPrice * (transaction.EffectiveTotalUSD / transaction.Total)
-            : transaction.EffectiveUnitPriceUSD;
-
-    /// <summary>
     /// Replaces the row's conversion queue entries in the company file and in the conversion
     /// service's copy, which converts from its own entries rather than from the row.
     /// </summary>
@@ -1403,6 +1394,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     protected void ResetForm()
     {
         EditingTransactionId = string.Empty;
+        SetEntryCurrency(null);
         ModalDate = DateTimeOffset.Now;
         SelectedCounterparty = null;
         SelectedCategory = null;
@@ -1574,7 +1566,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     [RelayCommand]
     protected void AddLineItem()
     {
-        var lineItem = new TLineItem();
+        var lineItem = new TLineItem { CurrencyCode = _entryCurrency };
         lineItem.PropertyChanged += OnLineItemPropertyChanged;
         LineItems.Add(lineItem);
         UpdateTotals();
@@ -1948,8 +1940,13 @@ public abstract partial class TransactionLineItemBase : ObservableObject
     [ObservableProperty]
     private string? _itemText;
 
+    /// <summary>The currency of an entry being edited in another currency than the company's, otherwise null.</summary>
+    public string? CurrencyCode { get; init; }
+
     public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0);
-    public string AmountFormatted => CurrencyService.Format(Amount);
+    public string AmountFormatted => CurrencyCode == null
+        ? CurrencyService.Format(Amount)
+        : CurrencyInfo.GetByCode(CurrencyCode).Format(Amount);
 
     partial void OnSelectedProductChanged(ProductOption? value)
     {

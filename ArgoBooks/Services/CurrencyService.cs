@@ -339,11 +339,17 @@ public static class CurrencyService
     /// <param name="amount">The amount entered by the user.</param>
     /// <param name="date">The transaction date for exchange rate lookup.</param>
     /// <returns>A MonetaryValue with both original and USD amounts.</returns>
-    public static async Task<MonetaryValue> CreateMonetaryValueAsync(decimal amount, DateTime date)
-    {
-        var currentCurrency = CurrentCurrencyCode;
+    public static Task<MonetaryValue> CreateMonetaryValueAsync(decimal amount, DateTime date)
+        => CreateMonetaryValueAsync(amount, CurrentCurrencyCode, date);
 
-        if (string.Equals(currentCurrency, "USD", StringComparison.OrdinalIgnoreCase))
+    /// <summary>
+    /// <see cref="CreateMonetaryValueAsync(decimal, DateTime)"/> for an amount in
+    /// <paramref name="currency"/> rather than the company currency, such as an entry being edited
+    /// that was recorded in another currency.
+    /// </summary>
+    public static async Task<MonetaryValue> CreateMonetaryValueAsync(decimal amount, string currency, DateTime date)
+    {
+        if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
         {
             return new MonetaryValue(amount, "USD", amount, date);
         }
@@ -354,10 +360,10 @@ public static class CurrencyService
 
         if (exchangeService != null)
         {
-            amountUSD = await exchangeService.ConvertToUSDAsync(amount, currentCurrency, date);
+            amountUSD = await exchangeService.ConvertToUSDAsync(amount, currency, date);
         }
 
-        return new MonetaryValue(amount, currentCurrency, amountUSD, date);
+        return new MonetaryValue(amount, currency, amountUSD, date);
     }
 
     /// <summary>

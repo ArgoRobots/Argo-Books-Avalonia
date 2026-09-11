@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -27,7 +28,7 @@ public class TransactionEditCurrencyTests : ModalViewModelTestBase
     [Fact]
     public async Task EditingARowEnteredInAnotherCurrency_KeepsEachLinesOwnPrice()
     {
-        UseNoExchangeRates();
+        UseRates(new NoRatesHandler());
         Company.Settings.Localization.Currency = "USD";
         Company.Products.Add(new Product { Id = "P1", Name = "Laptop" });
         Company.Products.Add(new Product { Id = "P2", Name = "Mouse" });
@@ -55,8 +56,198 @@ public class TransactionEditCurrencyTests : ModalViewModelTestBase
         await vm.SaveExpenseCommand.ExecuteAsync(null);
 
         var expense = Company.Expenses.Single();
-        Assert.Equal(550m, expense.Total);
-        Assert.Equal([500m, 5m], expense.LineItems.Select(li => li.UnitPrice));
+        Assert.Equal(("CAD", 1100m), (expense.OriginalCurrency, expense.Total));
+        Assert.Equal([1000m, 10m], expense.LineItems.Select(li => li.UnitPrice));
+    }
+
+    /// <summary>
+    /// The edit form loaded the entry converted into the company currency and saved it that way, so
+    /// changing only the notes on a EUR 100 expense turned it into a USD 125 one.
+    /// </summary>
+    [Theory]
+    [InlineData("USD")]
+    [InlineData("CAD")]
+    public async Task EditingOnlyTheNotesOfAEuroExpense_KeepsItInEurosAtItsDatesRate(string companyCurrency)
+    {
+        UseRates(new EurHandler(usdToEur: 0.8m));
+        Company.Settings.Localization.Currency = companyCurrency;
+        Company.Expenses.Add(EuroEntry(new Expense()));
+        var before = Snapshot(Company.Expenses.Single());
+
+        await EditNotesAsync(isExpense: true);
+
+        var expense = Company.Expenses.Single();
+        Assert.Equal(
+            "EUR total=100 lines=30,20 tax=10 ship=15 disc=5 pending=False totalUSD=125 taxUSD=12.5 shipUSD=18.75 discUSD=6.25 unitUSD=31.25 notes=Edited",
+            Snapshot(expense));
+
+        Undo();
+        Assert.Equal(before, Snapshot(expense));
+    }
+
+    [Theory]
+    [InlineData("USD")]
+    [InlineData("CAD")]
+    public async Task EditingOnlyTheNotesOfAEuroRevenue_KeepsItInEurosAtItsDatesRate(string companyCurrency)
+    {
+        UseRates(new EurHandler(usdToEur: 0.8m));
+        Company.Settings.Localization.Currency = companyCurrency;
+        Company.Revenues.Add(EuroEntry(new Revenue()));
+        var before = Snapshot(Company.Revenues.Single());
+
+        await EditNotesAsync(isExpense: false);
+
+        var revenue = Company.Revenues.Single();
+        Assert.Equal(
+            "EUR total=100 lines=30,20 tax=10 ship=15 disc=5 pending=False totalUSD=125 taxUSD=12.5 shipUSD=18.75 discUSD=6.25 unitUSD=31.25 notes=Edited",
+            Snapshot(revenue));
+
+        Undo();
+        Assert.Equal(before, Snapshot(revenue));
+    }
+
+    /// <summary>
+    /// With no rate for the entry's date it waits for one in its own currency, never converted at
+    /// another date's rate or relabelled in the company's.
+    /// </summary>
+    [Theory]
+    [InlineData("USD")]
+    [InlineData("CAD")]
+    public async Task EditingAEuroExpenseWithNoRate_KeepsItInEurosAndQueuesItsConversion(string companyCurrency)
+    {
+        var service = UseRates(new NoRatesHandler());
+        Company.Settings.Localization.Currency = companyCurrency;
+        Company.Expenses.Add(EuroEntry(new Expense()));
+        var before = Snapshot(Company.Expenses.Single());
+
+        await EditNotesAsync(isExpense: true);
+
+        var expense = Company.Expenses.Single();
+        Assert.Equal(("EUR", 100m, true), (expense.OriginalCurrency, expense.Total, expense.IsPendingConversion));
+        Assert.Equal([30m, 20m], expense.LineItems.Select(li => li.UnitPrice));
+        Assert.Equal(("EUR", 100m), Queued(expense.Id));
+        Assert.Equal(("EUR", 100m), await Queued(service, expense.Id));
+
+        Undo();
+        Assert.Equal(before, Snapshot(expense));
+        Assert.Equal((null, null), Queued(expense.Id));
+        Assert.Equal((null, null), await Queued(service, expense.Id));
+    }
+
+    [Theory]
+    [InlineData("USD")]
+    [InlineData("CAD")]
+    public async Task EditingAEuroRevenueWithNoRate_KeepsItInEurosAndQueuesItsConversion(string companyCurrency)
+    {
+        var service = UseRates(new NoRatesHandler());
+        Company.Settings.Localization.Currency = companyCurrency;
+        Company.Revenues.Add(EuroEntry(new Revenue()));
+        var before = Snapshot(Company.Revenues.Single());
+
+        await EditNotesAsync(isExpense: false);
+
+        var revenue = Company.Revenues.Single();
+        Assert.Equal(("EUR", 100m, true), (revenue.OriginalCurrency, revenue.Total, revenue.IsPendingConversion));
+        Assert.Equal([30m, 20m], revenue.LineItems.Select(li => li.UnitPrice));
+        Assert.Equal(("EUR", 100m), Queued(revenue.Id));
+        Assert.Equal(("EUR", 100m), await Queued(service, revenue.Id));
+
+        Undo();
+        Assert.Equal(before, Snapshot(revenue));
+        Assert.Equal((null, null), Queued(revenue.Id));
+        Assert.Equal((null, null), await Queued(service, revenue.Id));
+    }
+
+    [Fact]
+    public void EditingAEuroExpense_ShowsItsOwnAmountsInEuros()
+    {
+        UseRates(new EurHandler(usdToEur: 0.8m));
+        Company.Settings.Localization.Currency = "USD";
+        Company.Expenses.Add(EuroEntry(new Expense()));
+
+        var vm = new ExpenseModalsViewModel();
+        vm.OpenEditModal(new ExpenseDisplayItem { Id = EntryId });
+
+        Assert.Equal([30m, 20m], vm.LineItems.Select(li => li.UnitPrice ?? 0));
+        Assert.Equal((10m, 15m, 5m), (vm.ModalTaxAmount, vm.ModalShipping, vm.ModalDiscount));
+        Assert.Equal("€100.00 EUR", vm.TotalFormatted);
+        Assert.Equal("€60.00", vm.LineItems[0].AmountFormatted);
+        Assert.False(vm.HasEditModalChanges);
+    }
+
+    private const string EntryId = "TXN-2026-00001";
+
+    /// <summary>
+    /// EUR 100 on 1 March, stored at 1.25 USD per EUR: two lines of 30 and one of 20, plus tax 10
+    /// and shipping 15, less a discount of 5.
+    /// </summary>
+    private static T EuroEntry<T>(T entry) where T : Transaction
+    {
+        entry.Id = EntryId;
+        entry.Date = new DateTime(2026, 3, 1);
+        entry.OriginalCurrency = "EUR";
+        entry.LineItems =
+        [
+            new LineItem { ProductId = "P1", Description = "Widget", Quantity = 2, UnitPrice = 30m },
+            new LineItem { ProductId = "P2", Description = "Gadget", Quantity = 1, UnitPrice = 20m }
+        ];
+        entry.Quantity = 3;
+        entry.UnitPrice = 25m;
+        entry.Amount = 80m;
+        entry.TaxAmount = 10m;
+        entry.ShippingCost = 15m;
+        entry.Discount = 5m;
+        entry.Total = 100m;
+        entry.TotalUSD = 125m;
+        entry.TaxAmountUSD = 12.5m;
+        entry.ShippingCostUSD = 18.75m;
+        entry.DiscountUSD = 6.25m;
+        entry.UnitPriceUSD = 31.25m;
+        entry.Notes = "Original";
+        return entry;
+    }
+
+    private async Task EditNotesAsync(bool isExpense)
+    {
+        Company.Products.Add(new Product { Id = "P1", Name = "Widget" });
+        Company.Products.Add(new Product { Id = "P2", Name = "Gadget" });
+
+        if (isExpense)
+        {
+            var vm = new ExpenseModalsViewModel();
+            vm.OpenEditModal(new ExpenseDisplayItem { Id = EntryId });
+            vm.ModalNotes = "Edited";
+            await vm.SaveExpenseCommand.ExecuteAsync(null);
+        }
+        else
+        {
+            var vm = new RevenueModalsViewModel();
+            vm.OpenEditModal(new RevenueDisplayItem { Id = EntryId });
+            vm.ModalNotes = "Edited";
+            await vm.SaveRevenueCommand.ExecuteAsync(null);
+        }
+    }
+
+    private static string Snapshot(Transaction t) =>
+        $"{t.OriginalCurrency} total={N(t.Total)} lines={string.Join(",", t.LineItems.Select(li => N(li.UnitPrice)))} " +
+        $"tax={N(t.TaxAmount)} ship={N(t.ShippingCost)} disc={N(t.Discount)} pending={t.IsPendingConversion} " +
+        $"totalUSD={N(t.TotalUSD)} taxUSD={N(t.TaxAmountUSD)} shipUSD={N(t.ShippingCostUSD)} discUSD={N(t.DiscountUSD)} " +
+        $"unitUSD={N(t.UnitPriceUSD)} notes={t.Notes}";
+
+    private static string N(decimal value) => value.ToString("0.######", CultureInfo.InvariantCulture);
+
+    private (string? Currency, decimal? Total) Queued(string id)
+    {
+        var entry = Company.PendingConversions.SingleOrDefault(p => p.TransactionId == id);
+        return (entry?.OriginalCurrency, entry?.Total);
+    }
+
+    private static async Task<(string? Currency, decimal? Total)> Queued(PendingConversionService service, string id)
+    {
+        var probe = new CompanyData();
+        await service.ReconcileWithCompanyDataAsync(probe);
+        var entry = probe.PendingConversions.SingleOrDefault(p => p.TransactionId == id);
+        return (entry?.OriginalCurrency, entry?.Total);
     }
 
     /// <summary>
@@ -117,8 +308,17 @@ public class TransactionEditCurrencyTests : ModalViewModelTestBase
     {
         Company.Settings.Localization.Currency = "EUR";
         Company.Products.Add(new Product { Id = "P1", Name = "Widget" });
+        return UseRates(new NoRatesHandler());
+    }
+
+    /// <summary>
+    /// Serves rates from <paramref name="handler"/> for the test. Returns the conversion service the
+    /// view models queue with.
+    /// </summary>
+    private PendingConversionService UseRates(HttpMessageHandler handler)
+    {
         UseNoExchangeRates(); // puts the shared rate service back after the test
-        RatesInstance.SetValue(null, new ExchangeRateService(new NoDiskPlatform(), new HttpClient(new NoRatesHandler())));
+        RatesInstance.SetValue(null, new ExchangeRateService(new NoDiskPlatform(), new HttpClient(handler)));
         return PendingConversionService.Instance ?? new PendingConversionService(new NoDiskPlatform());
     }
 
@@ -150,6 +350,18 @@ public class TransactionEditCurrencyTests : ModalViewModelTestBase
             {
                 Content = new StringContent("""{ "success": true, "base": "USD", "rates": {} }""", Encoding.UTF8, "application/json")
             });
+    }
+
+    private sealed class EurHandler(decimal usdToEur) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var payload = $$"""{ "success": true, "base": "USD", "rates": { "EUR": {{usdToEur.ToString(CultureInfo.InvariantCulture)}} } }""";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(payload, Encoding.UTF8, "application/json")
+            });
+        }
     }
 
     private sealed class NoDiskPlatform : IPlatformService

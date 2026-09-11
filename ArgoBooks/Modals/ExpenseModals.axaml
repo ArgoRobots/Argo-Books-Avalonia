@@ -234,7 +234,7 @@
                             <Grid ColumnDefinitions="*,16,*,16,*,16,*">
                                 <!-- Tax -->
                                 <StackPanel Grid.Column="0" Spacing="6">
-                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Tax'}" /><Run Text=" ($)" /></TextBlock>
+                                    <TextBlock FontSize="13" FontWeight="Medium" Foreground="{DynamicResource TextSecondaryBrush}"><Run Text="{loc:Loc 'Tax'}" /><Run Text="{Binding TaxCurrencyLabel}" /></TextBlock>
                                     <TextBox Text="{Binding ModalTaxAmount, Mode=TwoWay, Converter={x:Static local:NullableDecimalConverter.Instance}}"
                                              Classes="form-input"
                                              HorizontalAlignment="Stretch"
