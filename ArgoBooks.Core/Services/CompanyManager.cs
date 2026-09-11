@@ -509,7 +509,7 @@ public class CompanyManager : IDisposable
         try
         {
             // Create company directory inside temp
-            var companyDir = Path.Combine(_currentTempDirectory, companyName);
+            var companyDir = Path.Combine(_currentTempDirectory, ToCompanyFileName(companyName));
             Directory.CreateDirectory(companyDir);
 
             // Create default company data
@@ -666,9 +666,10 @@ public class CompanyManager : IDisposable
             _currentPassword = password;
 
             // Sync the company name from the file name so that external renames
-            // (e.g., via the OS file explorer) are reflected in the app
+            // (e.g., via the OS file explorer) are reflected in the app. A file named for the
+            // company's own name leaves it alone, even where "/" and the like became "-".
             var fileBaseName = Path.GetFileNameWithoutExtension(filePath);
-            if (!string.IsNullOrEmpty(fileBaseName) && CompanyData.Settings.Company.Name != fileBaseName)
+            if (!string.IsNullOrEmpty(fileBaseName) && ToCompanyFileName(CompanyData.Settings.Company.Name) != fileBaseName)
             {
                 CompanyData.Settings.Company.Name = fileBaseName;
             }
@@ -1015,6 +1016,13 @@ public class CompanyManager : IDisposable
                     File.Move(CurrentFilePath, PendingRenamePath, overwrite: false);
                     CurrentFilePath = PendingRenamePath;
                 }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                               or ArgumentException or NotSupportedException)
+                {
+                    // The file keeps its name. The data still gets saved, and the rename is dropped
+                    // below rather than left to fail every save after this one.
+                    _errorLogger?.LogError(ex, ErrorCategory.FileSystem, "Failed to rename company file");
+                }
                 finally
                 {
                     AcquireFileLock(CurrentFilePath);
@@ -1110,7 +1118,7 @@ public class CompanyManager : IDisposable
 
             // Sync company name with the new file name so they stay consistent
             var newName = Path.GetFileNameWithoutExtension(newFilePath);
-            if (!string.IsNullOrEmpty(newName) && CompanyData!.Settings.Company.Name != newName)
+            if (!string.IsNullOrEmpty(newName) && ToCompanyFileName(CompanyData!.Settings.Company.Name) != newName)
             {
                 CompanyData.Settings.Company.Name = newName;
             }
@@ -1274,6 +1282,24 @@ public class CompanyManager : IDisposable
     /// </summary>
     public Task RemoveSupplierAvatarAsync(Supplier supplier)
         => RemoveEntityAvatarAsync(supplier);
+
+    // Path.GetInvalidFileNameChars lists only this platform's, and a file made on a Mac is
+    // often copied to a PC, so Windows' list is always added.
+    private static readonly char[] UnsafeFileNameChars =
+        [.. Path.GetInvalidFileNameChars(), '<', '>', ':', '"', '/', '\\', '|', '?', '*'];
+
+    /// <summary>
+    /// The file name, without ".argo", for a company called <paramref name="companyName"/>.
+    /// Characters no file name can hold, such as "/", become "-". The company keeps the name as
+    /// typed; only its file is named this.
+    /// </summary>
+    public static string ToCompanyFileName(string companyName)
+    {
+        var fileName = new string(companyName
+            .Select(c => char.IsControl(c) || UnsafeFileNameChars.Contains(c) ? '-' : c)
+            .ToArray());
+        return string.IsNullOrWhiteSpace(fileName) ? "Company" : fileName;
+    }
 
     private static string SanitizeForFileName(string raw)
     {

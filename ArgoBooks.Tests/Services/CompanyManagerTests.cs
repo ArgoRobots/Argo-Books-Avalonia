@@ -283,6 +283,67 @@ public class CompanyManagerTests : IDisposable
 
     #endregion
 
+    #region Company File Name Tests
+
+    /// <summary>
+    /// A company name can hold characters a file name can't, such as "/". The file gets a safe
+    /// name, and the name the user typed is what the company is still called after reopening.
+    /// </summary>
+    [Fact]
+    public async Task CreateCompany_NameWithSlash_KeepsNameAfterReopen()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, CompanyManager.ToCompanyFileName("Smith/Jones: Books?") + ".argo");
+        try
+        {
+            Assert.DoesNotContain(Path.GetFileName(path), c => "<>:\"/\\|?*".Contains(c));
+
+            await _manager.CreateCompanyAsync(path, "Smith/Jones: Books?");
+            await _manager.SaveCompanyAsync();
+            await _manager.CloseCompanyAsync();
+
+            Assert.True(await _manager.OpenCompanyAsync(path));
+            Assert.Equal("Smith/Jones: Books?", _manager.CompanyData!.Settings.Company.Name);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    /// <summary>
+    /// A rename that can't be done must not stop the data being saved, or leave itself pending so
+    /// that every later save fails the same way.
+    /// </summary>
+    [Fact]
+    public async Task Save_RenameCannotBeApplied_SavesAtCurrentPath()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        try
+        {
+            await _manager.CreateCompanyAsync(path, "Acme");
+            _manager.SetPendingRename(Path.Combine(path + "-missing", "Acme West.argo"));
+            _manager.CompanyData!.Customers.Add(new Customer { Id = "CUST-1", Name = "Kept" });
+
+            await _manager.SaveCompanyAsync();
+
+            Assert.Null(_manager.PendingRenamePath);
+            Assert.Equal(path, _manager.CurrentFilePath);
+            await _manager.CloseCompanyAsync();
+            await _manager.OpenCompanyAsync(path);
+            Assert.Single(_manager.CompanyData!.Customers);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    #endregion
+
     #region ChangeCustomerId Cascade Tests
 
     [Fact]

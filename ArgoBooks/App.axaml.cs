@@ -3969,7 +3969,7 @@ public partial class App : Application
         return await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save Company".Translate(),
-            SuggestedFileName = $"{suggestedFileName}.argo",
+            SuggestedFileName = $"{CompanyManager.ToCompanyFileName(suggestedFileName)}.argo",
             DefaultExtension = "argo",
             FileTypeChoices =
             [

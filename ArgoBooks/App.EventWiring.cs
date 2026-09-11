@@ -905,7 +905,7 @@ public partial class App
                     {
                         var currentPath = CompanyManager.CurrentFilePath;
                         var directory = Path.GetDirectoryName(currentPath);
-                        var newFileName = args.CompanyName + ".argo";
+                        var newFileName = CompanyManager.ToCompanyFileName(args.CompanyName) + ".argo";
                         var newPath = Path.Combine(directory!, newFileName);
 
                         if (currentPath != newPath && !File.Exists(newPath))
@@ -1427,7 +1427,7 @@ public partial class App
                 var backupFile = await desktop.MainWindow!.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                 {
                     Title = "Export Backup".Translate(),
-                    SuggestedFileName = $"{CompanyManager.CurrentCompanyName ?? "Backup"}-{DateTime.Now:yyyy-MM-dd}.argobk",
+                    SuggestedFileName = $"{CompanyManager.ToCompanyFileName(CompanyManager.CurrentCompanyName ?? "Backup")}-{DateTime.Now:yyyy-MM-dd}.argobk",
                     DefaultExtension = "argobk",
                     FileTypeChoices =
                     [
