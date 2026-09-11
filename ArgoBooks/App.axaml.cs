@@ -2641,10 +2641,12 @@ public partial class App : Application
                 // transaction date before importing, so money never converts at a wrong-date rate
                 // (see docs/Calculations.md). If rates can't be fetched (offline or server down),
                 // pause with a connect-and-retry prompt. Best-effort: any row the scan misses still
-                // self-heals via IsPendingConversion.
+                // self-heals via IsPendingConversion. A row that names no currency is in the
+                // company's, so a non-USD company always needs its rates.
                 var hasNonUsd =
                     currencyScan.Resolved.Values.SelectMany(m => m.Values)
                         .Concat(importOptions.SymbolResolution.Values)
+                        .Append(companyData.Settings.Localization.Currency)
                         .Any(c => !string.IsNullOrEmpty(c) && !string.Equals(c, "USD", StringComparison.OrdinalIgnoreCase));
                 if (hasNonUsd && ExchangeRateService.Instance is { } exchangeRates)
                 {

@@ -1090,24 +1090,18 @@ public class SpreadsheetImportService
         => _currentSheetRowCurrency is { } map && map.TryGetValue(rowIndex, out var code) ? code : null;
 
     /// <summary>
+    /// The currency of an amount that names none. It is the company's, which is not necessarily
+    /// USD, so it still has to be converted to the USD base like any other.
+    /// </summary>
+    private static string CompanyCurrency(CompanyData data)
+        => string.IsNullOrWhiteSpace(data.Settings.Localization.Currency) ? "USD" : data.Settings.Localization.Currency;
+
+    /// <summary>
     /// Sets <c>OriginalCurrency</c> and the USD fields on a Revenue/Expense from the per-row
-    /// detected currency, or the company currency (raw passthrough) when none was detected.
+    /// detected currency, or the company currency when none was detected.
     /// </summary>
     private void ApplyTransactionCurrency(Transaction txn, int rowIndex, CompanyData data)
-    {
-        var code = Tier1RowCurrency(rowIndex);
-        if (code != null)
-        {
-            ApplyTransactionCurrencyCode(txn, code, data);
-        }
-        else
-        {
-            txn.OriginalCurrency = data.Settings.Localization.Currency;
-            txn.TotalUSD = txn.Total;
-            txn.TaxAmountUSD = txn.TaxAmount;
-            txn.ShippingCostUSD = txn.ShippingCost;
-        }
-    }
+        => ApplyTransactionCurrencyCode(txn, Tier1RowCurrency(rowIndex) ?? CompanyCurrency(data), data);
 
     /// <summary>
     /// True when an exact-date original-&gt;USD rate is available (or the row is already USD), so the
@@ -1124,16 +1118,7 @@ public class SpreadsheetImportService
 
     /// <summary>Per-row currency for a Payment (or company currency when none detected).</summary>
     private void ApplyPaymentCurrency(Payment payment, int rowIndex, CompanyData data)
-    {
-        var code = Tier1RowCurrency(rowIndex);
-        if (code != null)
-            ApplyPaymentCurrencyCode(payment, code, data);
-        else
-        {
-            payment.OriginalCurrency = data.Settings.Localization.Currency;
-            payment.AmountUSD = payment.Amount;
-        }
-    }
+        => ApplyPaymentCurrencyCode(payment, Tier1RowCurrency(rowIndex) ?? CompanyCurrency(data), data);
 
     /// <summary>
     /// Converts a Payment's amount to USD at its exact date for <paramref name="code"/>; on an
@@ -1160,17 +1145,7 @@ public class SpreadsheetImportService
 
     /// <summary>Per-row currency for an Invoice (or company currency when none detected).</summary>
     private void ApplyInvoiceCurrency(Invoice invoice, int rowIndex, CompanyData data)
-    {
-        var code = Tier1RowCurrency(rowIndex);
-        if (code != null)
-            ApplyInvoiceCurrencyCode(invoice, code, data);
-        else
-        {
-            invoice.OriginalCurrency = data.Settings.Localization.Currency;
-            invoice.TotalUSD = invoice.Total;
-            invoice.BalanceUSD = invoice.Balance;
-        }
-    }
+        => ApplyInvoiceCurrencyCode(invoice, Tier1RowCurrency(rowIndex) ?? CompanyCurrency(data), data);
 
     /// <summary>
     /// Converts an Invoice's Total and Balance to USD at its exact issue date; on an unpriceable row,
@@ -1199,16 +1174,7 @@ public class SpreadsheetImportService
 
     /// <summary>Per-row currency for a PurchaseOrder (or company currency when none detected).</summary>
     private void ApplyPurchaseOrderCurrency(PurchaseOrder po, int rowIndex, CompanyData data)
-    {
-        var code = Tier1RowCurrency(rowIndex);
-        if (code != null)
-            ApplyPurchaseOrderCurrencyCode(po, code, data);
-        else
-        {
-            po.OriginalCurrency = data.Settings.Localization.Currency;
-            po.TotalUSD = po.Total;
-        }
-    }
+        => ApplyPurchaseOrderCurrencyCode(po, Tier1RowCurrency(rowIndex) ?? CompanyCurrency(data), data);
 
     /// <summary>
     /// Converts a PurchaseOrder's Total to USD at its exact order date; on an unpriceable row, defers
@@ -1666,20 +1632,10 @@ public class SpreadsheetImportService
                 if (invoice != null && !string.IsNullOrEmpty(invoice.Id))
                 {
 
-                    var invoiceCurrency = ExtractRowCurrency(entityJson, options);
-                    if (!string.IsNullOrEmpty(invoiceCurrency))
-                    {
-                        // A per-row currency column was mapped: convert Total/Balance at the exact
-                        // issue date, deferring (pending + enqueue) when unpriceable. Shared with Tier 1.
-                        ApplyInvoiceCurrencyCode(invoice, invoiceCurrency, data);
-                    }
-                    else
-                    {
-                        // No currency column: amounts are already in the company currency.
-                        invoice.OriginalCurrency = data.Settings.Localization.Currency;
-                        invoice.TotalUSD = invoice.Total;
-                        invoice.BalanceUSD = invoice.Balance;
-                    }
+                    // Convert Total/Balance at the exact issue date from the row's own currency, or
+                    // the company currency when it names none, deferring (pending + enqueue) when
+                    // unpriceable. Shared with Tier 1.
+                    ApplyInvoiceCurrencyCode(invoice, ExtractRowCurrency(entityJson, options) ?? CompanyCurrency(data), data);
 
                     // Resolve customer reference by name, else create a placeholder
                     invoice.CustomerId = EnsureCustomerExists(data, invoice.CustomerId, refContext) ?? invoice.CustomerId;
@@ -1701,21 +1657,9 @@ public class SpreadsheetImportService
                 var expense = JsonSerializer.Deserialize<Expense>(jsonStr, opts);
                 if (expense != null && !string.IsNullOrEmpty(expense.Id))
                 {
-                    var expenseCurrency = ExtractRowCurrency(entityJson, options);
-                    if (!string.IsNullOrEmpty(expenseCurrency))
-                    {
-                        // A per-row currency column was mapped: convert each amount to USD at the
-                        // transaction's EXACT date. Future-dated/unpriceable rows become pending.
-                        ApplyTransactionCurrencyCode(expense, expenseCurrency, data);
-                    }
-                    else
-                    {
-                        // No currency column: amounts are already in the company currency.
-                        expense.OriginalCurrency = data.Settings.Localization.Currency;
-                        expense.TotalUSD = expense.Total;
-                        expense.TaxAmountUSD = expense.TaxAmount;
-                        expense.ShippingCostUSD = expense.ShippingCost;
-                    }
+                    // Convert each amount to USD at the transaction's EXACT date, from the row's own
+                    // currency or else the company's. Future-dated/unpriceable rows become pending.
+                    ApplyTransactionCurrencyCode(expense, ExtractRowCurrency(entityJson, options) ?? CompanyCurrency(data), data);
 
                     // Resolve supplier reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(expense.SupplierId))
@@ -1772,21 +1716,9 @@ public class SpreadsheetImportService
                 {
                     // PaymentStatus is already normalized by the enum's JSON
                     // converter (legacy typos → Paid fallback), no separate call.
-                    var revenueCurrency = ExtractRowCurrency(entityJson, options);
-                    if (!string.IsNullOrEmpty(revenueCurrency))
-                    {
-                        // A per-row currency column was mapped: convert each amount to USD at the
-                        // transaction's EXACT date. Future-dated/unpriceable rows become pending.
-                        ApplyTransactionCurrencyCode(revenue, revenueCurrency, data);
-                    }
-                    else
-                    {
-                        // No currency column: amounts are already in the company currency.
-                        revenue.OriginalCurrency = data.Settings.Localization.Currency;
-                        revenue.TotalUSD = revenue.Total;
-                        revenue.TaxAmountUSD = revenue.TaxAmount;
-                        revenue.ShippingCostUSD = revenue.ShippingCost;
-                    }
+                    // Convert each amount to USD at the transaction's EXACT date, from the row's own
+                    // currency or else the company's. Future-dated/unpriceable rows become pending.
+                    ApplyTransactionCurrencyCode(revenue, ExtractRowCurrency(entityJson, options) ?? CompanyCurrency(data), data);
 
                     // Resolve customer reference by name, else create a placeholder
                     if (!string.IsNullOrEmpty(revenue.CustomerId))
@@ -1840,20 +1772,10 @@ public class SpreadsheetImportService
                 var payment = JsonSerializer.Deserialize<Payment>(jsonStr, opts);
                 if (payment != null && !string.IsNullOrEmpty(payment.Id))
                 {
-                    var paymentCurrency = ExtractRowCurrency(entityJson, options);
-                    if (!string.IsNullOrEmpty(paymentCurrency))
-                    {
-                        // A per-row currency column was mapped: convert at the exact payment date,
-                        // deferring (pending + enqueue) when unpriceable so it self-heals later rather
-                        // than being stuck at 0. Shared with the Tier 1 path.
-                        ApplyPaymentCurrencyCode(payment, paymentCurrency, data);
-                    }
-                    else
-                    {
-                        // No currency column: amount is already in the company currency.
-                        payment.OriginalCurrency = data.Settings.Localization.Currency;
-                        payment.AmountUSD = payment.Amount;
-                    }
+                    // Convert at the exact payment date from the row's own currency or else the
+                    // company's, deferring (pending + enqueue) when unpriceable so it self-heals
+                    // later rather than being stuck at 0. Shared with the Tier 1 path.
+                    ApplyPaymentCurrencyCode(payment, ExtractRowCurrency(entityJson, options) ?? CompanyCurrency(data), data);
 
                     // Resolve customer reference by name, else create a placeholder
                     payment.CustomerId = EnsureCustomerExists(data, payment.CustomerId, refContext) ?? payment.CustomerId;
@@ -1955,19 +1877,9 @@ public class SpreadsheetImportService
                 var po = JsonSerializer.Deserialize<PurchaseOrder>(jsonStr, opts);
                 if (po != null && !string.IsNullOrEmpty(po.Id))
                 {
-                    var poCurrency = ExtractRowCurrency(entityJson, options);
-                    if (!string.IsNullOrEmpty(poCurrency))
-                    {
-                        // A per-row currency column was mapped: convert at the exact order date,
-                        // deferring (pending + enqueue) when unpriceable. Shared with the Tier 1 path.
-                        ApplyPurchaseOrderCurrencyCode(po, poCurrency, data);
-                    }
-                    else
-                    {
-                        // No currency column: the total is already in the company currency.
-                        po.OriginalCurrency = data.Settings.Localization.Currency;
-                        po.TotalUSD = po.Total;
-                    }
+                    // Convert at the exact order date from the row's own currency or else the
+                    // company's, deferring (pending + enqueue) when unpriceable. Shared with Tier 1.
+                    ApplyPurchaseOrderCurrencyCode(po, ExtractRowCurrency(entityJson, options) ?? CompanyCurrency(data), data);
 
                     if (!string.IsNullOrEmpty(po.SupplierId))
                         po.SupplierId = EnsureSupplierExists(data, po.SupplierId, refContext) ?? po.SupplierId;
