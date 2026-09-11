@@ -274,8 +274,11 @@ internal static class SpreadsheetRowReader
     }
 
     public static DateTime? GetNullableDateTime(List<object?> row, List<string> headers, string columnName)
+        => GetNullableDateTime(row, headers, columnName, DateOrder.Unknown);
+
+    public static DateTime? GetNullableDateTime(List<object?> row, List<string> headers, string columnName, DateOrder order)
     {
-        var dt = GetDateTime(row, headers, columnName);
+        var dt = GetDateTime(row, headers, columnName, order);
         return dt == DateTime.MinValue ? null : dt;
     }
 }

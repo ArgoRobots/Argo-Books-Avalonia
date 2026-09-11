@@ -910,6 +910,7 @@ public class SpreadsheetImportService
             && bySheet.TryGetValue(sheetName, out var rowMap) ? rowMap : null;
         try
         {
+            BeginSheet(rows);
             ImportBySheetType(sheetType, data, headers, rows, options);
         }
         finally
@@ -1000,9 +1001,10 @@ public class SpreadsheetImportService
                 var headers = SpreadsheetRowReader.GetHeaders(ws);
                 ApplyColumnMapping(headers, sheet); // source -> target names, in place
                 var rows = SpreadsheetRowReader.GetDataRows(ws, headers.Count);
+                var order = SpreadsheetRowReader.DetectDateOrder(rows, headers, dateColumn);
                 foreach (var row in rows)
                 {
-                    var d = SpreadsheetRowReader.GetNullableDateTime(row, headers, dateColumn);
+                    var d = SpreadsheetRowReader.GetNullableDateTime(row, headers, dateColumn, order);
                     if (d.HasValue) dates.Add(d.Value.Date);
                 }
             }
@@ -1088,6 +1090,29 @@ public class SpreadsheetImportService
     /// <summary>The ISO code detected for the given Tier 1 data-row ordinal, or <c>null</c>.</summary>
     private string? Tier1RowCurrency(int rowIndex)
         => _currentSheetRowCurrency is { } map && map.TryGetValue(rowIndex, out var code) ? code : null;
+
+    /// <summary>
+    /// The rows of the sheet being imported, so each date column's day/month order is decided once
+    /// from all of its values rather than per cell, which read 15/03 as March and 05/03 in the same
+    /// column as May. See <see cref="SpreadsheetRowReader.DetectDateOrder"/>.
+    /// </summary>
+    private List<List<object?>>? _sheetRows;
+    private readonly Dictionary<string, SpreadsheetRowReader.DateOrder> _sheetDateOrders = new(StringComparer.OrdinalIgnoreCase);
+
+    private void BeginSheet(List<List<object?>> rows)
+    {
+        _sheetRows = rows;
+        _sheetDateOrders.Clear();
+    }
+
+    private SpreadsheetRowReader.DateOrder DateOrderOf(List<string> headers, string columnName)
+    {
+        if (_sheetRows == null)
+            return SpreadsheetRowReader.DateOrder.Unknown;
+        if (!_sheetDateOrders.TryGetValue(columnName, out var order))
+            _sheetDateOrders[columnName] = order = SpreadsheetRowReader.DetectDateOrder(_sheetRows, headers, columnName);
+        return order;
+    }
 
     /// <summary>
     /// The currency of an amount that names none. It is the company's, which is not necessarily
@@ -2952,6 +2977,7 @@ public class SpreadsheetImportService
         // Get all data rows (starting from row 2)
         var rows = GetDataRows(worksheet, headers.Count);
         if (rows.Count == 0) return;
+        BeginSheet(rows);
 
         // Import based on sheet type
         switch (SpreadsheetSheetTypeExtensions.ParseSheetName(sheetName))
@@ -3116,9 +3142,11 @@ public class SpreadsheetImportService
 
     private static int GetInt(List<object?> row, List<string> headers, string columnName) => SpreadsheetRowReader.GetInt(row, headers, columnName);
 
-    private static DateTime GetDateTime(List<object?> row, List<string> headers, string columnName) => SpreadsheetRowReader.GetDateTime(row, headers, columnName);
+    private DateTime GetDateTime(List<object?> row, List<string> headers, string columnName)
+        => SpreadsheetRowReader.GetDateTime(row, headers, columnName, DateOrderOf(headers, columnName));
 
-    private static DateTime? GetNullableDateTime(List<object?> row, List<string> headers, string columnName) => SpreadsheetRowReader.GetNullableDateTime(row, headers, columnName);
+    private DateTime? GetNullableDateTime(List<object?> row, List<string> headers, string columnName)
+        => SpreadsheetRowReader.GetNullableDateTime(row, headers, columnName, DateOrderOf(headers, columnName));
 
     private static TEnum ParseEnum<TEnum>(string value, TEnum defaultValue) where TEnum : struct, Enum
     {
@@ -3953,11 +3981,11 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // "Hire Date" is the usual name for it outside this app.
             if (Has("Start Date", "Hire Date"))
-                employee.StartDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "Start Date")
-                                     ?? SpreadsheetRowReader.GetNullableDateTime(row, headers, "Hire Date");
+                employee.StartDate = GetNullableDateTime(row, headers, "Start Date")
+                                     ?? GetNullableDateTime(row, headers, "Hire Date");
 
             if (Has("End Date"))
-                employee.EndDate = SpreadsheetRowReader.GetNullableDateTime(row, headers, "End Date");
+                employee.EndDate = GetNullableDateTime(row, headers, "End Date");
 
             // Replaced wholesale rather than merged, so a sheet carrying an address is
             // authoritative for all of it, but only when it carries one at all.
