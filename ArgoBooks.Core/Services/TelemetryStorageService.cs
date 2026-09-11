@@ -265,7 +265,11 @@ public class TelemetryStorageService : ITelemetryStorageService
         {
             await using var stream = File.OpenRead(path);
             var loaded = await JsonSerializer.DeserializeAsync<List<TelemetryEventWrapper>>(stream, _jsonOptions, cancellationToken);
-            _events = loaded ?? [];
+
+            // The converter answers an event it cannot read with null. Kept, that entry broke
+            // every query over the list, all of which read Event, so pending events stopped
+            // uploading for good. Dropping it costs that one event and nothing else.
+            _events = loaded?.Where(e => e.Event != null).ToList() ?? [];
             return true;
         }
         catch (Exception ex)
@@ -504,7 +508,14 @@ public class TelemetryStorageService : ITelemetryStorageService
                 return null;
             }
 
-            var dataType = Enum.Parse<TelemetryDataType>(dataTypeElement.GetString()!, ignoreCase: true);
+            // A data type added since this build is as unreadable as any other unknown value, and
+            // costs the same: that event, not the file.
+            if (dataTypeElement.ValueKind != JsonValueKind.String ||
+                !Enum.TryParse<TelemetryDataType>(dataTypeElement.GetString(), ignoreCase: true, out var dataType))
+            {
+                return null;
+            }
+
             var json = root.GetRawText();
 
             // One unreadable event used to fail the whole List<TelemetryEvent>, taking every
