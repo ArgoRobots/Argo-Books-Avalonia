@@ -534,40 +534,9 @@ public partial class App
 
         fileMenu.CloseCompanyRequested += async (_, _) =>
         {
-            if (CompanyManager?.IsCompanyOpen == true)
+            if (CompanyManager?.IsCompanyOpen == true && await ConfirmLeavingCompanyAsync())
             {
-                // Use UndoRedoManager's saved state which correctly handles undo back to original
-                if (UndoRedoManager.IsAtSavedState == false)
-                {
-                    var result = await ShowUnsavedChangesDialogAsync();
-                    switch (result)
-                    {
-                        case UnsavedChangesResult.Save:
-                            // Sample company cannot be saved directly - redirect to Save As
-                            if (CompanyManager.IsSampleCompany)
-                            {
-                                var saved = await SaveCompanyAsDialogAsync(desktop);
-                                if (!saved) return; // User cancelled Save As, don't close
-                            }
-                            else
-                            {
-                                await CompanyManager.SaveCompanyAsync();
-                            }
-                            await CompanyManager.CloseCompanyAsync();
-                            break;
-                        case UnsavedChangesResult.DontSave:
-                            await CompanyManager.CloseCompanyAsync();
-                            break;
-                        case UnsavedChangesResult.Cancel:
-                        case UnsavedChangesResult.None:
-                            // User cancelled, do nothing
-                            return;
-                    }
-                }
-                else
-                {
-                    await CompanyManager.CloseCompanyAsync();
-                }
+                await CompanyManager.CloseCompanyAsync();
             }
         };
 

@@ -3491,37 +3491,41 @@ public partial class App : Application
     internal static async Task RequestCreateNewCompanyAsync()
     {
         if (_appShellViewModel == null) return;
-
-        // Use UndoRedoManager's saved state, which correctly accounts for undoing back to the
-        // last-saved point (matches the Close Company prompt).
-        if (CompanyManager?.IsCompanyOpen == true && UndoRedoManager.IsAtSavedState == false)
-        {
-            var result = await ShowUnsavedChangesDialogAsync();
-            switch (result)
-            {
-                case UnsavedChangesResult.Save:
-                    // Sample company cannot be saved directly - redirect to Save As.
-                    if (CompanyManager.IsSampleCompany)
-                    {
-                        var desktop = Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
-                        if (desktop == null) return;
-                        var saved = await SaveCompanyAsDialogAsync(desktop);
-                        if (!saved) return; // user cancelled Save As, abort the new-company action
-                    }
-                    else
-                    {
-                        await CompanyManager.SaveCompanyAsync();
-                    }
-                    break;
-                case UnsavedChangesResult.DontSave:
-                    break;
-                case UnsavedChangesResult.Cancel:
-                case UnsavedChangesResult.None:
-                    return; // user cancelled, don't open the wizard
-            }
-        }
+        if (!await ConfirmLeavingCompanyAsync()) return;
 
         _appShellViewModel.CreateCompanyViewModel.OpenCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// Offers to save unsaved changes before the open company is closed or replaced. Shared by
+    /// Close Company, New Company and every way of opening a company: opening one closes the
+    /// current company without saving it, so any path that skips this loses the changes.
+    /// </summary>
+    /// <returns>False when the user chose to stay where they are.</returns>
+    private static async Task<bool> ConfirmLeavingCompanyAsync()
+    {
+        // UndoRedoManager's saved state, which correctly accounts for undoing back to the
+        // last-saved point.
+        if (CompanyManager?.IsCompanyOpen != true || UndoRedoManager.IsAtSavedState)
+            return true;
+
+        switch (await ShowUnsavedChangesDialogAsync())
+        {
+            case UnsavedChangesResult.Save:
+                // Sample company cannot be saved directly - redirect to Save As.
+                if (CompanyManager.IsSampleCompany)
+                {
+                    return Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+                           && await SaveCompanyAsDialogAsync(desktop);
+                }
+
+                await CompanyManager.SaveCompanyAsync();
+                return true;
+            case UnsavedChangesResult.DontSave:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /// <summary>
@@ -3531,6 +3535,7 @@ public partial class App : Application
     private static async Task OpenCompanyWithRetryAsync(string filePath)
     {
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null) return;
+        if (!await ConfirmLeavingCompanyAsync()) return;
 
         var passwordModal = _appShellViewModel.PasswordPromptModalViewModel;
 
