@@ -189,4 +189,28 @@ public class RentalRecordsModalsViewModelTests : ModalViewModelTestBase
         Assert.Single(Company.Rentals);
         Assert.Equal(0, stock.InStock);
     }
+
+    // "Rent Out" saves only the top-level item and quantity, with no line items, so an edit has to
+    // read the units already out from those or it takes them off the stock a second time.
+    [Fact]
+    public void EditRentOutRental_ChangingOnlyTheDueDate_LeavesStockAlone()
+    {
+        var stock = SeedRentableStock(7); // 10 owned, 3 out on this rental
+        var record = new RentalRecord
+        {
+            Id = "RNT-1", CustomerId = "CUST-1", RentalItemId = "RI-1", Quantity = 3,
+            RateType = RateType.Daily, RateAmount = 10m, Status = RentalStatus.Active,
+            StartDate = DateTime.Today, DueDate = DateTime.Today.AddDays(1)
+        };
+        Company.Rentals.Add(record);
+        var vm = new RentalRecordsModalsViewModel();
+
+        vm.OpenEditModal(new RentalRecordDisplayItem { Id = "RNT-1", IsActive = true });
+        vm.ModalDueDate = new DateTimeOffset(DateTime.Today.AddDays(5));
+        vm.SaveEditedRecord();
+
+        Assert.Equal(DateTime.Today.AddDays(5), record.DueDate);
+        Assert.Equal(7, stock.InStock);
+        Assert.DoesNotContain(Company.StockAdjustments, a => a.Reason == "Rental edited");
+    }
 }

@@ -533,6 +533,17 @@ public partial class RentalInventoryModalsViewModel : ViewModelBase
             return;
         }
 
+        // Return, edit and delete find a rental's stock through this link when they run, so moving it
+        // while units are out would put them back on the wrong item.
+        var rentalItemId = _editingItem.Id;
+        if (oldInventoryItemId != newInventoryItemId && companyData.Rentals.Any(r =>
+                (r.Status == RentalStatus.Active || r.Status == RentalStatus.Overdue) &&
+                RentalRecordsModalsViewModel.GetEffectiveLineItems(r).Any(li => li.RentalItemId == rentalItemId)))
+        {
+            ModalInventoryItemError = "This item is rented out. Link it to another inventory item once every rental of it is returned.".Translate();
+            return;
+        }
+
         var itemToEdit = _editingItem;
         var itemName = ResolveRentalItemName(companyData, itemToEdit);
         var changes = new Dictionary<string, FieldChange>();

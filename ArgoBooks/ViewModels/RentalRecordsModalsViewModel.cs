@@ -726,8 +726,9 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
             });
         }
 
-        // Calculate inventory changes via InventoryItem.InStock
-        var effectiveOldLineItems = oldLineItems.Count > 0 ? oldLineItems : _editingRecord.LineItems;
+        // Calculate inventory changes via InventoryItem.InStock. A "Rent Out" record has no line
+        // items, so the units it has out come from its top-level fields.
+        var effectiveOldLineItems = GetEffectiveLineItems(_editingRecord);
 
         // Compute net quantity diff per InventoryItem
         var oldQtyByInvItem = new Dictionary<string, int>();
