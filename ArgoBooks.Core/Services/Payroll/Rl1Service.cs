@@ -57,12 +57,21 @@ public class Rl1Service
         foreach (var group in lines.GroupBy(l => l.EmployeeId))
         {
             Employee? employee = data.Employees.FirstOrDefault(e => e.Id == group.Key);
-            if (employee == null || !IsQuebec(employee))
+            if (employee == null)
             {
                 continue;
             }
 
-            Rl1Slip slip = BuildSlip(employee, group.ToList(), ceilings);
+            // The Quebec part of the year only, read off each line rather than from where the
+            // employee works now: someone who moved in files for their Quebec pay alone, and
+            // someone who moved out still files for the months before they left.
+            List<PayRunLine> quebecLines = group.Where(l => IsQuebec(l, employee)).ToList();
+            if (quebecLines.Count == 0)
+            {
+                continue;
+            }
+
+            Rl1Slip slip = BuildSlip(employee, quebecLines, ceilings);
 
             // A slip whose every figure nets to zero is one whose runs were all voided. There
             // is nothing to report.
@@ -81,19 +90,15 @@ public class Rl1Service
     {
         ArgumentNullException.ThrowIfNull(data);
 
-        var quebec = data.Employees
-            .Where(IsQuebec)
-            .Select(e => e.Id)
-            .ToHashSet(StringComparer.Ordinal);
-
-        return quebec.Count > 0
-               && data.PayRuns.Any(r => r.Status != PayRunStatus.Draft
-                                        && r.PayDate.Year == taxYear
-                                        && r.Lines.Any(l => quebec.Contains(l.EmployeeId)));
+        return data.PayRuns.Any(r => r.Status != PayRunStatus.Draft
+                                     && r.PayDate.Year == taxYear
+                                     && r.Lines.Any(l => data.Employees.FirstOrDefault(e => e.Id == l.EmployeeId)
+                                                             is { } employee
+                                                         && IsQuebec(l, employee)));
     }
 
-    private static bool IsQuebec(Employee employee) =>
-        string.Equals(employee.Province, "QC", StringComparison.OrdinalIgnoreCase);
+    private static bool IsQuebec(PayRunLine line, Employee employee) =>
+        T4Service.ProvinceOf(line, employee) == "QC";
 
     private static Rl1Slip BuildSlip(Employee employee, List<PayRunLine> lines, EarningsCeilings ceilings)
     {
