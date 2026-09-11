@@ -263,8 +263,9 @@ public class RemoveElementAction : IReportUndoableAction
 
     public void Undo()
     {
+        // Straight into the list: AddElement would put it on top of everything.
         _element.ZOrder = _originalZOrder;
-        _config.AddElement(_element);
+        _config.Elements.Add(_element);
     }
 
     public void Redo()
@@ -565,9 +566,11 @@ public class DeletePageAction : IReportUndoableAction
         _config = config;
         _deletedPageNumber = pageNumber;
         _removedElements = removedElements.Select(e => e.Clone()).ToList();
-        // Preserve original page numbers in clones
+        // Preserve original IDs and page numbers in clones, so other undo/redo actions that name
+        // these elements still find them once the page is back (as RemoveElementAction does)
         for (int i = 0; i < _removedElements.Count; i++)
         {
+            _removedElements[i].Id = removedElements[i].Id;
             _removedElements[i].PageNumber = removedElements[i].PageNumber;
         }
     }
@@ -585,7 +588,9 @@ public class DeletePageAction : IReportUndoableAction
 
         foreach (var element in _removedElements)
         {
-            _config.Elements.Add(element.Clone());
+            var restored = element.Clone();
+            restored.Id = element.Id;
+            _config.Elements.Add(restored);
         }
     }
 

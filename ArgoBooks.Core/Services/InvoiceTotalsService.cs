@@ -169,6 +169,20 @@ public static class InvoiceTotalsService
     }
 
     /// <summary>
+    /// The status to show for an invoice (docs/Calculations.md §6), the same one the invoices list
+    /// shows: Overdue is derived rather than stored, and a refunded invoice's status is worked out
+    /// afresh by <see cref="RefundedStatus"/> in case the stored one is stale.
+    /// </summary>
+    public static InvoiceStatus DisplayStatus(Invoice invoice)
+    {
+        if (invoice.IsOverdue)
+            return InvoiceStatus.Overdue;
+        if (invoice.AmountRefunded > 0 && invoice.Total > 0)
+            return RefundedStatus(invoice);
+        return invoice.Status;
+    }
+
+    /// <summary>
     /// Convenience wrapper: recalc totals, then recalc status. Use this
     /// after any mutation to the invoice's payment list.
     /// </summary>

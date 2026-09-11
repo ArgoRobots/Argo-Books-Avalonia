@@ -428,6 +428,80 @@ public class ReportUndoRedoManagerTests
 
     #endregion
 
+    #region Page delete and element layer
+
+    /// <summary>Deletes a page the way ReportsPageViewModel.DeletePage does.</summary>
+    private static void DeletePage(ReportConfiguration config, ReportUndoRedoManager manager, int page)
+    {
+        var onPage = config.Elements.Where(e => e.PageNumber == page).ToList();
+        manager.RecordAction(new DeletePageAction(config, page, onPage));
+        foreach (var element in onPage)
+            config.Elements.Remove(element);
+        foreach (var element in config.Elements.Where(e => e.PageNumber > page))
+            element.PageNumber--;
+        config.PageCount--;
+    }
+
+    [Fact]
+    public void DeletePage_Undo_KeepsElementIds_SoEarlierUndosStillWork()
+    {
+        var config = new ReportConfiguration { PageCount = 2 };
+        var manager = new ReportUndoRedoManager();
+        var label = new LabelReportElement { X = 10, Y = 20, Width = 100, Height = 50, PageNumber = 2 };
+        config.AddElement(label);
+
+        manager.RecordAction(new MoveResizeElementAction(config, label.Id, (10, 20, 100, 50), (60, 70, 100, 50)));
+        label.Bounds = (60, 70, 100, 50);
+        DeletePage(config, manager, 2);
+
+        manager.Undo(); // the page comes back
+        var restored = Assert.Single(config.Elements);
+        Assert.Equal(label.Id, restored.Id);
+
+        manager.Undo(); // then the move is undone
+        Assert.Equal(10, restored.X);
+    }
+
+    [Fact]
+    public void AddElement_ThenDeleteItsPage_UndoAndRedoBoth_LeavesNoCopy()
+    {
+        var config = new ReportConfiguration { PageCount = 2 };
+        var manager = new ReportUndoRedoManager();
+        var label = new LabelReportElement { X = 10, Y = 20, Width = 100, Height = 50, PageNumber = 2 };
+        config.AddElement(label);
+        manager.RecordAction(new AddElementAction(config, label));
+        DeletePage(config, manager, 2);
+
+        manager.Undo(); // page back
+        manager.Undo(); // add undone
+        Assert.Empty(config.Elements);
+
+        manager.Redo(); // add again
+        manager.Redo(); // page deleted again
+        Assert.Empty(config.Elements);
+    }
+
+    [Fact]
+    public void RemoveElement_Undo_PutsItBackOnItsOwnLayer()
+    {
+        var config = new ReportConfiguration();
+        var manager = new ReportUndoRedoManager();
+        var back = new LabelReportElement();
+        var middle = new LabelReportElement();
+        var front = new LabelReportElement();
+        config.AddElement(back);
+        config.AddElement(middle);
+        config.AddElement(front);
+
+        manager.RecordAction(new RemoveElementAction(config, middle));
+        config.RemoveElement(middle.Id);
+        manager.Undo();
+
+        Assert.Equal(new[] { back.Id, middle.Id, front.Id }, config.GetElementsByZOrder().Select(e => e.Id));
+    }
+
+    #endregion
+
     #region Mock Classes
 
     private class MockAction : IReportUndoableAction

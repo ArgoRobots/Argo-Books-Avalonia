@@ -210,6 +210,7 @@ Owned by `InvoiceTotalsService.RecalculateStatus`.
 Heuristics:
 - `Overdue` is a *display state*, not a write. Always compute it with `Invoice.IsOverdue` (past `DueDate`, not Paid / Refunded / Cancelled, and not paid in full) rather than storing it. A partly paid invoice that was then partly refunded still owes its balance, so it can be overdue.
 - Refund statuses (`PartiallyRefunded` / `Refunded`) supersede `Paid` as soon as a refund row exists for the invoice. The display layer self-heals with the same net-paid rule (`InvoiceTotalsService.RefundedStatus`) rather than relying on the stored status, if the stored status disagrees, the computed one wins.
+- `InvoiceTotalsService.DisplayStatus` applies both of the above and is what report tables print, the same status the invoices list shows. Never print the stored `Status` alone.
 
 ---
 
