@@ -1123,10 +1123,11 @@ public class SpreadsheetImportService
 
     /// <summary>
     /// Sets <c>OriginalCurrency</c> and the USD fields on a Revenue/Expense from the per-row
-    /// detected currency, or the company currency when none was detected.
+    /// detected currency, or else <paramref name="currentCurrency"/> (an updated record's own), or
+    /// else the company currency.
     /// </summary>
-    private void ApplyTransactionCurrency(Transaction txn, int rowIndex, CompanyData data)
-        => ApplyTransactionCurrencyCode(txn, Tier1RowCurrency(rowIndex) ?? CompanyCurrency(data), data);
+    private void ApplyTransactionCurrency(Transaction txn, int rowIndex, CompanyData data, string? currentCurrency = null)
+        => ApplyTransactionCurrencyCode(txn, Tier1RowCurrency(rowIndex) ?? currentCurrency ?? CompanyCurrency(data), data);
 
     /// <summary>
     /// True when an exact-date original-&gt;USD rate is available (or the row is already USD), so the
@@ -1301,8 +1302,9 @@ public class SpreadsheetImportService
     private static void EnqueueImportPending(CompanyData data, Transaction txn)
     {
         var type = txn is Revenue ? "Revenue" : "Expense";
-        if (data.PendingConversions.Any(p => p.TransactionId == txn.Id))
-            return;
+        // Replaced rather than kept: the conversion is made from this snapshot, so an updated row's
+        // new amounts have to win over the ones queued when it was first imported.
+        data.PendingConversions.RemoveAll(p => p.TransactionId == txn.Id);
         data.PendingConversions.Add(new PendingConversion
         {
             TransactionId = txn.Id,
@@ -3087,6 +3089,11 @@ public class SpreadsheetImportService
 
     private static readonly string[] PostalCodeVariants = ["Postal Code", "ZIP Code", "Postcode", "PIN Code"];
     private static readonly string[] StateVariants = ["State", "State/Province", "Province", "County", "Prefecture", "Region"];
+    private static readonly string[] AddressColumns = ["Street", "City", "Country", .. StateVariants, .. PostalCodeVariants];
+
+    // The columns a revenue or expense is priced from, and those its single line is built from.
+    private static readonly string[] TransactionPriceColumns = ["Date", "Quantity", "Unit Price", "Tax", "Total", "Shipping", "Currency"];
+    private static readonly string[] TransactionLineColumns = ["Product", "Description", "Quantity", "Unit Price", "Tax"];
 
     private static string? GetNullableString(List<object?> row, List<string> headers, string columnName) => SpreadsheetRowReader.GetNullableString(row, headers, columnName);
 
@@ -3415,22 +3422,36 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var customer = existing ?? new Customer();
+
+            // Updating a customer changes only what the sheet has columns for; a new one takes every field.
+            bool Set(params string[] columns) => existing == null || columns.Any(headers.Contains);
+
             customer.Id = id;
-            customer.Name = NameOrUnknown(name);
-            customer.CompanyName = GetNullableString(row, headers, "Company");
-            customer.Email = GetString(row, headers, "Email");
-            customer.Phone = GetString(row, headers, "Phone");
-            customer.Address = new Address
+            if (Set("Name"))
+                customer.Name = NameOrUnknown(name);
+            if (Set("Company"))
+                customer.CompanyName = GetNullableString(row, headers, "Company");
+            if (Set("Email"))
+                customer.Email = GetString(row, headers, "Email");
+            if (Set("Phone"))
+                customer.Phone = GetString(row, headers, "Phone");
+            if (Set(AddressColumns))
             {
-                Street = GetString(row, headers, "Street"),
-                City = GetString(row, headers, "City"),
-                State = GetStringMulti(row, headers, StateVariants),
-                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
-                Country = GetString(row, headers, "Country")
-            };
-            customer.Notes = GetString(row, headers, "Notes");
-            customer.Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active);
-            customer.TotalPurchases = GetDecimal(row, headers, "Total Purchases");
+                customer.Address = new Address
+                {
+                    Street = GetString(row, headers, "Street"),
+                    City = GetString(row, headers, "City"),
+                    State = GetStringMulti(row, headers, StateVariants),
+                    ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
+                    Country = GetString(row, headers, "Country")
+                };
+            }
+            if (Set("Notes"))
+                customer.Notes = GetString(row, headers, "Notes");
+            if (Set("Status"))
+                customer.Status = ParseEnum(GetString(row, headers, "Status"), EntityStatus.Active);
+            if (Set("Total Purchases"))
+                customer.TotalPurchases = GetDecimal(row, headers, "Total Purchases");
 
             if (existing == null)
                 data.Customers.Add(customer);
@@ -3544,44 +3565,63 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
+            var purchase = existing ?? new Expense();
+
+            // Updating an expense changes only what the sheet has columns for; a new one takes every field.
+            bool Set(params string[] columns) => existing == null || columns.Any(headers.Contains);
+
+            purchase.Id = id;
+            if (Set("Date"))
+                purchase.Date = date;
+            if (Set("Supplier ID"))
+                purchase.SupplierId = supplierId;
+            if (Set("Product", "Description"))
+                purchase.Description = description;
+
             // Quantity is optional: sheets that list a single amount per row have no quantity
             // column, so default to 1. When a quantity column IS present, the pre-tax Amount is
             // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
-            var quantity = GetDecimal(row, headers, "Quantity");
-            if (quantity <= 0) quantity = 1;
-            var unitPrice = GetDecimal(row, headers, "Unit Price");
+            if (Set("Quantity"))
+            {
+                var quantity = GetDecimal(row, headers, "Quantity");
+                purchase.Quantity = quantity <= 0 ? 1 : quantity;
+            }
+            if (Set("Unit Price"))
+                purchase.UnitPrice = GetDecimal(row, headers, "Unit Price");
+            if (Set("Quantity", "Unit Price"))
+                purchase.Amount = purchase.Quantity * purchase.UnitPrice;
+            if (Set("Tax"))
+                purchase.TaxAmount = GetDecimal(row, headers, "Tax");
+            if (Set("Total"))
+                purchase.Total = GetDecimal(row, headers, "Total");
+            if (Set("Reference"))
+                purchase.ReferenceNumber = GetString(row, headers, "Reference");
+            if (Set("Payment Method"))
+                purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
+            if (Set("Shipping"))
+                purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
 
-            var purchase = existing ?? new Expense();
-            purchase.Id = id;
-            purchase.Date = date;
-            purchase.SupplierId = supplierId;
-            purchase.Description = description;
-            purchase.Quantity = quantity;
-            purchase.UnitPrice = unitPrice;
-            purchase.Amount = quantity * unitPrice;
-            purchase.TaxAmount = GetDecimal(row, headers, "Tax");
-            purchase.Total = GetDecimal(row, headers, "Total");
-            purchase.ReferenceNumber = GetString(row, headers, "Reference");
-            purchase.PaymentMethod = ParseEnum(GetString(row, headers, "Payment Method"), PaymentMethod.Cash);
-            purchase.ShippingCost = GetDecimal(row, headers, "Shipping");
-
-            // Per-row currency detected from the amount cells, else the company currency.
-            ApplyTransactionCurrency(purchase, rowIndex, data);
+            // Per-row currency detected from the amount cells, else the record's own when updating,
+            // else the company currency. Left as it is when nothing it is priced from changed.
+            if (Set(TransactionPriceColumns))
+                ApplyTransactionCurrency(purchase, rowIndex, data, existing?.OriginalCurrency);
 
             // Link product by looking up by name and creating a LineItem
             // Prefer products with Expense-type categories when there are duplicate names
-            // Auto-create the product if it doesn't exist
-            if (!string.IsNullOrEmpty(description))
+            // Auto-create the product if it doesn't exist. A record with several lines keeps them,
+            // since one row cannot describe them.
+            if (!string.IsNullOrEmpty(purchase.Description)
+                && (existing == null || (existing.LineItems.Count <= 1 && Set(TransactionLineColumns))))
             {
-                var product = FindProductByName(data, description, CategoryType.Expense)
-                              ?? AutoCreateProduct(data, description, unitPrice, CategoryType.Expense);
+                var product = FindProductByName(data, purchase.Description, CategoryType.Expense)
+                              ?? AutoCreateProduct(data, purchase.Description, purchase.UnitPrice, CategoryType.Expense);
 
                 var lineItem = new LineItem
                 {
                     ProductId = product.Id,
-                    Description = description,
-                    Quantity = quantity,
-                    UnitPrice = unitPrice,
+                    Description = purchase.Description,
+                    Quantity = purchase.Quantity,
+                    UnitPrice = purchase.UnitPrice,
                     TaxRate = purchase.Amount > 0 ? purchase.TaxAmount / purchase.Amount : 0
                 };
                 purchase.LineItems = [lineItem];
@@ -3656,12 +3696,21 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             };
 
             var product = existing ?? new Product();
+
+            // Updating a product changes only what the sheet has columns for; a new one takes every field.
+            bool Set(params string[] columns) => existing == null || columns.Any(headers.Contains);
+
             product.Id = id;
-            product.Name = name;
-            product.Type = productType;
-            product.ItemType = itemType;
-            product.Sku = GetString(row, headers, "SKU");
-            product.Description = GetString(row, headers, "Description");
+            if (Set("Name"))
+                product.Name = name;
+            if (Set("Type"))
+                product.Type = productType;
+            if (Set("Item Type"))
+                product.ItemType = itemType;
+            if (Set("SKU"))
+                product.Sku = GetString(row, headers, "SKU");
+            if (Set("Description"))
+                product.Description = GetString(row, headers, "Description");
 
             // Handle Category - prefer ID, fall back to name lookup, auto-create if needed
             var categoryId = GetNullableString(row, headers, "Category ID");
@@ -3673,7 +3722,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                 categoriesById.TryGetValue(categoryId, out var existingCat);
                 if (existingCat == null)
                 {
-                    var category = FindOrCreateCategory(data, categoryId, productType);
+                    var category = FindOrCreateCategory(data, categoryId, product.Type);
                     categoryId = category.Id;
                 }
                 else
@@ -3682,13 +3731,14 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             }
             else if (!string.IsNullOrEmpty(categoryName))
             {
-                var category = FindOrCreateCategory(data, categoryName, productType);
+                var category = FindOrCreateCategory(data, categoryName, product.Type);
                 categoryId = category.Id;
             }
             else
             {
             }
-            product.CategoryId = categoryId;
+            if (Set("Category ID", "Category Name"))
+                product.CategoryId = categoryId;
 
             // Handle Supplier - prefer ID, fall back to name lookup
             var supplierId = GetNullableString(row, headers, "Supplier ID");
@@ -3700,11 +3750,14 @@ Respond with ONLY a JSON array, one entry per product in the same order:
                     supplierId = supplier.Id;
                 }
             }
-            product.SupplierId = supplierId;
+            if (Set("Supplier ID", "Supplier Name"))
+                product.SupplierId = supplierId;
 
             // Handle Reorder Point and Overstock Threshold
-            product.ReorderPoint = GetInt(row, headers, "Reorder Point");
-            product.OverstockThreshold = GetInt(row, headers, "Overstock Threshold");
+            if (Set("Reorder Point"))
+                product.ReorderPoint = GetInt(row, headers, "Reorder Point");
+            if (Set("Overstock Threshold"))
+                product.OverstockThreshold = GetInt(row, headers, "Overstock Threshold");
 
             // Set TrackInventory based on whether reorder/overstock values are set
             if (product.ReorderPoint > 0 || product.OverstockThreshold > 0)
@@ -3838,20 +3891,32 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var supplier = existing ?? new Supplier();
+
+            // Updating a supplier changes only what the sheet has columns for; a new one takes every field.
+            bool Set(params string[] columns) => existing == null || columns.Any(headers.Contains);
+
             supplier.Id = id;
-            supplier.Name = name;
-            supplier.Email = GetString(row, headers, "Email");
-            supplier.Phone = GetString(row, headers, "Phone");
-            supplier.Website = GetNullableString(row, headers, "Website") ?? "";
-            supplier.Address = new Address
+            if (Set("Name"))
+                supplier.Name = name;
+            if (Set("Email"))
+                supplier.Email = GetString(row, headers, "Email");
+            if (Set("Phone"))
+                supplier.Phone = GetString(row, headers, "Phone");
+            if (Set("Website"))
+                supplier.Website = GetNullableString(row, headers, "Website") ?? "";
+            if (Set(AddressColumns))
             {
-                Street = GetString(row, headers, "Street"),
-                City = GetString(row, headers, "City"),
-                State = GetStringMulti(row, headers, StateVariants),
-                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
-                Country = GetString(row, headers, "Country")
-            };
-            supplier.Notes = GetString(row, headers, "Notes");
+                supplier.Address = new Address
+                {
+                    Street = GetString(row, headers, "Street"),
+                    City = GetString(row, headers, "City"),
+                    State = GetStringMulti(row, headers, StateVariants),
+                    ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
+                    Country = GetString(row, headers, "Country")
+                };
+            }
+            if (Set("Notes"))
+                supplier.Notes = GetString(row, headers, "Notes");
 
             if (existing == null)
                 data.Suppliers.Add(supplier);
@@ -4077,39 +4142,58 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
+            var revenue = existing ?? new Revenue();
+
+            // Updating a revenue changes only what the sheet has columns for; a new one takes every
+            // field. Without this an update read a missing Payment Status as Paid.
+            bool Set(params string[] columns) => existing == null || columns.Any(headers.Contains);
+
+            revenue.Id = id;
+            if (Set("Date"))
+                revenue.Date = date;
+            if (Set("Customer ID"))
+                revenue.CustomerId = customerId;
+            if (Set("Product", "Description"))
+                revenue.Description = description;
+
             // Quantity is optional (see ImportPurchases): default 1, and the pre-tax Amount is
             // Quantity * UnitPrice so the line-item subtotal reconciles with the stored Total.
-            var quantity = GetDecimal(row, headers, "Quantity");
-            if (quantity <= 0) quantity = 1;
-            var unitPrice = GetDecimal(row, headers, "Unit Price");
-
-            var revenue = existing ?? new Revenue();
-            revenue.Id = id;
-            revenue.Date = date;
-            revenue.CustomerId = customerId;
-            revenue.Description = description;
-            revenue.Quantity = quantity;
-            revenue.UnitPrice = unitPrice;
-            revenue.Amount = quantity * unitPrice;
-            revenue.TaxAmount = GetDecimal(row, headers, "Tax");
-            revenue.Total = GetDecimal(row, headers, "Total");
-            revenue.ReferenceNumber = GetString(row, headers, "Reference");
-            revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
-            revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
+            if (Set("Quantity"))
+            {
+                var quantity = GetDecimal(row, headers, "Quantity");
+                revenue.Quantity = quantity <= 0 ? 1 : quantity;
+            }
+            if (Set("Unit Price"))
+                revenue.UnitPrice = GetDecimal(row, headers, "Unit Price");
+            if (Set("Quantity", "Unit Price"))
+                revenue.Amount = revenue.Quantity * revenue.UnitPrice;
+            if (Set("Tax"))
+                revenue.TaxAmount = GetDecimal(row, headers, "Tax");
+            if (Set("Total"))
+                revenue.Total = GetDecimal(row, headers, "Total");
+            if (Set("Reference"))
+                revenue.ReferenceNumber = GetString(row, headers, "Reference");
+            if (Set("Payment Status"))
+                revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
+            if (Set("Shipping"))
+                revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
 
             if (headers.Contains("Invoice ID"))
                 revenue.InvoiceId = GetNullableString(row, headers, "Invoice ID");
             if (headers.Contains("Kept Deposit"))
                 revenue.IsKeptDeposit = ReadBool(row, headers, "Kept Deposit");
 
-            // Per-row currency detected from the amount cells, else the company currency.
-            ApplyTransactionCurrency(revenue, rowIndex, data);
+            // Per-row currency detected from the amount cells, else the record's own when updating,
+            // else the company currency. Left as it is when nothing it is priced from changed.
+            if (Set(TransactionPriceColumns))
+                ApplyTransactionCurrency(revenue, rowIndex, data, existing?.OriginalCurrency);
 
             // Revenue from an invoice takes its lines from the invoice, which may be on a later
-            // sheet, so it is settled once every sheet is in.
+            // sheet, so it is settled once every sheet is in. A record with several lines keeps
+            // them, since one row cannot describe them.
             if (!string.IsNullOrEmpty(revenue.InvoiceId))
                 _revenuesNamingAnInvoice.Add(revenue);
-            else
+            else if (existing == null || (existing.LineItems.Count <= 1 && Set(TransactionLineColumns)))
                 LinkRevenueProduct(data, revenue);
 
             if (existing == null)
@@ -4463,20 +4547,32 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
 
             var location = existing ?? new Location();
+
+            // Updating a location changes only what the sheet has columns for; a new one takes every field.
+            bool Set(params string[] columns) => existing == null || columns.Any(headers.Contains);
+
             location.Id = id;
-            location.Name = name;
-            location.ContactPerson = GetString(row, headers, "Contact Person");
-            location.Phone = GetString(row, headers, "Phone");
-            location.Address = new Address
+            if (Set("Name"))
+                location.Name = name;
+            if (Set("Contact Person"))
+                location.ContactPerson = GetString(row, headers, "Contact Person");
+            if (Set("Phone"))
+                location.Phone = GetString(row, headers, "Phone");
+            if (Set(AddressColumns))
             {
-                Street = GetString(row, headers, "Street"),
-                City = GetString(row, headers, "City"),
-                State = GetStringMulti(row, headers, StateVariants),
-                ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
-                Country = GetString(row, headers, "Country")
-            };
-            location.Capacity = GetInt(row, headers, "Capacity");
-            location.CurrentUtilization = GetInt(row, headers, "Utilization");
+                location.Address = new Address
+                {
+                    Street = GetString(row, headers, "Street"),
+                    City = GetString(row, headers, "City"),
+                    State = GetStringMulti(row, headers, StateVariants),
+                    ZipCode = GetStringMulti(row, headers, PostalCodeVariants),
+                    Country = GetString(row, headers, "Country")
+                };
+            }
+            if (Set("Capacity"))
+                location.Capacity = GetInt(row, headers, "Capacity");
+            if (Set("Utilization"))
+                location.CurrentUtilization = GetInt(row, headers, "Utilization");
 
             if (existing == null)
                 data.Locations.Add(location);
