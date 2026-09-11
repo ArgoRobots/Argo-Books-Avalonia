@@ -371,6 +371,7 @@ When writing or reviewing aggregation code:
 - `RefundAggregator.GroupRefundsByDayUSD(payments, start, end)`: per-day refund map for time-series charts.
 - `ProfitCalculator.CalculateNetProfitUSD(data, start, end)`: the cross-cutting net profit formula. Use this; don't re-derive.
 - `ProfitCalculator.CalculateNetProfitByDayUSD(data, start, end)`: per-day profit for charts.
+- `ComparisonPeriod.For(preset, start, end)`: the period every "vs previous period" figure compares against (dashboard, Analytics, Insights trends). This month, quarter or year so far compares with the same days of the one before, stopping at its end when it is shorter (This Month on Sep 11 is Aug 1 to Aug 11; This Year on Feb 29 is Jan 1 to Feb 28). Last month, quarter or year compares with the whole calendar period before it. Everything else compares with the same number of days just before.
 - `InvoiceTotalsService.Recalculate(invoice, allPayments)`: call after any mutation to an invoice's payment list.
 
 **Display helpers (`ArgoBooks/Services/`):**

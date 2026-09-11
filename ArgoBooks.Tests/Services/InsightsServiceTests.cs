@@ -82,6 +82,56 @@ public class InsightsServiceTests
 
     #endregion
 
+    #region Trends for a future range
+
+    // "Next Month" on Sep 11 analyses this month so far against the same days of last month. It
+    // used to compare Sep 1-10 with Aug 1-30 (the whole month, less each end day's entries, since
+    // the bounds were midnight), so steady sales read as a two-thirds drop.
+    private static readonly DateTime TrendsToday = new(2026, 9, 11);
+
+    [Fact]
+    public async Task AnalyzeTrendsAsync_NextMonth_SteadyDailyRevenue_ReportsNoDecline()
+    {
+        var data = DailyRevenue(new DateTime(2026, 7, 1), TrendsToday, 100m);
+
+        var trends = await ServiceOn(TrendsToday).AnalyzeTrendsAsync(data, NextMonth(TrendsToday));
+
+        Assert.DoesNotContain(trends, t => t.Title == "Revenue Decline Detected");
+    }
+
+    [Fact]
+    public async Task AnalyzeTrendsAsync_NextMonth_CountsTodaysEntries()
+    {
+        var data = DailyRevenue(new DateTime(2026, 7, 1), TrendsToday, 100m);
+        data.Revenues.Add(UsdRevenue("Today", TrendsToday.AddHours(15), 2000m));
+
+        var trends = await ServiceOn(TrendsToday).AnalyzeTrendsAsync(data, NextMonth(TrendsToday));
+
+        // Sep 1-11 is 11 x 100 + 2000; Aug 1-11 is 11 x 100.
+        var growth = Assert.Single(trends, t => t.Title == "Revenue Growth Detected");
+        Assert.Equal(3100m, growth.MetricValue);
+        Assert.Equal(181.8m, Math.Round(growth.PercentageChange!.Value, 1));
+    }
+
+    private static InsightsService ServiceOn(DateTime today) =>
+        new(new LocalMLForecastingService(), new ForecastAccuracyService(), () => today);
+
+    private static AnalysisDateRange NextMonth(DateTime today)
+    {
+        var start = new DateTime(today.Year, today.Month, 1).AddMonths(1);
+        return AnalysisDateRange.Custom(start, start.AddMonths(1).AddSeconds(-1));
+    }
+
+    private static CompanyData DailyRevenue(DateTime from, DateTime through, decimal amount)
+    {
+        var data = new CompanyData();
+        for (var day = from; day <= through; day = day.AddDays(1))
+            data.Revenues.Add(UsdRevenue($"R{day:yyyyMMdd}", day.AddHours(12), amount));
+        return data;
+    }
+
+    #endregion
+
     #region FormatCurrency / display currency
 
     [Fact]

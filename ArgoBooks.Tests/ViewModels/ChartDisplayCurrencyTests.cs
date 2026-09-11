@@ -89,11 +89,12 @@ public class ChartDisplayCurrencyTests : ModalViewModelTestBase
     }
 
     // $100 this period less a $40 refund, against $100 last period, is a 40% fall, as the Revenue card counts it.
+    // This Month compares with the same days of last month, which always include its first day.
     [Fact]
     public void RevenueGrowth_SubtractsRefundsAsTheRevenueCardDoes()
     {
         Company.Revenues.Add(new Revenue { Id = "REV-NOW", Date = Today, OriginalCurrency = "USD", Total = 100m });
-        Company.Revenues.Add(new Revenue { Id = "REV-BEFORE", Date = MonthStart.AddHours(-12), OriginalCurrency = "USD", Total = 100m });
+        Company.Revenues.Add(new Revenue { Id = "REV-BEFORE", Date = MonthStart.AddMonths(-1).AddHours(12), OriginalCurrency = "USD", Total = 100m });
         Company.Payments.Add(new Payment
         {
             Id = "PAY-REFUND", IsRefund = true, Date = Today, OriginalCurrency = "USD", Amount = -40m, AmountUSD = -40m
