@@ -91,4 +91,32 @@ public class InvoiceModalsViewModelTests : ModalViewModelTestBase
         var schedule = Assert.Single(Company.RecurringInvoices);
         Assert.Equal("Net 15", schedule.PaymentTerms);
     }
+
+    /// <summary>
+    /// The invoice being saved stands in for every occurrence up to its own issue date, and the
+    /// schedule picks up with the first one after it. A start after the issue date is itself the
+    /// next invoice; one before it must not produce a draft beside the invoice just saved.
+    /// </summary>
+    [Theory]
+    [InlineData(10, 1, 10, 1)]
+    [InlineData(8, 1, 10, 1)]
+    [InlineData(9, 10, 10, 10)]
+    public async Task SaveAsDraft_RecurringInvoice_NextInvoiceIsTheFirstOccurrenceAfterTheSavedOne(
+        int startMonth, int startDay, int nextMonth, int nextDay)
+    {
+        Company.Customers.Add(new Customer { Id = "CUST-1", Name = "Acme" });
+        var vm = new InvoiceModalsViewModel();
+        vm.OpenCreateModal();
+        vm.SelectedCustomer = vm.CustomerOptions.First(c => c.Id == "CUST-1");
+        vm.ModalIssueDate = new DateTimeOffset(new DateTime(2026, 9, 10), TimeSpan.Zero);
+        vm.ModalDueDate = new DateTimeOffset(new DateTime(2026, 10, 10), TimeSpan.Zero);
+        vm.IsRecurring = true;
+        vm.RecurringFrequency = Frequency.Monthly;
+        vm.RecurringStartDate = new DateTimeOffset(new DateTime(2026, startMonth, startDay), TimeSpan.Zero);
+
+        await vm.SaveAsDraftCommand.ExecuteAsync(null);
+
+        var schedule = Assert.Single(Company.RecurringInvoices);
+        Assert.Equal(new DateTime(2026, nextMonth, nextDay), schedule.NextInvoiceDate);
+    }
 }

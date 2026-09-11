@@ -2436,9 +2436,11 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
     /// <summary>
     /// If the user flipped "Repeat this invoice" and this invoice doesn't already have a schedule,
-    /// create the recurring schedule (this invoice is occurrence #1; the schedule's next date is one
-    /// cadence step after the start) and add it to the company data. Called from both the
+    /// create the recurring schedule and add it to the company data. Called from both the
     /// save-as-draft and create-and-send paths so a recurring invoice is scheduled either way.
+    /// The invoice being saved stands in for every occurrence up to its own issue date, so the
+    /// next one is the first date of the start date's series after it: a later start is itself
+    /// the next invoice, and an earlier one does not put a draft beside the invoice just saved.
     /// </summary>
     private void CreateRecurringScheduleIfNeeded(Invoice invoice, CompanyData companyData, IdGenerator idGenerator)
     {
@@ -2455,7 +2457,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Frequency = RecurringFrequency,
             StartDate = startDate,
             EndDate = RecurringEndDate?.Date,
-            NextInvoiceDate = RecurringInvoiceService.AdvanceDate(startDate, RecurringFrequency, startDate.Day),
+            NextInvoiceDate = RecurrenceSchedule.FirstOnOrAfter(
+                startDate, RecurringFrequency, startDate.Day, invoice.IssueDate.Date.AddDays(1)),
             // Inherit the terms the user set on this invoice (its issue->due span) instead of a fixed default.
             PaymentTerms = RecurringInvoiceService.FormatPaymentTerms(invoice.IssueDate, invoice.DueDate),
             Status = RecurringInvoiceStatus.Active,
