@@ -1,5 +1,6 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models;
 using ArgoBooks.Core.Models.Entities;
 
 namespace ArgoBooks.Core.Services;
@@ -37,31 +38,31 @@ public static class StarterCategories
     private static ((string Name, string Icon)[] Revenue, (string Name, string Icon)[] Expenses) ForIndustry(string? industry) =>
         industry switch
         {
-            "Retail" => (
+            IndustryNames.Retail => (
                 [("Sales", "🛒")],
                 [("Inventory Purchases", "📦"), ("Shipping", "🚚")]),
-            "Services" => (
+            IndustryNames.Services => (
                 [("Services", "💵")],
                 [("Vehicle & Fuel", "🚚"), ("Contractors", "🔧")]),
-            "Manufacturing" => (
+            IndustryNames.Manufacturing => (
                 [("Product Sales", "🛒")],
                 [("Raw Materials", "📦"), ("Equipment", "⚙️"), ("Shipping", "🚚")]),
-            "Technology" => (
+            IndustryNames.Technology => (
                 [("Services", "💵"), ("Software Sales", "💻")],
                 [("Hosting & Cloud", "💻"), ("Equipment", "⚙️"), ("Contractors", "🔧")]),
-            "Healthcare" => (
+            IndustryNames.Healthcare => (
                 [("Patient Services", "❤️")],
                 [("Medical Supplies", "📦"), ("Equipment", "⚙️"), ("Licenses & Dues", "🏷️")]),
-            "Food & Beverage" => (
+            IndustryNames.FoodAndBeverage => (
                 [("Food & Drink Sales", "🛒")],
                 [("Ingredients", "🛒"), ("Kitchen Supplies", "📦"), ("Equipment", "⚙️")]),
-            "Construction" => (
+            IndustryNames.Construction => (
                 [("Contract Work", "🔧")],
                 [("Materials", "📦"), ("Equipment Rental", "⚙️"), ("Subcontractors", "🔧"), ("Vehicle & Fuel", "🚚")]),
-            "Transportation" => (
+            IndustryNames.Transportation => (
                 [("Delivery & Freight", "🚚")],
                 [("Fuel", "🚚"), ("Vehicle Maintenance", "🔧"), ("Tolls & Parking", "🏷️")]),
-            "Real Estate" => (
+            IndustryNames.RealEstate => (
                 [("Rent Income", "🏠"), ("Commissions", "💵")],
                 [("Property Maintenance", "🔧"), ("Property Tax", "🏷️"), ("Utilities", "💡")]),
             _ => (

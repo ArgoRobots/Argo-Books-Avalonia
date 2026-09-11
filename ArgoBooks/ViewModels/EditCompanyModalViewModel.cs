@@ -109,19 +109,7 @@ public partial class EditCompanyModalViewModel : ViewModelBase
     /// <summary>
     /// Available industries (shared data source).
     /// </summary>
-    public static string[] Industries { get; } =
-    [
-        "Retail",
-        "Services",
-        "Manufacturing",
-        "Technology",
-        "Healthcare",
-        "Food & Beverage",
-        "Construction",
-        "Transportation",
-        "Real Estate",
-        "Other"
-    ];
+    public static string[] Industries { get; } = Core.Models.IndustryNames.All;
 
     // Store original values for detecting changes
     private string _originalCompanyName = "";
