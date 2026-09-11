@@ -312,11 +312,23 @@ public class UndoRedoManager : ObservableObject, IUndoRedoManager
     }
 
     /// <summary>
+    /// The state a save starting now writes: the newest action, or null when there is none.
+    /// Pass it to <see cref="MarkSaved(IUndoableAction?)"/> once that save has finished.
+    /// </summary>
+    public IUndoableAction? SavePoint => _undoStack.Count > 0 ? _undoStack.Peek() : null;
+
+    /// <summary>
     /// Marks the current state as saved.
     /// </summary>
-    public void MarkSaved()
+    public void MarkSaved() => MarkSaved(SavePoint);
+
+    /// <summary>
+    /// Marks the state captured by <see cref="SavePoint"/> as saved, so an action recorded
+    /// while the save was writing still counts as unsaved.
+    /// </summary>
+    public void MarkSaved(IUndoableAction? savePoint)
     {
-        _savedState = _undoStack.Count > 0 ? _undoStack.Peek() : null;
+        _savedState = savePoint;
         OnStateChanged();
     }
 

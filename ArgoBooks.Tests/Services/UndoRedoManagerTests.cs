@@ -10,6 +10,39 @@ public class UndoRedoManagerTests
 {
     private readonly UndoRedoManager _manager = new();
 
+    #region Saved State Tests
+
+    /// <summary>
+    /// A save takes a while, and the user can keep editing during it. Only what existed when the
+    /// save started is in the file, so an action recorded after that must still count as unsaved.
+    /// </summary>
+    [Fact]
+    public void MarkSaved_ActionRecordedDuringSave_StaysUnsaved()
+    {
+        _manager.RecordAction(new MockUndoableAction("Before save"));
+        var savePoint = _manager.SavePoint;
+        _manager.RecordAction(new MockUndoableAction("During save"));
+
+        _manager.MarkSaved(savePoint);
+
+        Assert.False(_manager.IsAtSavedState);
+        _manager.Undo();
+        Assert.True(_manager.IsAtSavedState);
+    }
+
+    [Fact]
+    public void MarkSaved_NothingBeforeSave_ActionRecordedDuringSave_StaysUnsaved()
+    {
+        var savePoint = _manager.SavePoint;
+        _manager.RecordAction(new MockUndoableAction("During save"));
+
+        _manager.MarkSaved(savePoint);
+
+        Assert.False(_manager.IsAtSavedState);
+    }
+
+    #endregion
+
     #region Record Tests
 
     [Fact]

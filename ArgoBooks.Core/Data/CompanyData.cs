@@ -286,6 +286,12 @@ public class CompanyData
         set => Settings.ChangesMade = value;
     }
 
+    /// <summary>
+    /// Counts edits, see <see cref="CompanySettings.ChangeCount"/>.
+    /// </summary>
+    [JsonIgnore]
+    public long ChangeCount => Settings.ChangeCount;
+
     #endregion
 
     #region Helper Methods
@@ -494,6 +500,16 @@ public class CompanyData
     public void MarkAsSaved()
     {
         Settings.ChangesMade = false;
+    }
+
+    /// <summary>
+    /// Marks the data as saved, unless something changed after <paramref name="changeCount"/>
+    /// was read from <see cref="ChangeCount"/>, since that edit may not be in the file.
+    /// </summary>
+    public void MarkAsSaved(long changeCount)
+    {
+        if (Settings.ChangeCount == changeCount)
+            Settings.ChangesMade = false;
     }
 
     #endregion

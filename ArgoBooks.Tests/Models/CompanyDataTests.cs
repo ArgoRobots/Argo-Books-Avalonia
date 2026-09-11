@@ -114,5 +114,34 @@ public class CompanyDataTests
         Assert.False(data.ChangesMade);
     }
 
+    /// <summary>
+    /// An edit that lands while a save is writing may not be in the file, so the save must not
+    /// clear the flag for it; otherwise the auto-save before locking skips it.
+    /// </summary>
+    [Fact]
+    public void MarkAsSaved_ChangeDuringSave_KeepsChangesMade()
+    {
+        var data = new CompanyData();
+        data.MarkAsModified();
+        var changeCount = data.ChangeCount;
+
+        data.Settings.ChangesMade = true;
+        data.MarkAsSaved(changeCount);
+
+        Assert.True(data.ChangesMade);
+    }
+
+    [Fact]
+    public void MarkAsSaved_NoChangeDuringSave_ClearsChangesMade()
+    {
+        var data = new CompanyData();
+        data.MarkAsModified();
+        var changeCount = data.ChangeCount;
+
+        data.MarkAsSaved(changeCount);
+
+        Assert.False(data.ChangesMade);
+    }
+
     #endregion
 }

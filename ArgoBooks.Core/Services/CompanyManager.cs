@@ -992,6 +992,9 @@ public class CompanyManager : IDisposable
             // Notify listeners to sync in-memory state before saving
             CompanySaving?.Invoke(this, EventArgs.Empty);
 
+            // An edit made during the awaits below may miss the file, so it must stay unsaved.
+            var changeCount = CompanyData!.ChangeCount;
+
             // Save data to temp directory
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData!, cancellationToken);
@@ -1043,7 +1046,7 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(CurrentFilePath);
             }
 
-            CompanyData!.MarkAsSaved();
+            CompanyData!.MarkAsSaved(changeCount);
 
             // Now that the file at the new path contains the freshly-written footer
             // with the updated company name, listeners can refresh recent-company
@@ -1096,6 +1099,7 @@ public class CompanyManager : IDisposable
 
             // Notify listeners to sync in-memory state before saving
             CompanySaving?.Invoke(this, EventArgs.Empty);
+            var changeCount = CompanyData!.ChangeCount;
 
             // Determine password to use
             var passwordToUse = newPassword ?? _currentPassword;
@@ -1135,7 +1139,7 @@ public class CompanyManager : IDisposable
                 AcquireFileLock(newFilePath);
             }
 
-            CompanyData!.MarkAsSaved();
+            CompanyData!.MarkAsSaved(changeCount);
 
             // Add to recent companies
             _settingsService.AddRecentCompany(newFilePath);

@@ -20,6 +20,10 @@ namespace ArgoBooks;
 /// </summary>
 public partial class App
 {
+    // The undo state the running save writes, taken as it starts. Edits made while it is
+    // writing come after this point, so they stay unsaved.
+    private static IUndoableAction? _saveUndoPoint;
+
     /// <summary>
     /// Wires up CompanyManager events to update UI.
     /// </summary>
@@ -29,7 +33,11 @@ public partial class App
             return;
 
         // Sync event log to CompanyData before every save (centralized handler)
-        CompanyManager.CompanySaving += (_, _) => SyncEventLogBeforeSave();
+        CompanyManager.CompanySaving += (_, _) =>
+        {
+            _saveUndoPoint = UndoRedoManager.SavePoint;
+            SyncEventLogBeforeSave();
+        };
 
         CompanyManager.CompanyOpened += async (_, args) =>
         {
@@ -313,7 +321,7 @@ public partial class App
             _mainWindowViewModel.HasUnsavedChanges = false;
 
             // Mark undo/redo state as saved so IsAtSavedState returns true
-            UndoRedoManager.MarkSaved();
+            UndoRedoManager.MarkSaved(_saveUndoPoint);
 
             // Clear tracked changes after saving
             ChangeTrackingService?.ClearAllChanges();
