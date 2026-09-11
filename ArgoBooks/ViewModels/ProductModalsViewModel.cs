@@ -366,8 +366,7 @@ public partial class ProductModalsViewModel : ViewModelBase
         }
         else
         {
-            companyData.IdCounters.Product++;
-            newId = $"PRD-{companyData.IdCounters.Product:D3}";
+            newId = new Core.Data.IdGenerator(companyData).NextProductId();
         }
 
         var reorderPoint = int.TryParse(ModalReorderPoint, out var rp) ? rp : 0;

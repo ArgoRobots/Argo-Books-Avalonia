@@ -448,8 +448,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
         }
         else
         {
-            companyData.IdCounters.Customer++;
-            newId = $"CUS-{companyData.IdCounters.Customer:D3}";
+            newId = new Core.Data.IdGenerator(companyData).NextCustomerId();
         }
 
         var newCustomer = new Customer
@@ -1317,7 +1316,10 @@ public partial class CustomerModalsViewModel : ViewModelBase
             isValid = false;
         }
 
-        if (string.IsNullOrWhiteSpace(ModalLastName))
+        // A customer saved with a one-word name, such as one a bank import created, has no last
+        // name to give, and must still be editable.
+        var keepsOneWordName = _editingCustomer != null && string.IsNullOrEmpty(_originalLastName);
+        if (string.IsNullOrWhiteSpace(ModalLastName) && !keepsOneWordName)
         {
             ModalLastNameError = "Last name is required.".Translate();
             isValid = false;
@@ -1354,7 +1356,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
                 }
             }
 
-            var fullName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}";
+            var fullName = $"{ModalFirstName.Trim()} {ModalLastName.Trim()}".Trim();
             var existingWithSameName = companyData.Customers.Any(c =>
                 c.Name.Equals(fullName, StringComparison.OrdinalIgnoreCase) &&
                 (_editingCustomer == null || c.Id != _editingCustomer.Id));

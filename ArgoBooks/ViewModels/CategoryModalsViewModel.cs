@@ -389,6 +389,16 @@ public partial class CategoryModalsViewModel : ViewModelBase
                     return;
 
                 deleteSubcategories = subResult == ConfirmationResult.Primary;
+
+                var childIds = children!.Select(c => c.Id).ToHashSet();
+                if (deleteSubcategories &&
+                    companyData!.Products.Any(p => p.CategoryId != null && childIds.Contains(p.CategoryId)))
+                {
+                    await App.ShowWarningMessageBoxAsync(
+                        "Cannot Delete".Translate(),
+                        "A subcategory of this category is used by one or more products, so it cannot be deleted. Choose Move to Top Level instead.".Translate());
+                    return;
+                }
             }
             else
             {
@@ -498,6 +508,13 @@ public partial class CategoryModalsViewModel : ViewModelBase
         if (oldParentId == newParentId)
         {
             MoveError = "Category is already under this parent.".Translate();
+            return;
+        }
+
+        // The Categories page shows two levels, so its subcategories would drop out of sight.
+        if (newParentId != null && companyData!.Categories.Any(c => c.ParentId == category.Id))
+        {
+            MoveError = "A category with subcategories can't be moved under another category.".Translate();
             return;
         }
 

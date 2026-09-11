@@ -441,8 +441,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
         }
         else
         {
-            companyData.IdCounters.Supplier++;
-            newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
+            newId = new Core.Data.IdGenerator(companyData).NextSupplierId();
         }
 
         var newSupplier = new Supplier

@@ -259,10 +259,9 @@ public static class ReceiptTypeConverter
                         if (newCategory) createdCategory = category;
                     }
 
-                    data.IdCounters.Product++;
                     product = new Product
                     {
-                        Id = $"PRD-{data.IdCounters.Product:D3}",
+                        Id = new IdGenerator(data).NextProductId(),
                         Name = name,
                         CategoryId = category.Id,
                         Type = targetType,
@@ -328,10 +327,9 @@ public static class ReceiptTypeConverter
             s => string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase));
         if (match != null) return match.Id;
 
-        data.IdCounters.Supplier++;
         created = new Supplier
         {
-            Id = $"SUP-{data.IdCounters.Supplier:D3}",
+            Id = new IdGenerator(data).NextSupplierId(),
             Name = name,
             Notes = "Created from receipt scan"
         };
@@ -349,10 +347,9 @@ public static class ReceiptTypeConverter
             c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
         if (match != null) return match.Id;
 
-        data.IdCounters.Customer++;
         created = new Customer
         {
-            Id = $"CUS-{data.IdCounters.Customer:D3}",
+            Id = new IdGenerator(data).NextCustomerId(),
             Name = name,
             Notes = "Created from receipt scan"
         };

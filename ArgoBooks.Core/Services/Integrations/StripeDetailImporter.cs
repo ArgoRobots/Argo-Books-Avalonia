@@ -113,10 +113,9 @@ public class StripeDetailImporter
             : data.Customers.FirstOrDefault(c => string.Equals(c.Name, ch.CustomerName, StringComparison.OrdinalIgnoreCase));
         if (existing != null) { _customerCache[key] = existing.Id; return existing.Id; }
 
-        data.IdCounters.Customer++;
         var customer = new Customer
         {
-            Id = $"CUS-{data.IdCounters.Customer:D3}",
+            Id = new IdGenerator(data).NextCustomerId(),
             Name = string.IsNullOrWhiteSpace(ch.CustomerName) ? (ch.CustomerEmail ?? "Stripe customer") : ch.CustomerName!,
             Email = ch.CustomerEmail ?? string.Empty
         };
@@ -133,10 +132,9 @@ public class StripeDetailImporter
         if (existing != null) { _productCache[name] = existing.Id; return existing.Id; }
 
         var categoryId = ResolveStripeCategory(data);
-        data.IdCounters.Product++;
         var product = new Product
         {
-            Id = $"PRD-{data.IdCounters.Product:D3}",
+            Id = new IdGenerator(data).NextProductId(),
             Name = name,
             CategoryId = categoryId,
             Type = CategoryType.Revenue,

@@ -133,10 +133,9 @@ public class ArgoApiImporter
             return;
         }
 
-        data.IdCounters.Customer++;
         var customer = new Customer
         {
-            Id = $"CUS-{data.IdCounters.Customer:D3}",
+            Id = new IdGenerator(data).NextCustomerId(),
             Name = api.Name,
             Email = api.Email ?? string.Empty,
             Phone = api.Phone ?? string.Empty
@@ -160,10 +159,9 @@ public class ArgoApiImporter
             return;
         }
 
-        data.IdCounters.Supplier++;
         var supplier = new Supplier
         {
-            Id = $"SUP-{data.IdCounters.Supplier:D3}",
+            Id = new IdGenerator(data).NextSupplierId(),
             Name = api.Name,
             Email = api.Email ?? string.Empty,
             Phone = api.Phone ?? string.Empty,
@@ -195,10 +193,9 @@ public class ArgoApiImporter
         // buy, and typing it as revenue would file it on the wrong side.
         var productType = data.Categories.FirstOrDefault(c => c.Id == categoryId)?.Type ?? CategoryType.Revenue;
 
-        data.IdCounters.Product++;
         var product = new Product
         {
-            Id = $"PRD-{data.IdCounters.Product:D3}",
+            Id = new IdGenerator(data).NextProductId(),
             Name = api.Name,
             CategoryId = categoryId,
             Type = productType,

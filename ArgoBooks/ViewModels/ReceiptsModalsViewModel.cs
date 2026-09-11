@@ -2893,9 +2893,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             _createdCategoryForUndo = category;
         }
 
-        // Generate proper product ID
-        companyData.IdCounters.Product++;
-        var newId = $"PRD-{companyData.IdCounters.Product:D3}";
+        var newId = new Core.Data.IdGenerator(companyData).NextProductId();
 
         var newProduct = new Product
         {
@@ -3372,9 +3370,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
-        // Generate ID
-        companyData.IdCounters.Supplier++;
-        var newId = $"SUP-{companyData.IdCounters.Supplier:D3}";
+        var newId = new Core.Data.IdGenerator(companyData).NextSupplierId();
 
         // Create supplier
         var newSupplier = new Supplier

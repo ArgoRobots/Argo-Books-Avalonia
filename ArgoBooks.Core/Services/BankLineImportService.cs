@@ -297,8 +297,7 @@ public class BankLineImportService(UsdConverter? convert = null)
         var existing = data.Suppliers.FirstOrDefault(s => string.Equals(s.Name, key, StringComparison.OrdinalIgnoreCase));
         if (existing != null) { cache[key] = existing.Id; return existing.Id; }
 
-        data.IdCounters.Supplier++;
-        var supplier = new Supplier { Id = $"SUP-{data.IdCounters.Supplier:D3}", Name = key };
+        var supplier = new Supplier { Id = new IdGenerator(data).NextSupplierId(), Name = key };
         data.Suppliers.Add(supplier);
         creation.CreatedEntities.Add(supplier);
         cache[key] = supplier.Id;
@@ -314,8 +313,7 @@ public class BankLineImportService(UsdConverter? convert = null)
         var existing = data.Customers.FirstOrDefault(c => string.Equals(c.Name, key, StringComparison.OrdinalIgnoreCase));
         if (existing != null) { cache[key] = existing.Id; return existing.Id; }
 
-        data.IdCounters.Customer++;
-        var customer = new Customer { Id = $"CUS-{data.IdCounters.Customer:D3}", Name = key };
+        var customer = new Customer { Id = new IdGenerator(data).NextCustomerId(), Name = key };
         data.Customers.Add(customer);
         creation.CreatedEntities.Add(customer);
         cache[key] = customer.Id;
@@ -356,10 +354,9 @@ public class BankLineImportService(UsdConverter? convert = null)
             p.Type == type && string.Equals(p.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
         if (existing != null) { cache[key] = existing.Id; return existing.Id; }
 
-        data.IdCounters.Product++;
         var product = new Product
         {
-            Id = $"PRD-{data.IdCounters.Product:D3}",
+            Id = new IdGenerator(data).NextProductId(),
             Name = name.Trim(),
             CategoryId = categoryId,
             Type = type,

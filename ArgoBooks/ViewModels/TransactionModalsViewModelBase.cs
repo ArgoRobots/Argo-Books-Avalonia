@@ -1290,8 +1290,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
 
     private ProductOption CreateProduct(CompanyData companyData, string name, decimal price, CategoryOption? category, List<Product> created)
     {
-        companyData.IdCounters.Product++;
-        var id = $"PRD-{companyData.IdCounters.Product:D3}";
+        var id = new Core.Data.IdGenerator(companyData).NextProductId();
         var product = new Product
         {
             Id = id,
