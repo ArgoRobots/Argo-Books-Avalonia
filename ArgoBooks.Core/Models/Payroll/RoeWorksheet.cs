@@ -60,6 +60,14 @@ public class RoeWorksheet
     public decimal VacationPay { get; set; }
 
     /// <summary>
+    /// Block 17A as filed: vacation pay the employer confirms was paid because the employee left,
+    /// written under code 2. Separate from <see cref="VacationPay"/>, which is only the final
+    /// period's figure and can be the percentage paid with every cheque, which must not be
+    /// reported. Null or zero leaves the block out.
+    /// </summary>
+    public decimal? VacationPayOnLeaving { get; set; }
+
+    /// <summary>
     /// Why the hours could not be worked out, if they could not. Shown on the worksheet in
     /// place of a figure.
     /// </summary>

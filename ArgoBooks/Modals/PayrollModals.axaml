@@ -624,6 +624,22 @@
                                     </ComboBox>
                                 </StackPanel>
 
+                                <!-- Block 17A. Blank by default: the final pay run's vacation pay is often
+                                     the percentage added to every cheque, which is never reported. -->
+                                <StackPanel Spacing="6">
+                                    <TextBlock Text="{loc:Loc 'Vacation pay paid because they left (Block 17A)'}" FontSize="13" FontWeight="Medium"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox Text="{Binding Roe.VacationPayOnLeaving, Mode=TwoWay}"
+                                             Classes="form-input"
+                                             PlaceholderText="0.00"
+                                             behaviors:NumericInputBehavior.IsDecimalOnly="True"
+                                             MaxLength="13" />
+                                    <TextBlock Text="{Binding Roe.VacationPayHint}"
+                                               FontSize="12" TextWrapping="Wrap"
+                                               Foreground="{DynamicResource TextTertiaryBrush}"
+                                               IsVisible="{Binding Roe.VacationPayHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                                </StackPanel>
+
                                 <StackPanel Spacing="6">
                                     <TextBlock Text="{loc:Loc 'Comments'}" FontSize="13" FontWeight="Medium"
                                                Foreground="{DynamicResource TextSecondaryBrush}" />

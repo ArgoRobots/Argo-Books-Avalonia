@@ -51,7 +51,15 @@ public static partial class RoeXmlWriter
     private const int PostalCodeMax = 10;
     private const int ExtensionMax = 8;
 
-    [System.Text.RegularExpressions.GeneratedRegex(@"^[0-9]{9}[RW]?[PW][0-9]{4}$")]
+    /// <summary>
+    /// Block 17A's vacation pay code for "Paid because no longer working", the only one of the
+    /// four this writes. Code 1, "Included with each pay", is never reported, and codes 3 and 4
+    /// are future-dated payments pay runs know nothing about.
+    /// </summary>
+    private const string VacationPaidOnLeavingCode = "2";
+
+    /// <summary>The schema's pattern: nine digits, R, then P (W is Appendix D's demo account), then four digits.</summary>
+    [System.Text.RegularExpressions.GeneratedRegex(@"^[0-9]{9}R[PW][0-9]{4}$")]
     private static partial System.Text.RegularExpressions.Regex BusinessNumber();
 
     /// <summary>
@@ -121,7 +129,7 @@ public static partial class RoeXmlWriter
         }
 
         // The schema pins the shape, not just the length: nine digits, R, P or W, four digits.
-        if (!BusinessNumber().IsMatch(Upper(sheet.PayrollAccountNumber, 15) ?? string.Empty))
+        if (!BusinessNumber().IsMatch(PayrollAccount(sheet.PayrollAccountNumber) ?? string.Empty))
         {
             problems.Add("Block 5 needs the CRA payroll account number in the form 123456789RP0001, set on the company.");
         }
@@ -203,6 +211,12 @@ public static partial class RoeXmlWriter
             problems.Add("Block 16 needs a ten digit contact telephone number.");
         }
 
+        // Appendix D's range for the amount.
+        if (VacationPayOnLeaving(sheet) is < 0.01m or > 9_999_999.99m)
+        {
+            problems.Add("Block 17A needs an amount between 0.01 and 9,999,999.99.");
+        }
+
         return problems;
     }
 
@@ -222,7 +236,7 @@ public static partial class RoeXmlWriter
         // Block 3, the employer's own reference. Optional.
         Add(roe, "B3", Text(sheet.PayrollReferenceNumber, 26));
 
-        roe.Add(new XElement("B5", Upper(sheet.PayrollAccountNumber, 15)));
+        roe.Add(new XElement("B5", PayrollAccount(sheet.PayrollAccountNumber)));
         roe.Add(new XElement("B6", RoeCodes.PayPeriodType(sheet.PayPeriodType)));
         roe.Add(new XElement("B8", Digits(sheet.Sin, 9)));
         roe.Add(BuildEmployee(sheet));
@@ -239,6 +253,17 @@ public static partial class RoeXmlWriter
         roe.Add(new XElement("B15A", Hours(sheet.TotalInsurableHours)));
         roe.Add(BuildPeriods(sheet));
         roe.Add(BuildReason(sheet));
+
+        // Block 17A comes only from a figure the employer confirmed on the form, never from the
+        // worksheet's final period alone: see RoeWorksheet.VacationPayOnLeaving.
+        if (VacationPayOnLeaving(sheet) is { } vacation)
+        {
+            roe.Add(new XElement("B17A",
+                new XElement("VP",
+                    new XAttribute("nbr", "1"),
+                    new XElement("CD", VacationPaidOnLeavingCode),
+                    new XElement("AMT", Money(vacation)))));
+        }
 
         Add(roe, "B18", Text(sheet.Comments, 160));
 
@@ -388,14 +413,29 @@ public static partial class RoeXmlWriter
 
     private static string? Name(string? value, int max) => Text(value, max);
 
-    private static string? Upper(string? value, int max) => Text(value, max)?.ToUpperInvariant();
+    /// <summary>
+    /// Block 5 without its spaces. The T4 accepts the number typed as "123456789 RP 0001", so a
+    /// number that files a T4 has to export an ROE too.
+    /// </summary>
+    private static string? PayrollAccount(string? value)
+    {
+        string cleaned = new string((value ?? string.Empty).Where(c => !char.IsWhiteSpace(c)).ToArray()).ToUpperInvariant();
+        return cleaned.Length == 0 ? null : cleaned;
+    }
+
+    /// <summary>Block 17A's amount as it will be written, or null when there is none to write.</summary>
+    private static decimal? VacationPayOnLeaving(RoeWorksheet sheet)
+    {
+        decimal amount = Math.Round(sheet.VacationPayOnLeaving ?? 0m, 2, MidpointRounding.AwayFromZero);
+        return amount == 0m ? null : amount;
+    }
 
     /// <summary>
     /// Block 16 wants a bare ten digit number. A pasted or dial-code-prefixed North American
     /// number arrives as eleven digits starting with 1, and taking the first ten of that shifts
     /// every digit one place left, which produces a valid looking wrong phone number.
     /// </summary>
-    private static string? NationalPhone(string? value)
+    internal static string? NationalPhone(string? value)
     {
         string digits = new((value ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
 

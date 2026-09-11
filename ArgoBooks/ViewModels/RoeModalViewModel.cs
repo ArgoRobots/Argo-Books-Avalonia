@@ -105,6 +105,17 @@ public partial class RoeModalViewModel : ViewModelBase
     [ObservableProperty]
     private string _contactPhoneExtension = string.Empty;
 
+    /// <summary>
+    /// Block 17A as typed. Starts blank rather than at the final pay run's vacation pay, which is
+    /// often the percentage paid with every cheque, and that must never be reported.
+    /// </summary>
+    [ObservableProperty]
+    private string _vacationPayOnLeaving = string.Empty;
+
+    /// <summary>The final pay run's vacation pay, offered as a prompt for block 17A.</summary>
+    [ObservableProperty]
+    private string _vacationPayHint = string.Empty;
+
     [ObservableProperty]
     private string _comments = string.Empty;
 
@@ -179,6 +190,11 @@ public partial class RoeModalViewModel : ViewModelBase
         RecallDate = null;
         Occupation = string.Empty;
         PayrollReferenceNumber = string.Empty;
+        VacationPayOnLeaving = string.Empty;
+        VacationPayHint = sheet.VacationPay > 0
+            ? "The final pay run included {0} of vacation pay. Enter it here only if it was paid because they left, not vacation pay added to every cheque."
+                .TranslateFormat(sheet.VacationPay.ToString("C", CultureInfo.CurrentCulture))
+            : string.Empty;
         Comments = string.Empty;
         StatusMessage = string.Empty;
 
@@ -201,6 +217,8 @@ public partial class RoeModalViewModel : ViewModelBase
     partial void OnContactLastNameChanged(string value) => Revalidate();
 
     partial void OnContactPhoneChanged(string value) => Revalidate();
+
+    partial void OnVacationPayOnLeavingChanged(string value) => Revalidate();
 
     partial void OnCommentsChanged(string value)
     {
@@ -248,6 +266,12 @@ public partial class RoeModalViewModel : ViewModelBase
         _sheet.ContactLastName = ContactLastName;
         _sheet.ContactPhone = ContactPhone;
         _sheet.ContactPhoneExtension = ContactPhoneExtension;
+
+        // The same parser the payroll amount boxes use, so a figure typed the way this machine
+        // writes numbers reads back as that figure.
+        _sheet.VacationPayOnLeaving = Behaviors.CurrencyInputBehavior.TryParse(VacationPayOnLeaving, out decimal vacation)
+            ? vacation
+            : null;
     }
 
     [RelayCommand]
@@ -361,32 +385,15 @@ public partial class RoeModalViewModel : ViewModelBase
     /// the same reason: whoever the tax authority phones about a filing.
     ///
     /// Saved on a successful export rather than on every keystroke, so a half-typed name never
-    /// replaces a good stored one, and only when there is something to save.
+    /// replaces a good stored one, and only what was actually changed on the form is written.
     /// </summary>
     private void RememberContact()
     {
-        if (App.CompanyManager?.CompanyData is not { } data)
+        if (App.CompanyManager?.CompanyData is { } data &&
+            RoeService.ApplyContact(data.Settings.Company, ContactFirstName, ContactLastName, ContactPhone))
         {
-            return;
+            App.CompanyManager.MarkAsChanged();
         }
-
-        string name = $"{ContactFirstName} {ContactLastName}".Trim();
-        string phone = ContactPhone.Trim();
-
-        if (name.Length == 0 || phone.Length == 0)
-        {
-            return;
-        }
-
-        if (data.Settings.Company.PayrollContactName == name
-            && data.Settings.Company.PayrollContactPhone == phone)
-        {
-            return;
-        }
-
-        data.Settings.Company.PayrollContactName = name;
-        data.Settings.Company.PayrollContactPhone = phone;
-        App.CompanyManager?.MarkAsChanged();
     }
 
     private static string Date(DateTime? value) =>

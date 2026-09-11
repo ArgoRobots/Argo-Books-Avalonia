@@ -201,6 +201,29 @@ public class RoeXmlTests
         Assert.Contains(RoeXmlWriter.Validate(sheet), p => p.Contains("Block 5"));
     }
 
+    [Theory]
+    [InlineData("123456789P0001")]
+    [InlineData("123456789WP0001")]
+    [InlineData("123456789RX0001")]
+    public void APayrollAccountNumberTheSchemaRejects_IsRefused(string number)
+    {
+        RoeWorksheet sheet = Sheet();
+        sheet.PayrollAccountNumber = number;
+
+        Assert.Contains(RoeXmlWriter.Validate(sheet), p => p.Contains("Block 5"));
+    }
+
+    /// <summary>The T4 takes the number typed with spaces, so the ROE has to as well.</summary>
+    [Fact]
+    public void APayrollAccountNumberTypedWithSpaces_IsWrittenWithout()
+    {
+        RoeWorksheet sheet = Sheet();
+        sheet.PayrollAccountNumber = "123456789 rp 0001";
+
+        Assert.DoesNotContain(RoeXmlWriter.Validate(sheet), p => p.Contains("Block 5"));
+        Assert.Equal("123456789RP0001", Roe(sheet).Element("B5")!.Value);
+    }
+
     [Fact]
     public void Block16_CarriesTheSeparationCodeAndTheContact()
     {
@@ -358,6 +381,62 @@ public class RoeXmlTests
 
     #endregion
 
+    #region Block 17A
+
+    [Fact]
+    public void VacationPayOnLeaving_IsBlock17A_UnderTheNoLongerWorkingCode()
+    {
+        RoeWorksheet sheet = Sheet();
+        sheet.VacationPayOnLeaving = 1234.5m;
+
+        XElement vp = Roe(sheet).Element("B17A")!.Element("VP")!;
+
+        Assert.Equal("1", vp.Attribute("nbr")!.Value);
+        // Code 2 is "Paid because no longer working". Code 1, "Included with each pay", is the
+        // one Service Canada says is never reported.
+        Assert.Equal("2", vp.Element("CD")!.Value);
+        Assert.Equal("1234.50", vp.Element("AMT")!.Value);
+        Assert.Null(vp.Element("SDT"));
+        Assert.Null(vp.Element("EDT"));
+    }
+
+    [Fact]
+    public void Block17A_SitsBetweenBlocks16And18()
+    {
+        RoeWorksheet sheet = Sheet();
+        sheet.VacationPayOnLeaving = 500m;
+        sheet.Comments = "Seasonal.";
+
+        string[] order = Roe(sheet).Elements().Select(e => e.Name.LocalName).ToArray();
+
+        Assert.Equal(Array.IndexOf(order, "B16") + 1, Array.IndexOf(order, "B17A"));
+        Assert.Equal(Array.IndexOf(order, "B17A") + 1, Array.IndexOf(order, "B18"));
+    }
+
+    /// <summary>
+    /// The final period's vacation pay is only a prompt. It is often the percentage paid with
+    /// every cheque, which must not be reported, so nothing reaches block 17A unconfirmed.
+    /// </summary>
+    [Fact]
+    public void WithoutVacationPayOnLeaving_Block17AIsLeftOut()
+    {
+        RoeWorksheet sheet = Sheet();
+        sheet.VacationPay = 80m;
+
+        Assert.Null(Roe(sheet).Element("B17A"));
+    }
+
+    [Fact]
+    public void VacationPayOnLeaving_BeyondWhatTheBlockHolds_IsRefused()
+    {
+        RoeWorksheet sheet = Sheet();
+        sheet.VacationPayOnLeaving = 10_000_000m;
+
+        Assert.Contains(RoeXmlWriter.Validate(sheet), p => p.Contains("Block 17A"));
+    }
+
+    #endregion
+
     #region The real check, once the schema is available
 
     private static string SchemaFile =>
@@ -383,6 +462,26 @@ public class RoeXmlTests
 
         var errors = new List<string>();
         RoeXmlWriter.Build(Sheet(), Version).Validate(schemas, (_, e) => errors.Add(e.Message));
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Block17A_ValidatesAgainstTheServiceCanadaSchema()
+    {
+        if (!File.Exists(SchemaFile))
+        {
+            return;
+        }
+
+        var schemas = new XmlSchemaSet();
+        schemas.Add(null, SchemaFile);
+
+        RoeWorksheet sheet = Sheet();
+        sheet.VacationPayOnLeaving = 1234.5m;
+
+        var errors = new List<string>();
+        RoeXmlWriter.Build(sheet, Version).Validate(schemas, (_, e) => errors.Add(e.Message));
 
         Assert.Empty(errors);
     }
