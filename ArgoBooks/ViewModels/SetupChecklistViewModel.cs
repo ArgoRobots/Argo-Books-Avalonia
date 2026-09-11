@@ -47,9 +47,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
     private bool _isVisible;
 
     [ObservableProperty]
-    private bool _isExpanded = true;
-
-    [ObservableProperty]
     private int _completedCount;
 
     [ObservableProperty]
@@ -219,12 +216,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
     private void OnTutorialStateChanged(object? sender, EventArgs e)
     {
         Refresh();
-    }
-
-    [RelayCommand]
-    private void ToggleExpanded()
-    {
-        IsExpanded = !IsExpanded;
     }
 
     [RelayCommand]
