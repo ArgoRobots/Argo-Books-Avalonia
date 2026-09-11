@@ -2329,8 +2329,14 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var transactionsValueDisplay = salesSumDisplay + purchasesSumDisplay;
         var avgTransactionValueDisplay = totalTransactionsCount > 0 ? transactionsValueDisplay / totalTransactionsCount : 0;
 
-        // Shipping costs from purchases
-        var avgShipping = purchases.Count > 0 ? purchases.Average(p => p.ShippingCost) : 0;
+        // Shipping on collected sales and on expenses, as the Average Shipping Costs chart counts it,
+        // each converted at its own date.
+        var avgShipping = totalTransactionsCount > 0
+            ? (sales.Sum(s => s.EffectiveShippingCostUSD) + purchases.Sum(p => p.EffectiveShippingCostUSD)) / totalTransactionsCount
+            : 0;
+        var salesShippingComplete = CurrencyService.TrySumDisplayFromUSD(sales, s => s.ShippingCost, s => s.OriginalCurrency, s => s.EffectiveShippingCostUSD, s => s.Date, out var salesShippingDisplay);
+        var purchasesShippingComplete = CurrencyService.TrySumDisplayFromUSD(purchases, p => p.ShippingCost, p => p.OriginalCurrency, p => p.EffectiveShippingCostUSD, p => p.Date, out var purchasesShippingDisplay);
+        var avgShippingDisplay = totalTransactionsCount > 0 ? (salesShippingDisplay + purchasesShippingDisplay) / totalTransactionsCount : 0;
 
         // Calculate previous period for comparison
         var (prevStartDate, prevEndDate) = Dashboard.DashboardCalculations.PreviousPeriod(StartDate, EndDate);
@@ -2344,14 +2350,18 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var prevTotalTransactionsCount = prevSales.Count + prevPurchases.Count;
         var prevAllTransactionValues = prevSales.Select(s => s.EffectiveTotalUSD).Concat(prevPurchases.Select(p => p.EffectiveTotalUSD)).ToList();
         var prevAvgTransactionValue = prevAllTransactionValues.Count > 0 ? prevAllTransactionValues.Average() : 0;
-        var prevAvgShipping = prevPurchases.Count > 0 ? prevPurchases.Average(p => p.ShippingCost) : 0;
+        var prevAvgShipping = prevTotalTransactionsCount > 0
+            ? (prevSales.Sum(s => s.EffectiveShippingCostUSD) + prevPurchases.Sum(p => p.EffectiveShippingCostUSD)) / prevTotalTransactionsCount
+            : 0;
 
         // Check if there's any previous period data
         var hasPrevPeriodData = prevTotalTransactionsCount > 0;
 
-        // Revenue growth (period over period)
-        var currentRevenueTotal = sales.Sum(s => s.EffectiveTotalUSD);
-        var prevRevenueTotal = prevSales.Sum(s => s.EffectiveTotalUSD);
+        // Revenue growth (period over period), net of refunds on their own dates as the Revenue card counts it
+        var currentRevenueTotal = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, StartDate, EndDate)
+            - RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, StartDate, EndDate);
+        var prevRevenueTotal = RevenueAggregator.SumCollectedRevenueUSD(data.Revenues, prevStartDate, prevEndDate)
+            - RefundAggregator.GetRefundedInDateRangeUSD(data.Payments, prevStartDate, prevEndDate);
         var revenueGrowthValue = prevRevenueTotal > 0 ? ((currentRevenueTotal - prevRevenueTotal) / prevRevenueTotal) * 100 : 0;
 
         var transactionsChange = prevTotalTransactionsCount > 0 ? ((double)(totalTransactionsCount - prevTotalTransactionsCount) / prevTotalTransactionsCount) * 100 : 0;
@@ -2370,7 +2380,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         AvgTransactionChangeValue = hasPrevPeriodData && prevAvgTransactionValue > 0 ? (double)avgTransactionChange : null;
         AvgTransactionChangeText = hasPrevPeriodData && prevAvgTransactionValue > 0 ? $"{(avgTransactionChange >= 0 ? "+" : "")}{avgTransactionChange:F1}%" : null;
 
-        AvgShippingCost = CurrencyService.Format(avgShipping);
+        AvgShippingCost = salesShippingComplete && purchasesShippingComplete
+            ? CurrencyService.Format(avgShippingDisplay)
+            : CurrencyService.PendingMarker;
         AvgShippingChangeValue = hasPrevPeriodData && prevAvgShipping > 0 ? (double)shippingChange : null;
         AvgShippingChangeText = hasPrevPeriodData && prevAvgShipping > 0 ? $"{(shippingChange >= 0 ? "+" : "")}{shippingChange:F1}%" : null;
     }
@@ -2425,7 +2437,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var returns = data.Returns.Where(r => r.ReturnDate >= StartDate && r.ReturnDate <= EndDate).ToList();
 
         var totalReturnsCount = returns.Count;
-        var financialImpact = returns.Sum(r => r.RefundAmount);
+        // Refund amounts are in their sale's own currency, so each converts from it at the return's date.
+        var impactComplete = ReturnLossAmounts.TrySumDisplay(returns, r => r.RefundAmount,
+            r => ReturnLossAmounts.CurrencyOf(data, r), r => r.ReturnDate,
+            CurrencyService.GetDisplayAmountFromNative, out var financialImpact);
 
         // Calculate return rate (returns / total sales transactions)
         var salesTransactions = data.Revenues.Count(s => s.Date >= StartDate && s.Date <= EndDate);
@@ -2436,7 +2451,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
 
         var prevReturns = data.Returns.Where(r => r.ReturnDate >= prevStartDate && r.ReturnDate <= prevEndDate).ToList();
         var prevReturnsCount = prevReturns.Count;
-        var prevFinancialImpact = prevReturns.Sum(r => r.RefundAmount);
+        ReturnLossAmounts.TrySumDisplay(prevReturns, r => r.RefundAmount,
+            r => ReturnLossAmounts.CurrencyOf(data, r), r => r.ReturnDate,
+            CurrencyService.GetDisplayAmountFromNative, out var prevFinancialImpact);
         var prevSalesTransactions = data.Revenues.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate);
         var prevReturnRate = prevSalesTransactions > 0 ? ((double)prevReturnsCount / prevSalesTransactions) * 100 : 0;
 
@@ -2455,7 +2472,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         ReturnRateChangeValue = hasPrevPeriodData && prevSalesTransactions > 0 ? returnRateChange : null;
         ReturnRateChangeText = hasPrevPeriodData && prevSalesTransactions > 0 ? $"{(returnRateChange >= 0 ? "+" : "")}{returnRateChange:F1}%" : null;
 
-        ReturnsFinancialImpact = CurrencyService.Format(financialImpact);
+        ReturnsFinancialImpact = impactComplete ? CurrencyService.Format(financialImpact) : CurrencyService.PendingMarker;
         ReturnsImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
         ReturnsImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 
@@ -2471,7 +2488,10 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         var losses = data.LostDamaged.Where(l => l.DateDiscovered >= StartDate && l.DateDiscovered <= EndDate).ToList();
 
         var totalLossesCount = losses.Count;
-        var financialImpact = losses.Sum(l => l.ValueLost);
+        // Loss values are in their sale's or purchase's own currency, so each converts from it at the loss's date.
+        var impactComplete = ReturnLossAmounts.TrySumDisplay(losses, l => l.ValueLost,
+            l => ReturnLossAmounts.CurrencyOf(data, l), l => l.DateDiscovered,
+            CurrencyService.GetDisplayAmountFromNative, out var financialImpact);
 
         // Calculate loss rate (losses / total transactions)
         var totalTransactions = data.Revenues.Count(s => s.Date >= StartDate && s.Date <= EndDate) +
@@ -2486,7 +2506,9 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
 
         var prevLosses = data.LostDamaged.Where(l => l.DateDiscovered >= prevStartDate && l.DateDiscovered <= prevEndDate).ToList();
         var prevLossesCount = prevLosses.Count;
-        var prevFinancialImpact = prevLosses.Sum(l => l.ValueLost);
+        ReturnLossAmounts.TrySumDisplay(prevLosses, l => l.ValueLost,
+            l => ReturnLossAmounts.CurrencyOf(data, l), l => l.DateDiscovered,
+            CurrencyService.GetDisplayAmountFromNative, out var prevFinancialImpact);
         var prevTotalTransactions = data.Revenues.Count(s => s.Date >= prevStartDate && s.Date <= prevEndDate) +
                                     data.Expenses.Count(p => p.Date >= prevStartDate && p.Date <= prevEndDate);
         var prevLossRate = prevTotalTransactions > 0 ? ((double)prevLossesCount / prevTotalTransactions) * 100 : 0;
@@ -2508,7 +2530,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
         LossRateChangeValue = hasPrevPeriodData && prevTotalTransactions > 0 ? lossRateChange : null;
         LossRateChangeText = hasPrevPeriodData && prevTotalTransactions > 0 ? $"{(lossRateChange >= 0 ? "+" : "")}{lossRateChange:F1}%" : null;
 
-        LossesFinancialImpact = CurrencyService.Format(financialImpact);
+        LossesFinancialImpact = impactComplete ? CurrencyService.Format(financialImpact) : CurrencyService.PendingMarker;
         LossesImpactChangeValue = hasPrevPeriodData && prevFinancialImpact > 0 ? (double)impactChange : null;
         LossesImpactChangeText = hasPrevPeriodData && prevFinancialImpact > 0 ? $"{(impactChange >= 0 ? "+" : "")}{impactChange:F1}%" : null;
 

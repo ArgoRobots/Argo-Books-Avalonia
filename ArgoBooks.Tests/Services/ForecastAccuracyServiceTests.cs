@@ -488,4 +488,43 @@ public class ForecastAccuracyServiceTests
     }
 
     #endregion
+
+    #region RunBacktestAsync Tests
+
+    // Backtests are scored and weighted alongside live forecasts, so they have to use the same
+    // yardstick: gross collected revenue and gross expenses.
+    [Fact]
+    public async Task RunBacktestAsync_MeasuresGrossCollectedRevenueAndGrossExpenses()
+    {
+        var companyData = new CompanyData();
+        for (var month = 1; month <= 5; month++)
+        {
+            var date = new DateTime(2024, month, 15);
+            companyData.Revenues.Add(new Revenue
+            {
+                Id = $"REV-{month}", Date = date, OriginalCurrency = "USD",
+                Total = 110m, TaxAmount = 10m, PaymentStatus = RevenuePaymentStatus.Paid
+            });
+            companyData.Revenues.Add(new Revenue
+            {
+                Id = $"REV-UNPAID-{month}", Date = date, OriginalCurrency = "USD",
+                Total = 500m, PaymentStatus = RevenuePaymentStatus.Unpaid
+            });
+            companyData.Expenses.Add(new Expense
+            {
+                Id = $"EXP-{month}", Date = date, OriginalCurrency = "USD", Total = 55m, TaxAmount = 5m
+            });
+        }
+
+        await _service.RunBacktestAsync(companyData, new CompanySettings(), new LocalMLForecastingService());
+
+        Assert.NotEmpty(companyData.ForecastRecords);
+        Assert.All(companyData.ForecastRecords, r =>
+        {
+            Assert.Equal(110m, r.ActualRevenue);
+            Assert.Equal(55m, r.ActualExpenses);
+        });
+    }
+
+    #endregion
 }

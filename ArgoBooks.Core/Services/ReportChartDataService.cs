@@ -1355,9 +1355,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets return financial impact (refund amounts) grouped by day.
+    /// Gets return financial impact (refund amounts) grouped by day. With <paramref name="toDisplay"/>,
+    /// each amount is converted from its sale's currency at the return's date, and one whose rate
+    /// is unavailable (null) counts as 0.
     /// </summary>
-    public List<ChartDataPoint> GetReturnFinancialImpactDaily()
+    public List<ChartDataPoint> GetReturnFinancialImpactDaily(Func<decimal, string, DateTime, decimal?>? toDisplay = null)
     {
         if (companyData?.Returns == null || !filters.IncludeReturns)
             return [];
@@ -1371,7 +1373,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM dd"),
-                Value = (double)g.Sum(r => r.RefundAmount),
+                Value = (double)g.Sum(r => toDisplay == null
+                    ? r.RefundAmount
+                    : toDisplay(r.RefundAmount, ReturnLossAmounts.CurrencyOf(companyData, r), r.ReturnDate) ?? 0m),
                 Date = g.Key
             })
             .ToList();
@@ -1444,7 +1448,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
-            return companyData.Returns.Any(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
+            return companyData.Returns.Any(r => r.ReturnDate >= clampedStart && r.ReturnDate <= clampedEnd);
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1455,12 +1461,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = companyData.Returns
-                    .Count(r => r.ReturnDate >= monthStart && r.ReturnDate <= monthEnd),
+                    .Count(r => r.ReturnDate >= clampedStart && r.ReturnDate <= clampedEnd),
                 Date = month
             };
         }).ToList();
@@ -1544,9 +1552,11 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
     }
 
     /// <summary>
-    /// Gets loss financial impact grouped by day.
+    /// Gets loss financial impact grouped by day. With <paramref name="toDisplay"/>, each value is
+    /// converted from its sale's or purchase's currency at the loss's date, and one whose rate is
+    /// unavailable (null) counts as 0.
     /// </summary>
-    public List<ChartDataPoint> GetLossFinancialImpactDaily()
+    public List<ChartDataPoint> GetLossFinancialImpactDaily(Func<decimal, string, DateTime, decimal?>? toDisplay = null)
     {
         if (companyData?.LostDamaged == null || !filters.IncludeLosses)
             return [];
@@ -1560,7 +1570,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Select(g => new ChartDataPoint
             {
                 Label = g.Key.ToString("MMM dd"),
-                Value = (double)g.Sum(l => l.ValueLost),
+                Value = (double)g.Sum(l => toDisplay == null
+                    ? l.ValueLost
+                    : toDisplay(l.ValueLost, ReturnLossAmounts.CurrencyOf(companyData, l), l.DateDiscovered) ?? 0m),
                 Date = g.Key
             })
             .ToList();
@@ -1629,7 +1641,9 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
-            return companyData.LostDamaged.Any(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
+            return companyData.LostDamaged.Any(l => l.DateDiscovered >= clampedStart && l.DateDiscovered <= clampedEnd);
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1640,12 +1654,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = companyData.LostDamaged
-                    .Count(l => l.DateDiscovered >= monthStart && l.DateDiscovered <= monthEnd),
+                    .Count(l => l.DateDiscovered >= clampedStart && l.DateDiscovered <= clampedEnd),
                 Date = month
             };
         }).ToList();

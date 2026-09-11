@@ -13,7 +13,7 @@ public class ForecastAccuracyService : IForecastAccuracyService
     /// <summary>
     /// Increment this when the forecasting algorithm changes to trigger a full re-backtest.
     /// </summary>
-    private const string CurrentBacktestVersion = "v2-smape-interpolation";
+    private const string CurrentBacktestVersion = "v3-gross-collected";
     /// <inheritdoc />
     public void SaveForecast(CompanyData companyData, ForecastData forecast, AnalysisDateRange forecastPeriod)
     {
@@ -343,15 +343,17 @@ public class ForecastAccuracyService : IForecastAccuracyService
     /// </summary>
     private List<MonthlyAggregate> GetMonthlyAggregates(CompanyData companyData)
     {
-        // Aggregate sales by month
+        // Same basis as the live forecast and ValidatePastForecasts: gross collected revenue and
+        // gross expenses, so backtests and live forecasts are scored against one yardstick.
         var salesByMonth = companyData.Revenues
+            .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => new DateTime(s.Date.Year, s.Date.Month, 1))
-            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveSubtotalUSD));
+            .ToDictionary(g => g.Key, g => g.Sum(s => s.EffectiveTotalUSD));
 
         // Aggregate purchases by month
         var purchasesByMonth = companyData.Expenses
             .GroupBy(p => new DateTime(p.Date.Year, p.Date.Month, 1))
-            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveSubtotalUSD));
+            .ToDictionary(g => g.Key, g => g.Sum(p => p.EffectiveTotalUSD));
 
         // Get the full range of months with data
         var allDataMonths = salesByMonth.Keys.Concat(purchasesByMonth.Keys).ToList();

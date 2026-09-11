@@ -939,7 +939,7 @@ public partial class InsightsPageViewModel : ViewModelBase, ICleanupViewModel
     /// precision on a projection). Forecasts are "as of now", so they convert at today's rate (warmed
     /// by the caller); shows the pending marker if that rate isn't cached yet.
     /// </summary>
-    private static string FormatForecastAmount(decimal amountUSD) =>
+    internal static string FormatForecastAmount(decimal amountUSD) =>
         CurrencyService.TryGetDisplayFromUSD(amountUSD, DateTime.Today, out var amount)
             ? CurrencyService.CurrentSymbol + amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)
             : CurrencyService.PendingMarker;

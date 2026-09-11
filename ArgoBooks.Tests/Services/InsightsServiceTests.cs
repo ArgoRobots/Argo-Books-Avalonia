@@ -44,6 +44,44 @@ public class InsightsServiceTests
 
     #endregion
 
+    #region Forecast period
+
+    // The Insights page passes the period being forecast ("Next Month" on Sep 11 is Oct 1 - Oct 31).
+    // Saving it under the period after that made Past Predictions score it against the wrong month.
+    [Fact]
+    public async Task GenerateForecastAsync_FutureRange_SavesTheForecastUnderThatRange()
+    {
+        var service = new InsightsService();
+        var data = new CompanyData();
+        var start = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1).AddMonths(1);
+        var end = start.AddMonths(1).AddSeconds(-1);
+
+        await service.GenerateForecastAsync(data, AnalysisDateRange.Custom(start, end));
+
+        var record = Assert.Single(data.ForecastRecords);
+        Assert.Equal(start, record.PeriodStartDate);
+        Assert.Equal(end, record.PeriodEndDate);
+    }
+
+    #endregion
+
+    #region Previous period
+
+    // Transactions carry a time of day, so the previous period has to run to the last tick before
+    // the range, not midnight of the day before, or that day's later entries are dropped.
+    [Fact]
+    public void GetPreviousPeriod_EndsJustBeforeTheRangeStarts()
+    {
+        var range = AnalysisDateRange.Custom(new DateTime(2026, 3, 1), new DateTime(2026, 3, 30, 23, 59, 59));
+
+        var previous = range.GetPreviousPeriod();
+
+        Assert.Equal(new DateTime(2026, 1, 30), previous.StartDate);
+        Assert.Equal(new DateTime(2026, 3, 1).AddTicks(-1), previous.EndDate);
+    }
+
+    #endregion
+
     #region FormatCurrency / display currency
 
     [Fact]

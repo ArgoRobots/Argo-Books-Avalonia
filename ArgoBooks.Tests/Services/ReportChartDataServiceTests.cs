@@ -275,6 +275,34 @@ public class ReportChartDataServiceTests
         Assert.Equal(5d, SumOf(service.GetExpenseVsRevenueTax(), "Revenue Tax"));
     }
 
+    // The returns and losses comparisons count only what falls inside the range, and a month whose
+    // only entries are outside it gets no bar.
+    [Fact]
+    public void ReturnAndLossComparisons_ClampPartialMonthsToTheSelectedRange()
+    {
+        var data = new CompanyData();
+        data.Returns.Add(new Core.Models.Tracking.Return { Id = "RET-1", ReturnDate = new DateTime(2024, 8, 3) });
+        data.Returns.Add(new Core.Models.Tracking.Return { Id = "RET-2", ReturnDate = new DateTime(2024, 8, 20) });
+        data.Returns.Add(new Core.Models.Tracking.Return { Id = "RET-3", ReturnDate = new DateTime(2024, 9, 20) });
+        data.LostDamaged.Add(new Core.Models.Tracking.LostDamaged { Id = "LOST-1", DateDiscovered = new DateTime(2024, 8, 3) });
+        data.LostDamaged.Add(new Core.Models.Tracking.LostDamaged { Id = "LOST-2", DateDiscovered = new DateTime(2024, 8, 20) });
+        data.LostDamaged.Add(new Core.Models.Tracking.LostDamaged { Id = "LOST-3", DateDiscovered = new DateTime(2024, 9, 20) });
+        var filters = new ReportFilters
+        {
+            StartDate = new DateTime(2024, 8, 12), EndDate = new DateTime(2024, 9, 10),
+            IncludeReturns = true, IncludeLosses = true
+        };
+        var service = new ReportChartDataService(data, filters);
+
+        var returns = service.GetExpenseVsRevenueReturns();
+        var losses = service.GetExpenseVsRevenueLosses();
+
+        Assert.Equal(1d, SumOf(returns, "Revenue Returns"));
+        Assert.Equal(1d, SumOf(losses, "Expense Losses"));
+        Assert.Single(returns.First(s => s.Name == "Revenue Returns").DataPoints);
+        Assert.Single(losses.First(s => s.Name == "Expense Losses").DataPoints);
+    }
+
     // $500 paid Jan 5 and refunded Jan 20 nets to nothing, as it does on the Revenue card. The daily
     // series feeds the dashboard and Analytics chart and the non-USD report path.
     [Fact]

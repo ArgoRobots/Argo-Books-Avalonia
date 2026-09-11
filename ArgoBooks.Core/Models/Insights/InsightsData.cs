@@ -404,7 +404,8 @@ public class AnalysisDateRange
     public int DayCount => (EndDate - StartDate).Days + 1;
 
     /// <summary>
-    /// Gets the previous period of the same length for comparison.
+    /// Gets the previous period of the same length for comparison. It ends a tick before this one
+    /// starts, not at midnight of the day before, since transactions carry a time of day.
     /// </summary>
     public AnalysisDateRange GetPreviousPeriod()
     {
@@ -412,7 +413,7 @@ public class AnalysisDateRange
         return new AnalysisDateRange
         {
             StartDate = StartDate.AddDays(-days),
-            EndDate = StartDate.AddDays(-1),
+            EndDate = StartDate.AddTicks(-1),
             PresetName = "Previous Period"
         };
     }

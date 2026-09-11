@@ -315,9 +315,13 @@ The Insights tab (trends, anomalies, forecasts, recommendations) follows the **d
 
 **Display currency.** The analytics above run entirely in USD (percentages, z-scores, and forecasting are currency-invariant). Only the amounts shown to the user are converted to the company display currency, display-only: `InsightsService` resolves one currency per run (`ResolveDisplayCode`), the company currency when an exact-date USD→currency rate exists for every conversion date, otherwise "USD" for the whole run (the same all-or-nothing rule reports use, §3a). Description amounts convert each contributing transaction at its own date (`SumDisplay`, §3a Phase 2); statistical means, which have no single date, convert at today's rate. The forecast cards/ranges are "as of now" projections, so `InsightsPageViewModel` converts them at today's rate via `CurrencyService.FormatFromUSD` (warmed with `TryWarmTodayRateAsync`). The free-tier teaser numbers are illustrative and shown with the symbol only, never converted.
 
+**Forecast accuracy.** A live forecast is saved under the period it forecasts: the future range picked on the page ("Next Month" on Sep 11 is Oct 1 to Oct 31). Checking it once that period ends (`ForecastAccuracyService.ValidatePastForecasts`) and the backtests (`RunBacktestAsync`) measure revenue and expenses on the same basis as the forecast itself, gross collected revenue and gross expenses, so every accuracy score compares like with like. Past Predictions shows the stored USD figures the way the forecast cards do, in the display currency at today's rate.
+
 ### Returns and Losses
 
-Returns (customer-returned items) and Losses (lost / damaged inventory) have their own charts but do **not** participate in the revenue / profit / expense pipeline directly. They surface in dedicated "Return Financial Impact" / "Loss Financial Impact" charts that sum `Return.RefundAmount` and `LostDamaged.ValueLost` respectively. The recorded *refund* (a Payment row) is what flows through the revenue / profit subtraction defined in §8.
+Returns (customer-returned items) and Losses (lost / damaged inventory) have their own charts but do **not** participate in the revenue / profit / expense pipeline directly. They surface in dedicated "Return Financial Impact" / "Loss Financial Impact" charts and stat cards that sum `Return.RefundAmount` and `LostDamaged.ValueLost` respectively. The recorded *refund* (a Payment row) is what flows through the revenue / profit subtraction defined in §8.
+
+Neither record stores a USD amount or a currency of its own. The amount is in the currency of the sale or purchase it came from (`Return.OriginalTransactionId`, `LostDamaged.InventoryItemId`), or the company currency when it has none, and each one converts from that currency to the display currency at the record's own date (`ReturnLossAmounts.CurrencyOf`, `CurrencyService.GetDisplayAmountFromNative`, §3a). An amount already in the display currency is used as it is. One whose rate is missing counts as 0 on a chart and shows Pending on a stat card.
 
 ### Bank matching
 
@@ -339,6 +343,10 @@ Bank Matching (`BankMatchingService`) is a non-financial reference layer: it imp
 | Revenue vs Expenses | `EffectiveTotalUSD` | `EffectiveTotalUSD` | Yes (revenue side) | Full amount (revenue side) |
 | Top Customers by Revenue | `EffectiveTotalUSD` | — | Yes | Full amount |
 | Customer Lifetime Value | `EffectiveTotalUSD` | — | Yes | Full amount |
+| Revenue Growth (Analytics) | `EffectiveTotalUSD` | — | Yes | Full amount |
+| Avg Shipping Cost (Analytics) | `EffectiveShippingCostUSD` | `EffectiveShippingCostUSD` | Yes (revenue side) | n/a |
+| Return / Loss Financial Impact | `Return.RefundAmount`, in its sale's currency (§10) | `LostDamaged.ValueLost`, in its sale's or purchase's currency (§10) | n/a | n/a |
+| Forecasts, backtests and accuracy checks (Insights) | `EffectiveTotalUSD` | `EffectiveTotalUSD` | Yes (revenue side) | Not applied |
 | Geographic / Country charts | `EffectiveTotalUSD` | `EffectiveTotalUSD` | Yes (revenue side) | (not applied, TODO) |
 | Outstanding Invoices stat | `EffectiveBalanceUSD` | — | **No** (by design) | n/a |
 | Overdue Invoices stat | `EffectiveBalanceUSD` | — | **No** (by design) | n/a |

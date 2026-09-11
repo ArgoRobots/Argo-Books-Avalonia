@@ -901,8 +901,13 @@ public class InsightsService(
     /// </summary>
     private static AnalysisDateRange CalculateForecastPeriod(AnalysisDateRange currentRange)
     {
-        // The forecast period is the next period after the current analysis range
         var today = DateTime.Today;
+
+        // A future range, as the Insights page passes ("Next Month"), is itself the period forecast.
+        if (currentRange.StartDate > today)
+            return AnalysisDateRange.Custom(currentRange.StartDate, currentRange.EndDate);
+
+        // A historical range forecasts the period after it
         var periodDays = currentRange.DayCount;
 
         // Start from today (or end of current range if it's in the past)

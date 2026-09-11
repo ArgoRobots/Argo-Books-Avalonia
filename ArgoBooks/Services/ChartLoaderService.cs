@@ -1625,13 +1625,14 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
+            // Transaction counts, not amounts, skip USD→display conversion.
             var revenueValues = revenueSeriesData.DataPoints.Select(p => p.Value).ToArray();
-            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue));
+            series.Add(CreateDateTimeSeries(dates, revenueValues, "Revenue", ChartColors.Revenue, convertFromUSD: false));
 
             if (expenseSeriesData?.DataPoints != null)
             {
                 var expenseValues = expenseSeriesData.DataPoints.Select(p => p.Value).ToArray();
-                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense));
+                series.Add(CreateDateTimeSeries(dates, expenseValues, "Expenses", ChartColors.Expense, convertFromUSD: false));
             }
         }
 
@@ -1849,7 +1850,7 @@ public class ChartLoaderService
 
         // Values are transaction COUNTS per accountant, not currency amounts, so they must not be
         // FX-converted (the export SeriesName is "Count").
-        var (series, legend) = CreatePieSeriesWithLegend(dataPoints);
+        var (series, legend) = CreatePieSeriesWithLegend(dataPoints, isCurrency: false);
 
         // Store export data (used for "Transactions by Accountant" and "Companies of Destination")
         var exportData = new ChartExportData
@@ -2119,7 +2120,9 @@ public class ChartLoaderService
         filters.IncludeReturns = true;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetReturnFinancialImpactDaily();
+        // Refund amounts are in their sale's own currency, not USD, so the data service converts each
+        // from that currency at its own date and the series must not convert again.
+        var dataPoints = dataService.GetReturnFinancialImpactDaily(CurrencyService.GetDisplayAmountFromNative);
 
         // Filter to only days with data (non-zero values)
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
@@ -2133,7 +2136,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, impactValues, "Refunds", ChartColors.Expense));
+            series.Add(CreateDateTimeSeries(dates, impactValues, "Refunds", ChartColors.Expense, convertFromUSD: false));
         }
 
         // Store export data
@@ -2205,7 +2208,9 @@ public class ChartLoaderService
         filters.IncludeLosses = true;
         var dataService = new ReportChartDataService(companyData, filters);
 
-        var dataPoints = dataService.GetLossFinancialImpactDaily();
+        // Loss values are in their sale's or purchase's own currency, not USD, so the data service
+        // converts each from that currency at its own date and the series must not convert again.
+        var dataPoints = dataService.GetLossFinancialImpactDaily(CurrencyService.GetDisplayAmountFromNative);
 
         // Filter to only days with data (non-zero values)
         var filteredData = dataPoints.Where(p => p.Value > 0).ToList();
@@ -2219,7 +2224,7 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, impactValues, "Value Lost", ChartColors.Expense));
+            series.Add(CreateDateTimeSeries(dates, impactValues, "Value Lost", ChartColors.Expense, convertFromUSD: false));
         }
 
         // Store export data
@@ -2356,10 +2361,11 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ChartColors.Expense));
+            // Return counts, not amounts, skip USD→display conversion.
+            series.Add(CreateDateTimeSeries(dates, revenueReturnValues, "Revenue Returns", ChartColors.Expense, convertFromUSD: false));
             if (expenseReturnValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse(AppColors.PurpleDark)));
+                series.Add(CreateDateTimeSeries(dates, expenseReturnValues, "Expense Returns", SKColor.Parse(AppColors.PurpleDark), convertFromUSD: false));
             }
         }
 
@@ -2431,10 +2437,11 @@ public class ChartLoaderService
 
         if (dates.Length > 0)
         {
-            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ChartColors.Expense));
+            // Loss counts, not amounts, skip USD→display conversion.
+            series.Add(CreateDateTimeSeries(dates, expenseLossValues, "Expense Losses", ChartColors.Expense, convertFromUSD: false));
             if (revenueLossValues.Length > 0)
             {
-                series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse(AppColors.PurpleDark)));
+                series.Add(CreateDateTimeSeries(dates, revenueLossValues, "Revenue Losses", SKColor.Parse(AppColors.PurpleDark), convertFromUSD: false));
             }
         }
 
