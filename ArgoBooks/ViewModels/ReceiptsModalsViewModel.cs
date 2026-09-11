@@ -8,6 +8,7 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
+using ArgoBooks.Data;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Utilities;
@@ -467,6 +468,19 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _selectedPaymentMethod = "Cash";
+
+    /// <summary>
+    /// The currency the reviewed receipt is saved in. Starts on the scanned one (ReceiptCurrency),
+    /// so the user can correct it before saving.
+    /// </summary>
+    [ObservableProperty]
+    private string _selectedScanCurrency = string.Empty;
+
+    public IReadOnlyList<string> CurrencyOptions => Currencies.All;
+
+    private string ScanCurrencyCode => string.IsNullOrEmpty(SelectedScanCurrency)
+        ? CurrencyService.CurrentCurrencyCode
+        : CurrencyService.ParseCurrencyCode(SelectedScanCurrency);
 
     [ObservableProperty]
     private string _notes = string.Empty;
@@ -1326,6 +1340,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         // Restore per-item state that isn't on ScanResult
         Notes = item.Notes;
 
+        if (item.CurrencyCode != null)
+            SelectedScanCurrency = CurrencyService.GetDisplayString(item.CurrencyCode);
+
         if (item.IsRevenueOverride.HasValue)
             IsRevenue = item.IsRevenueOverride.Value;
 
@@ -1432,6 +1449,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Persist per-item state that isn't on ScanResult
         item.Notes = Notes;
+        item.CurrencyCode = ScanCurrencyCode;
         item.IsRevenueOverride = IsRevenue;
         item.SelectedSupplierId = SelectedSupplier?.Id;
         item.ShowCreateSupplierSuggestion = ShowCreateSupplierSuggestion;
@@ -1509,7 +1527,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var shipping = scanResult.Shipping ?? 0;
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
-            var currency = ReceiptCurrency(scanResult.CurrencyCode);
+            var currency = item.CurrencyCode ?? ReceiptCurrency(scanResult.CurrencyCode);
             // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
             await CurrencyService.WarmRateForDateAsync(transactionDate, currency);
             var isRevenue = item.IsRevenueOverride ?? false;
@@ -2175,14 +2193,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsNearLimit = usageCheck.MonthlyLimit > 0 && usageCheck.Remaining > 0 && usageCheck.Remaining <= usageCheck.MonthlyLimit / 10;
     }
 
-    // The currency the scan read off the receipt; the save decides whether to use it (ReceiptCurrency).
-    private string? _scannedCurrencyCode;
-
     private void PopulateScanResults(ReceiptScanResult result)
     {
         try
         {
-            _scannedCurrencyCode = result.CurrencyCode;
+            SelectedScanCurrency = CurrencyService.GetDisplayString(ReceiptCurrency(result.CurrencyCode));
             ExtractedSupplier = result.SupplierName ?? string.Empty;
             ExtractedDate = result.TransactionDate.HasValue
                 ? new DateTimeOffset(result.TransactionDate.Value)
@@ -2525,7 +2540,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Fetch the receipt-date rate up front (like manual entry) so the saved row shows its amount
         // immediately instead of a momentary "Pending".
-        await CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now, ReceiptCurrency(_scannedCurrencyCode));
+        await CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now, ScanCurrencyCode);
 
         if (IsRevenue)
         {
@@ -2551,7 +2566,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// The currency a scanned receipt is saved in: the one the scan detected, unless the app doesn't
+    /// The currency a scanned receipt's review starts on: the one the scan detected, unless the app doesn't
     /// know it or it shares its symbol with the company's own ("$" is USD, CAD and AUD alike), when the
     /// scan can't tell the two apart and the company currency stands.
     /// </summary>
@@ -2680,7 +2695,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
         decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
-        var currency = ReceiptCurrency(_scannedCurrencyCode);
+        var currency = ScanCurrencyCode;
         companyData.IdCounters.Expense++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
 
@@ -2755,7 +2770,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CreateRevenueTransaction(CompanyData companyData, string receiptId, string? fileData,
         decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
-        var currency = ReceiptCurrency(_scannedCurrencyCode);
+        var currency = ScanCurrencyCode;
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
 
@@ -3471,7 +3486,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ExtractedDiscount = string.Empty;
         ExtractedShipping = string.Empty;
         ExtractedTotal = string.Empty;
-        _scannedCurrencyCode = null;
+        SelectedScanCurrency = string.Empty;
         ConfidenceScore = 0;
         ConfidenceText = string.Empty;
         IsHighConfidence = false;

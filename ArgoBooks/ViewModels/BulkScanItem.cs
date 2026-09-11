@@ -108,6 +108,11 @@ public partial class BulkScanItem : ObservableObject
     public string Notes { get; set; } = string.Empty;
 
     /// <summary>
+    /// Per-item currency left in the review (null until the item is first reviewed).
+    /// </summary>
+    public string? CurrencyCode { get; set; }
+
+    /// <summary>
     /// Per-item transaction type override (user may change from the AI-detected value).
     /// </summary>
     public bool? IsRevenueOverride { get; set; }

@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Services;
+using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using Xunit;
 
@@ -325,5 +326,48 @@ public class ReceiptsModalsViewModelTests : ModalViewModelTestBase
         await vm.CreateAllApprovedTransactionsCommand.ExecuteAsync(null);
 
         Assert.Equal("CAD", Company.Expenses.Single().OriginalCurrency);
+    }
+
+    [Fact]
+    public async Task SingleScan_CurrencyChangedInReview_SavesInTheChosenCurrency()
+    {
+        Company.Settings.Localization.Currency = "CAD";
+        UseNoExchangeRates();
+        var vm = ReviewScan(OneLineScan("Hotel", 1, 120m, currency: "EUR"));
+        Assert.Equal(CurrencyService.GetDisplayString("EUR"), vm.SelectedScanCurrency);
+
+        vm.SelectedScanCurrency = CurrencyService.GetDisplayString("USD");
+        await SaveAsExpenseAsync(vm);
+
+        Assert.Equal("USD", Company.Expenses.Single().OriginalCurrency);
+    }
+
+    // The scan can't tell a CAD company's USD receipt from its own dollars, so the user picking USD
+    // must stick while they step through the other receipts.
+    [Fact]
+    public async Task CreateApprovedReceipts_CurrencyChangedInReview_KeepsTheChoiceAcrossReceipts()
+    {
+        Company.Settings.Localization.Currency = "CAD";
+        UseNoExchangeRates();
+        var vm = new ReceiptsModalsViewModel();
+        var first = ApprovedExpenseItem(50m);
+        var second = ApprovedExpenseItem(60m);
+        foreach (var item in new[] { first, second })
+        {
+            item.Status = BulkScanStatus.Succeeded;
+            item.HasAiSuggestionsRun = true;
+            vm.BulkItems.Add(item);
+        }
+
+        vm.NavigateToBulkItemByRefCommand.Execute(first);
+        vm.SelectedScanCurrency = CurrencyService.GetDisplayString("USD");
+        vm.NavigateToBulkItemByRefCommand.Execute(second);
+        Assert.Equal(CurrencyService.GetDisplayString("CAD"), vm.SelectedScanCurrency);
+        vm.NavigateToBulkItemByRefCommand.Execute(first);
+        Assert.Equal(CurrencyService.GetDisplayString("USD"), vm.SelectedScanCurrency);
+
+        await vm.CreateAllApprovedTransactionsCommand.ExecuteAsync(null);
+
+        Assert.Equal(["USD", "CAD"], Company.Expenses.Select(e => e.OriginalCurrency));
     }
 }
