@@ -133,7 +133,9 @@ public partial class App
             isCsv ? "ai-csv-rescue" : "ai-xlsx-rescue",
             importStopwatch.ElapsedMilliseconds);
 
-        await usageService.IncrementUsageAsync();
+        // Only a run that brought something in uses up an import.
+        if (totalProcessed > 0 || totalBankRouted > 0)
+            await usageService.IncrementUsageAsync();
 
         var resultDialog = _appShellViewModel?.ImportResultDialogViewModel;
         if (resultDialog != null)

@@ -264,9 +264,15 @@ public static class CurrencyService
     /// front. No-op for a USD display currency or when the rate is already cached. Best-effort: a
     /// failed fetch just leaves the row to fall back to pending + the self-heal.
     /// </summary>
-    public static async Task WarmRateForDateAsync(DateTime date, CancellationToken cancellationToken = default)
+    public static Task WarmRateForDateAsync(DateTime date, CancellationToken cancellationToken = default)
+        => WarmRateForDateAsync(date, CurrentCurrencyCode, cancellationToken);
+
+    /// <summary>
+    /// <see cref="WarmRateForDateAsync(DateTime, CancellationToken)"/> for a transaction in
+    /// <paramref name="code"/> rather than the display currency, such as a receipt scanned abroad.
+    /// </summary>
+    public static async Task WarmRateForDateAsync(DateTime date, string code, CancellationToken cancellationToken = default)
     {
-        var code = CurrentCurrencyCode;
         if (string.Equals(code, "USD", StringComparison.OrdinalIgnoreCase))
             return;
 

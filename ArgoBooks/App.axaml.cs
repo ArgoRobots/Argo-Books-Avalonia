@@ -2958,9 +2958,6 @@ public partial class App : Application
             _ = TelemetryManager?.TrackFeatureAsync(
                 FeatureName.DataImported, importContext, importStopwatch.ElapsedMilliseconds);
 
-            // Record usage on server
-            await usageService.IncrementUsageAsync();
-
             // Rows the import could not price yet were queued, or requeued with new amounts, in the
             // company file only.
             MirrorQueuedConversions(companyData, companyData.PendingConversions
@@ -3039,6 +3036,10 @@ public partial class App : Application
             // Bank statement rows are routed to the Bank Matching page (their own session), not
             // counted as new/updated book records, so factor them into "needs save" separately.
             var totalBankRouted = allSheetResults.Sum(sr => sr.BankMatchingImported);
+
+            // Only a run that brought something in uses up an import.
+            if (totalProcessed > 0 || totalBankRouted > 0)
+                await usageService.IncrementUsageAsync();
 
             // Show import result dialog
             var resultDialog = _appShellViewModel.ImportResultDialogViewModel;
@@ -3231,7 +3232,11 @@ public partial class App : Application
                     : await parser.ParseExcelAsync(filePath);
 
                 if (lines.Count == 0)
-                    lines = await TryAiParseBankStatementAsync(filePath, isCsv, parser);
+                {
+                    // Null: the user is out of bank imports and has just been told so.
+                    if (await TryAiParseBankStatementAsync(filePath, isCsv, parser) is not { } aiLines) return;
+                    lines = aiLines;
+                }
             }
 
             _mainWindowViewModel?.HideLoading();
@@ -3286,18 +3291,21 @@ public partial class App : Application
 
     /// <summary>
     /// Backup parser: uses the smart importer's AI column mapping when local header detection
-    /// couldn't recognize the statement's columns. Consumes one AI import credit on success.
-    /// Returns an empty list if AI isn't available or finds nothing.
+    /// couldn't recognize the statement's columns. Consumes one bank AI import on success. Returns
+    /// null when the user is out of bank imports (the limit prompt has been shown), or an empty list
+    /// if AI isn't available or finds nothing.
     /// </summary>
-    private static async Task<List<Core.Models.BankMatching.BankStatementLine>> TryAiParseBankStatementAsync(
+    private static async Task<List<Core.Models.BankMatching.BankStatementLine>?> TryAiParseBankStatementAsync(
         string filePath, bool isCsv, BankStatementImportService parser)
     {
         var gemini = new GeminiService(ErrorLogger, TelemetryManager);
         if (!gemini.IsConfigured) return [];
 
-        using var usage = new AiImportUsageService(LicenseService, ErrorLogger);
-        var usageCheck = await usage.CheckUsageAsync();
-        if (!usageCheck.CanImport) return [];
+        // The gate may show the limit prompt, which the loading overlay would cover.
+        _mainWindowViewModel?.HideLoading();
+        using var usage = await TryBeginBankPdfImportAsync();
+        if (usage == null) return null;
+        _mainWindowViewModel?.ShowLoading("Scanning bank statement...".Translate());
 
         var analysisService = new SpreadsheetAnalysisService(gemini, ErrorLogger, CompanyManager?.CurrentCompanySettings?.Company.Country);
         var analysis = isCsv
@@ -3318,7 +3326,8 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Shared usage gate for importing a PDF bank statement (one "bank" AI import). Available on the
+    /// Shared usage gate for a bank statement AI import (one "bank" import): a PDF statement, or the AI
+    /// column fallback for a CSV/Excel statement whose columns weren't recognized. Available on the
     /// free tier within the monthly limit, like the other AI imports. Shows the usage-limit prompt and
     /// returns null when the user is out of imports. On success returns a live bank-import usage
     /// service the CALLER owns: dispose it (with <c>using</c>) and call IncrementUsageAsync once

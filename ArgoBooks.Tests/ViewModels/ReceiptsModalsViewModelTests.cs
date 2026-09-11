@@ -228,4 +228,102 @@ public class ReceiptsModalsViewModelTests : ModalViewModelTestBase
         Redo();
         Assert.Equal(id, Assert.Single(Company.PendingConversions).TransactionId);
     }
+
+    /// <summary>Opens a scan in the review form, the way stepping through a bulk scan does.</summary>
+    private static ReceiptsModalsViewModel ReviewScan(ReceiptScanResult scan)
+    {
+        var vm = new ReceiptsModalsViewModel();
+        var item = new BulkScanItem { Status = BulkScanStatus.Succeeded, ScanResult = scan, HasAiSuggestionsRun = true };
+        vm.BulkItems.Add(item);
+        vm.NavigateToBulkItemByRefCommand.Execute(item);
+        return vm;
+    }
+
+    private static ReceiptScanResult OneLineScan(string description, decimal quantity, decimal unitPrice, string? currency = null) => new()
+    {
+        IsSuccess = true,
+        SupplierName = "Acme",
+        TransactionDate = new DateTime(2026, 3, 1),
+        Subtotal = quantity * unitPrice,
+        TaxAmount = 0m,
+        TotalAmount = quantity * unitPrice,
+        CurrencyCode = currency,
+        LineItems = [new ScannedLineItem { Description = description, Quantity = quantity, UnitPrice = unitPrice, TotalPrice = quantity * unitPrice }]
+    };
+
+    private static async Task SaveAsExpenseAsync(ReceiptsModalsViewModel vm)
+    {
+        vm.SelectedSupplier = new SupplierOption { Id = "SUP-001", Name = "Acme" };
+        foreach (var line in vm.LineItems)
+            line.SelectedProduct = new ProductOption { Id = "PRD-001", Name = line.Description };
+        await vm.CreateTransactionCommand.ExecuteAsync(null);
+    }
+
+    [Theory]
+    [InlineData(1.5, 60, 90)]
+    [InlineData(0.5, 40, 20)]
+    public async Task SingleScan_FractionalQuantity_SavesTheReceiptLineAmount(decimal quantity, decimal unitPrice, decimal lineTotal)
+    {
+        Company.Settings.Localization.Currency = "USD";
+        var vm = ReviewScan(OneLineScan("Labour", quantity, unitPrice));
+
+        await SaveAsExpenseAsync(vm);
+
+        var line = Company.Expenses.Single().LineItems.Single();
+        Assert.Equal(quantity, line.Quantity);
+        Assert.Equal(lineTotal, line.Quantity * line.UnitPrice);
+    }
+
+    // A CAD company's EUR 120 hotel receipt is EUR 120, not CAD 120. With no exact-date rate it
+    // saves pending in EUR and is queued to convert later (Calculations.md Rule 3a).
+    [Fact]
+    public async Task SingleScan_DetectedForeignCurrency_SavesInThatCurrency()
+    {
+        Company.Settings.Localization.Currency = "CAD";
+        UseNoExchangeRates();
+        var vm = ReviewScan(OneLineScan("Hotel", 1, 120m, currency: "EUR"));
+
+        await SaveAsExpenseAsync(vm);
+
+        var expense = Company.Expenses.Single();
+        Assert.Equal("EUR", expense.OriginalCurrency);
+        Assert.Equal(120m, expense.Total);
+        Assert.True(expense.IsPendingConversion);
+        Assert.Equal("EUR", Assert.Single(Company.PendingConversions).OriginalCurrency);
+    }
+
+    [Fact]
+    public async Task CreateApprovedReceipts_DetectedForeignCurrency_SavesInThatCurrency()
+    {
+        Company.Settings.Localization.Currency = "CAD";
+        UseNoExchangeRates();
+        var vm = new ReceiptsModalsViewModel();
+        var item = ApprovedExpenseItem(120m);
+        item.ScanResult!.CurrencyCode = "EUR";
+        vm.BulkItems.Add(item);
+
+        await vm.CreateAllApprovedTransactionsCommand.ExecuteAsync(null);
+
+        var expense = Company.Expenses.Single();
+        Assert.Equal("EUR", expense.OriginalCurrency);
+        Assert.True(expense.IsPendingConversion);
+        Assert.Equal("EUR", Assert.Single(Company.PendingConversions).OriginalCurrency);
+    }
+
+    // "$" is USD, CAD and AUD alike, so a scan that reads a CAD company's receipt as USD can't be
+    // told apart from the company's own dollars. It stays in the company currency.
+    [Fact]
+    public async Task CreateApprovedReceipts_DetectedCurrencySharingTheCompanySymbol_KeepsCompanyCurrency()
+    {
+        Company.Settings.Localization.Currency = "CAD";
+        UseNoExchangeRates();
+        var vm = new ReceiptsModalsViewModel();
+        var item = ApprovedExpenseItem(50m);
+        item.ScanResult!.CurrencyCode = "USD";
+        vm.BulkItems.Add(item);
+
+        await vm.CreateAllApprovedTransactionsCommand.ExecuteAsync(null);
+
+        Assert.Equal("CAD", Company.Expenses.Single().OriginalCurrency);
+    }
 }

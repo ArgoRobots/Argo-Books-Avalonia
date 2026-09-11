@@ -1509,8 +1509,9 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             var shipping = scanResult.Shipping ?? 0;
             var supplierName = scanResult.SupplierName ?? string.Empty;
             var transactionDate = scanResult.TransactionDate ?? DateTime.Now;
+            var currency = ReceiptCurrency(scanResult.CurrencyCode);
             // Fetch this receipt's date rate up front so the row shows its amount, not "Pending".
-            await CurrencyService.WarmRateForDateAsync(transactionDate);
+            await CurrencyService.WarmRateForDateAsync(transactionDate, currency);
             var isRevenue = item.IsRevenueOverride ?? false;
             var notes = item.Notes ?? string.Empty;
             var paymentMethod = scanResult.PaymentMethod ?? "Cash";
@@ -1583,7 +1584,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                ApplyDisplayCurrency(companyData, revenue, "Revenue");
+                ApplyDisplayCurrency(companyData, revenue, "Revenue", currency);
 
                 receipt.TransactionId = revenueId;
                 companyData.Revenues.Add(revenue);
@@ -1615,7 +1616,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
-                ApplyDisplayCurrency(companyData, expense, "Expense");
+                ApplyDisplayCurrency(companyData, expense, "Expense", currency);
 
                 receipt.TransactionId = expenseId;
                 companyData.Expenses.Add(expense);
@@ -2174,10 +2175,14 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         IsNearLimit = usageCheck.MonthlyLimit > 0 && usageCheck.Remaining > 0 && usageCheck.Remaining <= usageCheck.MonthlyLimit / 10;
     }
 
+    // The currency the scan read off the receipt; the save decides whether to use it (ReceiptCurrency).
+    private string? _scannedCurrencyCode;
+
     private void PopulateScanResults(ReceiptScanResult result)
     {
         try
         {
+            _scannedCurrencyCode = result.CurrencyCode;
             ExtractedSupplier = result.SupplierName ?? string.Empty;
             ExtractedDate = result.TransactionDate.HasValue
                 ? new DateTimeOffset(result.TransactionDate.Value)
@@ -2221,7 +2226,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
                 var lineItem = new ScannedLineItemViewModel
                 {
                     Description = CleanOcrText(item.Description),
-                    Quantity = ((int)item.Quantity).ToString(),
+                    Quantity = item.Quantity.ToString("0.####"),
                     UnitPrice = item.UnitPrice.ToString("F2"),
                     TotalPrice = item.TotalPrice.ToString("F2"),
                     Confidence = item.Confidence
@@ -2431,6 +2436,15 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             hasErrors = true;
         }
 
+        // A refund's negative lines were read as a discount, so it also has no line items. Saying
+        // it's a refund explains both, so the other field errors would only add noise.
+        if (total < 0)
+        {
+            TotalErrorMessage = RefundReceiptMessage;
+            HasValidationMessage = true;
+            return;
+        }
+
         // Supplier is required for expenses, optional for revenue
         if (!IsRevenue && SelectedSupplier == null)
         {
@@ -2511,7 +2525,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
 
         // Fetch the receipt-date rate up front (like manual entry) so the saved row shows its amount
         // immediately instead of a momentary "Pending".
-        await CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now);
+        await CurrencyService.WarmRateForDateAsync(ExtractedDate?.DateTime ?? DateTime.Now, ReceiptCurrency(_scannedCurrencyCode));
 
         if (IsRevenue)
         {
@@ -2537,17 +2551,29 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Tags a receipt-created transaction with the company's display currency and its USD total, like
-    /// the normal expense/revenue save, so a non-USD company's receipt rows show the amount instead of
-    /// "Pending". Receipt amounts are entered in the display currency, so the original currency IS the
-    /// display currency, which makes every row column show the amount directly. The USD total is
-    /// converted at the transaction's own date when the exact-date rate is cached; otherwise the row is
-    /// marked pending and queued for the self-heal, which fills the USD values once the rate is available.
+    /// The currency a scanned receipt is saved in: the one the scan detected, unless the app doesn't
+    /// know it or it shares its symbol with the company's own ("$" is USD, CAD and AUD alike), when the
+    /// scan can't tell the two apart and the company currency stands.
+    /// </summary>
+    private static string ReceiptCurrency(string? detectedCode)
+    {
+        var companyCurrency = CurrencyService.CurrentCurrencyCode;
+        if (string.IsNullOrWhiteSpace(detectedCode)
+            || !CurrencyInfo.All.TryGetValue(detectedCode.Trim(), out var detected)
+            || detected.Symbol == CurrencyInfo.GetSymbol(companyCurrency))
+            return companyCurrency;
+        return detected.Code;
+    }
+
+    /// <summary>
+    /// Tags a receipt-created transaction with the receipt's currency and its USD amounts, like the
+    /// normal expense/revenue save. The USD amounts are converted at the transaction's own date when
+    /// the exact-date rate is cached; otherwise the row is marked pending and queued for the
+    /// self-heal, which fills them once the rate is available (Calculations.md Rule 3a).
     /// </summary>
     private static void ApplyDisplayCurrency(
-        CompanyData companyData, Transaction txn, string transactionType)
+        CompanyData companyData, Transaction txn, string transactionType, string currency)
     {
-        var currency = CurrencyService.CurrentCurrencyCode;
         txn.OriginalCurrency = currency;
 
         if (string.Equals(currency, "USD", StringComparison.OrdinalIgnoreCase))
@@ -2583,8 +2609,8 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             return;
         }
 
-        // Exact-date rate not cached: the display is already correct (original currency == display
-        // currency); defer all the USD amounts to the self-heal queue, exactly like the normal save.
+        // Exact-date rate not cached: defer all the USD amounts to the self-heal queue, exactly like
+        // the normal save.
         txn.IsPendingConversion = true;
         var entry = new PendingConversion
         {
@@ -2654,6 +2680,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CreateExpenseTransaction(CompanyData companyData, string receiptId, string? fileData,
         decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
+        var currency = ReceiptCurrency(_scannedCurrencyCode);
         companyData.IdCounters.Expense++;
         var expenseId = $"PUR-{DateTime.Now:yyyy}-{companyData.IdCounters.Expense:D5}";
 
@@ -2678,7 +2705,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        ApplyDisplayCurrency(companyData, expense, "Expense");
+        ApplyDisplayCurrency(companyData, expense, "Expense", currency);
 
         var receipt = new Receipt
         {
@@ -2728,6 +2755,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
     private void CreateRevenueTransaction(CompanyData companyData, string receiptId, string? fileData,
         decimal total, decimal subtotal, decimal taxAmount, decimal discount, decimal shipping, List<LineItem> lineItems)
     {
+        var currency = ReceiptCurrency(_scannedCurrencyCode);
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
 
@@ -2754,7 +2782,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        ApplyDisplayCurrency(companyData, revenue, "Revenue");
+        ApplyDisplayCurrency(companyData, revenue, "Revenue", currency);
 
         var receipt = new Receipt
         {
@@ -3142,7 +3170,12 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         OnPropertyChanged(nameof(BulkIncompleteCount));
         OnPropertyChanged(nameof(HasBulkIncompleteItems));
 
-        if (hasErrors)
+        if (total < 0)
+        {
+            HasBulkIncompleteWarning = true;
+            BulkIncompleteWarningMessage = RefundReceiptMessage;
+        }
+        else if (hasErrors)
         {
             HasBulkIncompleteWarning = true;
             BulkIncompleteWarningMessage = string.Format(
@@ -3155,6 +3188,11 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
             BulkIncompleteWarningMessage = string.Empty;
         }
     }
+
+    // A refund or return slip scans with a negative total. The review only creates new expenses and
+    // revenue, so it can't book one; saying so beats "enter a valid total".
+    private static string RefundReceiptMessage =>
+        "This receipt is a refund, so it can't be added as a new expense or revenue.".Translate();
 
     /// <summary>
     /// Determines if a line item is a discount rather than a product.
@@ -3433,6 +3471,7 @@ public partial class ReceiptsModalsViewModel : ViewModelBase
         ExtractedDiscount = string.Empty;
         ExtractedShipping = string.Empty;
         ExtractedTotal = string.Empty;
+        _scannedCurrencyCode = null;
         ConfidenceScore = 0;
         ConfidenceText = string.Empty;
         IsHighConfidence = false;

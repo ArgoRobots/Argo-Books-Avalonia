@@ -513,6 +513,20 @@ public class SpreadsheetImportService
             EntityType = entityType
         };
 
+        // Rows whose AI call failed produced no entities; list them rather than let them vanish.
+        foreach (var rawRow in processedData.SelectMany(chunk => chunk.FailedRows))
+        {
+            const string failedReason = "AI couldn't read this row, so it wasn't imported";
+            sheetResult.Skipped++;
+            sheetResult.SkipReasons.Add(failedReason);
+            sheetResult.UnimportedRows.Add(new UnimportedRow
+            {
+                Sheet = sheetName,
+                Reason = failedReason,
+                RawValue = rawRow
+            });
+        }
+
         // Bank statement rows are reference data for the Bank Matching feature, never committed as
         // book transactions. The normal importer hands them to the dedicated bank importer, but this
         // AI path has no per-entity bank importer (they would fall through ImportSingleEntity to
