@@ -264,7 +264,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
     private decimal _originalFee;
     private string _originalPaymentMethod = "Cash";
     private string _originalNotes = string.Empty;
-    private List<(string? ProductId, string? CategoryId, string Description, decimal? Quantity, decimal? UnitPrice)> _originalLineItems = [];
+    private List<(string? ProductId, string? CategoryId, string Description, decimal? Quantity, decimal? UnitPrice, string? ItemText, string? CategoryText)> _originalLineItems = [];
 
     /// <summary>
     /// Returns true if any data has been entered in the Add modal.
@@ -277,7 +277,15 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         ModalShipping > 0 ||
         ModalDiscount > 0 ||
         ModalFee > 0 ||
-        LineItems.Any(li => li.SelectedProduct != null || li.SelectedCategory != null || !string.IsNullOrWhiteSpace(li.Description) || (li.UnitPrice ?? 0) > 0);
+        LineItems.Any(li => li.SelectedProduct != null || li.SelectedCategory != null || !string.IsNullOrWhiteSpace(li.Description) || (li.UnitPrice ?? 0) > 0 ||
+                            !string.IsNullOrWhiteSpace(li.ItemText) || !string.IsNullOrWhiteSpace(li.CategoryText));
+
+    /// <summary>
+    /// Typed text counts as a change even though it moves no selection: typing over a picked
+    /// product changes only the box's text, and that text is what the save acts on.
+    /// </summary>
+    private static bool SameText(string? a, string? b) =>
+        string.Equals(a?.Trim() ?? string.Empty, b?.Trim() ?? string.Empty, StringComparison.Ordinal);
 
     /// <summary>
     /// Returns true if any changes have been made in the Edit modal compared to original values.
@@ -306,7 +314,9 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                     current.SelectedCategory?.Id != original.CategoryId ||
                     current.Description != original.Description ||
                     current.Quantity != original.Quantity ||
-                    current.UnitPrice != original.UnitPrice)
+                    current.UnitPrice != original.UnitPrice ||
+                    !SameText(current.ItemText, original.ItemText) ||
+                    !SameText(current.CategoryText, original.CategoryText))
                     return true;
             }
 
@@ -328,7 +338,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         _originalFee = ModalFee;
         _originalPaymentMethod = SelectedPaymentMethod;
         _originalNotes = ModalNotes;
-        _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.SelectedCategory?.Id, li.Description, li.Quantity, li.UnitPrice)).ToList();
+        _originalLineItems = LineItems.Select(li => (li.SelectedProduct?.Id, li.SelectedCategory?.Id, li.Description, li.Quantity, li.UnitPrice, li.ItemText, li.CategoryText)).ToList();
     }
 
     // Computed totals
@@ -961,6 +971,20 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         var companyData = App.CompanyManager?.CompanyData;
         if (companyData == null) return;
 
+        List<TypedLine>? typedLines = null;
+        if (AllowsTypedItems)
+        {
+            typedLines = PlanTypedItems(companyData, out var typedProblem);
+            if (typedLines == null)
+            {
+                ReportValidationBlock("line-item-typed-conflict");
+                ValidationMessage = typedProblem;
+                HasValidationMessage = true;
+                ScrollToLineItemsRequested?.Invoke(this, EventArgs.Empty);
+                return;
+            }
+        }
+
         IsSavingTransaction = true;
         try
         {
@@ -1028,7 +1052,8 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 ConvertedFee = new MonetaryValue(FeeAmount, "USD", FeeAmount, transactionDate);
             }
 
-            ResolveTypedItems(companyData);
+            if (typedLines != null)
+                ResolveTypedItems(companyData, typedLines);
 
             if (IsEditMode)
             {
@@ -1124,20 +1149,108 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         return FindProductOption(text);
     }
 
-    /// <summary>
-    /// The category named in a line's category box: the picked one while the box still shows its
-    /// name, otherwise the existing category with the typed name, or a new one.
-    /// </summary>
-    private CategoryOption? ResolveCategory(CompanyData companyData, TLineItem lineItem, List<Category> created)
+    /// <summary>What one line's boxes name, worked out before anything is created or moved.</summary>
+    private sealed class TypedLine
     {
-        var name = lineItem.CategoryText?.Trim();
-        if (string.IsNullOrEmpty(name) ||
-            string.Equals(name, lineItem.SelectedCategory?.Name, StringComparison.OrdinalIgnoreCase))
-            return lineItem.SelectedCategory;
+        public required TLineItem Line { get; init; }
 
-        var option = FindCategoryOption(name);
-        if (option != null) return option;
+        /// <summary>The existing product, or null when <see cref="NewProductName"/> is to be created.</summary>
+        public ProductOption? Product { get; init; }
 
+        public string? NewProductName { get; init; }
+
+        /// <summary>The existing category, or null when <see cref="NewCategoryName"/> is to be created or the box is empty.</summary>
+        public CategoryOption? Category { get; init; }
+
+        public string? NewCategoryName { get; init; }
+
+        /// <summary>Whether the existing <see cref="Product"/> moves into the line's category.</summary>
+        public bool MovesProduct { get; init; }
+    }
+
+    /// <summary>
+    /// Works out what each line's item and category boxes name, and refuses a save that would
+    /// contradict itself, before anything is created or moved. The boxes' text decides, not their
+    /// selections, because typing over a pick changes only the text. Clearing a selection is no
+    /// way round that: the dropdown empties its text when its selection is cleared.
+    /// </summary>
+    /// <returns>The plan, or null with <paramref name="problem"/> saying what to fix.</returns>
+    private List<TypedLine>? PlanTypedItems(CompanyData companyData, out string problem)
+    {
+        problem = string.Empty;
+        var plan = new List<TypedLine>();
+
+        // Where each product starts the save. Every line is compared with this rather than with a
+        // move an earlier line asked for, which is how two lines of one product undid each other.
+        string? StartingCategory(ProductOption option) =>
+            companyData.GetProduct(option.Id ?? string.Empty)?.CategoryId ?? option.CategoryId;
+
+        foreach (var lineItem in LineItems)
+        {
+            var categoryText = lineItem.CategoryText?.Trim();
+            var category = lineItem.SelectedCategory;
+            string? newCategoryName = null;
+            if (!string.IsNullOrEmpty(categoryText) &&
+                !string.Equals(categoryText, lineItem.SelectedCategory?.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                category = FindCategoryOption(categoryText);
+                if (category == null)
+                    newCategoryName = categoryText;
+            }
+
+            var product = FindExistingProduct(lineItem);
+            if (product == null)
+            {
+                var name = lineItem.ItemText?.Trim();
+                if (string.IsNullOrEmpty(name)) continue;
+
+                // Product names are unique across expenses and revenue, and this form lists only
+                // its own side, so a name from the other side matched nothing above.
+                if (companyData.Products.Any(p => string.Equals(p.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    lineItem.HasProductError = true;
+                    problem = "There is already a product called {0}. Give this item a different name.".TranslateFormat(name);
+                    return null;
+                }
+
+                plan.Add(new TypedLine { Line = lineItem, NewProductName = name, Category = category, NewCategoryName = newCategoryName });
+                continue;
+            }
+
+            // Typing an existing product's name over a picked one leaves the category box showing
+            // the pick's category. That was never a choice about the typed product, so it stays put.
+            var boxShowsPick = lineItem.SelectedProduct != null && lineItem.SelectedProduct != product &&
+                               newCategoryName == null && category?.Id == StartingCategory(lineItem.SelectedProduct);
+
+            var moves = !boxShowsPick &&
+                        (newCategoryName != null || (category?.Id != null && category.Id != StartingCategory(product)));
+
+            plan.Add(new TypedLine { Line = lineItem, Product = product, Category = category, NewCategoryName = newCategoryName, MovesProduct = moves });
+        }
+
+        // A product is in one category, so two lines sending it to different ones, or one new name
+        // typed into two categories, cannot both be done. Refused rather than letting a line win.
+        foreach (var group in plan.GroupBy(t => t.Product != null ? "id:" + t.Product.Id : "new:" + t.NewProductName!.ToUpperInvariant()))
+        {
+            var destinations = group
+                .Where(t => t.Product == null || t.MovesProduct)
+                .Select(t => t.NewCategoryName != null ? "new:" + t.NewCategoryName.ToUpperInvariant() : t.Category?.Id)
+                .Distinct()
+                .Count();
+            if (destinations <= 1) continue;
+
+            foreach (var typed in group)
+                typed.Line.HasCategoryError = true;
+            problem = "{0} has a different category on another line. An item can only be in one category."
+                .TranslateFormat(group.First().Product?.Name ?? group.First().NewProductName ?? string.Empty);
+            return null;
+        }
+
+        return plan;
+    }
+
+    private CategoryOption CreateCategory(CompanyData companyData, string name, List<Category> created)
+    {
         companyData.IdCounters.Category++;
         var typePrefix = CategoryTypeFilter == CategoryType.Expense ? "PUR" : "SAL";
         var category = new Category
@@ -1150,82 +1263,81 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
         created.Add(category);
         _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.CategoryCreated);
 
-        option = new CategoryOption { Id = category.Id, Name = category.Name };
+        var option = new CategoryOption { Id = category.Id, Name = category.Name };
         CategoryOptions.Add(option);
         return option;
     }
 
-    /// <summary>
-    /// Turns what was typed into each line's item and category boxes into records: the existing
-    /// product and category with those names or new ones, and a changed category on an existing
-    /// product. The boxes' text decides, not their selections, because typing over a pick changes
-    /// only the text. Clearing a selection is no way round that: the dropdown empties its text when
-    /// its selection is cleared. Everything created or changed here is one undo step, ahead of the
-    /// transaction's.
-    /// </summary>
-    private void ResolveTypedItems(CompanyData companyData)
+    private ProductOption CreateProduct(CompanyData companyData, string name, decimal price, CategoryOption? category, List<Product> created)
     {
-        if (!AllowsTypedItems) return;
+        companyData.IdCounters.Product++;
+        var id = $"PRD-{companyData.IdCounters.Product:D3}";
+        var product = new Product
+        {
+            Id = id,
+            Name = name,
+            Sku = id,
+            CategoryId = category?.Id,
+            Type = CategoryTypeFilter,
+            CostPrice = UseCostPrice ? price : 0,
+            UnitPrice = UseCostPrice ? 0 : price
+        };
+        companyData.Products.Add(product);
+        created.Add(product);
+        _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ProductCreated);
 
+        var option = new ProductOption { Id = id, Name = name, UnitPrice = price, CategoryId = category?.Id };
+        ProductOptions.Add(option);
+        return option;
+    }
+
+    /// <summary>
+    /// Carries out a plan from <see cref="PlanTypedItems"/>: the new categories and products, and
+    /// the moves. Everything created or changed here is one undo step, ahead of the transaction's.
+    /// </summary>
+    private void ResolveTypedItems(CompanyData companyData, List<TypedLine> plan)
+    {
         var createdCategories = new List<Category>();
         var createdProducts = new List<Product>();
-        var recategorized = new List<(Product Product, string? OldCategoryId, string NewCategoryId)>();
+        var moved = new List<(Product Product, string? OldCategoryId, string NewCategoryId)>();
 
-        foreach (var lineItem in LineItems)
+        foreach (var typed in plan)
         {
-            // Resolved before the product is set: setting it refills the category box from the product.
-            var category = ResolveCategory(companyData, lineItem, createdCategories);
-            var existing = FindExistingProduct(lineItem);
+            var category = typed.NewCategoryName == null
+                ? typed.Category
+                : FindCategoryOption(typed.NewCategoryName) ?? CreateCategory(companyData, typed.NewCategoryName, createdCategories);
 
-            if (existing == null)
+            var product = typed.Product
+                          ?? FindProductOption(typed.NewProductName)
+                          ?? CreateProduct(companyData, typed.NewProductName!, typed.Line.UnitPrice ?? 0, category, createdProducts);
+
+            // Categories belong to products, so a move takes every transaction using the product
+            // along. Recorded once, from where the product started, so undo puts it back there.
+            if (typed.MovesProduct && category?.Id != null && product.CategoryId != category.Id &&
+                companyData.GetProduct(product.Id ?? string.Empty) is { } record)
             {
-                var name = lineItem.ItemText?.Trim();
-                if (string.IsNullOrEmpty(name)) continue;
-
-                companyData.IdCounters.Product++;
-                var id = $"PRD-{companyData.IdCounters.Product:D3}";
-                var price = lineItem.UnitPrice ?? 0;
-                var product = new Product
-                {
-                    Id = id,
-                    Name = name,
-                    Sku = id,
-                    CategoryId = category?.Id,
-                    Type = CategoryTypeFilter,
-                    CostPrice = UseCostPrice ? price : 0,
-                    UnitPrice = UseCostPrice ? 0 : price
-                };
-                companyData.Products.Add(product);
-                createdProducts.Add(product);
-                _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.ProductCreated);
-
-                existing = new ProductOption { Id = id, Name = name, UnitPrice = price, CategoryId = category?.Id };
-                ProductOptions.Add(existing);
-            }
-            else if (category?.Id != null && existing.CategoryId != category.Id)
-            {
-                // Categories belong to products, so a different category here moves the product, and
-                // with it every transaction that uses it.
-                var product = companyData.GetProduct(existing.Id ?? string.Empty);
-                if (product != null)
-                {
-                    recategorized.Add((product, product.CategoryId, category.Id));
-                    product.CategoryId = category.Id;
-                    existing.CategoryId = category.Id;
-                }
+                moved.Add((record, record.CategoryId, category.Id));
+                record.CategoryId = category.Id;
+                product.CategoryId = category.Id;
             }
 
-            if (lineItem.SelectedProduct != existing)
-                lineItem.SelectedProduct = existing;
+            if (typed.Line.SelectedProduct != product)
+            {
+                // Setting the product fills an empty price from it. The total was converted from
+                // the line as it stood, so the line keeps the price it was saved with.
+                var price = typed.Line.UnitPrice;
+                typed.Line.SelectedProduct = product;
+                typed.Line.UnitPrice = price;
+            }
         }
 
-        if (createdCategories.Count == 0 && createdProducts.Count == 0 && recategorized.Count == 0) return;
+        if (createdCategories.Count == 0 && createdProducts.Count == 0 && moved.Count == 0) return;
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             $"Update products and categories from {TransactionTypeName.ToLowerInvariant()}",
             () =>
             {
-                foreach (var r in recategorized) r.Product.CategoryId = r.OldCategoryId;
+                foreach (var m in moved) m.Product.CategoryId = m.OldCategoryId;
                 foreach (var p in createdProducts) companyData.Products.Remove(p);
                 foreach (var c in createdCategories) companyData.Categories.Remove(c);
                 companyData.MarkAsModified();
@@ -1234,7 +1346,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             {
                 companyData.Categories.AddRange(createdCategories);
                 companyData.Products.AddRange(createdProducts);
-                foreach (var r in recategorized) r.Product.CategoryId = r.NewCategoryId;
+                foreach (var m in moved) m.Product.CategoryId = m.NewCategoryId;
                 companyData.MarkAsModified();
             }));
     }
