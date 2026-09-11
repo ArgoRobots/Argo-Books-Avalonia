@@ -1678,8 +1678,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
-            return companyData.Revenues.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
-                   companyData.Expenses.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
+            return companyData.Revenues.Any(r => r.Date >= clampedStart && r.Date <= clampedEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
+                   companyData.Expenses.Any(e => e.Date >= clampedStart && e.Date <= clampedEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1689,12 +1691,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
-                    .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
+                    .Where(r => r.Date >= clampedStart && r.Date <= clampedEnd)
                     .Sum(r => toDisplay != null ? toDisplay(r.EffectiveTaxAmountUSD, r.Date) : r.EffectiveTaxAmountUSD),
                 Date = month
             };
@@ -1704,12 +1708,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
-                    .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
+                    .Where(e => e.Date >= clampedStart && e.Date <= clampedEnd)
                     .Sum(e => toDisplay != null ? toDisplay(e.EffectiveTaxAmountUSD, e.Date) : e.EffectiveTaxAmountUSD),
                 Date = month
             };
@@ -1933,8 +1939,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
-            return companyData.Revenues.Any(r => r.Date >= monthStart && r.Date <= monthEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
-                   companyData.Expenses.Any(e => e.Date >= monthStart && e.Date <= monthEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
+            return companyData.Revenues.Any(r => r.Date >= clampedStart && r.Date <= clampedEnd && (r.TaxAmountUSD > 0 || r.TaxAmount > 0)) ||
+                   companyData.Expenses.Any(e => e.Date >= clampedStart && e.Date <= clampedEnd && (e.TaxAmountUSD > 0 || e.TaxAmount > 0));
         }).ToList();
 
         if (monthsWithData.Count == 0)
@@ -1944,12 +1952,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Revenues
-                    .Where(r => r.Date >= monthStart && r.Date <= monthEnd)
+                    .Where(r => r.Date >= clampedStart && r.Date <= clampedEnd)
                     .Sum(r => toDisplay != null ? toDisplay(r.EffectiveTaxAmountUSD, r.Date) : r.EffectiveTaxAmountUSD),
                 Date = month
             };
@@ -1959,12 +1969,14 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         {
             var monthStart = new DateTime(month.Year, month.Month, 1);
             var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+            var clampedStart = monthStart < startDate ? startDate : monthStart;
+            var clampedEnd = monthEnd > endDate ? endDate : monthEnd;
 
             return new ChartDataPoint
             {
                 Label = month.ToString("MMM yyyy"),
                 Value = (double)companyData.Expenses
-                    .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
+                    .Where(e => e.Date >= clampedStart && e.Date <= clampedEnd)
                     .Sum(e => toDisplay != null ? toDisplay(e.EffectiveTaxAmountUSD, e.Date) : e.EffectiveTaxAmountUSD),
                 Date = month
             };

@@ -252,5 +252,28 @@ public class ReportChartDataServiceTests
         Assert.Equal(8d, SumOf(service.GetTaxCollectedVsPaid(), "Tax Collected"));
     }
 
+    // A range that starts partway through a month counts only that month's tax from inside the range,
+    // as the other month-bucketed charts do.
+    [Fact]
+    public void TaxCharts_ClampPartialMonthsToTheSelectedRange()
+    {
+        var data = new CompanyData();
+        data.Revenues.Add(new Revenue
+        {
+            Id = "R1", Date = new DateTime(2024, 8, 3), OriginalCurrency = "USD",
+            Subtotal = 100m, TaxAmount = 10m, TaxAmountUSD = 10m, Total = 110m, TotalUSD = 110m
+        });
+        data.Revenues.Add(new Revenue
+        {
+            Id = "R2", Date = new DateTime(2024, 8, 20), OriginalCurrency = "USD",
+            Subtotal = 50m, TaxAmount = 5m, TaxAmountUSD = 5m, Total = 55m, TotalUSD = 55m
+        });
+        var filters = new ReportFilters { StartDate = new DateTime(2024, 8, 12), EndDate = new DateTime(2024, 9, 10) };
+        var service = new ReportChartDataService(data, filters);
+
+        Assert.Equal(5d, SumOf(service.GetTaxCollectedVsPaid(), "Tax Collected"));
+        Assert.Equal(5d, SumOf(service.GetExpenseVsRevenueTax(), "Revenue Tax"));
+    }
+
     #endregion
 }
