@@ -1177,14 +1177,23 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
         var oldStatus = schedule.Status;
         var newStatus = pausing ? RecurringInvoiceStatus.Paused : RecurringInvoiceStatus.Active;
+
+        // Generation catches up from the next date, so resuming with it still in the paused months
+        // would create a draft for each of them.
+        var oldDate = schedule.NextInvoiceDate;
+        var newDate = pausing
+            ? oldDate
+            : RecurrenceSchedule.FirstOnOrAfter(oldDate, schedule.Frequency, schedule.StartDate.Day, DateTime.Today);
+
         schedule.Status = newStatus;
+        schedule.NextInvoiceDate = newDate;
         companyData.MarkAsModified();
         LoadSchedules();
 
         App.UndoRedoManager.RecordAction(new DelegateAction(
             pausing ? "Pause recurring invoice" : "Resume recurring invoice",
-            () => { schedule.Status = oldStatus; companyData.MarkAsModified(); LoadSchedules(); },
-            () => { schedule.Status = newStatus; companyData.MarkAsModified(); LoadSchedules(); }));
+            () => { schedule.Status = oldStatus; schedule.NextInvoiceDate = oldDate; companyData.MarkAsModified(); LoadSchedules(); },
+            () => { schedule.Status = newStatus; schedule.NextInvoiceDate = newDate; companyData.MarkAsModified(); LoadSchedules(); }));
     }
 
     [RelayCommand]

@@ -25,6 +25,18 @@ public static class RecurrenceSchedule
         _ => AddMonthsAnchored(date, 1, anchorDay ?? date.Day)
     };
 
+    /// <summary>
+    /// Steps <paramref name="date"/> forward until it falls on or after <paramref name="floor"/>,
+    /// landing on the same dates generation would.
+    /// </summary>
+    public static DateTime FirstOnOrAfter(DateTime date, Frequency frequency, int anchorDay, DateTime floor)
+    {
+        var next = date.Date;
+        while (next < floor.Date)
+            next = AdvanceDate(next, frequency, anchorDay);
+        return next;
+    }
+
     private static DateTime AddMonthsAnchored(DateTime date, int months, int anchorDay)
     {
         var shifted = date.AddMonths(months);

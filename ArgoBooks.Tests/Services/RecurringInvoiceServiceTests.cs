@@ -181,6 +181,40 @@ public class RecurringInvoiceServiceTests
         Assert.Equal(RecurringInvoiceStatus.Completed, data.RecurringInvoices[0].Status);
     }
 
+    /// <summary>What resuming does: move the next date to the first occurrence on or after today.</summary>
+    private static IReadOnlyList<Invoice> ResumeAndGenerate(RecurringInvoice schedule, DateTime today)
+    {
+        var data = new CompanyData();
+        data.RecurringInvoices.Add(schedule);
+        schedule.NextInvoiceDate = RecurrenceSchedule.FirstOnOrAfter(
+            schedule.NextInvoiceDate, schedule.Frequency, schedule.StartDate.Day, today);
+        return RecurringInvoiceService.GenerateDueInvoices(data, today);
+    }
+
+    [Fact]
+    public void Resume_AfterAPause_DoesNotGenerateThePausedMonths()
+    {
+        // Paused in May with June 1 next; resumed September 5.
+        var schedule = MakeSchedule(new DateTime(2026, 1, 1));
+        schedule.NextInvoiceDate = new DateTime(2026, 6, 1);
+
+        var generated = ResumeAndGenerate(schedule, new DateTime(2026, 9, 5));
+
+        Assert.Empty(generated);
+        Assert.Equal(new DateTime(2026, 10, 1), schedule.NextInvoiceDate);
+    }
+
+    [Fact]
+    public void Resume_OnAnOccurrenceDay_StillGeneratesThatDaysInvoice()
+    {
+        var schedule = MakeSchedule(new DateTime(2026, 1, 1));
+        schedule.NextInvoiceDate = new DateTime(2026, 6, 1);
+
+        var generated = ResumeAndGenerate(schedule, new DateTime(2026, 9, 1));
+
+        Assert.Equal(new DateTime(2026, 9, 1), Assert.Single(generated).IssueDate);
+    }
+
     [Fact]
     public void GenerateDueInvoices_NullTemplate_IsSkipped()
     {
