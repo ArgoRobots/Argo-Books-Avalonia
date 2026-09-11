@@ -78,9 +78,10 @@ The app never substitutes a different date's rate or shows a raw cross-currency 
 
 - The single chokepoint is `ExchangeRateService.TryConvertExact`; it succeeds only on an exact-date
   cache hit (or same-currency). There is no "nearest cached rate" fallback for money.
-- **Storage vs display precision.** `TryConvertExact` rounds to 2 decimals because it produces a
-  number the user sees. The stored USD base is different: every `*USD` field is written at FULL
-  precision (never rounded to cents) via `ExchangeRateService.TryConvertToUsdBase` (cache-only) and
+- **Storage vs display precision.** `TryConvertExact` rounds to the target currency's decimal places
+  (two for most, none for yen) because it produces a number the user sees, and a total of converted
+  rows has to equal the rows as shown. The stored USD base is different: every `*USD` field is
+  written at FULL precision (never rounded to cents) via `ExchangeRateService.TryConvertToUsdBase` (cache-only) and
   `ConvertToUSDAsync` (the async manual-entry path). USD is the aggregation currency; rounding the
   base to cents made a same-currency round-trip (native -> USD base -> native) drift by a cent, so a
   $10 CAD expense read $9.99 on a chart that re-derives its value from the USD base while the stat
@@ -94,6 +95,9 @@ The app never substitutes a different date's rate or shows a raw cross-currency 
   best-effort optimization; the pending self-heal is the guarantee.
 - **Manual add/edit** saves a row as `IsPendingConversion` when its exact-date rate is unavailable;
   it converts automatically later (`PendingConversionService`) once that exact rate is fetchable.
+- **Online payments** take their invoice's rate, as its refunds do. A payment or refund on an
+  invoice still waiting for its rate waits too, queued at the invoice's date, so it converts at the
+  rate the invoice does and a paid invoice owes nothing in USD either.
 - **Future-dated rows** have no rate (the future is unpriced) and stay pending until their date
   arrives.
 - **Display** shows `CurrencyService.PendingMarker` instead of a number when a row's exact-date

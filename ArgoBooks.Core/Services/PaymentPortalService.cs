@@ -332,6 +332,7 @@ public class PaymentPortalService : IDisposable
     {
         var newPayments = new List<Payment>();
         var backfilledRows = 0;
+        var queued = new List<string>();
 
         foreach (var portalPayment in portalPayments)
         {
@@ -409,6 +410,7 @@ public class PaymentPortalService : IDisposable
                         ?.Id;
                 }
 
+                var (refundUSD, refundPending) = PortalAmountUSD(portalPayment.Amount, portalPayment.Currency, invoice);
                 payment = new Payment
                 {
                     Id = paymentId,
@@ -423,13 +425,8 @@ public class PaymentPortalService : IDisposable
                         : $"Refund issued via {providerName}, {portalPayment.RefundReason}",
                     CreatedAt = DateTime.UtcNow,
                     OriginalCurrency = portalPayment.Currency,
-                    AmountUSD = portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase)
-                        ? portalPayment.Amount
-                        // USD base stored full-precision (no 2dp round), matching the payment path
-                        // above; display rounds at the boundary. See docs/Calculations.md Rule 3.
-                        : (invoice.TotalUSD > 0 && invoice.Total > 0
-                            ? portalPayment.Amount * (invoice.TotalUSD / invoice.Total)
-                            : 0m),
+                    AmountUSD = refundUSD,
+                    IsPendingConversion = refundPending,
                     Source = PaymentSource.Online,
                     PortalPaymentId = portalPayment.Id.ToString(),
                     IsRefund = true,
@@ -444,6 +441,8 @@ public class PaymentPortalService : IDisposable
 
                 companyData.Payments.Add(payment);
                 newPayments.Add(payment);
+                if (refundPending)
+                    QueueConversion(companyData, payment, invoice, queued);
 
                 // Recalc invoice totals + status from the full Payments list.
                 // Status only flips to Refunded / PartiallyRefunded when
@@ -475,23 +474,7 @@ public class PaymentPortalService : IDisposable
             // up with what the merchant sees in their provider dashboard.
             var invoiceAmount = Math.Max(0m, portalPayment.Amount);
 
-            // Convert non-USD payment amount to USD using the invoice's conversion ratio
-            decimal amountUSD;
-            if (portalPayment.Currency.Equals("USD", StringComparison.OrdinalIgnoreCase))
-            {
-                amountUSD = invoiceAmount;
-            }
-            else if (invoice.TotalUSD > 0 && invoice.Total > 0)
-            {
-                // Use invoice's known USD conversion ratio. The USD base is stored full-precision (no
-                // 2dp round); display rounds at the boundary. See docs/Calculations.md Rule 3.
-                amountUSD = invoiceAmount * (invoice.TotalUSD / invoice.Total);
-            }
-            else
-            {
-                // No conversion ratio available, defer by setting AmountUSD to 0
-                amountUSD = 0m;
-            }
+            var (amountUSD, isPending) = PortalAmountUSD(invoiceAmount, portalPayment.Currency, invoice);
 
             // Build payment notes with fee info if applicable
             var notes = portalPayment.ProcessingFee > 0
@@ -511,6 +494,7 @@ public class PaymentPortalService : IDisposable
                 CreatedAt = DateTime.UtcNow,
                 OriginalCurrency = portalPayment.Currency,
                 AmountUSD = amountUSD,
+                IsPendingConversion = isPending,
                 Source = PaymentSource.Online,
                 PortalPaymentId = portalPayment.Id.ToString(),
                 ProviderPaymentId = portalPayment.ProviderPaymentId,
@@ -519,6 +503,8 @@ public class PaymentPortalService : IDisposable
 
             companyData.Payments.Add(payment);
             newPayments.Add(payment);
+            if (isPending)
+                QueueConversion(companyData, payment, invoice, queued);
 
             // Recalc invoice totals + status from the full Payments list.
             InvoiceTotalsService.Recalculate(invoice, companyData.Payments);
@@ -528,7 +514,48 @@ public class PaymentPortalService : IDisposable
             invoice.UpdatedAt = DateTime.UtcNow;
         }
 
+        // The conversion service converts from its own copy of the queue.
+        if (queued.Count > 0)
+            _ = PendingConversionService.Instance?.MirrorAsync(companyData, queued);
+
         return new PortalPaymentSyncResult(newPayments, backfilledRows);
+    }
+
+    /// <summary>
+    /// An online payment's USD amount, at its invoice's rate like the invoice's refunds. An invoice
+    /// still waiting for its rate has no ratio to take yet, so the payment is priced at the
+    /// invoice's date, the rate that ratio will come from, or waits with the invoice
+    /// (docs/Calculations.md Rule 3a).
+    /// </summary>
+    private static (decimal AmountUSD, bool IsPending) PortalAmountUSD(decimal amount, string currency, Invoice invoice)
+    {
+        if (currency.Equals("USD", StringComparison.OrdinalIgnoreCase))
+            return (amount, false);
+
+        // The USD base is stored full-precision (no 2dp round); display rounds at the boundary.
+        // See docs/Calculations.md Rule 3.
+        if (invoice.TotalUSD > 0 && invoice.Total > 0)
+            return (amount * (invoice.TotalUSD / invoice.Total), false);
+
+        if (ExchangeRateService.Instance is { } rates
+            && rates.TryConvertToUsdBase(amount, currency, invoice.IssueDate, out var usd))
+            return (usd, false);
+
+        return (0m, true);
+    }
+
+    private static void QueueConversion(CompanyData companyData, Payment payment, Invoice invoice, List<string> queued)
+    {
+        companyData.PendingConversions.RemoveAll(p => p.TransactionId == payment.Id);
+        companyData.PendingConversions.Add(new PendingConversion
+        {
+            TransactionId = payment.Id,
+            TransactionType = "Payment",
+            OriginalCurrency = payment.OriginalCurrency,
+            TransactionDate = invoice.IssueDate,
+            Total = payment.Amount
+        });
+        queued.Add(payment.Id);
     }
 
     #endregion

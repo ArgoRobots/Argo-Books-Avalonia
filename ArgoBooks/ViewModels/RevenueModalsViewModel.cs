@@ -627,6 +627,7 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
 
         // Store original values for undo
         var original = CaptureTransactionState(revenue);
+        var originalQueued = companyData.PendingConversions.Where(p => p.TransactionId == revenue.Id).ToList();
 
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
@@ -661,10 +662,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             : averageUnitPrice;
         revenue.IsPendingConversion = IsPendingConversion;
 
-        // Queue for offline conversion if pending
+        // Queue for offline conversion if pending; a row that converted leaves the queue
+        List<PendingConversion> editedQueued = [];
         if (IsPendingConversion)
         {
-            var pendingEntry = new PendingConversion
+            editedQueued.Add(new PendingConversion
             {
                 TransactionId = revenue.Id,
                 TransactionType = "Revenue",
@@ -676,15 +678,11 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
                 Discount = ModalDiscount,
                 Fee = ModalFee,
                 UnitPrice = averageUnitPrice
-            };
-            companyData.PendingConversions.RemoveAll(p => p.TransactionId == revenue.Id);
-            companyData.PendingConversions.Add(pendingEntry);
-            _ = PendingConversionService.Instance?.AddPendingConversionAsync(pendingEntry);
+            });
         }
-        else if (original.IsPendingConversion)
-        {
-            companyData.PendingConversions.RemoveAll(p => p.TransactionId == revenue.Id);
-        }
+        var queueTouched = originalQueued.Count > 0 || editedQueued.Count > 0;
+        if (queueTouched)
+            SetQueuedConversions(companyData, revenue.Id, editedQueued);
 
         // Handle receipt. The form loads an existing receipt's OriginalFilePath, so only a different
         // path means Change picked a new file.
@@ -718,6 +716,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             () =>
             {
                 RestoreTransactionState(revenue, original);
+                if (queueTouched)
+                    SetQueuedConversions(companyData, revenue.Id, originalQueued);
                 if (capturedNewReceipt != null)
                     companyData.Receipts.Remove(capturedNewReceipt);
                 if (replacedReceipt != null && !companyData.Receipts.Contains(replacedReceipt))
@@ -728,6 +728,8 @@ public partial class RevenueModalsViewModel : TransactionModalsViewModelBase<Rev
             () =>
             {
                 RestoreTransactionState(revenue, edited);
+                if (queueTouched)
+                    SetQueuedConversions(companyData, revenue.Id, editedQueued);
                 if (replacedReceipt != null)
                     companyData.Receipts.Remove(replacedReceipt);
                 if (capturedNewReceipt != null && !companyData.Receipts.Contains(capturedNewReceipt))

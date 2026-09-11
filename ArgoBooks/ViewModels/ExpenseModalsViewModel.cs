@@ -596,6 +596,7 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
 
         // Store original values for undo
         var original = CaptureTransactionState(expense);
+        var originalQueued = companyData.PendingConversions.Where(p => p.TransactionId == expense.Id).ToList();
 
         var (description, totalQuantity, averageUnitPrice) = GetLineItemSummary();
         var modelLineItems = CreateModelLineItems();
@@ -629,10 +630,11 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             : averageUnitPrice;
         expense.IsPendingConversion = IsPendingConversion;
 
-        // Queue for offline conversion if pending
+        // Queue for offline conversion if pending; a row that converted leaves the queue
+        List<PendingConversion> editedQueued = [];
         if (IsPendingConversion)
         {
-            var pendingEntry = new PendingConversion
+            editedQueued.Add(new PendingConversion
             {
                 TransactionId = expense.Id,
                 TransactionType = "Expense",
@@ -644,17 +646,11 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
                 Discount = ModalDiscount,
                 Fee = ModalFee,
                 UnitPrice = averageUnitPrice
-            };
-            // Remove any existing entry for this transaction before adding updated one
-            companyData.PendingConversions.RemoveAll(p => p.TransactionId == expense.Id);
-            companyData.PendingConversions.Add(pendingEntry);
-            _ = PendingConversionService.Instance?.AddPendingConversionAsync(pendingEntry);
+            });
         }
-        else if (original.IsPendingConversion)
-        {
-            // Was pending, now converted, remove from queue
-            companyData.PendingConversions.RemoveAll(p => p.TransactionId == expense.Id);
-        }
+        var queueTouched = originalQueued.Count > 0 || editedQueued.Count > 0;
+        if (queueTouched)
+            SetQueuedConversions(companyData, expense.Id, editedQueued);
 
         // Handle receipt. The form loads an existing receipt's OriginalFilePath, so only a different
         // path means Change picked a new file.
@@ -688,6 +684,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             () =>
             {
                 RestoreTransactionState(expense, original);
+                if (queueTouched)
+                    SetQueuedConversions(companyData, expense.Id, originalQueued);
                 if (capturedNewReceipt != null)
                     companyData.Receipts.Remove(capturedNewReceipt);
                 if (replacedReceipt != null && !companyData.Receipts.Contains(replacedReceipt))
@@ -698,6 +696,8 @@ public partial class ExpenseModalsViewModel : TransactionModalsViewModelBase<Exp
             () =>
             {
                 RestoreTransactionState(expense, edited);
+                if (queueTouched)
+                    SetQueuedConversions(companyData, expense.Id, editedQueued);
                 if (replacedReceipt != null)
                     companyData.Receipts.Remove(replacedReceipt);
                 if (capturedNewReceipt != null && !companyData.Receipts.Contains(capturedNewReceipt))

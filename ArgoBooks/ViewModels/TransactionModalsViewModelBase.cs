@@ -653,7 +653,7 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
             foreach (var li in transaction.LineItems)
             {
                 var unitPrice = needsConversion
-                    ? CurrencyService.GetDisplayAmount(transaction.EffectiveUnitPriceUSD, transaction.Date)
+                    ? CurrencyService.GetDisplayAmount(LineUnitPriceUSD(transaction, li), transaction.Date)
                     : li.UnitPrice;
 
                 var selectedProduct = ProductOptions.FirstOrDefault(p => p.Id == li.ProductId) ?? StoredProductOption(li.ProductId);
@@ -1369,6 +1369,26 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 foreach (var m in moved) m.Product.CategoryId = m.NewCategoryId;
                 companyData.MarkAsModified();
             }));
+    }
+
+    /// <summary>
+    /// A line's unit price in USD. The row keeps a single USD unit price, the average over its
+    /// lines, so each line takes the row's own USD-to-native ratio instead.
+    /// </summary>
+    private static decimal LineUnitPriceUSD(Transaction transaction, LineItem line) =>
+        transaction.Total != 0
+            ? line.UnitPrice * (transaction.EffectiveTotalUSD / transaction.Total)
+            : transaction.EffectiveUnitPriceUSD;
+
+    /// <summary>
+    /// Replaces the row's conversion queue entries in the company file and in the conversion
+    /// service's copy, which converts from its own entries rather than from the row.
+    /// </summary>
+    protected static void SetQueuedConversions(CompanyData companyData, string transactionId, List<PendingConversion> entries)
+    {
+        companyData.PendingConversions.RemoveAll(p => p.TransactionId == transactionId);
+        companyData.PendingConversions.AddRange(entries);
+        _ = PendingConversionService.Instance?.MirrorAsync(companyData, [transactionId]);
     }
 
     protected (string description, decimal totalQuantity, decimal averageUnitPrice) GetLineItemSummary()

@@ -1303,7 +1303,10 @@ public partial class App : Application
             UnsavedChangesDialog = new UnsavedChangesDialogViewModel();
             ReceiptViewerModal = new ReceiptViewerModalViewModel();
             ChangeTrackingService = new ChangeTrackingService();
-            PendingConversionService = new PendingConversionService(errorLogger);
+            PendingConversionService = new PendingConversionService(errorLogger)
+            {
+                CurrentCompany = () => (CompanyManager?.CompanyData, CompanyManager?.CurrentFilePath)
+            };
             PdfStatementExtractor = new PdfStatementExtractor(LicenseService, ErrorLogger);
             _idleDetectionService = new IdleDetectionService();
 
