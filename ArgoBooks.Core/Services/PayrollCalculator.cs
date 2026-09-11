@@ -32,6 +32,11 @@ public static class PayrollCalculator
         ArgumentNullException.ThrowIfNull(ytd);
         ArgumentNullException.ThrowIfNull(rates);
 
+        if (input.RegularPayPerPeriod > 0 && input.GrossPay > 0 && input.NonPeriodicPay >= input.GrossPay)
+        {
+            return CalculateBonusOnly(input, ytd, rates);
+        }
+
         // Quebec is handed off whole rather than branched through. Its pension plan, its
         // parental insurance plan and its income tax formula are all different in kind, so
         // there is nothing below this line that would apply to it.
@@ -187,6 +192,31 @@ public static class PayrollCalculator
             FederalTax = federal,
             ProvincialTax = provincial,
         };
+    }
+
+    /// <summary>
+    /// A period that pays a bonus and nothing else.
+    ///
+    /// Income tax is what the bonus would add to a period of regular pay: the tax on the regular
+    /// pay with the bonus, less the tax on the regular pay alone. Working it from this period's
+    /// own figures annualised a regular pay of zero, so the bonus was taxed as though it were the
+    /// employee's whole year and mostly vanished under the personal amount.
+    ///
+    /// Contributions are still charged on what this period pays. The regular pay is borrowed only
+    /// to place the bonus in the right bracket, and was never paid in this run.
+    /// </summary>
+    private static PayrollDeductions CalculateBonusOnly(PayrollInput input, PayrollYearToDate ytd, PayrollRateTable rates)
+    {
+        decimal bonus = input.GrossPay;
+        decimal regular = input.RegularPayPerPeriod;
+
+        PayrollDeductions actual = Calculate(input.WithPay(bonus, bonus), ytd, rates);
+        PayrollDeductions alone = Calculate(input.WithPay(regular, 0m), ytd, rates);
+        PayrollDeductions together = Calculate(input.WithPay(regular + bonus, bonus), ytd, rates);
+
+        actual.FederalTax = Math.Max(0m, together.FederalTax - alone.FederalTax);
+        actual.ProvincialTax = Math.Max(0m, together.ProvincialTax - alone.ProvincialTax);
+        return actual;
     }
 
     /// <summary>
@@ -462,12 +492,29 @@ public class PayrollInput
     /// </summary>
     public decimal NonPeriodicPay { get; set; }
 
+    /// <summary>
+    /// What the employee is normally paid for a period, bonuses excluded. Read only when this
+    /// period pays a bonus and nothing else, because T4127 taxes a bonus on top of the regular
+    /// annual income and a run with no regular pay has none to annualise.
+    /// </summary>
+    public decimal RegularPayPerPeriod { get; set; }
+
     /// <summary>Only used by provinces whose tax reduction has a dependant component.</summary>
     public int Dependants { get; set; }
 
     public bool IsCppExempt { get; set; }
 
     public bool IsEiExempt { get; set; }
+
+    /// <summary>The same employee and period with different pay and no borrowed regular pay.</summary>
+    internal PayrollInput WithPay(decimal gross, decimal nonPeriodic)
+    {
+        var copy = (PayrollInput)MemberwiseClone();
+        copy.GrossPay = gross;
+        copy.NonPeriodicPay = nonPeriodic;
+        copy.RegularPayPerPeriod = 0m;
+        return copy;
+    }
 }
 
 /// <summary>

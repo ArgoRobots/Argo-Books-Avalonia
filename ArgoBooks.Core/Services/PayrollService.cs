@@ -136,6 +136,7 @@ public class PayrollService(PayrollRateService? rateService = null)
                     // direction; treating a recurring 4% as one-off would be an error in the
                     // other.
                     NonPeriodicPay = line.Bonus,
+                    RegularPayPerPeriod = RegularPayPerPeriod(data, employee, run),
                     Province = employee.Province,
                     PayPeriodsPerYear = employee.PayFrequency.PeriodsPerYear(),
                     FederalClaimAmount = employee.FederalClaimAmount,
@@ -163,6 +164,34 @@ public class PayrollService(PayrollRateService? rateService = null)
             line.ProvincialTax = d.ProvincialTax;
             line.NetPay = d.NetPay;
         }
+    }
+
+    /// <summary>
+    /// What the employee is normally paid for a period, which a bonus paid on its own is taxed on
+    /// top of.
+    ///
+    /// A salaried employee's is their salary for the period, which is the regular pay by
+    /// definition. An hourly employee has no fixed figure, so it is the regular part of the last
+    /// run that actually paid them: their most recent real pay is the best evidence of what the
+    /// year's income will look like. With no such run there is nothing to go on, and zero keeps
+    /// the old behaviour rather than inventing an income.
+    /// </summary>
+    private static decimal RegularPayPerPeriod(CompanyData data, Employee employee, PayRun run)
+    {
+        if (employee.PayType == PayType.Salary)
+        {
+            return employee.GrossPerPeriod();
+        }
+
+        return data.PayRuns
+            .Where(r => r.Status == PayRunStatus.Approved
+                        && r.VoidsPayRunId is not { Length: > 0 }
+                        && r.Id != run.Id
+                        && r.PayDate <= run.PayDate)
+            .OrderByDescending(r => r.PayDate)
+            .SelectMany(r => r.Lines.Where(l => l.EmployeeId == employee.Id))
+            .Select(l => l.GrossPay - l.Bonus)
+            .FirstOrDefault(regular => regular > 0);
     }
 
     /// <summary>
