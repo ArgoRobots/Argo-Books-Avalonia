@@ -30,9 +30,13 @@ public class ReceiptsModalsViewModelTests : ModalViewModelTestBase
         }
     };
 
-    // No rate source in the test run serves JPY, so a JPY receipt has no exact-date rate and is
-    // saved pending (Calculations.md Rule 3a). Today avoids the historical-date retries.
-    private void UseCurrencyWithNoRate() => Company.Settings.Localization.Currency = "JPY";
+    // With no exchange rate service, a JPY receipt has no exact-date rate and is saved pending
+    // (Calculations.md Rule 3a).
+    private void UseCurrencyWithNoRate()
+    {
+        Company.Settings.Localization.Currency = "JPY";
+        UseNoExchangeRates();
+    }
 
     private static void CreateSuggestedSupplier(ReceiptsModalsViewModel vm, string name)
     {
