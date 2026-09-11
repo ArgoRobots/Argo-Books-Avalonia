@@ -1139,9 +1139,9 @@ window.__totalsConfig = __TOTALS_CONFIG__;
         runInitialFit();
     }
 
-    // Zoom handling (Ctrl+Scroll)
+    // Zoom handling (Ctrl+Scroll, or Cmd+Scroll on a Mac, where Cmd arrives as metaKey)
     document.addEventListener('wheel', function(e) {
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
             var wrapper = document.getElementById('__zoomWrapper');
             var currentScale = parseFloat(wrapper.dataset.scale || '1');

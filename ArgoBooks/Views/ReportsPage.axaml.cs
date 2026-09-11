@@ -829,7 +829,9 @@ public partial class ReportsPage : UserControl
                 e.Handled = true;
                 break;
 
-            case Key.S when e.KeyModifiers.HasCommand():
+            // Shift is left to the app-wide Save As, which runs only if this page has not
+            // already taken the key.
+            case Key.S when e.KeyModifiers.HasCommand() && !e.KeyModifiers.HasFlag(KeyModifiers.Shift):
                 vm.OpenSaveTemplateCommand.Execute(null);
                 e.Handled = true;
                 break;

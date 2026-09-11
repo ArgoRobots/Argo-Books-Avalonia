@@ -447,16 +447,22 @@ public partial class LanguageService
     /// through covers every language without a parallel set of keys per platform.
     ///
     /// A no-op on Windows and Linux, where the modifier is already Ctrl.
+    ///
+    /// The key's name is matched rather than the exact text "Ctrl+", because translations
+    /// spell it their own way ("Strg+" in German, "Ktrl+" in Basque) and some put spaces round
+    /// the plus. Spelled "Cmd" rather than the U+2318 glyph: Inter, the app's font, has no glyph
+    /// there, and the macOS fallback is what drew the stacked bars.
     /// </summary>
     private static string LocalizeShortcutModifier(string text)
     {
         if (!OperatingSystem.IsMacOS() || string.IsNullOrEmpty(text))
             return text;
 
-        return text.Contains("Ctrl+", StringComparison.Ordinal)
-            ? text.Replace("Ctrl+", PlatformKeys.CommandLabel, StringComparison.Ordinal)
-            : text;
+        return ShortcutModifierName().Replace(text, "Cmd");
     }
+
+    [GeneratedRegex(@"(?<!\p{L})(?:Ctrl|Strg|Ktrl)(?=\s*\+)")]
+    private static partial Regex ShortcutModifierName();
 
     private string TranslateCore(string text)
     {
