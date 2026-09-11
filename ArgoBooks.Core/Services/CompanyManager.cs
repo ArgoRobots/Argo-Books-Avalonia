@@ -1666,18 +1666,27 @@ public class CompanyManager : IDisposable
     /// to the temp directory and repackages the .argo file, without triggering a full company save
     /// workflow (no CompanySaving/CompanySaved events, no MarkAsSaved).
     /// </summary>
-    public async Task SavePaymentSyncAsync(CancellationToken cancellationToken = default)
+    /// <returns>
+    /// Whether <paramref name="companyData"/> was written to its file. False when it is no longer the
+    /// open company or no company file is open, in which case nothing was saved.
+    /// </returns>
+    public async Task<bool> SavePaymentSyncAsync(CompanyData companyData, CancellationToken cancellationToken = default)
     {
         await _saveLock.WaitAsync(cancellationToken);
         try
         {
-            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null)
-                return;
+            // Opening or closing a company doesn't take the save lock, so the company the payments
+            // were synced into may have gone while this waited for it.
+            if (!IsCompanyOpen || CurrentFilePath == null || _currentTempDirectory == null || CompanyData == null
+                || !ReferenceEquals(CompanyData, companyData))
+                return false;
 
             // Merge deferred receipts before writing receipts.json (see SaveCompanyAsync).
             // This save path is auto-triggered by portal sync shortly after open, so the
             // gate here is what prevents an early sync from dropping receipts.
             await EnsureReceiptsLoadedAsync();
+            if (!ReferenceEquals(CompanyData, companyData) || CurrentFilePath == null || _currentTempDirectory == null)
+                return false;
 
             var companyDir = GetCompanyDirectory(_currentTempDirectory);
             await _fileService.SaveCompanyDataAsync(companyDir, CompanyData, cancellationToken);
@@ -1692,6 +1701,8 @@ public class CompanyManager : IDisposable
             {
                 AcquireFileLock(CurrentFilePath);
             }
+
+            return true;
         }
         finally
         {

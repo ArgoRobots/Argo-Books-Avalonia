@@ -2,6 +2,8 @@ using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Tests.ViewModels;
 using Xunit;
@@ -22,6 +24,9 @@ public class MobileSyncAckTests : ModalViewModelTestBase
     {
         public readonly List<int> Acked = [];
 
+        /// <summary>When set, the pull waits for it, so a test can act while the pull is in flight.</summary>
+        public TaskCompletionSource? PullGate { get; set; }
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
             var path = request.RequestUri!.AbsolutePath;
@@ -29,7 +34,8 @@ public class MobileSyncAckTests : ModalViewModelTestBase
 
             if (path.EndsWith("/queue/pull"))
             {
-                body = JsonSerializer.Serialize(new { success = true, items = new[] { new { id = QueueItemId, ciphertext } } });
+                if (PullGate != null) await PullGate.Task.WaitAsync(ct);
+                body =JsonSerializer.Serialize(new { success = true, items = new[] { new { id = QueueItemId, ciphertext } } });
             }
             else if (path.EndsWith("/queue/ack"))
             {
@@ -110,6 +116,41 @@ public class MobileSyncAckTests : ModalViewModelTestBase
 
             Assert.Equal([QueueItemId], handler.Acked);
             Assert.Single(Company.Expenses);
+        });
+    }
+
+    // With no company file behind it the save writes nothing, as when it is skipped because another
+    // company has been opened. Nothing was saved, so nothing may be acked.
+    [Fact]
+    public async Task CaptureWhoseSaveWroteNothing_IsNotAcked()
+    {
+        await RunWithQueueAsync(async handler =>
+        {
+            await App.AutoMobileSyncAsync();
+
+            Assert.Single(Company.Expenses);
+            Assert.Empty(handler.Acked);
+            Assert.True(Company.ChangesMade);
+        });
+    }
+
+    // If another company is opened while the pull is in flight, the captures must not go into the
+    // one that was closed, which nobody will save, and must stay in the queue for its next sync.
+    [Fact]
+    public async Task CapturesArrivingAfterACompanySwitch_AreNotAppliedOrAcked()
+    {
+        await RunWithQueueAsync(async handler =>
+        {
+            handler.PullGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var sync = App.AutoMobileSyncAsync();
+
+            App.SetCompanyManagerForTesting(CompanyManager.CreateForTesting(new CompanyData()));
+
+            handler.PullGate.SetResult();
+            await sync;
+
+            Assert.Empty(Company.Expenses);
+            Assert.Empty(handler.Acked);
         });
     }
 }

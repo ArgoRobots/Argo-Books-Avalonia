@@ -1427,6 +1427,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
             return;
         }
 
+        // The replies describe the company whose key asked; once another is open they must not land in it.
+        bool CompanyChanged() => !ReferenceEquals(App.CompanyManager?.CompanyData, companyData);
+
         IsSyncing = true;
         try
         {
@@ -1434,6 +1437,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
 
             // force=true recovers payments confirmed server-side but never saved locally.
             var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
+            if (CompanyChanged()) return;
 
             if (!syncResponse.Success)
             {
@@ -1459,6 +1463,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 if (processedPortalIds.Count > 0)
                 {
                     await portalService.ConfirmSyncAsync(processedPortalIds);
+                    if (CompanyChanged()) return;
                 }
 
                 // Also save when only existing rows were backfilled, or the in-memory
@@ -1467,7 +1472,7 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                 // in-progress work.
                 if ((newPayments.Count > 0 || syncResult.BackfilledRows > 0) && !(App.CompanyManager?.HasUnsavedChanges ?? false))
                 {
-                    try { await App.CompanyManager!.SavePaymentSyncAsync(); }
+                    try { await App.CompanyManager!.SavePaymentSyncAsync(companyData); }
                     catch { /* non-fatal */ }
                 }
             }

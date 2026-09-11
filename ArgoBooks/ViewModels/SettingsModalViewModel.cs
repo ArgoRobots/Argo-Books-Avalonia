@@ -809,7 +809,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 && ReferenceEquals(App.CompanyManager?.CompanyData, companyData))
             {
                 ApplyPortalPreferences(result.Preferences);
-                SavePortalSettings();
+                SavePortalPreferences();
             }
         }
         catch
@@ -1329,7 +1329,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 }
 
                 // Persist changes to local settings immediately
-                SavePortalSettings();
+                SaveConnectedAccounts();
 
                 // Notify invoice views and other subscribers that provider state changed
                 PaymentProviderService.NotifyProvidersChanged();
@@ -1460,7 +1460,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 PaypalEmail = status.ConnectedProviders.PaypalEmail;
                 SquareConnected = status.ConnectedProviders.SquareConnected;
                 SquareEmail = status.ConnectedProviders.SquareEmail;
-                SavePortalSettings();
+                SaveConnectedAccounts();
 
                 // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
                 if (!string.IsNullOrEmpty(status.PortalUrl))
@@ -1485,7 +1485,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 if (status.Preferences != null)
                 {
                     ApplyPortalPreferences(status.Preferences);
-                    SavePortalSettings();
+                    SavePortalPreferences();
                 }
 
                 // Mirror the authoritative owner email onto this device so a
@@ -1556,7 +1556,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                             PaypalEmail = status.ConnectedProviders.PaypalEmail;
                             SquareConnected = status.ConnectedProviders.SquareConnected;
                             SquareEmail = status.ConnectedProviders.SquareEmail;
-                            SavePortalSettings();
+                            SaveConnectedAccounts();
 
                             // Persist PortalUrl so other pages (e.g. Invoices) see it immediately
                             if (!string.IsNullOrEmpty(status.PortalUrl))
@@ -1589,15 +1589,33 @@ public partial class SettingsModalViewModel : ViewModelBase
         // connected, so until then there is no portal record holding it.
         settings.CompanyName = PortalCompanyName;
         settings.NotifyOnPayment = PortalNotifyOnPayment;
-        settings.EmailOwnerOnPayment = PortalEmailOwnerOnPayment;
-        settings.SendPaymentReminders = PortalSendPaymentReminders;
-        settings.RemindersEnabledAt = PortalRemindersEnabledAt;
         settings.AutoSyncIntervalMinutes = PortalSyncInterval == "Manual"
             ? 0
             : int.TryParse(PortalSyncInterval, out var mins) ? mins : 5;
 
         // Track the saved sync interval for revert-on-auth
         _previousSyncInterval = PortalSyncInterval;
+
+        SavePortalPreferences();
+        SaveConnectedAccounts();
+    }
+
+    // These two write only what the server reports, so a server reply can store it without
+    // also committing the other portal fields, which the user may be editing and which apply on Save.
+    private void SavePortalPreferences()
+    {
+        var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        if (settings == null) return;
+
+        settings.EmailOwnerOnPayment = PortalEmailOwnerOnPayment;
+        settings.SendPaymentReminders = PortalSendPaymentReminders;
+        settings.RemindersEnabledAt = PortalRemindersEnabledAt;
+    }
+
+    private void SaveConnectedAccounts()
+    {
+        var settings = App.CompanyManager?.CompanyData?.Settings.PaymentPortal;
+        if (settings == null) return;
 
         settings.ConnectedAccounts.StripeConnected = StripeConnected;
         settings.ConnectedAccounts.StripeEmail = StripeEmail;

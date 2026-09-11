@@ -471,12 +471,16 @@ public partial class App : Application
 
             var portalSettings = companyData.Settings.PaymentPortal;
 
+            // The replies describe the company whose key asked. Opening another swaps both the key
+            // and CompanyData, and nothing from these replies may then land in it.
+            bool CompanyChanged() => !ReferenceEquals(CompanyManager?.CompanyData, companyData);
+
             // Use force sync to also recover any payments that were previously
             // confirmed on the server but never saved locally (e.g. due to app crash).
             // Duplicate prevention in ProcessSyncedPayments handles efficiency.
             var syncResponse = await portalService.SyncPaymentsAsync(since: null, force: true);
 
-            if (!syncResponse.Success)
+            if (!syncResponse.Success || CompanyChanged())
                 return;
 
             // Always advance the sync timestamp on success to avoid re-querying the same window
@@ -493,6 +497,7 @@ public partial class App : Application
             if (PortalBalanceSyncService != null)
             {
                 await PortalBalanceSyncService.ReconcileAsync();
+                if (CompanyChanged()) return;
             }
 
             if (syncResponse.Payments.Count == 0)
@@ -512,6 +517,7 @@ public partial class App : Application
             if (processedPortalIds.Count > 0)
             {
                 await portalService.ConfirmSyncAsync(processedPortalIds);
+                if (CompanyChanged()) return;
             }
 
             // Persist when there are new rows OR existing rows were backfilled
@@ -528,11 +534,13 @@ public partial class App : Application
                 // sync can't quietly commit the user's in-progress edits.
                 if (!CompanyManager!.HasUnsavedChanges)
                 {
-                    try { await CompanyManager.SavePaymentSyncAsync(); }
+                    try { await CompanyManager.SavePaymentSyncAsync(companyData); }
                     catch (Exception ex)
                     {
                         ErrorLogger?.LogWarning($"Failed to persist synced payments: {ex.Message}", "PortalSync");
                     }
+
+                    if (CompanyChanged()) return;
                 }
 
                 // Refresh any already-instantiated page ViewModels so the UI reflects the new data
@@ -592,6 +600,10 @@ public partial class App : Application
             var syncKey = mobileSync.SyncKeyBase64!;
             var ct = CancellationToken.None;
 
+            // Opening another company replaces CompanyData. Captures applied to the one that was
+            // closed are never saved, so they must stay in the queue for its next sync.
+            bool CompanyChanged() => !ReferenceEquals(CompanyManager?.CompanyData, companyData);
+
             // UPLOAD: push a fresh snapshot so the phone always has current data to browse offline.
             // Wrapped in its own try/catch so an upload/network failure doesn't skip the pull/ingest
             // below - the two directions are independent and one failing shouldn't block the other.
@@ -607,11 +619,15 @@ public partial class App : Application
                 ErrorLogger?.LogWarning($"Failed to upload mobile-sync snapshot: {ex.Message}", "MobileSync");
             }
 
+            if (CompanyChanged()) return;
+
             // PULL + INGEST: drain the phone's capture queue into local Expenses/Revenue/Receipts.
             // CaptureIngestService de-dupes on CapturedTransaction.ScanUid via the persisted
             // CompanyData.IngestedScanUids list, so a re-delivered-but-still-pending item is
             // safely skipped even across app restarts (not just within this session).
             var items = await syncService.PullQueueAsync(companyUid, ct);
+            if (CompanyChanged()) return;
+
             var malformedIds = new List<int>();
             var ingestedIds = new List<int>();
             var duplicateIds = new List<int>();
@@ -642,7 +658,7 @@ public partial class App : Application
 
             // PERSIST before ACK: an item that added new data must never be acknowledged (and thus
             // deleted server-side) before that data is actually saved locally. If the save is skipped
-            // (the user has unsaved edits in memory) or throws, the newly-ingested items must NOT be
+            // (the user has unsaved edits in memory), writes nothing or throws, the newly-ingested items must NOT be
             // acked - they stay in the server queue and are re-delivered each cycle, where
             // CaptureIngestService's ScanUid check no-ops them, until a save has written them.
             var saved = false;
@@ -652,8 +668,7 @@ public partial class App : Application
                 {
                     try
                     {
-                        await CompanyManager.SavePaymentSyncAsync();
-                        saved = true;
+                        saved = await CompanyManager.SavePaymentSyncAsync(companyData);
                     }
                     catch (Exception ex)
                     {
@@ -671,7 +686,7 @@ public partial class App : Application
             // from an earlier cycle whose save was skipped. Acking deletes the server's copy, so wait
             // until nothing is unsaved: from then on the capture is in the file.
             var toAck = new List<int>(malformedIds);
-            if (saved || CompanyManager is { HasUnsavedChanges: false })
+            if (saved || !companyData.ChangesMade)
             {
                 toAck.AddRange(duplicateIds);
             }
@@ -688,7 +703,7 @@ public partial class App : Application
             mobileSync.LastSyncTime = DateTime.UtcNow;
 
             var ingestedCount = ingestedIds.Count;
-            if (ingestedCount > 0)
+            if (ingestedCount > 0 && !CompanyChanged())
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
