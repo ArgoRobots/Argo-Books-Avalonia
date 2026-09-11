@@ -521,6 +521,7 @@ public class CompanyManager : IDisposable
             if (companyInfo != null)
             {
                 CompanyData.Settings.Company = companyInfo;
+                StarterCategories.AddTo(CompanyData, companyInfo.Industry);
             }
 
             if (string.IsNullOrEmpty(CompanyData.Settings.Company.Name))
