@@ -4769,27 +4769,33 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     #region ID Counter Update
 
+    /// <summary>
+    /// Raises each counter past the highest id now present. Only ever raises: a counter already
+    /// ahead of every present id is ahead because a record was deleted, and lowering it would
+    /// hand that deleted id to the next new record.
+    /// </summary>
     private static void UpdateIdCounters(CompanyData data)
     {
-        data.IdCounters.Customer = GetMaxIdNumber(data.Customers.Select(c => c.Id), "CUS-");
-        data.IdCounters.Product = GetMaxIdNumber(data.Products.Select(p => p.Id), "PRD-");
-        data.IdCounters.Supplier = GetMaxIdNumber(data.Suppliers.Select(s => s.Id), "SUP-");
-        data.IdCounters.Category = GetMaxIdNumber(data.Categories.Select(c => c.Id), "CAT-");
-        data.IdCounters.Location = GetMaxIdNumber(data.Locations.Select(l => l.Id), "LOC-");
-        data.IdCounters.Revenue = Math.Max(
-            GetMaxIdNumber(data.Revenues.Select(s => s.Id), "SAL-"),
-            GetMaxIdNumber(data.Revenues.Select(s => s.Id), "REV-"));
-        data.IdCounters.Expense = GetMaxIdNumber(data.Expenses.Select(p => p.Id), "PUR-");
-        data.IdCounters.Invoice = GetMaxIdNumber(data.Invoices.Select(i => i.Id), "INV-");
-        data.IdCounters.Payment = GetMaxIdNumber(data.Payments.Select(p => p.Id), "PAY-");
-        data.IdCounters.RecurringInvoice = GetMaxIdNumber(data.RecurringInvoices.Select(r => r.Id), "REC-INV-");
-        data.IdCounters.InventoryItem = GetMaxIdNumber(data.Inventory.Select(i => i.Id), "INV-ITM-");
-        data.IdCounters.StockAdjustment = GetMaxIdNumber(data.StockAdjustments.Select(s => s.Id), "ADJ-");
-        data.IdCounters.PurchaseOrder = GetMaxIdNumber(data.PurchaseOrders.Select(p => p.Id), "PO-");
-        data.IdCounters.RentalItem = GetMaxIdNumber(data.RentalInventory.Select(r => r.Id), "RNT-ITM-");
-        data.IdCounters.Rental = GetMaxIdNumber(data.Rentals.Select(r => r.Id), "RNT-");
-        data.IdCounters.Return = GetMaxIdNumber(data.Returns.Select(r => r.Id), "RET-");
-        data.IdCounters.LostDamaged = GetMaxIdNumber(data.LostDamaged.Select(ld => ld.Id), "LOST-");
+        var c = data.IdCounters;
+        c.Customer = Math.Max(c.Customer, GetMaxIdNumber(data.Customers.Select(x => x.Id), "CUS-"));
+        c.Product = Math.Max(c.Product, GetMaxIdNumber(data.Products.Select(x => x.Id), "PRD-"));
+        c.Supplier = Math.Max(c.Supplier, GetMaxIdNumber(data.Suppliers.Select(x => x.Id), "SUP-"));
+        c.Category = Math.Max(c.Category, GetMaxIdNumber(data.Categories.Select(x => x.Id), "CAT-"));
+        c.Location = Math.Max(c.Location, GetMaxIdNumber(data.Locations.Select(x => x.Id), "LOC-"));
+        c.Revenue = Math.Max(c.Revenue, Math.Max(
+            GetMaxIdNumber(data.Revenues.Select(x => x.Id), "SAL-"),
+            GetMaxIdNumber(data.Revenues.Select(x => x.Id), "REV-")));
+        c.Expense = Math.Max(c.Expense, GetMaxIdNumber(data.Expenses.Select(x => x.Id), "PUR-"));
+        c.Invoice = Math.Max(c.Invoice, GetMaxIdNumber(data.Invoices.Select(x => x.Id), "INV-"));
+        c.Payment = Math.Max(c.Payment, GetMaxIdNumber(data.Payments.Select(x => x.Id), "PAY-"));
+        c.RecurringInvoice = Math.Max(c.RecurringInvoice, GetMaxIdNumber(data.RecurringInvoices.Select(x => x.Id), "REC-INV-"));
+        c.InventoryItem = Math.Max(c.InventoryItem, GetMaxIdNumber(data.Inventory.Select(x => x.Id), "INV-ITM-"));
+        c.StockAdjustment = Math.Max(c.StockAdjustment, GetMaxIdNumber(data.StockAdjustments.Select(x => x.Id), "ADJ-"));
+        c.PurchaseOrder = Math.Max(c.PurchaseOrder, GetMaxIdNumber(data.PurchaseOrders.Select(x => x.Id), "PO-"));
+        c.RentalItem = Math.Max(c.RentalItem, GetMaxIdNumber(data.RentalInventory.Select(x => x.Id), "RNT-ITM-"));
+        c.Rental = Math.Max(c.Rental, GetMaxIdNumber(data.Rentals.Select(x => x.Id), "RNT-"));
+        c.Return = Math.Max(c.Return, GetMaxIdNumber(data.Returns.Select(x => x.Id), "RET-"));
+        c.LostDamaged = Math.Max(c.LostDamaged, GetMaxIdNumber(data.LostDamaged.Select(x => x.Id), "LOST-"));
     }
 
     private static int GetMaxIdNumber(IEnumerable<string> ids, string prefix)
