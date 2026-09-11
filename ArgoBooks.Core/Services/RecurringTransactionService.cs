@@ -144,17 +144,19 @@ public static class RecurringTransactionService
     public static void ClearPendingRevenues() => PendingRevenueCount = 0;
 
     /// <summary>
-    /// Generates every occurrence due on or before <paramref name="asOfUtc"/>. The converter is
-    /// injectable so this does not have to reach for the exchange rate singleton, which is set
-    /// once per process and cannot be controlled by a caller.
+    /// Generates every occurrence due on or before <paramref name="today"/>, the local calendar
+    /// date. Schedule dates are calendar dates, so the UTC date ran a day early in the evening
+    /// west of Greenwich and a day late in the morning east of it. The converter is injectable so
+    /// this does not have to reach for the exchange rate singleton, which is set once per process
+    /// and cannot be controlled by a caller.
     /// </summary>
     public static IReadOnlyList<Transaction> GenerateDue(
-        CompanyData data, DateTime asOfUtc, UsdConverter? convert = null)
+        CompanyData data, DateTime today, UsdConverter? convert = null)
     {
         convert ??= DefaultConverter;
 
         var generated = new List<Transaction>();
-        var asOfDate = asOfUtc.Date;
+        var asOfDate = today.Date;
 
         foreach (var schedule in data.RecurringTransactions)
         {
@@ -176,7 +178,7 @@ public static class RecurringTransactionService
                 if (!skipped && !AlreadyGenerated(data, schedule, occurrence))
                 {
                     generated.Add(CloneFor(schedule, occurrence, data, convert));
-                    schedule.LastGeneratedAt = asOfUtc;
+                    schedule.LastGeneratedAt = DateTime.UtcNow;
                 }
 
                 schedule.NextDate = RecurrenceSchedule.AdvanceDate(

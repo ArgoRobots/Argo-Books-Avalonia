@@ -187,7 +187,7 @@ public partial class App
                     if (CompanyManager.CompanyData != null && !CompanyManager.IsSampleCompany)
                     {
                         var generatedRecurring = RecurringInvoiceService
-                            .GenerateDueInvoices(CompanyManager.CompanyData, DateTime.UtcNow);
+                            .GenerateDueInvoices(CompanyManager.CompanyData, DateTime.Today);
                         if (generatedRecurring.Count > 0)
                         {
                             await CompanyManager.SaveCompanyAsync();
@@ -203,7 +203,7 @@ public partial class App
                         }
 
                         var generatedTxns = RecurringTransactionService
-                            .GenerateDue(CompanyManager.CompanyData, DateTime.UtcNow);
+                            .GenerateDue(CompanyManager.CompanyData, DateTime.Today);
                         if (generatedTxns.Count > 0)
                         {
                             await CompanyManager.SaveCompanyAsync();

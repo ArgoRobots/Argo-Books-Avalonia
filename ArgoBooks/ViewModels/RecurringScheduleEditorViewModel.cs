@@ -406,7 +406,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
     /// </summary>
     private static IReadOnlyList<Transaction> GenerateDueNow(Core.Data.CompanyData data)
     {
-        var generated = RecurringTransactionService.GenerateDue(data, DateTime.UtcNow);
+        var generated = RecurringTransactionService.GenerateDue(data, DateTime.Today);
         if (generated.Count == 0) return generated;
 
         var expenses = generated.Count(t => t is Expense);
