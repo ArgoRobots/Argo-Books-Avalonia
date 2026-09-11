@@ -115,6 +115,7 @@ public class StripeSyncService
             {
                 StripePayoutId = p.Id,
                 AmountCents = Math.Abs(p.AmountCents),
+                Currency = p.Currency?.ToUpperInvariant(),
                 Date = DateTimeOffset.FromUnixTimeSeconds(p.DateUnix).LocalDateTime
             });
         }

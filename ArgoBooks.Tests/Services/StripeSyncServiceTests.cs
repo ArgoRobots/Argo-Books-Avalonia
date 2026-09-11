@@ -19,7 +19,7 @@ public class StripeSyncServiceTests
             {
                 // One paid payout po_1, amount 48.25, arrival date.
                 body = "{\"has_more\":false,\"data\":[" +
-                       "{\"id\":\"po_1\",\"amount\":4825,\"arrival_date\":1700000900,\"created\":1700000800,\"status\":\"paid\"}" +
+                       "{\"id\":\"po_1\",\"amount\":4825,\"currency\":\"usd\",\"arrival_date\":1700000900,\"created\":1700000800,\"status\":\"paid\"}" +
                        "]}";
             }
             else if (url.Contains("/v1/balance_transactions"))
@@ -94,6 +94,7 @@ public class StripeSyncServiceTests
         var stripe = data.Settings.Integrations.Stripe;
         Assert.Single(stripe.ImportedPayouts);
         Assert.Equal("po_1", stripe.ImportedPayouts[0].StripePayoutId);
+        Assert.Equal("USD", stripe.ImportedPayouts[0].Currency);
         Assert.Equal("ch_1", stripe.LastSyncCursor);
         Assert.NotNull(stripe.LastSyncTime);
 

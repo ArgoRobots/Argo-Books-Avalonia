@@ -115,15 +115,17 @@ public class BankMatchingService
     }
 
     /// <summary>
-    /// Auto-ignores deposits that are an already-imported Stripe payout (amount within 1 cent OR
-    /// 1%, date within DateWindowDays), so they aren't double-counted against a book record. A
-    /// payout accounts for one deposit, the closest by date and then by amount, and the line keeps
-    /// the payout's id so a later run can't spend the same payout on another deposit.
+    /// Auto-ignores deposits that are an already-imported Stripe payout (amount within one minor
+    /// unit, a cent or a yen, OR 1%, date within DateWindowDays), so they aren't double-counted
+    /// against a book record. A payout accounts for one deposit, the closest by date and then by
+    /// amount, and the line keeps the payout's id so a later run can't spend the same payout on
+    /// another deposit.
     /// </summary>
     private static void AutoIgnoreStripePayouts(List<BankStatementLine> lines, CompanyData data, BankMatchingOptions options)
     {
         var payouts = data.Settings.Integrations.Stripe.ImportedPayouts;
         if (payouts.Count == 0) return;
+        var companyCurrency = data.Settings.Localization.Currency;
 
         var spent = lines
             .Where(l => l.MatchStatus == BankLineMatchStatus.Ignored && l.StripePayoutId != null)
@@ -143,7 +145,7 @@ public class BankMatchingService
 
             foreach (var payout in payouts)
             {
-                if (!spent.Contains(payout.StripePayoutId) && PayoutFit(line, payout, options) is { } fit)
+                if (!spent.Contains(payout.StripePayoutId) && PayoutFit(line, payout, companyCurrency, options) is { } fit)
                     pairs.Add((line, payout, legacy, fit.Days, fit.CentsOff));
             }
         }
@@ -164,10 +166,12 @@ public class BankMatchingService
     }
 
     private static (double Days, long CentsOff)? PayoutFit(
-        BankStatementLine line, Models.Integrations.StripePayoutRecord payout, BankMatchingOptions options)
+        BankStatementLine line, Models.Integrations.StripePayoutRecord payout, string companyCurrency,
+        BankMatchingOptions options)
     {
-        var lineCents = (long)Math.Round(line.Amount * 100m);
-        var diff = Math.Abs(payout.AmountCents - lineCents);
+        var currency = string.IsNullOrWhiteSpace(payout.Currency) ? companyCurrency : payout.Currency;
+        var lineUnits = Integrations.ArgoMoney.ToMinorUnits(line.Amount, currency);
+        var diff = Math.Abs(payout.AmountCents - lineUnits);
         var within = diff <= 1 || diff <= (long)Math.Round(Math.Abs(payout.AmountCents) * 0.01);
         var days = Math.Abs((payout.Date.Date - line.Date.Date).TotalDays);
         return within && days <= options.DateWindowDays ? (days, diff) : null;

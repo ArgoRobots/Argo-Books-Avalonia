@@ -22,6 +22,10 @@ public static class ArgoMoney
     /// <summary>Convert minor units to the amount a person would write down.</summary>
     public static decimal ToDecimal(long minorUnits, string? currency)
         => ZeroDecimal.Contains(currency ?? "USD") ? minorUnits : minorUnits / 100m;
+
+    /// <summary>Convert an amount to the currency's smallest unit, the form Stripe states amounts in.</summary>
+    public static long ToMinorUnits(decimal amount, string? currency)
+        => (long)Math.Round(ZeroDecimal.Contains(currency ?? "USD") ? amount : amount * 100m);
 }
 
 /// <summary>Import lifecycle reported alongside every object.</summary>

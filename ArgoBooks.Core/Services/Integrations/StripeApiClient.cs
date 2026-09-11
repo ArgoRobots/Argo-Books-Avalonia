@@ -6,8 +6,11 @@ namespace ArgoBooks.Core.Services.Integrations;
 /// <summary>Result of validating a pasted Stripe key.</summary>
 public record StripeValidationResult(bool Ok, string? AccountLabel, string? ErrorMessage);
 
-/// <summary>A Stripe payout (the net deposit that lands in the bank). DateUnix is the bank arrival date.</summary>
-public record StripePayoutSummary(string Id, long AmountCents, long DateUnix, string Status);
+/// <summary>
+/// A Stripe payout (the net deposit that lands in the bank). DateUnix is the bank arrival date.
+/// AmountCents is in the currency's smallest unit, which for JPY and the like is the whole unit.
+/// </summary>
+public record StripePayoutSummary(string Id, long AmountCents, long DateUnix, string Status, string? Currency = null);
 
 /// <summary>A charge's processing fee, in the balance transaction's (settlement) currency.</summary>
 public record StripeFee(long Cents, string? Currency);
@@ -103,7 +106,8 @@ public class StripeApiClient
                     // arrival_date is when the deposit lands in the bank (best for matching); fall back to created.
                     var dateUnix = PropNum(el, "arrival_date");
                     if (dateUnix == 0) dateUnix = PropNum(el, "created");
-                    results.Add(new StripePayoutSummary(id, PropNum(el, "amount"), dateUnix, PropStr(el, "status")));
+                    results.Add(new StripePayoutSummary(
+                        id, PropNum(el, "amount"), dateUnix, PropStr(el, "status"), NullableStr(el, "currency")));
                     lastId = id;
                     count++;
                 }
