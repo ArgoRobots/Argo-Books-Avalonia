@@ -339,7 +339,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         var revenueByCategory = GroupTransactionsByCategory(revenues);
         var expenseByCategory = GroupTransactionsByCategory(expenses);
 
-        var totalRevenue = revenueByCategory.Values.Sum();
+        // Refunds come off revenue on their own date, before tax (docs/Calculations.md §8).
+        var refunds = companyData.Payments
+            .Where(p => p.IsRefund && IsInDateRange(p.Date))
+            .Sum(p => ToDisplay(RefundAggregator.PreTaxPortionUSD(p, InvoicesById), p.Date));
+
+        var totalRevenue = revenueByCategory.Values.Sum() - refunds;
         var totalExpenses = expenseByCategory.Values.Sum();
         var netIncome = totalRevenue - totalExpenses;
 
@@ -362,10 +367,21 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             });
         }
 
+        if (refunds != 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Refunds",
+                Values = [FormatCurrencyWithSign(-refunds)],
+                IndentLevel = 1,
+                RowType = AccountingRowType.DataRow
+            });
+        }
+
         data.Rows.Add(new AccountingRow
         {
             Label = t.TotalRevenue,
-            Values = [FormatCurrency(totalRevenue)],
+            Values = [FormatCurrencyWithSign(totalRevenue)],
             RowType = AccountingRowType.SubtotalRow
         });
 
@@ -926,6 +942,19 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                 Debit = pmt.IsRefund ? 0 : amount,
                 Credit = pmt.IsRefund ? -amount : 0
             });
+
+            // A refund also comes off revenue on its own date, before tax (docs/Calculations.md §8).
+            if (pmt.IsRefund)
+            {
+                AddLedgerEntry(entries, t.RevenueCategory, new LedgerEntry
+                {
+                    Date = pmt.Date,
+                    Description = $"Refund to {customerName}",
+                    Reference = pmt.Id,
+                    Debit = ToDisplay(RefundAggregator.PreTaxPortionUSD(pmt, InvoicesById), pmt.Date),
+                    Credit = 0
+                });
+            }
         }
 
         // Render grouped entries

@@ -336,7 +336,7 @@ Bank Matching (`BankMatchingService`) is a non-financial reference layer: it imp
 | Outstanding Invoices stat | `EffectiveBalanceUSD` | — | **No** (by design) | n/a |
 | Overdue Invoices stat | `EffectiveBalanceUSD` | — | **No** (by design) | n/a |
 | Revenue page list | `EffectiveTotalUSD` | — | **No** (shows all) | n/a |
-| Income Statement / GL | `EffectiveSubtotalUSD` | `EffectiveSubtotalUSD` | Per-report setting | Per-report setting |
+| Income Statement / GL | `EffectiveSubtotalUSD` | `EffectiveSubtotalUSD` | No (accrual) | Pre-tax portion |
 | Sales by Product (Analytics tab) | `EffectiveTotalUSD` (allocated per line item) | — | Yes | Not applied (see §13) |
 | Sales by Product (Report) | `EffectiveTotalUSD` (allocated per line item) | — | No (accrual) | Not applied (see §13) |
 

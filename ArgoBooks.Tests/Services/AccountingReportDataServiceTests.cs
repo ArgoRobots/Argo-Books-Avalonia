@@ -406,10 +406,8 @@ public class AccountingReportDataServiceTests
         Assert.Contains("5", subtotals[1].Values[0]);   // tax paid = $5
     }
 
-    // docs/Calculations.md §8: $86.91 + $32.09 tax = $119, paid and then refunded in full. Tax owed
-    // drops by the $32.09 handed back.
-    [Fact]
-    public void GetReportData_TaxSummary_TakesOffTheTaxOnARefund()
+    // docs/Calculations.md §8: $86.91 + $32.09 tax = $119, paid Mar 1 and refunded in full Mar 10.
+    private static CompanyData RefundedSale()
     {
         var data = new CompanyData();
         data.Invoices.Add(new Invoice
@@ -433,11 +431,41 @@ public class AccountingReportDataServiceTests
             Id = "PAY-T2", InvoiceId = "INV-T", OriginalCurrency = "USD", Date = new DateTime(2024, 3, 10),
             Amount = -119m, AmountUSD = -119m, IsRefund = true
         });
+        return data;
+    }
 
-        var result = new AccountingReportDataService(data, CreateDefaultFilters())
+    // Tax owed drops by the $32.09 handed back.
+    [Fact]
+    public void GetReportData_TaxSummary_TakesOffTheTaxOnARefund()
+    {
+        var result = new AccountingReportDataService(RefundedSale(), CreateDefaultFilters())
             .GetReportData(AccountingReportType.TaxSummary);
 
         Assert.Equal(0m, AmountOf(result, "NET TAX LIABILITY"));
+    }
+
+    // The $86.91 of revenue comes back off on the refund's date, so nothing is left as income.
+    [Fact]
+    public void GetReportData_IncomeStatement_TakesOffARefundBeforeTax()
+    {
+        var result = new AccountingReportDataService(RefundedSale(), CreateDefaultFilters())
+            .GetReportData(AccountingReportType.IncomeStatement);
+
+        Assert.Equal(0m, AmountOf(result, "Total Revenue"));
+        Assert.Equal(0m, AmountOf(result, "NET INCOME"));
+    }
+
+    [Fact]
+    public void GetReportData_GeneralLedger_TakesARefundBackOffRevenueBeforeTax()
+    {
+        var result = new AccountingReportDataService(RefundedSale(), CreateDefaultFilters())
+            .GetReportData(AccountingReportType.GeneralLedger);
+
+        var revenueRows = result.Rows
+            .SkipWhile(r => r.Label != "REVENUE").Skip(1)
+            .TakeWhile(r => r.RowType == AccountingRowType.DataRow)
+            .ToList();
+        Assert.Equal(0m, ParseAmount(revenueRows[^1].Values[4]));
     }
 
     #endregion
