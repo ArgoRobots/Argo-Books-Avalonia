@@ -3427,8 +3427,39 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// </summary>
     private static string NameOrUnknown(string? name) => string.IsNullOrWhiteSpace(name) ? "Unknown" : name;
 
+    /// <summary>
+    /// The ids a blank-ID row must not be given: every one the company has and every one written
+    /// on the sheet, before or after that row. An id typed in by hand or given on a sheet does not
+    /// move the counter, so the counter can reach one that is already taken.
+    /// </summary>
+    private static HashSet<string> TakenIds(IEnumerable<string> existingIds, List<string> headers, List<List<object?>> rows, params string[] idColumns)
+    {
+        var taken = new HashSet<string>(existingIds.Where(id => !string.IsNullOrWhiteSpace(id)), StringComparer.OrdinalIgnoreCase);
+        foreach (var row in rows)
+        {
+            foreach (var column in idColumns)
+            {
+                var id = GetString(row, headers, column);
+                if (!string.IsNullOrWhiteSpace(id))
+                    taken.Add(id);
+            }
+        }
+        return taken;
+    }
+
+    /// <summary>Advances the counter past every id in <paramref name="taken"/> and claims the one it lands on.</summary>
+    private static string MintId(Func<int> advance, Func<int, string> format, HashSet<string> taken)
+    {
+        string id;
+        do id = format(advance());
+        while (!taken.Add(id));
+        return id;
+    }
+
     private void ImportCustomers(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Customers.Select(c => c.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -3441,10 +3472,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record
             // (or skipped as "already exists"). Mirrors ImportPurchases/ImportPayments/ImportSales.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Customer++;
-                id = $"CUS-{data.IdCounters.Customer:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.Customer, n => $"CUS-{n:D3}", takenIds);
 
             var existing = data.Customers.FirstOrDefault(c => c.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3490,6 +3518,9 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportInvoices(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        // Numbers too: a row with only a number is identified by it, and line items match on either.
+        var takenIds = TakenIds(data.Invoices.SelectMany(i => new[] { i.Id, i.InvoiceNumber }), headers, rows, "ID", "Invoice #");
+
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
@@ -3518,8 +3549,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Blank on both: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(invoiceId))
             {
-                data.IdCounters.Invoice++;
-                invoiceId = $"INV-{data.IdCounters.Invoice:D3}";
+                invoiceId = MintId(() => ++data.IdCounters.Invoice, n => $"INV-{n:D3}", takenIds);
                 invoiceNumber = invoiceId;
             }
 
@@ -3562,6 +3592,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportPurchases(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Expenses.Select(e => e.Id), headers, rows, "ID");
+
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
@@ -3585,10 +3617,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // single record (or skipped as "already exists") when the sheet has no identifier. Without
             // this, an ID-less sheet imports only its first row.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Expense++;
-                id = $"PUR-{DateTime.UtcNow:yyyy}-{data.IdCounters.Expense:D5}";
-            }
+                id = MintId(() => ++data.IdCounters.Expense, n => $"PUR-{DateTime.UtcNow:yyyy}-{n:D5}", takenIds);
 
             var existing = data.Expenses.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3673,6 +3702,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         foreach (var s in data.Suppliers)
             suppliersByName.TryAdd(s.Name, s);
         var categoriesById = data.Categories.ToDictionary(c => c.Id, c => c);
+        var takenIds = TakenIds(data.Products.Select(p => p.Id), headers, rows, "ID");
 
         foreach (var row in rows)
         {
@@ -3685,10 +3715,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Product++;
-                id = $"PRD-{data.IdCounters.Product:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.Product, n => $"PRD-{n:D3}", takenIds);
 
             // Check for existing product by ID first
             productsById.TryGetValue(id, out var existing);
@@ -3807,6 +3834,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportInventory(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Inventory.Select(i => i.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -3819,10 +3848,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.InventoryItem++;
-                id = $"INV-ITM-{data.IdCounters.InventoryItem:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.InventoryItem, n => $"INV-ITM-{n:D3}", takenIds);
 
             var existing = data.Inventory.FirstOrDefault(i => i.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3849,6 +3875,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportPayments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Payments.Select(p => p.Id), headers, rows, "ID");
+
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
@@ -3868,10 +3896,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // single record (or skipped as "already exists") when the sheet has no identifier. Without
             // this, an ID-less sheet imports only its first row. (Mirrors ImportPurchases.)
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Payment++;
-                id = $"PAY-{DateTime.UtcNow:yyyy}-{data.IdCounters.Payment:D5}";
-            }
+                id = MintId(() => ++data.IdCounters.Payment, n => $"PAY-{DateTime.UtcNow:yyyy}-{n:D5}", takenIds);
 
             var existing = data.Payments.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3899,6 +3924,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportSuppliers(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Suppliers.Select(s => s.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -3910,10 +3937,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Supplier++;
-                id = $"SUP-{data.IdCounters.Supplier:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.Supplier, n => $"SUP-{n:D3}", takenIds);
 
             var existing = data.Suppliers.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -3959,6 +3983,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
     /// </summary>
     private void ImportEmployees(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Employees.Select(e => e.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -3985,7 +4011,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // Numbered off the existing employees rather than an IdCounters entry, because that
             // is how the employee form mints them and there is no counter for them in the file.
             if (string.IsNullOrWhiteSpace(id))
-                id = NextEmployeeId(data);
+                id = NextEmployeeId(data, takenIds);
 
             var existing = data.Employees.FirstOrDefault(e => e.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4113,7 +4139,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         }
     }
 
-    private static string NextEmployeeId(CompanyData data)
+    private static string NextEmployeeId(CompanyData data, HashSet<string> taken)
     {
         int highest = 0;
 
@@ -4126,7 +4152,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             }
         }
 
-        return $"EMP-{highest + 1:D3}";
+        return MintId(() => ++highest, n => $"EMP-{n:D3}", taken);
     }
 
     /// <summary>
@@ -4147,6 +4173,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportSales(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Revenues.Select(r => r.Id), headers, rows, "ID");
+
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
@@ -4170,10 +4198,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             // single record (or skipped as "already exists") when the sheet has no identifier. Without
             // this, an ID-less sheet imports only its first row. (Mirrors ImportPurchases.)
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Revenue++;
-                id = $"REV-{DateTime.UtcNow:yyyy}-{data.IdCounters.Revenue:D5}";
-            }
+                id = MintId(() => ++data.IdCounters.Revenue, n => $"REV-{DateTime.UtcNow:yyyy}-{n:D5}", takenIds);
 
             var existing = data.Revenues.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4392,6 +4417,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportRentalInventory(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.RentalInventory.Select(r => r.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4404,10 +4431,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.RentalItem++;
-                id = $"RNT-ITM-{data.IdCounters.RentalItem:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.RentalItem, n => $"RNT-ITM-{n:D3}", takenIds);
 
             var existing = data.RentalInventory.FirstOrDefault(r => r.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4525,6 +4549,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportCategories(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Categories.Select(c => c.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4536,10 +4562,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Category++;
-                id = $"CAT-{data.IdCounters.Category:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.Category, n => $"CAT-{n:D3}", takenIds);
 
             var existing = data.Categories.FirstOrDefault(c => c.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4572,6 +4595,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportLocations(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Locations.Select(l => l.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4583,10 +4608,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Location++;
-                id = $"LOC-{data.IdCounters.Location:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.Location, n => $"LOC-{n:D3}", takenIds);
 
             var existing = data.Locations.FirstOrDefault(l => l.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4628,6 +4650,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportRecurringInvoices(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.RecurringInvoices.Select(r => r.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4642,10 +4666,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.RecurringInvoice++;
-                id = $"REC-INV-{data.IdCounters.RecurringInvoice:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.RecurringInvoice, n => $"REC-INV-{n:D3}", takenIds);
 
             var existing = data.RecurringInvoices.FirstOrDefault(r => r.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4671,6 +4692,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportStockAdjustments(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.StockAdjustments.Select(s => s.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4682,10 +4705,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.StockAdjustment++;
-                id = $"ADJ-{data.IdCounters.StockAdjustment:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.StockAdjustment, n => $"ADJ-{n:D3}", takenIds);
 
             var existing = data.StockAdjustments.FirstOrDefault(s => s.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4719,6 +4739,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportPurchaseOrders(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.PurchaseOrders.Select(p => p.Id), headers, rows, "ID");
+
         for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
         {
             var row = rows[rowIndex];
@@ -4734,10 +4756,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.PurchaseOrder++;
-                id = $"PO-{data.IdCounters.PurchaseOrder:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.PurchaseOrder, n => $"PO-{n:D3}", takenIds);
 
             var existing = data.PurchaseOrders.FirstOrDefault(p => p.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4884,6 +4903,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportReturns(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.Returns.Select(r => r.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4896,10 +4917,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.Return++;
-                id = $"RET-{data.IdCounters.Return:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.Return, n => $"RET-{n:D3}", takenIds);
 
             var existing = data.Returns.FirstOrDefault(r => r.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
@@ -4955,6 +4973,8 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
     private void ImportLostDamaged(CompanyData data, List<string> headers, List<List<object?>> rows, ImportOptions? options = null)
     {
+        var takenIds = TakenIds(data.LostDamaged.Select(ld => ld.Id), headers, rows, "ID");
+
         foreach (var row in rows)
         {
             var id = GetString(row, headers, "ID");
@@ -4968,10 +4988,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
 
             // Blank ID: mint a unique one so distinct rows aren't collapsed into a single record.
             if (string.IsNullOrWhiteSpace(id))
-            {
-                data.IdCounters.LostDamaged++;
-                id = $"LOST-{data.IdCounters.LostDamaged:D3}";
-            }
+                id = MintId(() => ++data.IdCounters.LostDamaged, n => $"LOST-{n:D3}", takenIds);
 
             var existing = data.LostDamaged.FirstOrDefault(ld => ld.Id == id);
             if (options?.SkipExistingRecords == true && existing != null) { options.SkippedCount++; continue; }
