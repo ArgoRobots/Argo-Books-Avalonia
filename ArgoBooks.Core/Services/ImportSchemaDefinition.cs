@@ -357,6 +357,8 @@ public static class ImportSchemaDefinition
                 new("Standard Hours Per Week", "decimal", "Contract hours in a normal week, for salaried staff only. Leave blank when unknown rather than entering zero", JsonName: "standardHoursPerWeek"),
                 new("Federal Claim Amount", "decimal", "Total claim amount from the federal TD1. Zero means none was filed", JsonName: "federalClaimAmount"),
                 new("Provincial Claim Amount", "decimal", "Total claim amount from the provincial or territorial TD1", JsonName: "provincialClaimAmount"),
+                new("Federal Claims Zero", "bool", "The federal TD1 claims nothing, as for a second job. Not the same as no TD1 on file", JsonName: "federalClaimIsZero"),
+                new("Provincial Claims Zero", "bool", "The provincial or territorial TD1 claims nothing. Not the same as no TD1 on file", JsonName: "provincialClaimIsZero"),
                 new("CPP Exempt", "bool", "Under 18, over 70, or already drawing a CPP retirement pension", JsonName: "isCppExempt"),
                 new("EI Exempt", "bool", "Typically an owner controlling more than 40% of the voting shares", JsonName: "isEiExempt"),
                 new("Dental Benefit", "enum:NotEligible,PayeeOnly,PayeeAndSpouse,PayeeAndChildren,PayeeSpouseAndChildren", "Box 45 on the T4: what dental coverage the employer offered", JsonName: "dentalBenefit"),

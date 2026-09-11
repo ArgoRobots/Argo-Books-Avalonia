@@ -4045,6 +4045,14 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             if (Has("Provincial Claim Amount"))
                 employee.ProvincialClaimAmount = GetDecimal(row, headers, "Provincial Claim Amount");
 
+            // Only from a sheet that has the column. An older export wrote 0 for "no TD1 filed",
+            // and reading that as "claims nothing" would take away the basic personal amount.
+            if (Has("Federal Claims Zero"))
+                employee.FederalClaimIsZero = ReadBool(row, headers, "Federal Claims Zero");
+
+            if (Has("Provincial Claims Zero"))
+                employee.ProvincialClaimIsZero = ReadBool(row, headers, "Provincial Claims Zero");
+
             if (Has("Ontario Dependants"))
                 employee.OntarioDependants = Math.Max(0, GetInt(row, headers, "Ontario Dependants"));
 

@@ -544,6 +544,26 @@ public class SpreadsheetRoundTripFidelityTests : IDisposable
         Assert.Equal("on the payroll", employee.Notes);
     }
 
+    // A TD1 claiming nothing is its own flag, because a zero amount has always meant no TD1 was
+    // filed. Lose the flag and the employee is given the basic personal amount again.
+    [Fact]
+    public async Task AnEmployeeWhoseTd1sClaimNothing_StillClaimsNothingAfterARoundTrip()
+    {
+        CompanyData source = Source();
+        Employee dana = Dana();
+        dana.FederalClaimAmount = 0m;
+        dana.ProvincialClaimAmount = 0m;
+        dana.FederalClaimIsZero = true;
+        dana.ProvincialClaimIsZero = true;
+        source.Employees.Add(dana);
+
+        CompanyData target = await RoundTripAsync(source);
+        Employee employee = Assert.Single(target.Employees);
+
+        Assert.True(employee.FederalClaimIsZero);
+        Assert.True(employee.ProvincialClaimIsZero);
+    }
+
     [Fact]
     public async Task AnEmployeeWithNoContractHours_ComesBackWithNoneRatherThanZero()
     {
