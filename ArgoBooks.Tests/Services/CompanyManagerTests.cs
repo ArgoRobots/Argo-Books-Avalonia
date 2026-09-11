@@ -6,6 +6,7 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
+using ArgoBooks.Core.Security;
 using ArgoBooks.Core.Services;
 using Xunit;
 
@@ -278,6 +279,46 @@ public class CompanyManagerTests : IDisposable
         {
             await _manager.CloseCompanyAsync();
             if (File.Exists(path)) File.Delete(path);
+        }
+    }
+
+    #endregion
+
+    #region ChangePassword Tests
+
+    /// <summary>
+    /// A password change rewrites the file without saving. It must not take along a change the
+    /// user hasn't saved, such as a removed logo, which quitting without saving would then not undo.
+    /// </summary>
+    [Fact]
+    public async Task ChangePassword_UnsavedLogoRemoval_IsNotWrittenToFile()
+    {
+        var footerService = new FooterService();
+        using var manager = new CompanyManager(
+            new FileService(new CompressionService(), footerService, new EncryptionService()),
+            new GlobalSettingsService(new MockPlatformService()),
+            footerService);
+        var path = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.argo");
+        var logo = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}.png");
+        try
+        {
+            await File.WriteAllBytesAsync(logo, [1, 2, 3]);
+            await manager.CreateCompanyAsync(path, "Acme");
+            await manager.SetCompanyLogoAsync(logo);
+            await manager.SaveCompanyAsync();
+
+            await manager.RemoveCompanyLogoAsync();
+            await manager.ChangePasswordAsync("CorrectHorse#1");
+            await manager.CloseCompanyAsync();
+
+            Assert.True(await manager.OpenCompanyAsync(path, "CorrectHorse#1"));
+            Assert.NotNull(manager.CurrentCompanyLogoPath);
+        }
+        finally
+        {
+            await manager.CloseCompanyAsync();
+            foreach (var p in new[] { path, logo })
+                if (File.Exists(p)) File.Delete(p);
         }
     }
 

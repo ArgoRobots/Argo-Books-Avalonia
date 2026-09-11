@@ -1569,17 +1569,25 @@ public class CompanyManager : IDisposable
             // Determine password to use
             var passwordToUse = string.IsNullOrEmpty(newPassword) ? null : newPassword;
 
-            // Re-encrypt the file with the new password WITHOUT saving data changes
-            // This only packages the existing temp directory content with the new encryption
-            // Release file lock before saving (save uses exclusive access), then re-acquire
-            ReleaseFileLock();
+            // Re-encrypt what is saved, not the working folder. That already holds changes the user
+            // hasn't saved, such as a deleted logo, which quitting without saving could then not undo.
+            var savedCopy = await _fileService.OpenCompanyAsync(CurrentFilePath, _currentPassword, cancellationToken);
             try
             {
-                await _fileService.SaveCompanyAsync(CurrentFilePath, _currentTempDirectory, passwordToUse, cancellationToken);
+                // Release file lock before saving (save uses exclusive access), then re-acquire
+                ReleaseFileLock();
+                try
+                {
+                    await _fileService.SaveCompanyAsync(CurrentFilePath, savedCopy, passwordToUse, cancellationToken);
+                }
+                finally
+                {
+                    AcquireFileLock(CurrentFilePath);
+                }
             }
             finally
             {
-                AcquireFileLock(CurrentFilePath);
+                await _fileService.CloseCompanyAsync(savedCopy);
             }
 
             _currentPassword = passwordToUse;
