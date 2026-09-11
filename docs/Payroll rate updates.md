@@ -150,10 +150,12 @@ that wording lives. If certification is ever obtained, that constant, the two PD
 ### The remitter type
 
 CRA assigns it from the average monthly withholding amount two years back, and it decides the
-deadline shown on the Pay runs page. It is a company setting, not a calculation, because a new
-employer has no history to read it from. The four schedules are in `RemitterType` and their due
-dates in `PayrollService.PeriodsStartingIn`; both come straight from CRA's table of remitter
-types and have not moved in years, but the table is worth a glance when the thresholds change.
+deadline shown on the Pay runs page, the pay run review and the dashboard's Next Remittance Due
+card, which all read it through `PayrollService`. It is a company setting, not a calculation,
+because a new employer has no history to read it from. The four schedules are in `RemitterType`
+and their due dates in `PayrollService.PeriodsStartingIn`; both come straight from CRA's table of
+remitter types and have not moved in years, but the table is worth a glance when the thresholds
+change.
 
 ### What does not need touching
 

@@ -278,29 +278,21 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
         SecondaryText = lowStock > 0 ? $"{lowStock} low stock" : $"{data.Inventory.Count} items";
     }
 
+    private void LoadPayrollRemittance(CompanyData data) =>
+        (Value, SecondaryText) = PayrollRemittanceCard(data, DateTime.Today);
+
     /// <summary>
-    /// What is owed to CRA for last month's payroll, and the date it is due.
-    ///
-    /// Last month rather than the current one, because a regular remitter pays for the month
-    /// just ended. Once that is paid the card rolls forward on its own, so there is nothing to
-    /// mark off. Everything but drafts counts: a voided run and its reversal are both included
-    /// and cancel to zero.
+    /// What is owed to CRA next, and the date it is due: the Pay runs page's own figure from the
+    /// same call, so the two cannot disagree. It follows the company's remitter type because an
+    /// accelerated remitter's deadline comes before the 15th and a quarterly one owes three
+    /// months at once. Once the deadline passes the card rolls on by itself.
     /// </summary>
-    private void LoadPayrollRemittance(CompanyData data)
+    internal static (string Value, string SecondaryText) PayrollRemittanceCard(CompanyData data, DateTime today)
     {
-        DateTime firstOfThisMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-        DateTime firstOfLastMonth = firstOfThisMonth.AddMonths(-1);
+        (decimal owing, DateTime due) = PayrollService.NextRemittance(
+            data.PayRuns, today, data.Settings.Company.RemitterType);
 
-        decimal owing = data.PayRuns
-            .Where(r => r.Status != Core.Models.Payroll.PayRunStatus.Draft
-                        && r.PayDate >= firstOfLastMonth
-                        && r.PayDate < firstOfThisMonth)
-            .Sum(r => r.TotalRemittance);
-
-        Value = CurrencyService.Format(owing);
-        SecondaryText = owing > 0
-            ? $"Due {firstOfThisMonth.AddDays(14):d MMM}"
-            : "Nothing owing";
+        return (CurrencyService.Format(owing), owing > 0 ? $"Due {due:d MMM}" : "Nothing owing");
     }
 
     private void LoadOverdueInvoices(CompanyData data)
