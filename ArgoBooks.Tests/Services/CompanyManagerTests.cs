@@ -385,6 +385,47 @@ public class CompanyManagerTests : IDisposable
 
     #endregion
 
+    #region Capitalization Rename Tests
+
+    /// <summary>
+    /// Changing only the capitalization of the name renames the same file. On Windows and macOS the
+    /// new name looks taken, because it finds that very file, so the rename was skipped and the
+    /// next open took the old name back from the file.
+    /// </summary>
+    [Fact]
+    public async Task Rename_CapitalizationOnly_RenamesFileAndKeepsName()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"argo-cm-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        var newPath = Path.Combine(dir, "Acme.argo");
+        var otherPath = Path.Combine(dir, "Beta.argo");
+        try
+        {
+            await File.WriteAllTextAsync(otherPath, "another company");
+            await _manager.CreateCompanyAsync(Path.Combine(dir, "acme.argo"), "acme");
+            _manager.CompanyData!.Settings.Company.Name = "Acme";
+
+            Assert.False(_manager.CanRenameTo(otherPath));
+            Assert.True(_manager.CanRenameTo(newPath));
+            _manager.SetPendingRename(newPath);
+            await _manager.SaveCompanyAsync();
+            await _manager.CloseCompanyAsync();
+
+            var names = Directory.GetFiles(dir).Select(Path.GetFileName).ToList();
+            Assert.Contains("Acme.argo", names);
+            Assert.DoesNotContain("acme.argo", names);
+            await _manager.OpenCompanyAsync(newPath);
+            Assert.Equal("Acme", _manager.CompanyData!.Settings.Company.Name);
+        }
+        finally
+        {
+            await _manager.CloseCompanyAsync();
+            Directory.Delete(dir, recursive: true);
+        }
+    }
+
+    #endregion
+
     #region ChangeCustomerId Cascade Tests
 
     [Fact]

@@ -378,6 +378,16 @@ public class CompanyManager : IDisposable
     public bool IsOpenInAnotherInstance(string filePath) => _instanceLock.IsHeldByAnotherInstance(filePath);
 
     /// <summary>
+    /// Whether the open company's file can be renamed to <paramref name="newPath"/>: a name it
+    /// doesn't already have, with no other file there. A change of capitalization alone counts as
+    /// free, since where file names ignore case the file found there is this one. Where they
+    /// don't and another file has that name, the move is refused and the save keeps the old name.
+    /// </summary>
+    public bool CanRenameTo(string newPath) =>
+        CurrentFilePath != null && CurrentFilePath != newPath
+        && (string.Equals(CurrentFilePath, newPath, StringComparison.OrdinalIgnoreCase) || !File.Exists(newPath));
+
+    /// <summary>
     /// Schedules a file rename to be applied on the next save.
     /// The rename is deferred so that closing without saving leaves the original file untouched.
     /// </summary>

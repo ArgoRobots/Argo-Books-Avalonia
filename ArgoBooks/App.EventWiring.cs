@@ -908,7 +908,7 @@ public partial class App
                         var newFileName = CompanyManager.ToCompanyFileName(args.CompanyName) + ".argo";
                         var newPath = Path.Combine(directory!, newFileName);
 
-                        if (currentPath != newPath && !File.Exists(newPath))
+                        if (CompanyManager.CanRenameTo(newPath))
                         {
                             CompanyManager.SetPendingRename(newPath);
                         }
