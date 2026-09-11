@@ -252,13 +252,7 @@ public partial class App
                     // Auto-sync online payments from the portal on company open
                     await AutoSyncPortalPaymentsAsync();
 
-                    // Start periodic portal sync every 5 minutes
-                    _portalSyncTimer?.Dispose();
-                    _portalSyncTimer = new Timer(
-                        state => { _ = AutoSyncPortalPaymentsAsync(); },
-                        null,
-                        TimeSpan.FromMinutes(5),
-                        TimeSpan.FromMinutes(5));
+                    ApplyPortalSyncInterval();
                 }
                 catch (Exception ex)
                 {
@@ -272,8 +266,7 @@ public partial class App
             // Clear the portal API key so a new company starts fresh
             PortalSettings.DeactivateApiKey();
 
-            _portalSyncTimer?.Dispose();
-            _portalSyncTimer = null;
+            StopPortalSyncTimer();
 
             _mainWindowViewModel.CloseCompany();
             _appShellViewModel.SetCompanyInfo(null);
@@ -930,6 +923,7 @@ public partial class App
                     var newBusinessType = args.BusinessType;
                     var newIndustry = args.Industry;
                     var newPhone = args.Phone;
+                    var newEmail = args.Email;
                     var newCountry = args.Country;
                     var newCity = args.City;
                     var newAddress = args.Address;
@@ -981,6 +975,7 @@ public partial class App
                             settings.Company.BusinessType = newBusinessType;
                             settings.Company.Industry = newIndustry;
                             settings.Company.Phone = newPhone;
+                            settings.Company.Email = newEmail;
                             settings.Company.Country = newCountry;
                             settings.Company.City = newCity;
                             settings.Company.Address = newAddress;
@@ -1047,12 +1042,14 @@ public partial class App
         {
             CompanyManager.CompanyOpened += (_, args) =>
             {
+                settings.CloseForCompanyChange();
                 settings.HasPassword = args.IsEncrypted;
                 settings.IsSampleCompany = CompanyManager.IsSampleCompany;
             };
 
             CompanyManager.CompanyClosed += (_, _) =>
             {
+                settings.CloseForCompanyChange();
                 settings.HasPassword = false;
                 settings.IsSampleCompany = false;
             };
@@ -1098,6 +1095,7 @@ public partial class App
                 // The file had no password until now, so any enrolment still on disk belongs
                 // to an older password. Start clean and let the user re-enable biometrics.
                 SyncBiometricEnrolment(args.NewPassword, keepEnrolment: false);
+                ConfigureAutoLock();
 
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been set.".Translate(), NotificationType.Success);
             }
@@ -1157,6 +1155,7 @@ public partial class App
                 // With no password there is nothing for biometrics to unlock, so drop the
                 // stored credential rather than leaving the old password on disk.
                 SyncBiometricEnrolment(null, keepEnrolment: false);
+                ConfigureAutoLock();
 
                 settings.OnPasswordRemoved();
                 _appShellViewModel.AddNotification("Success".Translate(), "Password has been removed.".Translate(), NotificationType.Success);
@@ -1754,12 +1753,7 @@ public partial class App
             if (companySettings != null)
             {
                 var security = companySettings.Security;
-                // The timeout is authoritative: "Never" (0) is off, any positive value is on, and it
-                // requires a password. The separate AutoLockEnabled flag defaults to false while the
-                // default AutoLockMinutes is 5, so trusting it left auto-lock disabled even though the
-                // settings dropdown showed "5 minutes". Derive enablement from the timeout instead.
-                var autoLockOn = security.AutoLockMinutes > 0 && CompanyManager.IsEncrypted;
-                _idleDetectionService.Configure(autoLockOn, security.AutoLockMinutes);
+                ConfigureAutoLock();
 
                 // Sync the UI with company settings
                 var timeoutString = security.AutoLockMinutes switch
@@ -1787,6 +1781,23 @@ public partial class App
             desktop.MainWindow.KeyDown += (_, _) => _idleDetectionService.RecordActivity();
             desktop.MainWindow.PointerPressed += (_, _) => _idleDetectionService.RecordActivity();
         }
+    }
+
+    /// <summary>
+    /// Arms or disarms auto-lock for the open company. Called on open and whenever a password is
+    /// added or removed, since whether the company has one decides it.
+    /// </summary>
+    private static void ConfigureAutoLock()
+    {
+        var security = CompanyManager?.CurrentCompanySettings?.Security;
+        if (_idleDetectionService == null || security == null) return;
+
+        // The timeout is authoritative: "Never" (0) is off, any positive value is on, and it
+        // requires a password. The separate AutoLockEnabled flag defaults to false while the
+        // default AutoLockMinutes is 5, so trusting it left auto-lock disabled even though the
+        // settings dropdown showed "5 minutes". Derive enablement from the timeout instead.
+        var autoLockOn = security.AutoLockMinutes > 0 && CompanyManager!.IsEncrypted;
+        _idleDetectionService.Configure(autoLockOn, security.AutoLockMinutes);
     }
 
     /// <summary>

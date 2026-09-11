@@ -799,11 +799,14 @@ public partial class SettingsModalViewModel : ViewModelBase
         var portalService = App.PaymentPortalService;
         if (portalService == null || !PortalSettings.IsConfigured) return;
 
+        var companyData = App.CompanyManager?.CompanyData;
+
         try
         {
             var result = await portalService.UpdatePreferencesAsync(
                 PortalSendPaymentReminders, PortalEmailOwnerOnPayment);
-            if (result.Success && result.Preferences != null)
+            if (result.Success && result.Preferences != null
+                && ReferenceEquals(App.CompanyManager?.CompanyData, companyData))
             {
                 ApplyPortalPreferences(result.Preferences);
                 SavePortalSettings();
@@ -1416,7 +1419,7 @@ public partial class SettingsModalViewModel : ViewModelBase
         _ = RefreshProviderStatusAsync();
     }
 
-    private async Task RefreshProviderStatusAsync()
+    internal async Task RefreshProviderStatusAsync()
     {
         var portalService = App.PaymentPortalService;
         if (portalService == null) return;
@@ -1437,9 +1440,15 @@ public partial class SettingsModalViewModel : ViewModelBase
                 "PortalKeyNotActivated");
         }
 
+        // The reply can take up to the client timeout, and describes the company whose key asked.
+        // If another company has been opened since, it must not be written into that one.
+        var companyData = App.CompanyManager?.CompanyData;
+        bool CompanyChanged() => !ReferenceEquals(App.CompanyManager?.CompanyData, companyData);
+
         try
         {
             var status = await portalService.CheckStatusAsync();
+            if (CompanyChanged()) return;
             if (status.Success && status.ConnectedProviders != null)
             {
                 // Connection is real once the server has a merchant/account ID stored;
@@ -1482,6 +1491,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                 // Mirror the authoritative owner email onto this device so a
                 // server-side change (e.g. the revert link) is reflected here.
                 await ReconcilePortalEmailFromStatusAsync(status);
+                if (CompanyChanged()) return;
 
                 if (!string.IsNullOrEmpty(status.Company?.Name))
                 {
@@ -1503,6 +1513,11 @@ public partial class SettingsModalViewModel : ViewModelBase
         var portalService = App.PaymentPortalService;
         if (portalService == null) return;
 
+        // Stop once another company is open: the Connect was for this one, and its replies
+        // must not be written into the other.
+        var companyData = App.CompanyManager?.CompanyData;
+        bool CompanyChanged() => !ReferenceEquals(App.CompanyManager?.CompanyData, companyData);
+
         // Poll every 3 seconds for up to 5 minutes
         const int intervalMs = 3000;
         const int maxAttempts = 100;
@@ -1510,10 +1525,12 @@ public partial class SettingsModalViewModel : ViewModelBase
         for (var i = 0; i < maxAttempts; i++)
         {
             await Task.Delay(intervalMs);
+            if (CompanyChanged()) return;
 
             try
             {
                 var status = await portalService.CheckStatusAsync();
+                if (CompanyChanged()) return;
                 if (status.Success && status.ConnectedProviders != null)
                 {
                     var connected = provider switch
@@ -1532,6 +1549,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                         // Dispatch property updates to the UI thread to ensure bindings refresh
                         Dispatcher.UIThread.Post(() =>
                         {
+                            if (CompanyChanged()) return;
                             StripeConnected = status.ConnectedProviders.StripeConnected;
                             StripeEmail = status.ConnectedProviders.StripeEmail;
                             PaypalConnected = status.ConnectedProviders.PaypalConnected;
@@ -2978,6 +2996,31 @@ public partial class SettingsModalViewModel : ViewModelBase
 
     #region Commands
 
+    // The company the fields were loaded from. Save must not write them into any other.
+    private CompanyData? _loadedCompanyData;
+
+    /// <summary>
+    /// Closes the modal without saving when its company closes or another one opens. It stays
+    /// open through auto-lock and through a file opened from Finder, still showing the fields
+    /// of the company it was opened on.
+    /// </summary>
+    public void CloseForCompanyChange()
+    {
+        var pendingNameUpdate = _portalCompanyNameCts;
+        if (pendingNameUpdate != null)
+        {
+            pendingNameUpdate.Cancel();
+            pendingNameUpdate.Dispose();
+            _portalCompanyNameCts = null;
+        }
+
+        if (!IsOpen) return;
+
+        ClosePasswordModalInternal();
+        RevertChanges();
+        IsOpen = false;
+    }
+
     /// <summary>
     /// Opens the settings modal.
     /// </summary>
@@ -2998,6 +3041,7 @@ public partial class SettingsModalViewModel : ViewModelBase
     {
         // Reset portal authentication, require re-auth each time settings opens
         _isPortalAuthenticated = false;
+        _loadedCompanyData = App.CompanyManager?.CompanyData;
 
         // Sync with current ThemeService values
         SelectedTheme = ThemeService.Instance.CurrentThemeName;
@@ -3200,6 +3244,12 @@ public partial class SettingsModalViewModel : ViewModelBase
     [RelayCommand]
     private async Task SaveAsync()
     {
+        if (!ReferenceEquals(App.CompanyManager?.CompanyData, _loadedCompanyData))
+        {
+            CloseForCompanyChange();
+            return;
+        }
+
         // Block the save and surface the errors if any bank import rule is incomplete.
         if (!ValidateBankRules())
         {
@@ -3270,8 +3320,9 @@ public partial class SettingsModalViewModel : ViewModelBase
                 settings.BankCategoryRules.Add(row.Rule);
             }
 
-            // Restart the timer with new settings
+            // Restart the timers with new settings
             App.HeaderViewModel?.RestartUnsavedChangesReminderTimer();
+            App.ApplyPortalSyncInterval();
 
             // Persist ONLY the settings file (appSettings.json) to the .argo.
             // SaveSettingsOnlyAsync writes just the settings, leaving the other
@@ -3871,6 +3922,9 @@ public partial class SettingsModalViewModel : ViewModelBase
     /// </summary>
     private async Task ReconcileOwnerEmailAsync(CompanyData companyData, string serverEmail)
     {
+        // The save below writes whichever company is open, so skip it once that is another one.
+        if (!ReferenceEquals(App.CompanyManager?.CompanyData, companyData)) return;
+
         companyData.Settings.Company.Email = serverEmail;
         CompanyEmail = serverEmail;
         PendingOwnerEmail = string.Empty;

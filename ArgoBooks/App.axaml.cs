@@ -58,6 +58,7 @@ public partial class App : Application
     /// can drive ViewModels that read <c>App.CompanyManager.CompanyData</c>. Not used in production.
     /// </summary>
     internal static void SetCompanyManagerForTesting(CompanyManager? manager) => CompanyManager = manager;
+    internal static void SetPaymentPortalServiceForTesting(PaymentPortalService? service) => PaymentPortalService = service;
 
     /// <summary>
     /// Gets the global settings service instance.
@@ -421,6 +422,38 @@ public partial class App : Application
 
     private static int _isAutoSyncing;
     private static Timer? _portalSyncTimer;
+    private static int _portalSyncTimerMinutes;
+
+    /// <summary>
+    /// Runs the periodic portal sync at the open company's chosen interval, or not at all for
+    /// "Manual" (0). A timer already running at that interval is left alone, so saving other
+    /// settings doesn't push the next sync back.
+    /// </summary>
+    internal static void ApplyPortalSyncInterval()
+    {
+        var minutes = CompanyManager?.IsCompanyOpen == true
+            ? CompanyManager.CompanyData?.Settings.PaymentPortal.AutoSyncIntervalMinutes ?? 0
+            : 0;
+        if (_portalSyncTimer != null && minutes == _portalSyncTimerMinutes) return;
+
+        StopPortalSyncTimer();
+        if (minutes <= 0) return;
+
+        // Run the sync on the UI thread, not the timer's: it adds payments, bumps the payment id
+        // counter, updates invoices and saves, all of which the UI thread does too.
+        var interval = TimeSpan.FromMinutes(minutes);
+        _portalSyncTimer = new Timer(
+            state => Avalonia.Threading.Dispatcher.UIThread.Post(() => { _ = AutoSyncPortalPaymentsAsync(); }),
+            null, interval, interval);
+        _portalSyncTimerMinutes = minutes;
+    }
+
+    private static void StopPortalSyncTimer()
+    {
+        _portalSyncTimer?.Dispose();
+        _portalSyncTimer = null;
+        _portalSyncTimerMinutes = 0;
+    }
 
     /// <summary>
     /// Auto-syncs online payments from the portal so invoice statuses stay up-to-date.

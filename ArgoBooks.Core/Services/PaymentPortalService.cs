@@ -43,6 +43,11 @@ public class PaymentPortalService : IDisposable
         };
     }
 
+    internal PaymentPortalService(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
     #region Portal Status
 
     /// <summary>
