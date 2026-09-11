@@ -1341,11 +1341,12 @@ public class ChartLoaderService
             return (series, dates);
         }
 
-        // Filter to only include days with data (at least one non-zero value)
+        // Filter to only include days with data (at least one non-zero value). A refund-only day is
+        // negative and must stay, or the refund never comes off the chart.
         var datesWithData = new HashSet<DateTime>();
         foreach (var dp in dailyRevenue.DataPoints.Concat(dailyExpense.DataPoints))
         {
-            if (dp.Date.HasValue && dp.Value > 0)
+            if (dp.Date.HasValue && dp.Value != 0)
                 datesWithData.Add(dp.Date.Value);
         }
 

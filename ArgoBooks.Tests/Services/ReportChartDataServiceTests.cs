@@ -275,5 +275,28 @@ public class ReportChartDataServiceTests
         Assert.Equal(5d, SumOf(service.GetExpenseVsRevenueTax(), "Revenue Tax"));
     }
 
+    // $500 paid Jan 5 and refunded Jan 20 nets to nothing, as it does on the Revenue card. The daily
+    // series feeds the dashboard and Analytics chart and the non-USD report path.
+    [Fact]
+    public void RevenueVsExpensesDaily_TakesOffRefundsOnTheirOwnDay()
+    {
+        var data = new CompanyData();
+        data.Revenues.Add(new Revenue
+        {
+            Id = "R1", InvoiceId = "INV-1", Date = new DateTime(2024, 1, 5), OriginalCurrency = "USD",
+            Subtotal = 500m, Total = 500m, TotalUSD = 500m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-2", InvoiceId = "INV-1", Date = new DateTime(2024, 1, 20), OriginalCurrency = "USD",
+            Amount = -500m, AmountUSD = -500m, IsRefund = true
+        });
+        var filters = new ReportFilters { StartDate = new DateTime(2024, 1, 1), EndDate = new DateTime(2024, 1, 31) };
+        var service = new ReportChartDataService(data, filters);
+
+        Assert.Equal(0d, SumOf(service.GetRevenueVsExpensesDaily(), "Revenue"));
+        Assert.Equal(0d, SumOf(service.GetRevenueVsExpensesConverted((usd, _) => usd), "Revenue"));
+    }
+
     #endregion
 }

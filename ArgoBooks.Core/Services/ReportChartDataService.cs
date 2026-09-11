@@ -409,6 +409,15 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .Where(RevenueAggregator.IsCollected)
             .GroupBy(s => s.Date.Date)
             .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveTotalUSD));
+        // Subtract refunds cash-basis on the refund's day, as GetRevenueVsExpenses does.
+        if (companyData.Payments != null)
+        {
+            foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
+                         companyData.Payments, startDate, endDate))
+            {
+                salesByDay[day] = salesByDay.GetValueOrDefault(day, 0) - (double)refunded;
+            }
+        }
 
         var purchasesByDay = companyData.Expenses
             .Where(p => p.Date >= startDate && p.Date <= endDate)
