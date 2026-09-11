@@ -269,7 +269,7 @@ public class SpreadsheetImportService
                 }
 
                 // Update ID counters based on imported data
-                UpdateIdCounters(companyData);
+                FinishImport(companyData);
 
                 companyData.MarkAsModified();
             }, cancellationToken);
@@ -330,7 +330,7 @@ public class SpreadsheetImportService
                     ImportWorksheetWithMapping(worksheets[i], companyData, analysis, result, options);
                 }
 
-                UpdateIdCounters(companyData);
+                FinishImport(companyData);
                 companyData.MarkAsModified();
             }, cancellationToken);
         }
@@ -416,7 +416,7 @@ public class SpreadsheetImportService
                     result.Warnings.Add("No sheet analysis found for CSV file.");
                 }
 
-                UpdateIdCounters(companyData);
+                FinishImport(companyData);
                 companyData.MarkAsModified();
             }, cancellationToken);
         }
@@ -743,7 +743,7 @@ public class SpreadsheetImportService
         // Surface any reference-resolution warnings (unmatched/ambiguous names) for reporting.
         sheetResult.Warnings.AddRange(refContext.Warnings);
 
-        UpdateIdCounters(companyData);
+        FinishImport(companyData);
         companyData.MarkAsModified();
 
         return sheetResult;
@@ -1349,6 +1349,27 @@ public class SpreadsheetImportService
         });
     }
 
+    /// <summary>Paid invoices brought in by the current import, given their revenue by <see cref="FinishImport"/>.</summary>
+    private readonly List<Invoice> _invoicesAwaitingRevenue = [];
+
+    /// <summary>
+    /// Closes out an import: brings the id counters up to date, then gives each paid invoice it
+    /// brought in a revenue unless one came in with it. Held until every sheet is in because the
+    /// Revenue sheet can come after the Invoices sheet, and so the new revenue is numbered past
+    /// every imported id rather than from a counter that has not caught up with them.
+    /// </summary>
+    private void FinishImport(CompanyData data)
+    {
+        UpdateIdCounters(data);
+
+        foreach (var awaiting in _invoicesAwaitingRevenue)
+        {
+            if (data.Invoices.Contains(awaiting))
+                AddAutoRevenueForInvoice(data, awaiting);
+        }
+        _invoicesAwaitingRevenue.Clear();
+    }
+
     /// <summary>
     /// Creates the linked Revenue for a paid/partially-paid imported invoice (so it shows on the
     /// dashboard and analytics). When the invoice's USD value is not yet known (future-dated, or a
@@ -1357,7 +1378,8 @@ public class SpreadsheetImportService
     /// </summary>
     private static void AddAutoRevenueForInvoice(CompanyData data, Invoice invoice)
     {
-        if (invoice.AmountPaid <= 0 || data.Revenues.Any(r => r.InvoiceId == invoice.Id))
+        // A kept deposit is linked to the invoice too, but it is not the invoice's revenue.
+        if (invoice.AmountPaid <= 0 || data.Revenues.Any(r => r.InvoiceId == invoice.Id && !r.IsKeptDeposit))
             return;
 
         data.IdCounters.Revenue++;
@@ -1645,10 +1667,7 @@ public class SpreadsheetImportService
                     if (existing != null) data.Invoices.Remove(existing);
                     data.Invoices.Add(invoice);
 
-                    // Create a linked Revenue entry for paid/partially paid invoices so they appear
-                    // on the dashboard and analytics pages (pending when the invoice's USD value is
-                    // not yet known).
-                    AddAutoRevenueForInvoice(data, invoice);
+                    _invoicesAwaitingRevenue.Add(invoice);
 
                     return existing != null ? ImportEntityResult.Updated : ImportEntityResult.Inserted;
                 }
@@ -3414,9 +3433,7 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             else if (options != null)
                 options.UpdatedCount++;
 
-            // Create a linked Revenue entry for paid/partially paid invoices so they appear on the
-            // dashboard and analytics pages (pending when the invoice's USD value is not yet known).
-            AddAutoRevenueForInvoice(data, invoice);
+            _invoicesAwaitingRevenue.Add(invoice);
         }
     }
 
@@ -4005,6 +4022,11 @@ Respond with ONLY a JSON array, one entry per product in the same order:
             revenue.ReferenceNumber = GetString(row, headers, "Reference");
             revenue.PaymentStatus = NormalizePaymentStatus(GetString(row, headers, "Payment Status"));
             revenue.ShippingCost = GetDecimal(row, headers, "Shipping");
+
+            if (headers.Contains("Invoice ID"))
+                revenue.InvoiceId = GetNullableString(row, headers, "Invoice ID");
+            if (headers.Contains("Kept Deposit"))
+                revenue.IsKeptDeposit = ReadBool(row, headers, "Kept Deposit");
 
             // Per-row currency detected from the amount cells, else the company currency.
             ApplyTransactionCurrency(revenue, rowIndex, data);

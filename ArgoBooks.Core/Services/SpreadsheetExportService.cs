@@ -557,7 +557,9 @@ public class SpreadsheetExportService
         var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
 
         // The same four columns the expenses sheet was missing, for the same reasons.
-        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Status", "Currency" };
+        // Invoice ID ties a revenue to the invoice it was collected on. Without it the invoice's
+        // revenue came back as a stray sale and the importer made a second one for the invoice.
+        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Invoice ID", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Status", "Kept Deposit", "Currency" };
         var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {
@@ -565,6 +567,7 @@ public class SpreadsheetExportService
             s.Date,
             s.CustomerId ?? "",
             Named(customerNames, s.CustomerId),
+            s.InvoiceId ?? "",
             s.Description,
             s.Quantity,
             s.UnitPrice,
@@ -573,6 +576,7 @@ public class SpreadsheetExportService
             s.Total,
             s.ReferenceNumber,
             s.PaymentStatus.ToString(),
+            s.IsKeptDeposit,
             s.OriginalCurrency
         }).ToList();
         return (headers, rows);

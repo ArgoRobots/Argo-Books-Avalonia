@@ -109,9 +109,11 @@ public class SpreadsheetRoundTripFidelityTests : IDisposable
         return data;
     }
 
-    private async Task<CompanyData> RoundTripAsync(CompanyData source)
+    private Task<CompanyData> RoundTripAsync(CompanyData source) => RoundTripAsync(source, AllSheets);
+
+    private async Task<CompanyData> RoundTripAsync(CompanyData source, string[] sheets)
     {
-        await new SpreadsheetExportService().ExportToExcelAsync(_path, source, [.. AllSheets], null, null);
+        await new SpreadsheetExportService().ExportToExcelAsync(_path, source, [.. sheets], null, null);
 
         var target = new CompanyData();
         target.Settings.Localization.Currency = "USD";
@@ -204,6 +206,125 @@ public class SpreadsheetRoundTripFidelityTests : IDisposable
         Invoice invoice = Assert.Single(target.Invoices);
         Assert.Equal("INV-9", invoice.Id);
         Assert.Equal("INV-9", invoice.InvoiceNumber);
+    }
+
+    #endregion
+
+    #region Revenue from invoices
+
+    private static CompanyData PaidInvoiceSource(bool withLinkedRevenue)
+    {
+        var data = new CompanyData();
+        data.Settings.Localization.Currency = "USD";
+        data.Customers.Add(new Customer { Id = "CUS-003", Name = "Jane Doe" });
+        data.Invoices.Add(new Invoice
+        {
+            Id = "INV-2025-00001",
+            InvoiceNumber = "#INV-2025-00001",
+            CustomerId = "CUS-003",
+            IssueDate = new DateTime(2025, 5, 4),
+            Subtotal = 300m,
+            TaxAmount = 15m,
+            Total = 315m,
+            AmountPaid = 315m,
+            Balance = 0m,
+            Status = Core.Enums.InvoiceStatus.Paid,
+        });
+
+        if (withLinkedRevenue)
+        {
+            data.Revenues.Add(new Revenue
+            {
+                Id = "REV-2025-00001",
+                Date = new DateTime(2025, 5, 4),
+                CustomerId = "CUS-003",
+                Description = "Widget",
+                InvoiceId = "INV-2025-00001",
+                Quantity = 1m,
+                UnitPrice = 300m,
+                TaxAmount = 15m,
+                Total = 315m,
+            });
+        }
+
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-2025-00002",
+            Date = new DateTime(2025, 5, 6),
+            CustomerId = "CUS-003",
+            Description = "Consulting",
+            Quantity = 1m,
+            UnitPrice = 200m,
+            Total = 200m,
+        });
+
+        return data;
+    }
+
+    // The export modal writes Revenue before Invoices; the other order is how AllSheets lists them.
+    public static TheoryData<string[]> SheetOrders => new()
+    {
+        new[] { "Customers", "Revenue", "Invoices", "Payments" },
+        new[] { "Customers", "Invoices", "Payments", "Revenue" },
+    };
+
+    [Theory]
+    [MemberData(nameof(SheetOrders))]
+    public async Task APaidInvoicesRevenue_ComesBackLinkedAndIsNotCountedTwice(string[] sheets)
+    {
+        // The Revenue sheet had no Invoice ID column, so the invoice's own revenue came back as a
+        // stray sale and the importer then created a second revenue for the same paid invoice.
+        CompanyData target = await RoundTripAsync(PaidInvoiceSource(withLinkedRevenue: true), sheets);
+
+        Assert.Equal(["REV-2025-00001", "REV-2025-00002"], target.Revenues.Select(r => r.Id).Order().ToArray());
+        Revenue linked = Assert.Single(target.Revenues, r => r.InvoiceId == "INV-2025-00001");
+        Assert.Equal("REV-2025-00001", linked.Id);
+        Assert.Equal(515m, target.Revenues.Sum(r => r.Total));
+    }
+
+    [Fact]
+    public async Task AKeptDeposit_StaysAKeptDeposit()
+    {
+        CompanyData source = PaidInvoiceSource(withLinkedRevenue: true);
+        source.Revenues.Add(new Revenue
+        {
+            Id = "REV-2025-00003",
+            Date = new DateTime(2025, 6, 1),
+            CustomerId = "CUS-003",
+            Description = "Kept security deposit",
+            InvoiceId = "INV-2025-00001",
+            IsKeptDeposit = true,
+            Quantity = 1m,
+            UnitPrice = 50m,
+            Total = 50m,
+        });
+
+        CompanyData target = await RoundTripAsync(source);
+
+        Revenue deposit = target.Revenues.Single(r => r.Id == "REV-2025-00003");
+        Assert.True(deposit.IsKeptDeposit);
+        Assert.Equal("INV-2025-00001", deposit.InvoiceId);
+        Assert.Single(target.Revenues, r => r.InvoiceId == "INV-2025-00001" && !r.IsKeptDeposit);
+    }
+
+    [Fact]
+    public async Task ARevenueCreatedForAPaidInvoice_NeverTakesAnImportedRevenuesId()
+    {
+        // The id counter is only brought up to date after every sheet is in, so the revenue made
+        // for a paid invoice was numbered from a stale counter and landed on an imported sale,
+        // which then overwrote it and inherited the invoice.
+        CompanyData source = PaidInvoiceSource(withLinkedRevenue: false);
+        string clash = $"REV-{DateTime.UtcNow:yyyy}-00001";
+        source.Revenues.Single().Id = clash;
+
+        CompanyData target = await RoundTripAsync(source);
+
+        Assert.Equal(2, target.Revenues.Count);
+        Assert.Equal(2, target.Revenues.Select(r => r.Id).Distinct().Count());
+        Revenue sale = target.Revenues.Single(r => r.Id == clash);
+        Assert.Null(sale.InvoiceId);
+        Assert.Equal(200m, sale.Total);
+        Assert.Equal(315m, Assert.Single(target.Revenues, r => r.InvoiceId == "INV-2025-00001").Total);
     }
 
     #endregion
