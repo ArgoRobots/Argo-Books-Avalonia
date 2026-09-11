@@ -2,6 +2,7 @@ using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.ViewModels;
 using Xunit;
 
@@ -85,6 +86,58 @@ public class RentalRecordsModalsViewModelTests : ModalViewModelTestBase
 
         vm.ConfirmReturn();
         Assert.Equal(100m, record.TotalCost);
+    }
+
+    private void SeedDepositInvoice(RentalRecord record)
+    {
+        Company.Invoices.Add(new Invoice
+        {
+            Id = "INV-1", InvoiceNumber = "INV-1", CustomerId = "CUST-1", OriginalCurrency = "USD",
+            IssueDate = DateTime.Today.AddDays(-5), Subtotal = 50m, SecurityDeposit = 20m, Total = 70m, TotalUSD = 70m,
+            AmountPaid = 70m, Status = InvoiceStatus.Paid
+        });
+        record.InvoiceIds.Add("INV-1");
+    }
+
+    private static void Return(RentalRecordsModalsViewModel vm, bool refundDeposit)
+    {
+        vm.OpenReturnModal(new RentalRecordDisplayItem
+        {
+            Id = "RNT-1", IsActive = true, ItemName = "Widget", CustomerName = "Bob"
+        });
+        vm.ReturnRefundDeposit = refundDeposit;
+        vm.ConfirmReturn();
+    }
+
+    // A deposit the business keeps is earned, so it becomes revenue on the day the rental comes back.
+    [Fact]
+    public void ReturnRental_KeepingTheDeposit_MakesItRevenue()
+    {
+        SeedDepositInvoice(SeedActiveRental());
+        var vm = new RentalRecordsModalsViewModel();
+
+        Return(vm, refundDeposit: false);
+
+        var kept = Assert.Single(Company.Revenues);
+        Assert.True(kept.IsKeptDeposit);
+        Assert.Equal((20m, RevenuePaymentStatus.Paid, DateTime.Today, "INV-1"),
+            (kept.Total, kept.PaymentStatus, kept.Date.Date, kept.InvoiceId));
+
+        Undo();
+        Assert.Empty(Company.Revenues);
+
+        Redo();
+        Assert.Same(kept, Assert.Single(Company.Revenues));
+    }
+
+    [Fact]
+    public void ReturnRental_GivingTheDepositBack_AddsNoRevenue()
+    {
+        SeedDepositInvoice(SeedActiveRental());
+
+        Return(new RentalRecordsModalsViewModel(), refundDeposit: true);
+
+        Assert.Empty(Company.Revenues);
     }
 
     private InventoryItem SeedRentableStock(int inStock)

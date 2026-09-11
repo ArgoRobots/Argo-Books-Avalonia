@@ -721,7 +721,7 @@ public class CompanyManager : IDisposable
     /// Current version of the invoice-totals healing logic. Bump this when the
     /// healing rules change so the pass re-runs once on the next open.
     /// </summary>
-    public const string InvoiceTotalsHealVersion = "2";
+    public const string InvoiceTotalsHealVersion = "3";
 
     /// <summary>
     /// One-time recalc that heals any historic drift between Invoice totals and
@@ -783,9 +783,66 @@ public class CompanyManager : IDisposable
             }
         }
 
+        // Version 3: a security deposit is held, not earned (Calculations.md §4). Revenue created from
+        // an invoice counted it, so it comes out, and past refunds record how much of them gave the
+        // deposit back, taken from the deposit first as a refund made in the provider's dashboard is.
+        foreach (var invoice in data.Invoices.Where(i => i.SecurityDeposit > 0))
+            healed |= TakeDepositOutOfRevenue(data, invoice) | SplitDepositOutOfRefunds(data, invoice);
+
         data.Settings.InvoiceTotalsHealedVersion = InvoiceTotalsHealVersion;
         if (healed)
             data.ChangesMade = true;
+    }
+
+    private static bool TakeDepositOutOfRevenue(CompanyData data, Invoice invoice)
+    {
+        var deposit = invoice.SecurityDeposit;
+        var pendingIds = new List<string>();
+        var changed = false;
+
+        // Only revenue still carrying the invoice's whole total counted the deposit. Revenue the user
+        // entered before making the invoice from it never did.
+        foreach (var revenue in data.Revenues.Where(r => r.InvoiceId == invoice.Id && !r.IsKeptDeposit
+                     && r.Total > 0 && Math.Abs(r.Total - invoice.Total) < 0.01m))
+        {
+            var total = revenue.Total - deposit;
+            var depositUSD = revenue.TotalUSD * deposit / revenue.Total;
+            revenue.TotalUSD = revenue.TotalUSD * total / revenue.Total;
+            revenue.FeeUSD = Math.Max(0m, revenue.FeeUSD - depositUSD);
+            revenue.Fee = Math.Max(0m, revenue.Fee - deposit);
+            revenue.Total = total;
+
+            // A revenue still waiting for its rate converts from its queue entry, not the row.
+            foreach (var pending in data.PendingConversions.Where(p => p.TransactionId == revenue.Id))
+            {
+                pending.Total = total;
+                pending.Fee = Math.Max(0m, pending.Fee - deposit);
+                pendingIds.Add(revenue.Id);
+            }
+            changed = true;
+        }
+
+        if (pendingIds.Count > 0)
+            _ = PendingConversionService.Instance?.MirrorAsync(data, pendingIds);
+        return changed;
+    }
+
+    private static bool SplitDepositOutOfRefunds(CompanyData data, Invoice invoice)
+    {
+        var refunds = data.Payments
+            .Where(p => p.IsRefund && p.InvoiceId == invoice.Id)
+            .OrderBy(p => p.Date)
+            .ToList();
+        if (refunds.Count == 0 || refunds.Any(p => p.DepositAmount > 0))
+            return false;
+
+        var held = invoice.SecurityDeposit;
+        foreach (var refund in refunds)
+        {
+            refund.DepositAmount = SecurityDeposits.RefundPortion(Math.Abs(refund.Amount), null, held);
+            held -= refund.DepositAmount;
+        }
+        return true;
     }
 
     public const string RevenuePaymentsMigrationVersion = "1";

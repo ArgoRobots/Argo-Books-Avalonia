@@ -180,6 +180,13 @@ public class PortalPaymentRecord
     /// </summary>
     [JsonPropertyName("refundReason")]
     public string? RefundReason { get; set; }
+
+    /// <summary>
+    /// For a refund made in Argo Books, the part that gave back the invoice's security deposit.
+    /// Null for refunds made in the provider's dashboard, and from servers that don't send it.
+    /// </summary>
+    [JsonPropertyName("depositAmount")]
+    public decimal? DepositAmount { get; set; }
 }
 
 /// <summary>

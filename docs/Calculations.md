@@ -141,7 +141,7 @@ Notes:
 - **`Subtotal` is the raw line-items sum** (after any per-line discounts). It is stored on the invoice and shown as the "Subtotal" line, and it is the base a *percentage* discount or fee is taken from. The invoice-level discount and custom fee are shown as their own separate lines, not folded into `Subtotal`.
 - **Discount on a line item** reduces only that line's subtotal.
 - **Invoice-level discount**, **custom fee**, and **shipping** adjust the *taxable base* before tax (industry standard: tax is charged on the net amount after discount, and a taxable fee and shipping are taxed). The discount lowers it; the fee and shipping raise it.
-- **Security deposit** is added to the total but is *not* taxed and is *not* considered revenue earned, it's a refundable hold against damages. If the deposit is forfeited, it should be moved into revenue separately.
+- **Security deposit** is added to the total but is *not* taxed and is *not* revenue: it's a refundable hold against damages. The revenue created from the invoice leaves it out (`Total − SecurityDeposit`). If a rental comes back and the business keeps the deposit, the return adds it as its own revenue row (`Revenue.IsKeptDeposit`), dated on the return, linked to the invoice, and priced at the invoice's rate as the invoice's refunds are. A rental with no invoice has no deposit in the books, so there is nothing to move. How refunds treat the deposit is in §8. Helper: `SecurityDeposits`.
 - **Tax** is applied to `TaxableBase` (Subtotal − discount + fee + shipping), not to the raw `Subtotal`. Argo Books treats tax as a single flat rate; we do not support different tax rates per line item at the invoice-roll-up level (line items each carry a `TaxRate` but the invoice header rate is what's stored as the final tax).
 
 ---
@@ -234,11 +234,11 @@ A refund is a `Payment` row with `IsRefund = true` and a negative `Amount`. It i
 
 ### Effect on revenue (gross, display)
 
-Subtract the **full refund amount** from gross revenue:
+Subtract the refund from gross revenue, less any security deposit it gave back (see *Refunds that give back a deposit* below):
 
 ```
 Revenue in period = Σ Revenue.EffectiveTotalUSD (paid-only, in date range)
-                  − Σ |Payment.EffectiveAmountUSD| for refunds in date range
+                  − Σ |Payment.EffectiveAmountUSD| × Payment.RevenueShare for refunds in date range
 ```
 
 Helper: `RefundAggregator.GetRefundedInDateRangeUSD(...)`.
@@ -248,11 +248,22 @@ Helper: `RefundAggregator.GetRefundedInDateRangeUSD(...)`.
 Subtract the **pre-tax portion** of the refund. Because a refund both reverses revenue *and* reverses the tax we owed on that revenue, the net profit impact is only the pre-tax portion:
 
 ```
-Per refund:   profit reduction = |Payment.EffectiveAmountUSD| × ((Invoice.Total − Invoice.TaxAmount) / Invoice.Total)
-Fallback:     if invoice link missing → full refund amount
+Per refund:   profit reduction = |Payment.EffectiveAmountUSD| × Payment.RevenueShare
+                                 × ((Invoice.Total − Invoice.SecurityDeposit − Invoice.TaxAmount) / (Invoice.Total − Invoice.SecurityDeposit))
+Fallback:     if invoice link missing → the refund's revenue part in full
 ```
 
-The share is total less tax, which is what the invoice's revenue counted before tax. It is not `Subtotal / Total`: `Subtotal` is the line sum before an invoice-level discount and without shipping, fees or a deposit (§4), so it disagrees whenever an invoice has any of those. Helper: `RefundAggregator.PreTaxShare`.
+The share is total less deposit and tax, over total less deposit, which is what the invoice's revenue counted before tax. It is not `Subtotal / Total`: `Subtotal` is the line sum before an invoice-level discount and without shipping, fees or a deposit (§4), so it disagrees whenever an invoice has any of those. Helper: `RefundAggregator.PreTaxShare`.
+
+### Refunds that give back a deposit
+
+A deposit was never revenue (§4), so the part of a refund that hands it back comes off nothing. Each refund stores that part as `Payment.DepositAmount`, and every refund sum above uses `Payment.RevenueShare`, the rest of the refund as a share of it.
+
+- A refund made in Argo Books names its deposit part: the refund form lists the deposit as its own line, and the payment sync returns that line's amount.
+- A refund made in the provider's dashboard doesn't, so it is taken from the deposit first, which is what a refund on a deposit invoice usually is.
+- Either way, never more than is still held: the deposit less earlier refunds of it and any kept deposit. Refunding a deposit the business kept comes off revenue, because keeping it made it revenue.
+
+Set when the refund is synced (`PaymentPortalService`), and once for older refunds by the open-time heal. Helper: `SecurityDeposits.RefundPortion`.
 
 Helper: `RefundAggregator.GetRefundedPreTaxInDateRangeUSD(payments, invoicesById, start, end)`. `ProfitCalculator` already calls this; new profit surfaces should reuse `ProfitCalculator.CalculateNetProfitUSD` or `CalculateNetProfitByDayUSD` rather than re-deriving the formula.
 

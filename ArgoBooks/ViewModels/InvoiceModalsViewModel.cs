@@ -2687,7 +2687,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// This handles the "Invoice → Revenue" path so the revenue table stays
     /// the single source of truth for all financial data.
     /// </summary>
-    private static void CreateRevenueFromInvoice(Invoice invoice, CompanyData companyData)
+    internal static void CreateRevenueFromInvoice(Invoice invoice, CompanyData companyData)
     {
         companyData.IdCounters.Revenue++;
         var revenueId = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}";
@@ -2710,6 +2710,10 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             ? invoice.Subtotal * (invoice.DiscountAmount / 100m)
             : invoice.DiscountAmount;
 
+        // The deposit is held for the customer, not earned, so it stays out of the revenue
+        // (docs/Calculations.md §4). A deposit kept when the rental comes back is added then.
+        var total = invoice.Total - invoice.SecurityDeposit;
+
         var revenue = new Revenue
         {
             Id = revenueId,
@@ -2731,9 +2735,9 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             Amount = invoice.Subtotal,
             TaxRate = invoice.TaxRate,
             TaxAmount = invoice.TaxAmount,
-            Fee = feeAmount + invoice.SecurityDeposit + invoice.ShippingAmount,
+            Fee = feeAmount + invoice.ShippingAmount,
             Discount = discountAmount,
-            Total = invoice.Total,
+            Total = total,
             PaymentMethod = PaymentMethod.Other,
             PaymentStatus = RevenuePaymentStatus.Unpaid,
             Notes = $"Auto-created from invoice {invoice.InvoiceNumber}",
@@ -2746,13 +2750,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             OriginalCurrency = invoice.OriginalCurrency,
             // USD base fields stored full-precision (no 2dp round) so they stay consistent with the
             // unrounded TotalUSD above; display rounds at the boundary. See docs/Calculations.md Rule 3.
-            TotalUSD = invoice.EffectiveTotalUSD,
+            TotalUSD = invoice.Total > 0 ? invoice.EffectiveTotalUSD * total / invoice.Total : 0,
             TaxAmountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
                 ? invoice.TaxAmount * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? invoice.TaxAmount : 0,
             FeeUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
-                ? (feeAmount + invoice.SecurityDeposit + invoice.ShippingAmount) * (invoice.EffectiveTotalUSD / invoice.Total)
-                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.SecurityDeposit + invoice.ShippingAmount : 0,
+                ? (feeAmount + invoice.ShippingAmount) * (invoice.EffectiveTotalUSD / invoice.Total)
+                : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? feeAmount + invoice.ShippingAmount : 0,
             DiscountUSD = invoice.EffectiveTotalUSD > 0 && invoice.Total > 0
                 ? discountAmount * (invoice.EffectiveTotalUSD / invoice.Total)
                 : string.Equals(invoice.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase) ? discountAmount : 0,

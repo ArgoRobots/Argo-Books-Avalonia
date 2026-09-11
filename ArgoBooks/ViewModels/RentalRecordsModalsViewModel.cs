@@ -3,8 +3,11 @@ using ArgoBooks.Services;
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
+using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Inventory;
 using ArgoBooks.Core.Models.Rentals;
+using ArgoBooks.Core.Models.Transactions;
+using ArgoBooks.Core.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -1143,6 +1146,12 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
         }
         _returningRecord.UpdatedAt = DateTime.UtcNow;
 
+        var keptDeposit = ReturnRefundDeposit
+            ? null
+            : CreateKeptDepositRevenue(_returningRecord, companyData, _returningRecord.ReturnDate ?? DateTime.Now);
+        if (keptDeposit != null)
+            AddKeptDeposit(companyData, keptDeposit);
+
         // Update inventory for all line items via InventoryItem.InStock
         var returnInvSnapshot = new Dictionary<string, int>();
         var returnAdjustments = new List<StockAdjustment>();
@@ -1203,6 +1212,8 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
                 recordToReturn.DepositRefunded = oldDepositRefunded;
                 recordToReturn.Paid = oldPaid;
                 recordToReturn.Notes = oldNotes;
+                if (keptDeposit != null)
+                    RemoveKeptDeposit(companyData, keptDeposit);
                 foreach (var (id, oldStock) in savedReturnInvSnapshot)
                 {
                     var invItem = companyData.Inventory.FirstOrDefault(i => i.Id == id);
@@ -1228,6 +1239,8 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
                 recordToReturn.DepositRefunded = newDepositRefunded;
                 recordToReturn.Paid = newPaid;
                 recordToReturn.Notes = newNotes;
+                if (keptDeposit != null)
+                    AddKeptDeposit(companyData, keptDeposit);
                 var returnItems = GetEffectiveLineItems(recordToReturn);
                 foreach (var li in returnItems)
                 {
@@ -1248,6 +1261,79 @@ public partial class RentalRecordsModalsViewModel : ViewModelBase
 
         RecordReturned?.Invoke(this, EventArgs.Empty);
         CloseReturnModal();
+    }
+
+    /// <summary>
+    /// A deposit the business keeps is earned, so it becomes revenue on the day the rental comes back
+    /// (docs/Calculations.md §4). Only a deposit billed on an invoice is in the books, so a rental with
+    /// no invoice has nothing to move. Priced at the invoice's rate, as the invoice's refunds are.
+    /// </summary>
+    private static Revenue? CreateKeptDepositRevenue(RentalRecord rental, CompanyData companyData, DateTime date)
+    {
+        var invoice = rental.InvoiceIds
+            .Select(companyData.GetInvoice)
+            .OfType<Invoice>()
+            .Where(i => i.SecurityDeposit > 0)
+            .OrderBy(i => i.IssueDate)
+            .FirstOrDefault();
+        if (invoice == null)
+            return null;
+
+        var amount = Math.Min(rental.SecurityDeposit,
+            SecurityDeposits.StillHeld(invoice, companyData.Payments, companyData.Revenues));
+        if (amount <= 0)
+            return null;
+
+        companyData.IdCounters.Revenue++;
+        return new Revenue
+        {
+            Id = $"REV-{DateTime.Now:yyyy}-{companyData.IdCounters.Revenue:D5}",
+            Date = date,
+            CustomerId = invoice.CustomerId,
+            Description = $"Kept security deposit, rental {rental.Id}",
+            Quantity = 1,
+            UnitPrice = amount,
+            Subtotal = amount,
+            Amount = amount,
+            Total = amount,
+            PaymentMethod = PaymentMethod.Other,
+            PaymentStatus = InvoiceTotalsService.IsPaidInFull(invoice) ? RevenuePaymentStatus.Paid : RevenuePaymentStatus.Unpaid,
+            InvoiceId = invoice.Id,
+            ReferenceNumber = invoice.InvoiceNumber,
+            IsKeptDeposit = true,
+            OriginalCurrency = invoice.OriginalCurrency,
+            TotalUSD = invoice.Total > 0 ? invoice.EffectiveTotalUSD * amount / invoice.Total : 0,
+            IsPendingConversion = invoice.IsPendingConversion,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+    }
+
+    private static void AddKeptDeposit(CompanyData companyData, Revenue revenue)
+    {
+        companyData.Revenues.Add(revenue);
+        if (!revenue.IsPendingConversion)
+            return;
+
+        var entry = new PendingConversion
+        {
+            TransactionId = revenue.Id,
+            TransactionType = "Revenue",
+            OriginalCurrency = revenue.OriginalCurrency,
+            TransactionDate = revenue.Date,
+            Total = revenue.Total,
+            UnitPrice = revenue.UnitPrice
+        };
+        companyData.PendingConversions.RemoveAll(p => p.TransactionId == revenue.Id);
+        companyData.PendingConversions.Add(entry);
+        _ = PendingConversionService.Instance?.AddPendingConversionAsync(entry);
+    }
+
+    private static void RemoveKeptDeposit(CompanyData companyData, Revenue revenue)
+    {
+        companyData.Revenues.Remove(revenue);
+        if (companyData.PendingConversions.RemoveAll(p => p.TransactionId == revenue.Id) > 0)
+            _ = PendingConversionService.Instance?.ForgetAsync([revenue.Id]);
     }
 
     #endregion

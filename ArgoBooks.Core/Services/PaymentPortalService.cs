@@ -426,6 +426,10 @@ public class PaymentPortalService : IDisposable
                     RefundedFromPaymentId = refundedFromLocalId,
                     RefundRequestId = portalPayment.RefundRequestId?.ToString(),
                     RefundReason = portalPayment.RefundReason,
+                    DepositAmount = SecurityDeposits.RefundPortion(
+                        Math.Abs(portalPayment.Amount),
+                        portalPayment.DepositAmount,
+                        SecurityDeposits.StillHeld(invoice, companyData.Payments, companyData.Revenues)),
                 };
 
                 companyData.Payments.Add(payment);
