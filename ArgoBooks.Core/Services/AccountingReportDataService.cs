@@ -2,6 +2,7 @@ using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Reports;
+using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Services;
 
@@ -173,6 +174,36 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         if (filters.EndDate.HasValue && date.Date > filters.EndDate.Value.Date)
             return false;
         return true;
+    }
+
+    /// <summary>
+    /// Issued invoices with money still owed at the end date, and how much (USD). The balance is
+    /// rebuilt from the payments dated on or before that date, because an invoice's stored status
+    /// and balance are today's: one paid after the end date was still owed on it. An invoice with
+    /// no payment rows (imported with only a paid amount) has no dates to rebuild from, so its
+    /// stored figures stand.
+    /// </summary>
+    private List<(Invoice Invoice, decimal BalanceUSD)> GetReceivablesAsOfEndDate()
+    {
+        var paymentsByInvoice = companyData!.Payments
+            .Where(p => !p.IsRefund && p.Amount > 0 && !string.IsNullOrEmpty(p.InvoiceId))
+            .ToLookup(p => p.InvoiceId);
+
+        var receivables = new List<(Invoice, decimal)>();
+        foreach (var invoice in companyData.Invoices.Where(i => i.Status != InvoiceStatus.Cancelled
+                                                                && i.Status != InvoiceStatus.Draft
+                                                                && IsOnOrBeforeEndDate(i.IssueDate)))
+        {
+            var payments = paymentsByInvoice[invoice.Id].ToList();
+            var balanceUSD = payments.Count == 0
+                ? (invoice.Status == InvoiceStatus.Paid ? 0m : invoice.EffectiveBalanceUSD)
+                : Math.Max(0m, invoice.EffectiveTotalUSD
+                               - payments.Where(p => IsOnOrBeforeEndDate(p.Date)).Sum(p => p.EffectiveAmountUSD));
+
+            if (Math.Round(balanceUSD, 2) > 0)
+                receivables.Add((invoice, balanceUSD));
+        }
+        return receivables;
     }
 
     /// <summary>
@@ -439,14 +470,10 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
 
         var cash = cashFromRevenue + cashFromPayments - cashPaidForExpenses;
 
-        // Accounts Receivable = unpaid/uncancelled invoices (excluding drafts), each balance
-        // converted at the invoice's issue date.
-        var accountsReceivable = companyData.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid
-                        && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft
-                        && IsOnOrBeforeEndDate(i.IssueDate))
-            .Sum(i => ToDisplay(i.EffectiveBalanceUSD, i.IssueDate));
+        // Accounts Receivable = what was still owed at the end date, each balance converted at the
+        // invoice's issue date.
+        var accountsReceivable = GetReceivablesAsOfEndDate()
+            .Sum(r => ToDisplay(r.BalanceUSD, r.Invoice.IssueDate));
 
         // Inventory valued at current unit cost, using stock levels
         // reconstructed as of the report end date. See docs/Calculations.md §10.
@@ -1039,19 +1066,9 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
         // Age receivables "as of" the report's end date (matching the Balance Sheet), not today.
         var asOf = EndDateForValuation;
 
-        // Filter to unpaid, non-draft, uncancelled invoices issued on or before the end date - the same
-        // set the Balance Sheet's Accounts Receivable uses - so a historical report doesn't leak invoices
-        // issued after its end date.
-        var openInvoices = companyData.Invoices
-            .Where(i => i.Status != InvoiceStatus.Paid
-                        && i.Status != InvoiceStatus.Cancelled
-                        && i.Status != InvoiceStatus.Draft
-                        && IsOnOrBeforeEndDate(i.IssueDate))
-            .ToList();
-
-        // Group by customer
-        var byCustomer = openInvoices
-            .GroupBy(i => i.CustomerId)
+        // The same set and balances the Balance Sheet's Accounts Receivable uses.
+        var byCustomer = GetReceivablesAsOfEndDate()
+            .GroupBy(r => r.Invoice.CustomerId)
             .OrderBy(g => companyData.GetCustomer(g.Key)?.Name ?? "Unknown");
 
         var totalCurrent = 0m;
@@ -1070,11 +1087,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             var days61to90 = 0m;
             var days90Plus = 0m;
 
-            foreach (var invoice in group)
+            foreach (var (invoice, balanceUSD) in group)
             {
                 var daysPastDue = (asOf - invoice.DueDate.Date).Days;
                 // Convert each open invoice's balance at its issue date (Calculations.md §3a Phase 2).
-                var balance = ToDisplay(invoice.EffectiveBalanceUSD, invoice.IssueDate);
+                var balance = ToDisplay(balanceUSD, invoice.IssueDate);
 
                 if (daysPastDue <= 0)
                     current += balance;

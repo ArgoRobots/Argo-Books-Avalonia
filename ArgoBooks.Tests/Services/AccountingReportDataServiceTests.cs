@@ -425,6 +425,100 @@ public class AccountingReportDataServiceTests
 
     #endregion
 
+    #region Receivables As Of The End Date
+
+    private static readonly ReportFilters January2024 = new()
+    {
+        StartDate = new DateTime(2024, 1, 1),
+        EndDate = new DateTime(2024, 1, 31)
+    };
+
+    // $1,000 invoiced Jan 10, $400 paid Jan 20, the other $600 Feb 5. Today it reads Paid with no
+    // balance, but at Jan 31 the customer still owed $600.
+    private static CompanyData InvoicePaidOffInFebruary()
+    {
+        var data = new CompanyData();
+        var invoice = new Invoice
+        {
+            Id = "INV-1", InvoiceNumber = "INV-1", CustomerId = "C1", OriginalCurrency = "USD",
+            IssueDate = new DateTime(2024, 1, 10), DueDate = new DateTime(2024, 2, 9),
+            Subtotal = 1000m, Total = 1000m, TotalUSD = 1000m, Status = InvoiceStatus.Sent
+        };
+        data.Invoices.Add(invoice);
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-1", InvoiceId = "INV-1", CustomerId = "C1", Date = new DateTime(2024, 1, 10),
+            OriginalCurrency = "USD", Subtotal = 1000m, Total = 1000m, TotalUSD = 1000m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-1", InvoiceId = "INV-1", CustomerId = "C1", OriginalCurrency = "USD",
+            Date = new DateTime(2024, 1, 20, 11, 0, 0), Amount = 400m, AmountUSD = 400m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-2", InvoiceId = "INV-1", CustomerId = "C1", OriginalCurrency = "USD",
+            Date = new DateTime(2024, 2, 5, 11, 0, 0), Amount = 600m, AmountUSD = 600m
+        });
+        InvoiceTotalsService.Recalculate(invoice, data.Payments);
+        return data;
+    }
+
+    [Fact]
+    public void GetReportData_BalanceSheet_ReceivablesAreWhatWasOwedAtTheEndDate()
+    {
+        var data = InvoicePaidOffInFebruary();
+        Assert.Equal(InvoiceStatus.Paid, data.Invoices[0].Status);
+
+        var result = new AccountingReportDataService(data, January2024).GetReportData(AccountingReportType.BalanceSheet);
+
+        // Cash is the $400 received by Jan 31; the $600 still owed is a receivable.
+        Assert.Equal(600m, AmountOf(result, "Accounts Receivable"));
+        Assert.Equal(1000m, AmountOf(result, "TOTAL ASSETS"));
+    }
+
+    [Fact]
+    public void GetReportData_ARAging_AgesWhatWasOwedAtTheEndDate()
+    {
+        var result = new AccountingReportDataService(InvoicePaidOffInFebruary(), January2024)
+            .GetReportData(AccountingReportType.AccountsReceivableAging);
+
+        var total = result.Rows.Find(r => r.Label == "TOTAL")!;
+        Assert.Equal(600m, ParseAmount(total.Values[^1]));
+    }
+
+    [Fact]
+    public void GetReportData_ARAging_LeavesOutAFullyRefundedInvoice()
+    {
+        var data = new CompanyData();
+        var invoice = new Invoice
+        {
+            Id = "INV-R", InvoiceNumber = "INV-R", CustomerId = "C1", OriginalCurrency = "USD",
+            IssueDate = new DateTime(2024, 3, 1), DueDate = new DateTime(2024, 3, 31),
+            Total = 500m, TotalUSD = 500m, Status = InvoiceStatus.Sent
+        };
+        data.Invoices.Add(invoice);
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-R1", InvoiceId = "INV-R", CustomerId = "C1", OriginalCurrency = "USD",
+            Date = new DateTime(2024, 3, 5), Amount = 500m, AmountUSD = 500m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-R2", InvoiceId = "INV-R", CustomerId = "C1", OriginalCurrency = "USD",
+            Date = new DateTime(2024, 3, 10), Amount = -500m, AmountUSD = -500m, IsRefund = true
+        });
+        InvoiceTotalsService.Recalculate(invoice, data.Payments);
+        Assert.Equal(InvoiceStatus.Refunded, invoice.Status);
+
+        var result = new AccountingReportDataService(data, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.AccountsReceivableAging);
+
+        Assert.DoesNotContain(result.Rows, r => r.RowType == AccountingRowType.DataRow);
+    }
+
+    #endregion
+
     #region Payroll Remittance Tests
 
     private static ReportFilters PayrollFilters() => new()
@@ -465,8 +559,15 @@ public class AccountingReportDataServiceTests
     }
 
     private static decimal AmountOf(AccountingTableData data, string label) =>
-        decimal.Parse(new string(data.Rows.Find(r => r.Label == label)!.Values[0]
-            .Where(c => char.IsDigit(c) || c == '.').ToArray()), System.Globalization.CultureInfo.InvariantCulture);
+        ParseAmount(data.Rows.Find(r => r.Label == label)!.Values[0]);
+
+    // Formatted amounts show a negative in parentheses.
+    private static decimal ParseAmount(string formatted)
+    {
+        var value = decimal.Parse(new string(formatted.Where(c => char.IsDigit(c) || c == '.').ToArray()),
+            System.Globalization.CultureInfo.InvariantCulture);
+        return formatted.StartsWith('(') ? -value : value;
+    }
 
     [Fact]
     public void PayrollRemittance_OutsideQuebec_TotalsEverythingForCra()
