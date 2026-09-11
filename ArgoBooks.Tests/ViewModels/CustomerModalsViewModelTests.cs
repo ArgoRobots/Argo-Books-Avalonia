@@ -44,4 +44,27 @@ public class CustomerModalsViewModelTests : ModalViewModelTestBase
         Assert.Equal("Amazon", customer.Name);
         Assert.Equal("Online orders", customer.Notes);
     }
+
+    [Fact]
+    public async Task SaveNew_NoLastName_Saves()
+    {
+        var vm = new CustomerModalsViewModel();
+
+        await AddAsync(vm, "Madonna", "");
+
+        Assert.Equal("Madonna", Assert.Single(Company.Customers).Name);
+    }
+
+    [Fact]
+    public async Task SaveEdited_LastNameCleared_Saves()
+    {
+        Company.Customers.Add(new Customer { Id = "CUS-001", Name = "Jane Doe" });
+        var vm = new CustomerModalsViewModel();
+
+        vm.OpenEditModal(new CustomerDisplayItem { Id = "CUS-001", Name = "Jane Doe" });
+        vm.ModalLastName = "";
+        await vm.SaveEditedCustomerAsync();
+
+        Assert.Equal("Jane", Assert.Single(Company.Customers).Name);
+    }
 }

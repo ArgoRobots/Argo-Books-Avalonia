@@ -44,7 +44,7 @@ public partial class CustomerModalsViewModel : ViewModelBase
     /// footer behind until the next Save.
     /// </summary>
     public bool HasValidationMessage =>
-        ModalIdError != null || ModalFirstNameError != null || ModalLastNameError != null
+        ModalIdError != null || ModalFirstNameError != null
         || ModalEmailError != null || ModalPhoneError != null;
 
     [ObservableProperty]
@@ -100,10 +100,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
     private string? _modalFirstNameError;
-
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
-    private string? _modalLastNameError;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasValidationMessage))]
@@ -178,10 +174,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
 
     partial void OnModalLastNameChanged(string value)
     {
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            ModalLastNameError = null;
-        }
         OnPropertyChanged(nameof(ModalInitialsPreview));
     }
 
@@ -1300,7 +1292,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
     {
         ModalIdError = null;
         ModalFirstNameError = null;
-        ModalLastNameError = null;
         ModalEmailError = null;
         ModalPhoneError = null;
     }
@@ -1313,15 +1304,6 @@ public partial class CustomerModalsViewModel : ViewModelBase
         if (string.IsNullOrWhiteSpace(ModalFirstName))
         {
             ModalFirstNameError = "First name is required.".Translate();
-            isValid = false;
-        }
-
-        // A customer saved with a one-word name, such as one a bank import created, has no last
-        // name to give, and must still be editable.
-        var keepsOneWordName = _editingCustomer != null && string.IsNullOrEmpty(_originalLastName);
-        if (string.IsNullOrWhiteSpace(ModalLastName) && !keepsOneWordName)
-        {
-            ModalLastNameError = "Last name is required.".Translate();
             isValid = false;
         }
 

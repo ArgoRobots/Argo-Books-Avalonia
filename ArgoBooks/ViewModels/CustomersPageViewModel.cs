@@ -206,9 +206,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private string? _modalFirstNameError;
 
     [ObservableProperty]
-    private string? _modalLastNameError;
-
-    [ObservableProperty]
     private string? _modalEmailError;
 
     /// <summary>
@@ -864,7 +861,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
     private void ClearModalErrors()
     {
         ModalFirstNameError = null;
-        ModalLastNameError = null;
         ModalEmailError = null;
     }
 
@@ -877,13 +873,6 @@ public partial class CustomersPageViewModel : SortablePageViewModelBase
         if (string.IsNullOrWhiteSpace(ModalFirstName))
         {
             ModalFirstNameError = "First name is required.".Translate();
-            isValid = false;
-        }
-
-        // Validate last name (required)
-        if (string.IsNullOrWhiteSpace(ModalLastName))
-        {
-            ModalLastNameError = "Last name is required.".Translate();
             isValid = false;
         }
 
