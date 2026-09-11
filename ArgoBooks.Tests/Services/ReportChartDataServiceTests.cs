@@ -231,5 +231,26 @@ public class ReportChartDataServiceTests
         Assert.Equal(100d, revenue.DataPoints.Single().Value);
     }
 
+    private static double SumOf(List<Core.Models.Charts.ChartSeriesData> series, string name) =>
+        series.Where(s => s.Name == name).SelectMany(s => s.DataPoints).Sum(p => p.Value);
+
+    // A sale entered in the afternoon of a month's last day belongs to that month. The month buckets
+    // ended at midnight that morning, so it was left out of every one of them.
+    [Fact]
+    public void MonthBuckets_IncludeTheWholeLastDayOfTheMonth()
+    {
+        var data = new CompanyData();
+        data.Revenues.Add(new Revenue
+        {
+            Id = "R1", Date = new DateTime(2024, 1, 31, 14, 30, 0), OriginalCurrency = "USD",
+            Subtotal = 100m, TaxAmount = 8m, TaxAmountUSD = 8m, Total = 108m, TotalUSD = 108m
+        });
+        var service = new ReportChartDataService(data, CreateDefaultFilters());
+
+        Assert.Equal(108d, SumOf(service.GetRevenueVsExpenses(), "Revenue"));
+        Assert.Equal(1d, SumOf(service.GetTransactionCountBySeries(), "Revenue"));
+        Assert.Equal(8d, SumOf(service.GetTaxCollectedVsPaid(), "Tax Collected"));
+    }
+
     #endregion
 }
