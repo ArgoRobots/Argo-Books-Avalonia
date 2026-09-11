@@ -642,6 +642,20 @@ public class SpreadsheetImportService
                 continue;
             }
 
+            // An invoice with no id is identified by its number, which is what payments and line
+            // items name. A derived id would leave "1001" unfindable, so the number becomes the id,
+            // as it does on the Tier 1 path and in ImportSingleEntity.
+            if (chunkEntityType == SpreadsheetSheetType.Invoices
+                && entityJson.TryGetProperty("invoiceNumber", out var numberProp)
+                && numberProp.ValueKind == JsonValueKind.String
+                && numberProp.GetString()?.Trim() is { Length: > 0 } invoiceNumber)
+            {
+                if (ExistingIdsFor(chunkEntityType).Contains(invoiceNumber))
+                    reimportMatches++;
+                entitiesToImport.Add((chunkEntityType, WithId(entityJson, invoiceNumber), false));
+                continue;
+            }
+
             // Id-less row: try to derive a deterministic id from its natural key.
             var naturalKey = NaturalKey(chunkEntityType, entityJson);
             if (naturalKey == null)
@@ -1871,7 +1885,7 @@ public class SpreadsheetImportService
 
                     // Resolve customer reference by name, else create a placeholder
                     payment.CustomerId = EnsureCustomerExists(data, payment.CustomerId, refContext) ?? payment.CustomerId;
-                    EnsureInvoiceExists(data, payment.InvoiceId, payment.CustomerId);
+                    payment.InvoiceId = EnsureInvoiceExists(data, payment.InvoiceId, payment.CustomerId) ?? payment.InvoiceId;
 
                     var existing = data.Payments.FirstOrDefault(p => p.Id == payment.Id);
                     if (skipExisting && existing != null) return ImportEntityResult.SkippedExisting;
@@ -4260,16 +4274,25 @@ Respond with ONLY a JSON array, one entry per product in the same order:
         return supplierId;
     }
 
-    private static void EnsureInvoiceExists(CompanyData data, string? invoiceId, string? customerId)
+    /// <summary>
+    /// Resolves a payment's invoice reference to the id of the invoice it names, matching either
+    /// the id or the invoice number as the line item importer does, else creates a placeholder
+    /// invoice with that id. Returns the id the payment should point at.
+    /// </summary>
+    private static string? EnsureInvoiceExists(CompanyData data, string? invoiceId, string? customerId)
     {
-        if (string.IsNullOrEmpty(invoiceId)) return;
-        if (data.Invoices.Any(i => i.Id == invoiceId)) return;
+        if (string.IsNullOrEmpty(invoiceId)) return invoiceId;
+        if (data.Invoices.Any(i => i.Id == invoiceId)) return invoiceId;
+        if (data.Invoices.FirstOrDefault(i => i.InvoiceNumber == invoiceId) is { } byNumber)
+            return byNumber.Id;
+
         data.Invoices.Add(new Invoice
         {
             Id = invoiceId,
             CustomerId = customerId ?? string.Empty,
             OriginalCurrency = data.Settings.Localization.Currency
         });
+        return invoiceId;
     }
 
     /// <summary>
