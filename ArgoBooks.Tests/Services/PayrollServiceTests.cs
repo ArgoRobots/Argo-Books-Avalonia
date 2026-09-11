@@ -519,6 +519,75 @@ public class PayrollServiceTests
 
     #endregion
 
+    #region Who is owed what
+
+    /// <summary>
+    /// Revenu Quebec collects Quebec income tax, QPP and QPIP; CRA collects federal tax and EI.
+    /// Counting it all as CRA's asked the employer to send CRA money CRA is not owed, and never
+    /// mentioned the payment Revenu Quebec was waiting for.
+    /// </summary>
+    private static PayRunLine QuebecLine() => new()
+    {
+        EmployeeId = "EMP-001",
+        Province = "QC",
+        GrossPay = 2000m,
+        CppEmployee = 100m,
+        CppEmployer = 100m,
+        Cpp2Employee = 5m,
+        Cpp2Employer = 5m,
+        EiEmployee = 25m,
+        EiEmployer = 35m,
+        QpipEmployee = 9m,
+        QpipEmployer = 12.60m,
+        FederalTax = 180m,
+        ProvincialTax = 140m,
+    };
+
+    [Fact]
+    public void AQuebecLinesRemittance_IsSplitBetweenCraAndRevenuQuebec()
+    {
+        PayRunLine line = QuebecLine();
+
+        Assert.Equal(180m + 25m + 35m, line.CraRemittance);
+        Assert.Equal(140m + 100m + 100m + 5m + 5m + 9m + 12.60m, line.QuebecRemittance);
+        Assert.Equal(line.TotalRemittance, line.CraRemittance + line.QuebecRemittance);
+    }
+
+    [Fact]
+    public void ALineOutsideQuebec_IsOwedEntirelyToCra()
+    {
+        PayRunLine line = QuebecLine();
+        line.Province = "ON";
+        line.QpipEmployee = 0m;
+        line.QpipEmployer = 0m;
+
+        Assert.Equal(line.TotalRemittance, line.CraRemittance);
+        Assert.Equal(0m, line.QuebecRemittance);
+    }
+
+    [Fact]
+    public void TheNextRemittanceToCra_LeavesOutWhatIsOwedToRevenuQuebec()
+    {
+        var run = new PayRun
+        {
+            Id = "PR-0001",
+            PayDate = new DateTime(2026, 8, 14),
+            Status = PayRunStatus.Approved,
+            Lines = { QuebecLine() },
+        };
+
+        (decimal cra, DateTime due) = PayrollService.NextRemittance([run], new DateTime(2026, 8, 16));
+        (decimal craAgain, decimal quebec, DateTime dueAgain) =
+            PayrollService.NextRemittanceByAgency([run], new DateTime(2026, 8, 16));
+
+        Assert.Equal(240m, cra);
+        Assert.Equal(cra, craAgain);
+        Assert.Equal(371.60m, quebec);
+        Assert.Equal(due, dueAgain);
+    }
+
+    #endregion
+
     #region Remitter types
 
     /// <summary>

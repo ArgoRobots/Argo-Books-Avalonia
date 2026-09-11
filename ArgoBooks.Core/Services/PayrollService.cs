@@ -268,17 +268,31 @@ public class PayrollService(PayrollRateService? rateService = null)
     public static (decimal Amount, DateTime DueDate) NextRemittance(
         IEnumerable<PayRun> runs, DateTime today, RemitterType remitterType = RemitterType.Regular)
     {
+        (decimal cra, _, DateTime due) = NextRemittanceByAgency(runs, today, remitterType);
+        return (cra, due);
+    }
+
+    /// <summary>
+    /// <see cref="NextRemittance"/> with the Revenu Quebec share of the same pay dates beside it.
+    ///
+    /// Two payments to two agencies: Quebec income tax, QPP and QPIP go to Revenu Quebec, and
+    /// counting them in CRA's figure asked for money CRA is not owed. The deadline is CRA's.
+    /// Revenu Quebec assigns its own schedule, which this app does not record.
+    /// </summary>
+    public static (decimal Cra, decimal Quebec, DateTime DueDate) NextRemittanceByAgency(
+        IEnumerable<PayRun> runs, DateTime today, RemitterType remitterType = RemitterType.Regular)
+    {
         ArgumentNullException.ThrowIfNull(runs);
 
         (DateTime start, DateTime end, DateTime dueDate) = NextRemittancePeriod(today.Date, remitterType);
 
-        decimal amount = runs
+        List<PayRun> inPeriod = runs
             .Where(r => r.Status != PayRunStatus.Draft
                         && r.PayDate.Date >= start
                         && r.PayDate.Date <= end)
-            .Sum(r => r.TotalRemittance);
+            .ToList();
 
-        return (amount, dueDate);
+        return (inPeriod.Sum(r => r.CraRemittance), inPeriod.Sum(r => r.QuebecRemittance), dueDate);
     }
 
     /// <summary>

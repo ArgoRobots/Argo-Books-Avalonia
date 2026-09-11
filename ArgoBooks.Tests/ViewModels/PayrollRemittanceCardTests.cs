@@ -67,4 +67,23 @@ public class PayrollRemittanceCardTests
         Assert.Equal(CurrencyService.Format(amount), value);
         Assert.Contains($"{due:d MMM}", secondary);
     }
+
+    [Fact]
+    public void TheCard_ShowsCrasShare_AndNamesWhatGoesToRevenuQuebec()
+    {
+        // Quebec income tax, QPP and QPIP go to Revenu Quebec as a separate payment. Folding them
+        // into the CRA figure overstated what CRA was owed by the whole Quebec side.
+        var data = new CompanyData();
+        PayRun run = Run(new DateTime(2026, 8, 14));
+        run.Lines[0].Province = "QC";
+        run.Lines[0].QpipEmployee = 9m;
+        run.Lines[0].QpipEmployer = 12.60m;
+        data.PayRuns.Add(run);
+
+        (string value, string secondary) = StatCardWidgetViewModel.PayrollRemittanceCard(data, new DateTime(2026, 8, 16));
+
+        // Federal tax and EI to CRA; Quebec tax, QPP and QPIP to Revenu Quebec.
+        Assert.Equal(CurrencyService.Format(200m + 30m + 42m), value);
+        Assert.Contains(CurrencyService.Format(90m + 100m + 100m + 9m + 12.60m), secondary);
+    }
 }

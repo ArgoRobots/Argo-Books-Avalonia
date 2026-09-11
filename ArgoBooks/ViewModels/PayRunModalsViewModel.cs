@@ -653,7 +653,14 @@ public partial class PayRunModalsViewModel : ViewModelBase
         // question, "which deadline has not passed yet", and returns the previous period's.
         DateTime due = PayrollService.RemittanceDueFor(_draft.PayDate, remitter);
 
-        RemittanceDueNote = $"Due to CRA by {due:d MMMM yyyy}.";
+        // Quebec income tax, QPP and QPIP are paid to Revenu Quebec, so for a Quebec employee the
+        // total above is two payments and the note names both.
+        decimal quebecShare = _draft.QuebecRemittance;
+
+        RemittanceDueNote = quebecShare == 0m
+            ? $"Due to CRA by {due:d MMMM yyyy}."
+            : $"{CurrencyService.Format(_draft.CraRemittance)} due to CRA by {due:d MMMM yyyy}, "
+              + $"{CurrencyService.Format(quebecShare)} to Revenu Quebec.";
     }
 
     /// <summary>

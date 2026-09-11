@@ -286,13 +286,22 @@ public partial class StatCardWidgetViewModel : WidgetViewModelBase
     /// same call, so the two cannot disagree. It follows the company's remitter type because an
     /// accelerated remitter's deadline comes before the 15th and a quarterly one owes three
     /// months at once. Once the deadline passes the card rolls on by itself.
+    ///
+    /// Quebec income tax, QPP and QPIP are a separate payment to Revenu Quebec, so they are named
+    /// beside the CRA figure rather than added to it.
     /// </summary>
     internal static (string Value, string SecondaryText) PayrollRemittanceCard(CompanyData data, DateTime today)
     {
-        (decimal owing, DateTime due) = PayrollService.NextRemittance(
+        (decimal cra, decimal quebec, DateTime due) = PayrollService.NextRemittanceByAgency(
             data.PayRuns, today, data.Settings.Company.RemitterType);
 
-        return (CurrencyService.Format(owing), owing > 0 ? $"Due {due:d MMM}" : "Nothing owing");
+        string secondary = cra <= 0 && quebec <= 0
+            ? "Nothing owing"
+            : quebec <= 0
+                ? $"Due {due:d MMM}"
+                : $"Due {due:d MMM}, plus {CurrencyService.Format(quebec)} to Revenu Quebec";
+
+        return (CurrencyService.Format(cra), secondary);
     }
 
     private void LoadOverdueInvoices(CompanyData data)
