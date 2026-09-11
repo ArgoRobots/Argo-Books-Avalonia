@@ -1,6 +1,7 @@
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Entities;
+using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
 using ArgoBooks.Core.Services;
 using ArgoBooks.ViewModels;
@@ -83,6 +84,68 @@ public class RecurringScheduleEditorViewModelTests : ModalViewModelTestBase
 
         Assert.Equal((false, false), afterUndo);
         Assert.Equal((true, true), afterRedo);
+    }
+
+    /// <summary>
+    /// Monthly rent that ran to its end date two months ago. Generation left the next date on the
+    /// first occurrence past the end and marked it Completed.
+    /// </summary>
+    private RecurringTransaction CompletedRent()
+    {
+        var start = DateTime.Today.AddMonths(-5);
+        var end = DateTime.Today.AddMonths(-2);
+        var schedule = new RecurringTransaction
+        {
+            Id = "REC-TXN-00001",
+            Type = CategoryType.Expense,
+            Frequency = Frequency.Monthly,
+            StartDate = start,
+            EndDate = end,
+            NextDate = RecurrenceSchedule.FirstOnOrAfter(start, Frequency.Monthly, start.Day, end.AddDays(1)),
+            Status = RecurringTransactionStatus.Completed,
+            ExpenseTemplate = new Expense
+            {
+                Description = "Rent", Amount = 2000m, Total = 2000m, OriginalCurrency = "USD",
+                SupplierId = "SUP-001"
+            }
+        };
+        Company.RecurringTransactions.Add(schedule);
+        return schedule;
+    }
+
+    [Fact]
+    public async Task Save_EndDateMovedPastTheNextDate_RestartsACompletedSchedule()
+    {
+        var schedule = CompletedRent();
+        var nextBefore = schedule.NextDate;
+        var vm = new RecurringScheduleEditorViewModel();
+        vm.ShowEdit(schedule);
+        vm.EndDate = new DateTimeOffset(DateTime.Today.AddYears(1));
+
+        await vm.SaveCommand.ExecuteAsync(null);
+
+        Assert.Equal(RecurringTransactionStatus.Active, schedule.Status);
+        Assert.Contains(Company.Expenses, e => e.OccurrenceDate == nextBefore);
+        Assert.True(schedule.NextDate > DateTime.Today);
+    }
+
+    [Fact]
+    public async Task Save_RestartingACompletedSchedule_UndoesBackToCompleted()
+    {
+        var schedule = CompletedRent();
+        var nextBefore = schedule.NextDate;
+        var vm = new RecurringScheduleEditorViewModel();
+        vm.ShowEdit(schedule);
+        vm.EndDate = null;
+        await vm.SaveCommand.ExecuteAsync(null);
+        var restarted = (schedule.Status, schedule.NextDate, Company.Expenses.Count);
+
+        Undo();
+        var afterUndo = (schedule.Status, schedule.NextDate, Company.Expenses.Count);
+        Redo();
+
+        Assert.Equal((RecurringTransactionStatus.Completed, nextBefore, 0), afterUndo);
+        Assert.Equal(restarted, (schedule.Status, schedule.NextDate, Company.Expenses.Count));
     }
 
     private sealed class NoDiskPlatform : IPlatformService

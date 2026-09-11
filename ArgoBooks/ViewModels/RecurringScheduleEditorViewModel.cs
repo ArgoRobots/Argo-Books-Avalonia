@@ -335,6 +335,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
         else
         {
             var before = Capture(existing);
+            var statusBefore = existing.Status;
             var oldAmount = existing.Template?.Total ?? 0m;
             var amountChanged = existing.Template != null && oldAmount != amount;
 
@@ -343,12 +344,19 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
             existing.EndDate = end;
             await ApplyTemplateAsync(existing, amount, start);
 
+            // Generation only runs Active schedules, and resuming refuses a Completed one, so an end
+            // date moved past the next occurrence would otherwise never produce it.
+            if (existing.Status == RecurringTransactionStatus.Completed
+                && (end == null || existing.NextDate.Date <= end.Value))
+                existing.Status = RecurringTransactionStatus.Active;
+
             var after = Capture(existing);
 
             var dateBefore = existing.NextDate;
             var generated = OwnEntries(GenerateDueNow(data), existing);
             var queued = QueueGenerated(data, generated);
             var dateAfter = existing.NextDate;
+            var statusAfter = existing.Status;
 
             App.UndoRedoManager.RecordAction(new DelegateAction(
                 $"Edit recurring schedule {existing.Id}",
@@ -357,6 +365,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                     RemoveGenerated(data, generated);
                     Restore(existing, before);
                     existing.NextDate = dateBefore;
+                    existing.Status = statusBefore;
                     Saved?.Invoke();
                 },
                 () =>
@@ -364,6 +373,7 @@ public partial class RecurringScheduleEditorViewModel : ViewModelBase
                     Restore(existing, after);
                     RestoreGenerated(data, generated, queued);
                     existing.NextDate = dateAfter;
+                    existing.Status = statusAfter;
                     Saved?.Invoke();
                 }));
 
