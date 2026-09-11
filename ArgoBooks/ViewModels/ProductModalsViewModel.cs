@@ -415,9 +415,6 @@ public partial class ProductModalsViewModel : ViewModelBase
         LastSavedProductId = newProduct.Id;
         ProductSaved?.Invoke(this, EventArgs.Empty);
 
-        // Mark the setup checklist item as complete
-        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.AddProduct);
-
         CloseAddModal();
     }
 

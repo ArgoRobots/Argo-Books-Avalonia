@@ -1237,11 +1237,6 @@ public abstract partial class TransactionModalsViewModelBase<TDisplayItem, TLine
                 foreach (var r in recategorized) r.Product.CategoryId = r.NewCategoryId;
                 companyData.MarkAsModified();
             }));
-
-        if (createdCategories.Count > 0)
-            TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.CreateCategory);
-        if (createdProducts.Count > 0)
-            TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.AddProduct);
     }
 
     protected (string description, decimal totalQuantity, decimal averageUnitPrice) GetLineItemSummary()

@@ -234,9 +234,6 @@ public partial class CategoryModalsViewModel : ViewModelBase
         LastSavedCategoryId = newCategory.Id;
         CategorySaved?.Invoke(this, EventArgs.Empty);
 
-        // Mark the setup checklist item as complete
-        TutorialService.Instance.CompleteChecklistItem(TutorialService.ChecklistItems.CreateCategory);
-
         CloseAddModal();
     }
 

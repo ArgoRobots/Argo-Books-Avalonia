@@ -24,10 +24,8 @@ public class TutorialService
     public static class ChecklistItems
     {
         public const string ScanReceipt = "scan_receipt";
-        public const string CreateCategory = "create_category";
         public const string RecordExpense = "record_expense";
         public const string RecordRevenue = "record_revenue";
-        public const string AddProduct = "add_product";
         public const string ExploreDashboard = "explore_dashboard";
         public const string VisitAnalytics = "visit_analytics";
     }
@@ -297,7 +295,7 @@ public class TutorialService
     /// <summary>
     /// Marks a checklist item as completed. Out-of-order calls are silently ignored.
     /// <para>
-    /// The gated chain is CreateCategory -> AddProduct -> RecordExpense -> VisitAnalytics.
+    /// The gated chain is RecordExpense -> VisitAnalytics.
     /// ScanReceipt is shown first but sits outside that chain: it has no prerequisites and
     /// is not a prerequisite for anything, so it can be completed at any point, including
     /// last. Items that aren't on the setup checklist are never gated.
@@ -345,8 +343,6 @@ public class TutorialService
         {
             // Show completion guidance for main tutorial tasks
             if (itemId == ChecklistItems.ScanReceipt ||
-                itemId == ChecklistItems.CreateCategory ||
-                itemId == ChecklistItems.AddProduct ||
                 itemId == ChecklistItems.RecordExpense)
             {
                 ShowGuidance(CompletionGuidanceType.Standard);
@@ -378,13 +374,8 @@ public class TutorialService
             // prerequisite for anything else: someone who came for invoicing must
             // still be able to work the manual path without scanning anything.
             ChecklistItems.ScanReceipt => true,
-            ChecklistItems.CreateCategory => true, // No prerequisites
-            ChecklistItems.AddProduct => completedItems.Contains(ChecklistItems.CreateCategory),
-            ChecklistItems.RecordExpense => completedItems.Contains(ChecklistItems.CreateCategory) &&
-                                            completedItems.Contains(ChecklistItems.AddProduct),
-            ChecklistItems.VisitAnalytics => completedItems.Contains(ChecklistItems.CreateCategory) &&
-                                             completedItems.Contains(ChecklistItems.AddProduct) &&
-                                             completedItems.Contains(ChecklistItems.RecordExpense),
+            ChecklistItems.RecordExpense => true,
+            ChecklistItems.VisitAnalytics => completedItems.Contains(ChecklistItems.RecordExpense),
             _ => true // Other items (not in main checklist) can be completed anytime
         };
     }
@@ -401,8 +392,6 @@ public class TutorialService
     {
         var completed = Settings.CompletedChecklistItems;
         return completed.Contains(ChecklistItems.ScanReceipt) &&
-               completed.Contains(ChecklistItems.CreateCategory) &&
-               completed.Contains(ChecklistItems.AddProduct) &&
                completed.Contains(ChecklistItems.RecordExpense) &&
                completed.Contains(ChecklistItems.VisitAnalytics);
     }
@@ -413,7 +402,7 @@ public class TutorialService
     public int GetTotalChecklistCount()
     {
         // Core items that all users should complete
-        return 4;
+        return 3;
     }
 
     /// <summary>

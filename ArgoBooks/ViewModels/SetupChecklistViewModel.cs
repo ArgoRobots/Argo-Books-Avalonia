@@ -109,10 +109,10 @@ public partial class SetupChecklistViewModel : ViewModelBase
     private void InitializeItems()
     {
         Items.Clear();
-        // Scanning is first: it is the fastest path to a visible result. A scan does create
-        // the category, product and transaction behind the scenes, but it credits only this
-        // step. Crediting the others was removed on purpose: the checklist teaches where
-        // each record lives, so every flow below is still walked by hand.
+        // Scanning is first: it is the fastest path to a visible result. A scan does create an
+        // expense behind the scenes, but it credits only this step, so the expense form is still
+        // walked by hand. There are no category or product steps: the expense form creates both
+        // from what is typed into a line, so sending people to those pages first was a detour.
         Items.Add(new ChecklistItemViewModel
         {
             Id = TutorialService.ChecklistItems.ScanReceipt,
@@ -120,22 +120,6 @@ public partial class SetupChecklistViewModel : ViewModelBase
             Description = "Let Argo Books fill in the details",
             Icon = Icons.ScanReceipt,
             NavigationTarget = TutorialService.Pages.Receipts
-        });
-        Items.Add(new ChecklistItemViewModel
-        {
-            Id = TutorialService.ChecklistItems.CreateCategory,
-            Title = "Create a category",
-            Description = "Organize your transactions",
-            Icon = Icons.Categories,
-            NavigationTarget = "Categories"
-        });
-        Items.Add(new ChecklistItemViewModel
-        {
-            Id = TutorialService.ChecklistItems.AddProduct,
-            Title = "Create a product",
-            Description = "Add items you sell or track",
-            Icon = Icons.Products,
-            NavigationTarget = "Products"
         });
         Items.Add(new ChecklistItemViewModel
         {
@@ -257,6 +241,8 @@ public partial class SetupChecklistViewModel : ViewModelBase
         // produced this is a no-op and they simply stay on the Receipts page.
         if (item.Id == TutorialService.ChecklistItems.ScanReceipt)
             _ = App.ReceiptsModalsViewModel?.OpenScanModalWithSampleAsync();
+        else if (item.Id == TutorialService.ChecklistItems.RecordExpense)
+            App.ExpenseModalsViewModel?.OpenAddModal();
     }
 
     [RelayCommand]
