@@ -69,6 +69,27 @@ public static class RefundAggregator
     }
 
     /// <summary>
+    /// The pre-tax USD part of one refund: its revenue part scaled by its invoice's
+    /// <see cref="PreTaxShare"/>, or the whole revenue part when the invoice link is missing.
+    /// </summary>
+    public static decimal PreTaxPortionUSD(Payment refund, IReadOnlyDictionary<string, Invoice> invoicesById)
+    {
+        var refundUSD = Math.Abs(refund.EffectiveAmountUSD) * refund.RevenueShare;
+        return !string.IsNullOrEmpty(refund.InvoiceId)
+               && invoicesById.TryGetValue(refund.InvoiceId, out var invoice)
+               && invoice.Total > 0
+            ? refundUSD * PreTaxShare(invoice)
+            : refundUSD;
+    }
+
+    /// <summary>
+    /// The sales tax one refund handed back (USD): its revenue part less the pre-tax part. The
+    /// deposit part carried no tax.
+    /// </summary>
+    public static decimal TaxPortionUSD(Payment refund, IReadOnlyDictionary<string, Invoice> invoicesById) =>
+        Math.Abs(refund.EffectiveAmountUSD) * refund.RevenueShare - PreTaxPortionUSD(refund, invoicesById);
+
+    /// <summary>
     /// Pre-tax USD portion of refunds inside [start, end], for profit math.
     /// Each refund's revenue part is scaled by its invoice's <see cref="PreTaxShare"/>
     /// so the tax part of the refund, which was never profit on the revenue side,
@@ -81,22 +102,9 @@ public static class RefundAggregator
         IReadOnlyDictionary<string, Invoice> invoicesById,
         DateTime start, DateTime end)
     {
-        decimal sum = 0m;
-        foreach (var p in allPayments.Where(x => x.IsRefund && x.Date >= start && x.Date <= end))
-        {
-            var refundUSD = Math.Abs(p.EffectiveAmountUSD) * p.RevenueShare;
-            if (!string.IsNullOrEmpty(p.InvoiceId)
-                && invoicesById.TryGetValue(p.InvoiceId, out var invoice)
-                && invoice.Total > 0)
-            {
-                sum += refundUSD * PreTaxShare(invoice);
-            }
-            else
-            {
-                sum += refundUSD;
-            }
-        }
-        return sum;
+        return allPayments
+            .Where(x => x.IsRefund && x.Date >= start && x.Date <= end)
+            .Sum(p => PreTaxPortionUSD(p, invoicesById));
     }
 
     /// <summary>
@@ -109,23 +117,8 @@ public static class RefundAggregator
         IReadOnlyDictionary<string, Invoice> invoicesById,
         DateTime start, DateTime end, Func<decimal, DateTime, decimal> toDisplay)
     {
-        decimal sum = 0m;
-        foreach (var p in allPayments.Where(x => x.IsRefund && x.Date >= start && x.Date <= end))
-        {
-            var refundUSD = Math.Abs(p.EffectiveAmountUSD) * p.RevenueShare;
-            decimal preTaxUSD;
-            if (!string.IsNullOrEmpty(p.InvoiceId)
-                && invoicesById.TryGetValue(p.InvoiceId, out var invoice)
-                && invoice.Total > 0)
-            {
-                preTaxUSD = refundUSD * PreTaxShare(invoice);
-            }
-            else
-            {
-                preTaxUSD = refundUSD;
-            }
-            sum += toDisplay(preTaxUSD, p.Date);
-        }
-        return sum;
+        return allPayments
+            .Where(x => x.IsRefund && x.Date >= start && x.Date <= end)
+            .Sum(p => toDisplay(PreTaxPortionUSD(p, invoicesById), p.Date));
     }
 }

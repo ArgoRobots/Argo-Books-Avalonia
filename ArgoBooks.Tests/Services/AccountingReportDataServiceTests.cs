@@ -132,6 +132,40 @@ public class AccountingReportDataServiceTests
         Assert.Equal(inventoryRow.Values[0], totalCurrentAssetsRow.Values[0]);
     }
 
+    // $500 rent + $65 tax + $200 deposit = $765, paid and refunded in full, deposit included. The
+    // $65 of tax is handed back; the deposit part of the refund carried none.
+    [Fact]
+    public void GetReportData_BalanceSheet_TaxPayableTakesOffTheTaxOnARefund()
+    {
+        var data = new CompanyData();
+        data.Invoices.Add(new Invoice
+        {
+            Id = "INV-D", InvoiceNumber = "INV-D", CustomerId = "C1", OriginalCurrency = "USD",
+            IssueDate = new DateTime(2024, 3, 1), Subtotal = 500m, TaxAmount = 65m, SecurityDeposit = 200m,
+            Total = 765m, TotalUSD = 765m, Status = InvoiceStatus.Refunded
+        });
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-D", InvoiceId = "INV-D", Date = new DateTime(2024, 3, 1), OriginalCurrency = "USD",
+            Subtotal = 500m, TaxAmount = 65m, TaxAmountUSD = 65m, Total = 565m, TotalUSD = 565m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-D1", InvoiceId = "INV-D", OriginalCurrency = "USD", Date = new DateTime(2024, 3, 1),
+            Amount = 765m, AmountUSD = 765m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-D2", InvoiceId = "INV-D", OriginalCurrency = "USD", Date = new DateTime(2024, 3, 10),
+            Amount = -765m, AmountUSD = -765m, IsRefund = true, DepositAmount = 200m
+        });
+
+        var result = new AccountingReportDataService(data, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.BalanceSheet);
+
+        Assert.Equal(0m, AmountOf(result, "TOTAL LIABILITIES"));
+    }
+
     [Fact]
     public void GetReportData_BalanceSheet_NoInventory_OmitsInventoryRow()
     {
@@ -317,6 +351,40 @@ public class AccountingReportDataServiceTests
         Assert.Equal(2, subtotals.Count);
         Assert.Contains("8", subtotals[0].Values[0]);   // tax collected = $8
         Assert.Contains("5", subtotals[1].Values[0]);   // tax paid = $5
+    }
+
+    // docs/Calculations.md §8: $86.91 + $32.09 tax = $119, paid and then refunded in full. Tax owed
+    // drops by the $32.09 handed back.
+    [Fact]
+    public void GetReportData_TaxSummary_TakesOffTheTaxOnARefund()
+    {
+        var data = new CompanyData();
+        data.Invoices.Add(new Invoice
+        {
+            Id = "INV-T", InvoiceNumber = "INV-T", CustomerId = "C1", OriginalCurrency = "USD",
+            IssueDate = new DateTime(2024, 3, 1), Subtotal = 86.91m, TaxAmount = 32.09m,
+            Total = 119m, TotalUSD = 119m, Status = InvoiceStatus.Refunded
+        });
+        data.Revenues.Add(new Revenue
+        {
+            Id = "REV-T", InvoiceId = "INV-T", Date = new DateTime(2024, 3, 1), OriginalCurrency = "USD",
+            Subtotal = 86.91m, TaxRate = 36.92m, TaxAmount = 32.09m, TaxAmountUSD = 32.09m, Total = 119m, TotalUSD = 119m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-T1", InvoiceId = "INV-T", OriginalCurrency = "USD", Date = new DateTime(2024, 3, 1),
+            Amount = 119m, AmountUSD = 119m
+        });
+        data.Payments.Add(new Payment
+        {
+            Id = "PAY-T2", InvoiceId = "INV-T", OriginalCurrency = "USD", Date = new DateTime(2024, 3, 10),
+            Amount = -119m, AmountUSD = -119m, IsRefund = true
+        });
+
+        var result = new AccountingReportDataService(data, CreateDefaultFilters())
+            .GetReportData(AccountingReportType.TaxSummary);
+
+        Assert.Equal(0m, AmountOf(result, "NET TAX LIABILITY"));
     }
 
     #endregion

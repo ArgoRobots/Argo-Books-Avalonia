@@ -38,6 +38,11 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// </summary>
     private string DisplayCode => _displayCode ??= ResolveDisplayCode();
 
+    private Dictionary<string, Invoice>? _invoicesById;
+
+    private IReadOnlyDictionary<string, Invoice> InvoicesById =>
+        _invoicesById ??= ProfitCalculator.BuildInvoiceLookup(companyData!.Invoices);
+
     private string ResolveDisplayCode()
     {
         var code = GetCurrencyCode();
@@ -493,15 +498,19 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
                          && IsOnOrBeforeEndDate(po.OrderDate))
             .Sum(po => ToDisplay(po.EffectiveTotalUSD, po.OrderDate));
 
-        // Sales Tax Payable = tax collected on all revenue minus input tax credits from expenses.
+        // Sales Tax Payable = tax collected on all revenue, less tax handed back on refunds
+        // (docs/Calculations.md §8), minus input tax credits from expenses.
         // Components converted at each transaction's own date, then combined (derived figure).
         var taxCollected = companyData.Revenues
             .Where(r => IsOnOrBeforeEndDate(r.Date))
             .Sum(r => ToDisplay(r.EffectiveTotalUSD - r.EffectiveSubtotalUSD, r.Date));
+        var taxRefunded = companyData.Payments
+            .Where(p => p.IsRefund && IsOnOrBeforeEndDate(p.Date))
+            .Sum(p => ToDisplay(RefundAggregator.TaxPortionUSD(p, InvoicesById), p.Date));
         var taxPaidOnExpenses = companyData.Expenses
             .Where(e => IsOnOrBeforeEndDate(e.Date))
             .Sum(e => ToDisplay(e.EffectiveTotalUSD - e.EffectiveSubtotalUSD, e.Date));
-        var salesTaxPayable = taxCollected - taxPaidOnExpenses;
+        var salesTaxPayable = taxCollected - taxRefunded - taxPaidOnExpenses;
 
         var totalLiabilities = accountsPayable + salesTaxPayable;
 
@@ -1435,7 +1444,12 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             }
         }
 
-        var totalTaxCollected = taxCollectedByRate.Values.Sum();
+        // Tax handed back on refunds in range is no longer owed (docs/Calculations.md §8).
+        var taxRefunded = companyData.Payments
+            .Where(p => p.IsRefund && IsInDateRange(p.Date))
+            .Sum(p => ToDisplay(RefundAggregator.TaxPortionUSD(p, InvoicesById), p.Date));
+
+        var totalTaxCollected = taxCollectedByRate.Values.Sum() - taxRefunded;
         var totalTaxPaid = taxPaidByRate.Values.Sum();
         var netTaxLiability = totalTaxCollected - totalTaxPaid;
 
@@ -1459,10 +1473,21 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
             });
         }
 
+        if (taxRefunded != 0)
+        {
+            data.Rows.Add(new AccountingRow
+            {
+                Label = "Less tax on refunds",
+                Values = [FormatCurrencyWithSign(-taxRefunded)],
+                IndentLevel = 1,
+                RowType = AccountingRowType.DataRow
+            });
+        }
+
         data.Rows.Add(new AccountingRow
         {
             Label = t.TaxCollectedTotal,
-            Values = [FormatCurrency(totalTaxCollected)],
+            Values = [FormatCurrencyWithSign(totalTaxCollected)],
             RowType = AccountingRowType.SubtotalRow
         });
 
