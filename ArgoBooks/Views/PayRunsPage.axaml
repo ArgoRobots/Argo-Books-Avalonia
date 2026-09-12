@@ -63,6 +63,7 @@
                              IsMediumMode="{Binding ResponsiveHeader.IsMediumMode}"
                              ShowButtonText="{Binding ResponsiveHeader.ShowButtonText}"
                              ShowFilterButton="False"
+                             ShowAddButton="{Binding HasPremium}"
                              AddCommand="{Binding RunPayrollCommand}"
                              AddButtonText="{loc:Loc 'Run payroll'}"
                              AddButtonTooltip="{loc:Loc 'Run payroll'}"
