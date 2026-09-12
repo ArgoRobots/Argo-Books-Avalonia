@@ -161,11 +161,9 @@ public class InvoiceTemplate
     [JsonPropertyName("showItemDescriptions")]
     public bool ShowItemDescriptions { get; set; } = true;
 
-    /// <summary>
-    /// Whether to show the notes section.
-    /// </summary>
-    [JsonPropertyName("showNotes")]
-    public bool ShowNotes { get; set; } = true;
+    // No "show notes" setting: the customer message renders in the invoice footer, always. A
+    // template-level toggle for it was saved and shown in the designer for a while but never
+    // reached the rendered invoice either way.
 
     /// <summary>
     /// Whether to show payment instructions.
@@ -233,7 +231,6 @@ public class InvoiceTemplate
             ShowCompanyCountry = ShowCompanyCountry,
             ShowTaxBreakdown = ShowTaxBreakdown,
             ShowItemDescriptions = ShowItemDescriptions,
-            ShowNotes = ShowNotes,
             ShowPaymentInstructions = ShowPaymentInstructions,
             ShowDueDateProminent = ShowDueDateProminent,
             CreatedAt = DateTime.UtcNow,

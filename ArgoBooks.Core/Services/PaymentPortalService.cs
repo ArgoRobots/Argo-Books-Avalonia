@@ -164,7 +164,9 @@ public class PaymentPortalService : IDisposable
                     Description = li.Description,
                     Quantity = li.Quantity,
                     UnitPrice = li.UnitPrice,
-                    Amount = li.Quantity * li.UnitPrice
+                    // Less the line's own discount, the same figure the invoice prints, or the
+                    // portal's line amounts wouldn't add up to the Subtotal sent alongside them.
+                    Amount = li.Subtotal
                 }).ToList()
             };
 

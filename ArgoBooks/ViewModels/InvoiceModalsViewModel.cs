@@ -318,6 +318,8 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             {
                 symbol = InvoiceCurrencySymbol,
                 code = SelectedCurrencyCode,
+                // So the live recompute prints the currency's own decimals (none, for yen).
+                decimals = InvoiceCurrencyInfo.DecimalPlaces,
                 deposit = SecurityDeposit,
                 portal,
                 passFee = OptPassProcessingFee,
@@ -690,15 +692,16 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     /// </summary>
     public string SelectedCurrencyCode => CurrencyService.ParseCurrencyCode(SelectedCurrency);
 
-    // Computed totals. Subtotal is the raw line-items sum (the base for a percentage discount/fee and
-    // the displayed Subtotal line). Tax applies to the subtotal AFTER the invoice-level discount and
-    // taxable custom fee, per industry standard and docs/Calculations.md §4.
+    // Computed totals. Subtotal is the line-items sum (the base for a percentage discount/fee and the
+    // displayed Subtotal line). Tax applies to the subtotal AFTER the invoice-level discount and
+    // taxable custom fee, per industry standard and docs/Calculations.md §4. InvoiceMath owns the
+    // formula so the form, the preview, the saved invoice and the rendered paper can't disagree.
     public decimal Subtotal => LineItems.Sum(i => i.Amount);
-    public decimal CustomFeeCalculated => CustomFeeIsPercent ? Subtotal * (CustomFeeAmount / 100m) : CustomFeeAmount;
-    public decimal DiscountCalculated => DiscountIsPercent ? Subtotal * (DiscountAmount / 100m) : DiscountAmount;
-    public decimal TaxableBase => Subtotal - DiscountCalculated + CustomFeeCalculated + ShippingAmount;
-    public decimal TaxAmount => TaxIsFixed ? TaxRate : TaxableBase * (TaxRate / 100m);
-    public decimal Total => TaxableBase + TaxAmount + SecurityDeposit;
+    public decimal CustomFeeCalculated => InvoiceMath.CustomFee(Subtotal, CustomFeeAmount, CustomFeeIsPercent);
+    public decimal DiscountCalculated => InvoiceMath.Discount(Subtotal, DiscountAmount, DiscountIsPercent);
+    public decimal TaxableBase => InvoiceMath.TaxableBase(Subtotal, DiscountCalculated, CustomFeeCalculated, ShippingAmount);
+    public decimal TaxAmount => InvoiceMath.Tax(TaxableBase, TaxRate, TaxIsFixed);
+    public decimal Total => InvoiceMath.Total(TaxableBase, TaxAmount, SecurityDeposit);
 
     // Format using the invoice's selected currency so modal totals match the picker.
     private CurrencyInfo InvoiceCurrencyInfo => CurrencyInfo.GetByCode(SelectedCurrencyCode);
@@ -1730,12 +1733,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Calculate totals. Less the line's own discount, per docs/Calculations.md §4, so the
         // preview shows the same subtotal the form does.
-        previewInvoice.Subtotal = previewInvoice.LineItems.Sum(li => li.Quantity * li.UnitPrice - li.Discount);
+        previewInvoice.Subtotal = InvoiceMath.Subtotal(previewInvoice.LineItems);
         previewInvoice.SecurityDeposit = SecurityDeposit;
         // Tax applies to the subtotal AFTER discount and the taxable fee plus shipping (docs/Calculations.md §4).
-        var previewTaxableBase = previewInvoice.Subtotal - DiscountCalculated + CustomFeeCalculated + ShippingAmount;
-        previewInvoice.TaxAmount = TaxIsFixed ? TaxRate : previewTaxableBase * (TaxRate / 100m);
-        previewInvoice.Total = previewTaxableBase + previewInvoice.TaxAmount + SecurityDeposit;
+        var previewTaxableBase = InvoiceMath.TaxableBase(
+            previewInvoice.Subtotal, DiscountCalculated, CustomFeeCalculated, ShippingAmount);
+        previewInvoice.TaxAmount = InvoiceMath.Tax(previewTaxableBase, TaxRate, TaxIsFixed);
+        previewInvoice.Total = InvoiceMath.Total(previewTaxableBase, previewInvoice.TaxAmount, SecurityDeposit);
         previewInvoice.Balance = previewInvoice.Total;
 
         // Render HTML using the same renderer as the template designer
@@ -2090,13 +2094,13 @@ public partial class InvoiceModalsViewModel : ViewModelBase
 
         // Calculate invoice totals (Subtotal / TaxAmount / Total, these are
         // invoice-level math, not Payment-derived).
-        invoice.Subtotal = invoice.LineItems.Sum(li => li.Quantity * li.UnitPrice - li.Discount);
-        var feeCalc = invoice.CustomFeeIsPercent ? invoice.Subtotal * (invoice.CustomFeeAmount / 100m) : invoice.CustomFeeAmount;
-        var discCalc = invoice.DiscountIsPercent ? invoice.Subtotal * (invoice.DiscountAmount / 100m) : invoice.DiscountAmount;
+        invoice.Subtotal = InvoiceMath.Subtotal(invoice.LineItems);
+        var feeCalc = InvoiceMath.CustomFee(invoice.Subtotal, invoice.CustomFeeAmount, invoice.CustomFeeIsPercent);
+        var discCalc = InvoiceMath.Discount(invoice.Subtotal, invoice.DiscountAmount, invoice.DiscountIsPercent);
         // Tax applies to the subtotal AFTER discount and the taxable fee plus shipping (docs/Calculations.md §4).
-        var taxableBase = invoice.Subtotal - discCalc + feeCalc + invoice.ShippingAmount;
-        invoice.TaxAmount = invoice.TaxIsFixed ? invoice.TaxRate : taxableBase * (invoice.TaxRate / 100m);
-        invoice.Total = taxableBase + invoice.TaxAmount + invoice.SecurityDeposit;
+        var taxableBase = InvoiceMath.TaxableBase(invoice.Subtotal, discCalc, feeCalc, invoice.ShippingAmount);
+        invoice.TaxAmount = InvoiceMath.Tax(taxableBase, invoice.TaxRate, invoice.TaxIsFixed);
+        invoice.Total = InvoiceMath.Total(taxableBase, invoice.TaxAmount, invoice.SecurityDeposit);
 
         // Set currency fields for multi-currency support
         invoice.OriginalCurrency = SelectedCurrencyCode;
@@ -3001,8 +3005,10 @@ public partial class LineItemDisplayModel : ObservableObject
 
     /// <summary>
     /// The line's contribution to the invoice subtotal: quantity times price, less the line's
-    /// own discount. That is docs/Calculations.md §4 verbatim, and it matches
-    /// <see cref="Core.Models.Common.LineItem.Subtotal"/>.
+    /// own discount, floored at zero. That is docs/Calculations.md §4, and it matches
+    /// <see cref="Core.Models.Common.LineItem.Subtotal"/> exactly, so what the form totals and what
+    /// the saved invoice totals are the same number. A discount larger than the line it sits on
+    /// zeroes that line; it does not come off the rest of the invoice.
     ///
     /// The per-line tax rate is deliberately NOT added. §4 is explicit that the invoice header
     /// rate is what produces the stored tax, and adding a line's own tax here would have the
@@ -3011,7 +3017,7 @@ public partial class LineItemDisplayModel : ObservableObject
     /// Discount is zero on every line this form creates, so for an invoice made in the app this
     /// is exactly what it always was.
     /// </summary>
-    public decimal Amount => (Quantity ?? 0) * (UnitPrice ?? 0) - Discount;
+    public decimal Amount => LineItem.SubtotalOf(Quantity ?? 0, UnitPrice ?? 0, Discount);
 
     public string AmountFormatted => CurrencyInfo.GetByCode(InvoiceCurrencyCode).Format(Amount);
 

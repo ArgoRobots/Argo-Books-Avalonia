@@ -132,8 +132,9 @@ Every aggregation across multi-currency data uses the `Effective*USD` properties
 How an invoice's grand total is built from its parts. The Invoice model stores the final numbers; this is how they're derived.
 
 ```
-1. Subtotal           = Σ over LineItem of (Quantity × UnitPrice − Discount)   (the stored/displayed Subtotal)
-2. invoiceDiscount    = DiscountIsPercent ? Subtotal × DiscountAmount/100 : DiscountAmount
+0. LineSubtotal       = max(0, Quantity × UnitPrice − Discount), rounded to 2 dp   (LineItem.Subtotal)
+1. Subtotal           = Σ over LineItem of LineSubtotal                            (the stored/displayed Subtotal)
+2. invoiceDiscount    = min(Subtotal, DiscountIsPercent ? Subtotal × DiscountAmount/100 : DiscountAmount)
 3. invoiceCustomFee   = CustomFeeIsPercent ? Subtotal × CustomFeeAmount/100 : CustomFeeAmount
 4. TaxableBase        = Subtotal − invoiceDiscount + invoiceCustomFee + ShippingAmount
 5. TaxAmount          = TaxableBase × TaxRate
@@ -141,9 +142,12 @@ How an invoice's grand total is built from its parts. The Invoice model stores t
                       = Subtotal − invoiceDiscount + invoiceCustomFee + ShippingAmount + TaxAmount + SecurityDeposit
 ```
 
+`InvoiceMath` implements steps 1 to 6 and is the only copy of them. The invoice form, the live preview, the saved invoice and the rendered HTML all call it, so they cannot drift apart.
+
 Notes:
-- **`Subtotal` is the raw line-items sum** (after any per-line discounts). It is stored on the invoice and shown as the "Subtotal" line, and it is the base a *percentage* discount or fee is taken from. The invoice-level discount and custom fee are shown as their own separate lines, not folded into `Subtotal`.
-- **Discount on a line item** reduces only that line's subtotal.
+- **`Subtotal` is the line-items sum.** It is stored on the invoice and shown as the "Subtotal" line, and it is the base a *percentage* discount or fee is taken from. The invoice-level discount and custom fee are shown as their own separate lines, not folded into `Subtotal`.
+- **Discount on a line item** reduces only that line's subtotal, and never below zero: a discount bigger than the line it sits on makes that line free, it does not come off the rest of the invoice.
+- **No figure on an invoice can be negative.** The invoice-level discount is worth at most the `Subtotal` it comes off (a 150 discount on a 100 subtotal is a 100 discount), and the taxable base floors at zero, so an invoice can come to nothing but can never owe the customer money. Shipping is still payable when a discount wipes out the goods, because the discount caps at the subtotal rather than at the whole invoice.
 - **Invoice-level discount**, **custom fee**, and **shipping** adjust the *taxable base* before tax (industry standard: tax is charged on the net amount after discount, and a taxable fee and shipping are taxed). The discount lowers it; the fee and shipping raise it.
 - **Security deposit** is added to the total but is *not* taxed and is *not* revenue: it's a refundable hold against damages. The revenue created from the invoice leaves it out (`Total − SecurityDeposit`). If a rental comes back and the business keeps the deposit, the return adds it as its own revenue row (`Revenue.IsKeptDeposit`), dated on the return, linked to the invoice, and priced at the invoice's rate as the invoice's refunds are. A rental with no invoice has no deposit in the books, so there is nothing to move. How refunds treat the deposit is in §8. Helper: `SecurityDeposits`.
 - **Tax** is applied to `TaxableBase` (Subtotal − discount + fee + shipping), not to the raw `Subtotal`. Argo Books treats tax as a single flat rate; we do not support different tax rates per line item at the invoice-roll-up level (line items each carry a `TaxRate` but the invoice header rate is what's stored as the final tax).
@@ -373,6 +377,7 @@ When writing or reviewing aggregation code:
 - `ProfitCalculator.CalculateNetProfitByDayUSD(data, start, end)`: per-day profit for charts.
 - `ComparisonPeriod.For(preset, start, end)`: the period every "vs previous period" figure compares against (dashboard, Analytics, Insights trends). This month, quarter or year so far compares with the same days of the one before, stopping at its end when it is shorter (This Month on Sep 11 is Aug 1 to Aug 11; This Year on Feb 29 is Jan 1 to Feb 28). Last month, quarter or year compares with the whole calendar period before it. Everything else compares with the same number of days just before.
 - `InvoiceTotalsService.Recalculate(invoice, allPayments)`: call after any mutation to an invoice's payment list.
+- `InvoiceMath`: the §4 per-invoice formula (subtotal, discount, fee, taxable base, tax, total). Anything that needs an invoice figure calls it rather than re-deriving the arithmetic.
 
 **Display helpers (`ArgoBooks/Services/`):**
 - `CurrencyService.FormatFromUSD(amountUSD, date)`: USD → display currency string. Use as the last step before binding to a UI text.
