@@ -704,8 +704,11 @@ public partial class ChartExpandOverlay : UserControl
     /// </summary>
     private static ChartLoaderService? GetChartLoaderService(object? dataContext)
     {
+        // Dashboard charts are widgets, each loading through its own service, so the widget is what
+        // the expanded chart's panel carries, not the dashboard page.
         return dataContext switch
         {
+            ViewModels.Dashboard.UnifiedChartWidgetViewModel widget => widget.ChartLoaderService,
             DashboardPageViewModel dashboard => dashboard.ChartLoaderService,
             AnalyticsPageViewModel analytics => analytics.ChartLoaderService,
             _ => null
