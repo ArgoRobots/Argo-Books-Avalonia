@@ -28,16 +28,6 @@
                 IsHitTestVisible="True"
                 ZIndex="1" />
 
-        <!-- Language, in the corner: the first thing a non-English user needs, without hunting in Settings -->
-        <ComboBox ItemsSource="{Binding LanguageOptions}"
-                  SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
-                  Classes="form-combobox"
-                  HorizontalAlignment="Right"
-                  VerticalAlignment="Bottom"
-                  MinWidth="160"
-                  Margin="0,0,24,20"
-                  ZIndex="2" />
-
         <!-- Main Content -->
         <ScrollViewer x:Name="MainScrollViewer"
                       HorizontalScrollBarVisibility="Disabled"

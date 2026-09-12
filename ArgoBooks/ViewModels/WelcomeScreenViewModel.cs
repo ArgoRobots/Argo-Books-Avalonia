@@ -41,37 +41,6 @@ public partial class WelcomeScreenViewModel : ViewModelBase
 
     public bool IsSandboxMode => ApiConfig.IsSandbox;
 
-    public IReadOnlyList<string> LanguageOptions => Data.Languages.All;
-
-    /// <summary>
-    /// The app's language, offered here as well as in Settings: a first install picks it from the
-    /// machine, and this is where someone whose machine says otherwise can say so before starting.
-    /// </summary>
-    [ObservableProperty]
-    private string _selectedLanguage = LanguageService.Instance.CurrentLanguage;
-
-    partial void OnSelectedLanguageChanged(string value)
-    {
-        if (Design.IsDesignMode || string.IsNullOrEmpty(value) || value == LanguageService.Instance.CurrentLanguage)
-            return;
-
-        _ = ApplyLanguageAsync(value);
-    }
-
-    private static async Task ApplyLanguageAsync(string language)
-    {
-        // The setting is written first so the choice survives even if the translation download fails,
-        // which leaves the app in English until the next start rather than losing the answer.
-        var settings = App.SettingsService;
-        if (settings != null)
-        {
-            settings.GlobalSettings.Ui.Language = language;
-            await settings.SaveGlobalSettingsAsync();
-        }
-
-        await LanguageService.Instance.SetLanguageAsync(language);
-    }
-
     /// <summary>
     /// Default constructor for design-time.
     /// </summary>
