@@ -1865,7 +1865,6 @@ public partial class App : Application
                 case LicenseValidationStatus.InvalidKey:
                     await LicenseService.ClearLicenseAsync();
                     _appShellViewModel.SetPlanStatus(false);
-                    RaisePlanStatusChanged(false);
                     await ShowErrorMessageBoxAsync(
                         "License Issue".Translate(),
                         "Your license key is no longer valid. Please contact support or enter a new key.".Translate());
@@ -1874,7 +1873,6 @@ public partial class App : Application
                 case LicenseValidationStatus.ExpiredSubscription:
                     await LicenseService.ClearLicenseAsync();
                     _appShellViewModel.SetPlanStatus(false);
-                    RaisePlanStatusChanged(false);
                     await ShowErrorMessageBoxAsync(
                         "Subscription Expired".Translate(),
                         "Your premium subscription has expired. Please renew your subscription to continue using premium features.".Translate());
@@ -1883,7 +1881,6 @@ public partial class App : Application
                 case LicenseValidationStatus.WrongDevice:
                     await LicenseService.ClearLicenseAsync();
                     _appShellViewModel.SetPlanStatus(false);
-                    RaisePlanStatusChanged(false);
                     await ShowErrorMessageBoxAsync(
                         "License Deactivated".Translate(),
                         "Your license key has been activated on a different device. Premium features have been deactivated on this device. You can re-enter your key in the Upgrade menu to reactivate.".Translate());
