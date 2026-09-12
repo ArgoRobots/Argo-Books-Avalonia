@@ -267,7 +267,7 @@
                               Foreground="{DynamicResource PrimaryBrush}" />
                 </Border>
 
-                <TextBlock Text="{loc:Loc 'Unlock Payroll'}"
+                <TextBlock Text="{loc:Loc 'Unlock Canadian Payroll'}"
                            FontSize="22"
                            FontWeight="Bold"
                            Foreground="{DynamicResource TextPrimaryBrush}"
