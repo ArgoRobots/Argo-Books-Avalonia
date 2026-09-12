@@ -5,6 +5,7 @@ using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Services.Payroll;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Telemetry;
 using ArgoBooks.Utilities;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -529,7 +530,7 @@ public partial class YearEndModalViewModel : ViewModelBase
             byte[] summary = await Task.Run(() => T4PdfRenderer.RenderSummary(t4));
             await File.WriteAllBytesAsync(Path.Combine(directory, $"T4-Summary-{t4.TaxYear}.pdf"), summary);
 
-            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.T4SlipsGenerated);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.T4SlipsGenerated);
 
             StatusMessage = "Saved {0} slips and the summary.".TranslateFormat(t4.Slips.Count);
         }
@@ -650,7 +651,7 @@ public partial class YearEndModalViewModel : ViewModelBase
 
             await File.WriteAllTextAsync(file.Path.LocalPath, T4XmlWriter.BuildString(filing), new UTF8Encoding(false));
 
-            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.T4XmlGenerated);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.T4XmlGenerated);
 
             StatusMessage = IsAmending
                 ? "Saved {0} slip(s). Upload it through CRA's Internet File Transfer. Send it on its own: CRA rejects a return that mixes amended and original slips."

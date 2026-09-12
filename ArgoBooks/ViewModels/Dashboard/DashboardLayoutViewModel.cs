@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using ArgoBooks.Core.Models.Dashboard;
-using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Telemetry;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 

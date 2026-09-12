@@ -8,6 +8,7 @@ using ArgoBooks.Core.Services.Payroll;
 using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Telemetry;
 using ArgoBooks.Utilities;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -335,7 +336,7 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
 
-            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.PayStubsExported);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PayStubsExported);
         }
         catch (Exception ex)
         {

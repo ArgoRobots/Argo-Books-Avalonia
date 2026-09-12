@@ -387,36 +387,27 @@ public class MoveResizeElementAction : ICoalescingAction
 /// <summary>
 /// Action for resizing accounting table columns via drag in the designer.
 /// </summary>
-public class ColumnResizeAction : IReportUndoableAction
+public class ColumnResizeAction(
+    ReportConfiguration config,
+    string elementId,
+    List<double> oldRatios,
+    List<double> newRatios)
+    : IReportUndoableAction
 {
-    private readonly ReportConfiguration _config;
-    private readonly string _elementId;
-    private readonly List<double> _oldRatios;
-    private readonly List<double> _newRatios;
-
-    public ColumnResizeAction(
-        ReportConfiguration config,
-        string elementId,
-        List<double> oldRatios,
-        List<double> newRatios)
-    {
-        _config = config;
-        _elementId = elementId;
-        _oldRatios = oldRatios.ToList();
-        _newRatios = newRatios.ToList();
-    }
+    private readonly List<double> _oldRatios = oldRatios.ToList();
+    private readonly List<double> _newRatios = newRatios.ToList();
 
     public string Description => "Resize column".Translate();
 
     public void Undo()
     {
-        if (_config.GetElementById(_elementId) is AccountingTableReportElement element)
+        if (config.GetElementById(elementId) is AccountingTableReportElement element)
             element.ColumnWidthRatios = _oldRatios.ToList();
     }
 
     public void Redo()
     {
-        if (_config.GetElementById(_elementId) is AccountingTableReportElement element)
+        if (config.GetElementById(elementId) is AccountingTableReportElement element)
             element.ColumnWidthRatios = _newRatios.ToList();
     }
 }

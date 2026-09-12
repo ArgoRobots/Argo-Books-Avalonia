@@ -6,6 +6,7 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Utilities;
 using ArgoBooks.Core.Services.Payroll;
 using ArgoBooks.Localization;
+using ArgoBooks.Shared.Telemetry;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
@@ -299,7 +300,7 @@ public partial class RoeModalViewModel : ViewModelBase
                 bytes,
                 $"ROE-worksheet-{ExportFolderHelper.Sanitize(_sheet.EmployeeName)}.pdf");
 
-            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.RoeWorksheetGenerated);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RoeWorksheetGenerated);
         }
         catch (Exception ex)
         {
@@ -362,7 +363,7 @@ public partial class RoeModalViewModel : ViewModelBase
             string xml = RoeXmlWriter.BuildString(_sheet, AppInfo.AssemblyVersion?.ToString(3) ?? string.Empty, draft);
             await File.WriteAllTextAsync(file.Path.LocalPath, xml, new UTF8Encoding(false));
 
-            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.RoeXmlGenerated);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.RoeXmlGenerated);
 
             RememberContact();
 

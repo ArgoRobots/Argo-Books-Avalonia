@@ -303,7 +303,7 @@ public partial class UnifiedChartWidgetViewModel : WidgetViewModelBase
                 sd.DataPoints.FirstOrDefault(p => p.Date == date)?.Value ?? 0.0).ToArray();
             seriesDisplayValues.Add(displayValues);
 
-            var colorHex = sd.Color ?? AppColors.Palette[i % AppColors.Palette.Length];
+            var colorHex = sd.Color;
             series.Add(ChartLoaderService.CreateDateTimeSeries(
                 allDates, displayValues, sd.Name, SKColor.Parse(colorHex), convertFromUSD: false));
         }

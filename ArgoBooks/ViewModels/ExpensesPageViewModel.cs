@@ -505,7 +505,7 @@ public ExpensesPageViewModel()
         var returnedIds = new HashSet<string>(
             companyData?.Returns
                 .Where(r => r.Status == ReturnStatus.Completed)
-                .Select(r => r.OriginalTransactionId ?? "") ?? []);
+                .Select(r => r.OriginalTransactionId) ?? []);
         IEnumerable<Expense> filtered = _allExpenses;
 
         // Apply search filter

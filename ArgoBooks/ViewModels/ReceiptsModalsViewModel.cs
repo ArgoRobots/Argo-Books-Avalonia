@@ -17,6 +17,7 @@ using CommunityToolkit.Mvvm.Input;
 using SkiaSharp;
 
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Shared.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 

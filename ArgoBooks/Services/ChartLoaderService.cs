@@ -111,7 +111,7 @@ public class ChartLoaderService
             Text = translatedText,
             TextSize = 16,
             Padding = padding,
-            Paint = new SolidColorPaint(textColor) { SKTypeface = Core.Services.PlatformTypefaces.Resolve(null, new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright)) }
+            Paint = new SolidColorPaint(textColor) { SKTypeface = PlatformTypefaces.Resolve(null, new SKFontStyle(SKFontStyleWeight.SemiBold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright)) }
         };
     }
 

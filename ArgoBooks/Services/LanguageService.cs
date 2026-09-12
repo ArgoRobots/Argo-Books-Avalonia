@@ -135,11 +135,10 @@ public partial class LanguageService
     /// <summary>
     /// Loads a single language file from disk into the provided dictionary.
     /// </summary>
-    private bool LoadLanguageFile(string isoCode, ref Dictionary<string, string> target)
+    private void LoadLanguageFile(string isoCode, ref Dictionary<string, string> target)
     {
         var filePath = GetLanguageFilePath(isoCode);
-        if (!File.Exists(filePath))
-            return false;
+        if (!File.Exists(filePath)) return;
 
         try
         {
@@ -151,7 +150,6 @@ public partial class LanguageService
                 {
                     target = translations;
                     App.ErrorLogger?.LogDebug($"LanguageService: Loaded {translations.Count} translations from {isoCode}.json");
-                    return true;
                 }
             }
         }
@@ -159,8 +157,6 @@ public partial class LanguageService
         {
             App.ErrorLogger?.LogError(ex, ErrorCategory.FileSystem, $"Failed to load language file: {isoCode}.json");
         }
-
-        return false;
     }
 
     /// <summary>

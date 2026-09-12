@@ -1,6 +1,7 @@
 ﻿using System.Runtime.InteropServices;
 using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Platform;
+using ArgoBooks.Shared.Telemetry;
 
 namespace ArgoBooks.Core.Services;
 

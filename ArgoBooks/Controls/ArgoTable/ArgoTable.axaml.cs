@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using ArgoBooks.Controls.ColumnWidths;
-using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Shared.Telemetry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;

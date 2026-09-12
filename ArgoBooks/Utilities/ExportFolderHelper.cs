@@ -39,7 +39,7 @@ public static class ExportFolderHelper
     public static string Sanitize(string name)
     {
         char[] invalid = Path.GetInvalidFileNameChars();
-        string result = new((name ?? string.Empty)
+        string result = new(name
             .Select(c => invalid.Contains(c) || c == ' ' ? '-' : c)
             .ToArray());
 

@@ -726,7 +726,7 @@ public partial class BankStatementImportModalViewModel : ViewModelBase
         var row = _editingRow;
         if (row == null) return;
 
-        var name = (ProductEditorName ?? string.Empty).Trim();
+        var name = (ProductEditorName).Trim();
         if (name.Length == 0)
         {
             ProductEditorNameError = true;

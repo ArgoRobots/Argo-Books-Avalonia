@@ -1,4 +1,4 @@
-namespace ArgoBooks.Core.Models.Telemetry;
+namespace ArgoBooks.Shared.Telemetry;
 
 /// <summary>
 /// Features that can be tracked.

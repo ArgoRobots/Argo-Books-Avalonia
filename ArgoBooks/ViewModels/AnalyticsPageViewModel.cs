@@ -1461,7 +1461,7 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
             var chartTitle = SelectedChartDataType?.GetDisplayName() ?? chartExportData?.ChartTitle ?? "Chart";
 
             // Use Pie chart type for distribution charts, match chart style for time-based charts
-            ArgoBooks.Core.Services.GoogleSheetsService.ChartType chartType;
+            GoogleSheetsService.ChartType chartType;
             if (chartExportData?.ChartType == ChartType.Distribution)
             {
                 chartType = GoogleSheetsService.ChartType.Pie;
@@ -1532,7 +1532,6 @@ public partial class AnalyticsPageViewModel : ChartContextMenuViewModelBase, ICl
                 IsSuccess = false,
                 ErrorMessage = null // Cancelled by user, no error message needed
             });
-            return;
         }
         catch (InvalidOperationException ex)
         {

@@ -1,4 +1,3 @@
-// ArgoBooks/ViewModels/BulkScanItem.cs
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;

@@ -20,8 +20,8 @@ using ArgoBooks.Shared.Sync;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Shared.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -1436,7 +1436,7 @@ public partial class SettingsModalViewModel : ViewModelBase
 
             App.ErrorLogger?.LogWarning(
                 "Portal API key was missing from the process cache and was re-primed from the company file.",
-                nameof(SettingsModalViewModel), Core.Models.Telemetry.ErrorCategory.Api,
+                nameof(SettingsModalViewModel), ErrorCategory.Api,
                 "PortalKeyNotActivated");
         }
 
@@ -3420,7 +3420,7 @@ public partial class SettingsModalViewModel : ViewModelBase
                     // Show error message. A debug build talks to the dev server, which usually has no
                     // translation files; say so there, since "check your connection" sends a developer
                     // looking in the wrong place. Never shown in a release build, so not translated.
-                    var missingOnDev = Core.Services.ApiConfig.IsSandbox && LanguageService.Instance.LastDownloadNotPublished;
+                    var missingOnDev = ApiConfig.IsSandbox && LanguageService.Instance.LastDownloadNotPublished;
                     var dialog = App.ConfirmationDialog;
                     if (dialog != null)
                     {

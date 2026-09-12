@@ -21,6 +21,7 @@ using ArgoBooks.Core.Services.Layout;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Telemetry;
 using ArgoBooks.ViewModels;
 using ArgoBooks.Views;
 

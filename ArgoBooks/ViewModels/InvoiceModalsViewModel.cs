@@ -12,8 +12,8 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.InvoiceTemplates;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Shared.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -287,7 +287,7 @@ public partial class InvoiceModalsViewModel : ViewModelBase
     // Pulls a number out of a value that may carry a currency symbol / thousands separators.
     private static bool TryParsePaperNumber(string raw, out decimal result)
     {
-        var cleaned = new string((raw ?? string.Empty).Where(c => char.IsDigit(c) || c == '.' || c == '-').ToArray());
+        var cleaned = new string(raw.Where(c => char.IsDigit(c) || c == '.' || c == '-').ToArray());
         return decimal.TryParse(cleaned, System.Globalization.NumberStyles.Number,
             System.Globalization.CultureInfo.InvariantCulture, out result);
     }
@@ -1697,8 +1697,6 @@ public partial class InvoiceModalsViewModel : ViewModelBase
             var defaultTemplates = InvoiceTemplateFactory.CreateDefaultTemplates();
             template = defaultTemplates.FirstOrDefault(t => t.IsDefault) ?? defaultTemplates.First();
         }
-
-        var companySettings = App.CompanyManager?.CompanyData?.Settings ?? new();
 
         // Create a preview invoice from current form data
         var previewInvoice = new Invoice

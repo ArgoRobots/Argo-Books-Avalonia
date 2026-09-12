@@ -11,8 +11,8 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-
 using ArgoBooks.Core.Models.Telemetry;
+using ArgoBooks.Shared.Telemetry;
 
 namespace ArgoBooks.ViewModels;
 
@@ -147,7 +147,7 @@ public partial class SupplierModalsViewModel : ViewModelBase
     {
         get
         {
-            var name = ModalSupplierName?.Trim() ?? string.Empty;
+            var name = ModalSupplierName.Trim();
             if (name.Length == 0) return "?";
 
             var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
