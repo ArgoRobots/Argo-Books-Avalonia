@@ -2299,6 +2299,50 @@ public partial class App : Application
     /// <summary>
     /// Creates and opens a sample company with pre-populated demo data.
     /// </summary>
+    /// <summary>
+    /// Freezes the sample's insights for a free user, straight after it opens and before anything
+    /// in it can change. Never fails the open: the page falls back to its teaser.
+    /// </summary>
+    private static async Task CaptureSampleInsightsAsync()
+    {
+        if (CompanyManager?.CompanyData is not { } data || _appShellViewModel?.SidebarViewModel.HasPremium == true)
+            return;
+
+        // The overlay stays up until the snapshot is taken, so nothing can go into the sample first.
+        _mainWindowViewModel?.ShowLoading("Opening sample company...".Translate());
+        try
+        {
+            // A row still waiting for its rate counts as zero in the insights, and the forecast cards
+            // convert at today's rate, so both are settled before anything is frozen.
+            if (PendingConversionService != null && data.PendingConversions.Count > 0)
+            {
+                await PendingConversionService.ReconcileWithCompanyDataAsync(data);
+                await PendingConversionService.ProcessPendingConversionsAsync(data);
+                data.MarkAsSaved();
+                if (_mainWindowViewModel != null)
+                    _mainWindowViewModel.HasUnsavedChanges = false;
+                if (_appShellViewModel != null)
+                    _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
+            }
+            await CurrencyService.TryWarmTodayRateAsync();
+
+            // Offline the figures would be wrong rather than pending, so the page keeps its teaser.
+            if (data.PendingConversions.Count > 0)
+                return;
+
+            await InsightsPageViewModel.CaptureSampleSnapshotAsync(data);
+            _insightsPageViewModel?.OnSampleSnapshotChanged();
+        }
+        catch (Exception ex)
+        {
+            ErrorLogger?.LogWarning($"Could not work out the sample company's insights: {ex.Message}", "Insights");
+        }
+        finally
+        {
+            _mainWindowViewModel?.HideLoading();
+        }
+    }
+
     private static async Task OpenSampleCompanyAsync()
     {
         if (CompanyManager == null || _mainWindowViewModel == null || _appShellViewModel == null || _fileService == null)
@@ -2387,6 +2431,8 @@ public partial class App : Application
 
                     // Set date range to show full year of sample data
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
+
+                    await CaptureSampleInsightsAsync();
                 }
 
                 // Exploring in the sample company looks identical to real use on the
@@ -3717,6 +3763,7 @@ public partial class App : Application
                     _appShellViewModel.HeaderViewModel.HasUnsavedChanges = false;
                     SyncSampleCompanyState();
                     ChartSettingsService.Instance.SelectedDateRange = "Last 365 Days";
+                    await CaptureSampleInsightsAsync();
                 }
 
                 await LoadRecentCompaniesAsync();
