@@ -1434,10 +1434,14 @@ public partial class App : Application
                         : string.Format("{0} pending transactions have been processed successfully.".Translate(), args.ConvertedCount);
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
-                        AddNotification(
-                            "Back Online".Translate(),
-                            message,
-                            NotificationType.Success);
+                        // The sample converts its demo rows on every open; announcing that is noise.
+                        if (CompanyManager?.IsSampleCompany != true)
+                        {
+                            AddNotification(
+                                "Back Online".Translate(),
+                                message,
+                                NotificationType.Success);
+                        }
 
                         // Refresh ViewModels so converted transactions show updated status and amounts
                         _expensesPageViewModel?.RefreshExpensesCommand.Execute(null);
