@@ -3398,6 +3398,8 @@ public partial class SettingsModalViewModel : ViewModelBase
                 }
                 else
                 {
+                    var requestedLanguage = SelectedLanguage;
+
                     // Download failed - revert to previous language
                     SetLanguageWithoutNotify(previousLanguage);
                     _originalLanguage = previousLanguage;
@@ -3415,14 +3417,21 @@ public partial class SettingsModalViewModel : ViewModelBase
                         await App.SettingsService!.SaveGlobalSettingsAsync();
                     }
 
-                    // Show error message
+                    // Show error message. A debug build talks to the dev server, which usually has no
+                    // translation files; say so there, since "check your connection" sends a developer
+                    // looking in the wrong place. Never shown in a release build, so not translated.
+                    var missingOnDev = Core.Services.ApiConfig.IsSandbox && LanguageService.Instance.LastDownloadNotPublished;
                     var dialog = App.ConfirmationDialog;
                     if (dialog != null)
                     {
                         await dialog.ShowAsync(new ConfirmationDialogOptions
                         {
-                            Title = "Language Download Failed".Translate(),
-                            Message = "Could not download the language file from the server. Please check your internet connection and try again.".Translate(),
+                            Title = missingOnDev
+                                ? "No Translation Files on the Dev Server"
+                                : "Language Download Failed".Translate(),
+                            Message = missingOnDev
+                                ? $"The dev server has no {requestedLanguage} translation file for version {Core.Services.AppInfo.VersionNumber}. Use a production build, or upload the language files to the dev server."
+                                : "Could not download the language file from the server. Please check your internet connection and try again.".Translate(),
                             PrimaryButtonText = "OK".Translate(),
                             SecondaryButtonText = null,
                             CancelButtonText = null

@@ -63,6 +63,12 @@ public partial class LanguageService
     public bool IsEnglish => CurrentIsoCode == "en";
 
     /// <summary>
+    /// Whether the last download failed because the server has no file for this language and version,
+    /// rather than because it couldn't be reached.
+    /// </summary>
+    public bool LastDownloadNotPublished { get; private set; }
+
+    /// <summary>
     /// Event raised when the language changes.
     /// </summary>
     public event EventHandler<LanguageChangedEventArgs>? LanguageChanged;
@@ -313,6 +319,8 @@ public partial class LanguageService
             }
         }
 
+        LastDownloadNotPublished = false;
+
         try
         {
             TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, true, "Downloading translations..."));
@@ -333,6 +341,7 @@ public partial class LanguageService
                 {
                     App.ErrorLogger?.LogDebug($"LanguageService: No translations published for version {version} ({isoCode}); keeping cached copy");
                     TranslationProgress?.Invoke(this, new TranslationProgressEventArgs(languageName, false, "No update available"));
+                    LastDownloadNotPublished = true;
                     return File.Exists(GetLanguageFilePath(isoCode));
                 }
                 App.ErrorLogger?.LogWarning($"LanguageService: Download failed with status {response.StatusCode}");
