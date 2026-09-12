@@ -656,6 +656,7 @@ public partial class HeaderViewModel : ViewModelBase
         Notifications.Clear();
         UnreadNotificationCount = 0;
         HasUnreadNotifications = false;
+        HideToast();
     }
 
     /// <summary>
