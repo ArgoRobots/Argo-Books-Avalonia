@@ -3428,6 +3428,11 @@ public partial class SettingsModalViewModel : ViewModelBase
                             CancelButtonText = null
                         });
                     }
+
+                    // Everything else is saved; stay open so the language can be retried or changed.
+                    // Bank rules are the one baseline Save doesn't refresh, since it normally closes.
+                    _originalBankRulesSignature = ComputeBankRulesSignature();
+                    return;
                 }
             }
             finally
