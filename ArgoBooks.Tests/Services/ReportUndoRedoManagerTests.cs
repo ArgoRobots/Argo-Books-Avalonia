@@ -502,6 +502,85 @@ public class ReportUndoRedoManagerTests
 
     #endregion
 
+    #region Deleting a multi-element selection
+
+    [Fact]
+    public void DeleteSelection_TakesASingleUndo_AndRestoresEveryElement()
+    {
+        var config = new ReportConfiguration();
+        var manager = new ReportUndoRedoManager();
+        var selection = new List<ReportElementBase>();
+        for (int i = 0; i < 5; i++)
+        {
+            var label = new LabelReportElement { X = i * 10, Y = i * 20, Width = 100, Height = 50 };
+            config.AddElement(label);
+            selection.Add(label);
+        }
+
+        RemoveElementsAction.RemoveAndRecord(config, selection, manager);
+
+        Assert.Empty(config.Elements);
+        Assert.Single(manager.UndoHistory);
+
+        manager.Undo();
+
+        Assert.Equal(5, config.Elements.Count);
+        Assert.Equal(selection.Select(e => e.Id).OrderBy(id => id), config.Elements.Select(e => e.Id).OrderBy(id => id));
+        Assert.False(manager.CanUndo);
+    }
+
+    [Fact]
+    public void DeleteSelection_Undo_RestoresPageAndLayerOfEachElement()
+    {
+        var config = new ReportConfiguration { PageCount = 2 };
+        var manager = new ReportUndoRedoManager();
+        var kept = new LabelReportElement();
+        var first = new LabelReportElement { X = 10, Y = 20, Width = 100, Height = 50 };
+        var second = new LabelReportElement { X = 30, Y = 40, Width = 100, Height = 50, PageNumber = 2 };
+        config.AddElement(kept);
+        config.AddElement(first);
+        config.AddElement(second);
+
+        RemoveElementsAction.RemoveAndRecord(config, [first, second], manager);
+        manager.Undo();
+
+        Assert.Equal(new[] { kept.Id, first.Id, second.Id }, config.GetElementsByZOrder().Select(e => e.Id));
+        Assert.Equal(2, config.GetElementById(second.Id)!.PageNumber);
+        Assert.Equal(30, config.GetElementById(second.Id)!.X);
+    }
+
+    [Fact]
+    public void DeleteSelection_Redo_RemovesTheWholeSelectionAgain()
+    {
+        var config = new ReportConfiguration();
+        var manager = new ReportUndoRedoManager();
+        var first = new LabelReportElement();
+        var second = new LabelReportElement();
+        var third = new LabelReportElement();
+        config.AddElement(first);
+        config.AddElement(second);
+        config.AddElement(third);
+
+        RemoveElementsAction.RemoveAndRecord(config, [first, third], manager);
+        manager.Undo();
+        manager.Redo();
+
+        Assert.Equal(new[] { second.Id }, config.Elements.Select(e => e.Id));
+    }
+
+    [Fact]
+    public void DeleteSelection_WithNothingSelected_RecordsNothing()
+    {
+        var config = new ReportConfiguration();
+        var manager = new ReportUndoRedoManager();
+
+        RemoveElementsAction.RemoveAndRecord(config, [], manager);
+
+        Assert.False(manager.CanUndo);
+    }
+
+    #endregion
+
     #region Mock Classes
 
     private class MockAction : IReportUndoableAction

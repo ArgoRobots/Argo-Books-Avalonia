@@ -275,6 +275,64 @@ public class RemoveElementAction : IReportUndoableAction
 }
 
 /// <summary>
+/// Action for removing a whole selection of elements as one undo entry.
+/// </summary>
+public class RemoveElementsAction : IReportUndoableAction
+{
+    private readonly ReportConfiguration _config;
+    private readonly List<(ReportElementBase Element, int ZOrder)> _removed;
+
+    public RemoveElementsAction(ReportConfiguration config, IReadOnlyList<ReportElementBase> elements)
+    {
+        _config = config;
+        _removed = elements.Select(e =>
+        {
+            var clone = e.Clone();
+            clone.Id = e.Id; // Preserve original ID so undo/redo pairs stay consistent
+            clone.PageNumber = e.PageNumber;
+            return (clone, e.ZOrder);
+        }).ToList();
+    }
+
+    public string Description => _removed.Count == 1
+        ? "Remove {0}".TranslateFormat(_removed[0].Element.DisplayName)
+        : $"Remove {_removed.Count} elements";
+
+    /// <summary>
+    /// Removes the elements and records the whole set as one undo entry, so a single
+    /// undo brings the entire selection back instead of one element at a time.
+    /// </summary>
+    public static void RemoveAndRecord(
+        ReportConfiguration config,
+        IReadOnlyList<ReportElementBase> elements,
+        ReportUndoRedoManager? undoRedoManager)
+    {
+        if (elements.Count == 0) return;
+
+        undoRedoManager?.RecordAction(new RemoveElementsAction(config, elements));
+
+        foreach (var element in elements)
+            config.RemoveElement(element.Id);
+    }
+
+    public void Undo()
+    {
+        foreach (var (element, zOrder) in _removed)
+        {
+            // Straight into the list: AddElement would put it on top of everything.
+            element.ZOrder = zOrder;
+            _config.Elements.Add(element);
+        }
+    }
+
+    public void Redo()
+    {
+        foreach (var (element, _) in _removed)
+            _config.RemoveElement(element.Id);
+    }
+}
+
+/// <summary>
 /// Action for moving/resizing an element. Supports coalescing so that rapid
 /// sequential changes (e.g., from spinner controls) merge into a single undo entry.
 /// </summary>
