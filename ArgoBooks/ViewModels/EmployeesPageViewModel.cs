@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using ArgoBooks.Controls.ColumnWidths;
 using ArgoBooks.Core.Models.Payroll;
 using ArgoBooks.Core.Services.Payroll;
-using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.Helpers;
 using ArgoBooks.Utilities;

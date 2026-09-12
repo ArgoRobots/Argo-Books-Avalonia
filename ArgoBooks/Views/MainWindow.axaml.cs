@@ -7,7 +7,6 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using System.ComponentModel;
-using System.Linq;
 using Avalonia.VisualTree;
 
 namespace ArgoBooks.Views;

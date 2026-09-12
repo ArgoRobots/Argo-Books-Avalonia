@@ -9,7 +9,6 @@ using ArgoBooks.Core.Models.Telemetry;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Controls.ArgoTable;

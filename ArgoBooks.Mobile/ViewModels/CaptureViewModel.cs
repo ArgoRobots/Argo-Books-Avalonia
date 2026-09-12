@@ -1,16 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Globalization;
-using System.Linq;
-using System.Threading.Tasks;
 using ArgoBooks.Core.Services.Sync;
 using ArgoBooks.Mobile.Services;
 using ArgoBooks.Shared.Mobile;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Networking;
 
 namespace ArgoBooks.Mobile.ViewModels;
 

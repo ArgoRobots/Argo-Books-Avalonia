@@ -1,5 +1,4 @@
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using ArgoBooks.Helpers;
 using ArgoBooks.Core.Enums;

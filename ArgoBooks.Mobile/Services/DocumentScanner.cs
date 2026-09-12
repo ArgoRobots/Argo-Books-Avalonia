@@ -1,12 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-using Android.App;
-using Android.Content;
-using Android.Gms.Extensions;
-using Microsoft.Maui.ApplicationModel;
-using Net.Google.MLKit.Vision.DocumentScanner;
-
 namespace ArgoBooks.Mobile.Services;
 
 /// <summary>

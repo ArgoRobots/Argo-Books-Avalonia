@@ -5,7 +5,6 @@ using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Models.BankMatching;
 using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Telemetry;
-using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;

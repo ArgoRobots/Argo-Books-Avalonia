@@ -6,7 +6,6 @@ using ArgoBooks.Core.Models.Entities;
 using ArgoBooks.Core.Models.Tracking;
 using ArgoBooks.Core.Models.Transactions;
 using ArgoBooks.Core.Platform;
-using ArgoBooks.Core.Security;
 using ArgoBooks.Core.Services;
 using Xunit;
 

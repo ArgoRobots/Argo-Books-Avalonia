@@ -5,7 +5,6 @@ using ArgoBooks.Core.Services;
 using ArgoBooks.Localization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Threading.Tasks;
 
 namespace ArgoBooks.ViewModels;
 

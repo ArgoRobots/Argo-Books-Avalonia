@@ -1,10 +1,6 @@
 using System.Text.RegularExpressions;
 using ArgoBooks.Core.Data;
-using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Entities;
-using ArgoBooks.Core.Models.Inventory;
-using ArgoBooks.Core.Models.Rentals;
-using ArgoBooks.Core.Models.Transactions;
 
 namespace ArgoBooks.Core.Validation;
 
