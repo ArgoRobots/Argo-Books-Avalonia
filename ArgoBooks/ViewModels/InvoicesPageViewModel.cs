@@ -1626,7 +1626,9 @@ public partial class InvoicesPageViewModel : SortablePageViewModelBase
                     invoice, companyData, template, currencySymbol);
                 if (!response.Success)
                 {
-                    failure = response.Message ?? "The payment portal rejected the request.";
+                    failure = string.IsNullOrEmpty(response.Message)
+                        ? "The payment portal rejected the request."
+                        : response.Message;
                 }
             }
             else

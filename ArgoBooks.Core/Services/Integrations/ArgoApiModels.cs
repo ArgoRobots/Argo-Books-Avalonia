@@ -129,7 +129,7 @@ public record ArgoAccount(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("display_name")] string? DisplayName,
     [property: JsonPropertyName("company_uid")] string? CompanyUid,
-    [property: JsonPropertyName("pending")] Dictionary<string, int> Pending);
+    [property: JsonPropertyName("pending")] Dictionary<string, int>? Pending);
 
 public record ArgoBatch(
     [property: JsonPropertyName("id")] string Id,
