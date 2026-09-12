@@ -47,6 +47,12 @@ public class GlobalSettingsService : IGlobalSettingsService
     /// <inheritdoc />
     public GlobalSettings GlobalSettings { get; private set; } = new();
 
+    /// <summary>
+    /// Whether this install had no settings file when it loaded, i.e. it has never run before.
+    /// A file that fails to parse does not count: those settings are someone's, just unreadable.
+    /// </summary>
+    public bool IsFirstRun { get; private set; }
+
     /// <inheritdoc />
     public CompanySettings? CompanySettings { get; private set; }
 
@@ -55,7 +61,8 @@ public class GlobalSettingsService : IGlobalSettingsService
     {
         var settingsPath = GetGlobalSettingsPath();
 
-        if (!File.Exists(settingsPath))
+        IsFirstRun = !File.Exists(settingsPath);
+        if (IsFirstRun)
         {
             GlobalSettings = new GlobalSettings();
             return;
@@ -88,7 +95,8 @@ public class GlobalSettingsService : IGlobalSettingsService
     {
         var settingsPath = GetGlobalSettingsPath();
 
-        if (!File.Exists(settingsPath))
+        IsFirstRun = !File.Exists(settingsPath);
+        if (IsFirstRun)
         {
             GlobalSettings = new GlobalSettings();
             return;

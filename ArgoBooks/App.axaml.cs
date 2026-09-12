@@ -1760,6 +1760,20 @@ public partial class App : Application
             if (SettingsService != null)
             {
                 var language = SettingsService.GlobalSettings.Ui.Language;
+
+                // A fresh install starts in the machine's own language when we have that translation.
+                // Only on the very first run: after that the setting is the user's answer, and a
+                // machine whose language changes later must not overrule it.
+                if (SettingsService.IsFirstRun
+                    && Data.Languages.MatchSystemLanguage(System.Globalization.CultureInfo.CurrentUICulture.Name)
+                        is { } detected
+                    && detected != language)
+                {
+                    language = detected;
+                    SettingsService.GlobalSettings.Ui.Language = detected;
+                    _ = SettingsService.SaveGlobalSettingsAsync();
+                }
+
                 if (!string.IsNullOrEmpty(language) && language != "English")
                 {
                     await LanguageService.Instance.SetLanguageAsync(language);
