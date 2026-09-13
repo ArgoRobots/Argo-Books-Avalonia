@@ -32,7 +32,6 @@ public static class FilePickerTypes
         new(".jpg", "image/jpeg", "JPEG", IsImage: true),
         new(".jpeg", "image/jpeg", "JPEG", IsImage: true),
         new(".png", "image/png", "PNG", IsImage: true),
-        // iPhones shoot HEIC by default, which is why it sits this high in the list.
         new(".heic", "image/heic", "HEIC", IsImage: true),
         new(".heif", "image/heif", "HEIC", IsImage: true),
         new(".webp", "image/webp", "WebP", IsImage: true),

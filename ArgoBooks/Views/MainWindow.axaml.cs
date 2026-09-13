@@ -7,7 +7,6 @@ using ArgoBooks.Localization;
 using ArgoBooks.Services;
 using ArgoBooks.ViewModels;
 using System.ComponentModel;
-using System.Linq;
 using Avalonia.VisualTree;
 
 namespace ArgoBooks.Views;
@@ -331,8 +330,20 @@ public partial class MainWindow : Window
                                 }
                                 else
                                 {
-                                    var saved = await App.SaveCompanyWithSecurityGuidanceAsync();
-                                    if (!saved) return; // User cancelled the blocked-save dialog, don't close
+                                    try
+                                    {
+                                        var saved = await App.SaveCompanyWithSecurityGuidanceAsync();
+                                        if (!saved) return; // User cancelled the blocked-save dialog, don't close
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Staying open keeps the changes; closing would discard them.
+                                        App.ErrorLogger?.LogError(ex, Core.Models.Telemetry.ErrorCategory.FileSystem, "Save before closing failed");
+                                        await App.ShowWarningMessageBoxAsync(
+                                            "Could Not Save".Translate(),
+                                            "Your changes could not be saved, so the company is still open with them. {0}".TranslateFormat(ex.Message));
+                                        return;
+                                    }
                                 }
                             }
                             await EndTelemetryAndCloseAsync();

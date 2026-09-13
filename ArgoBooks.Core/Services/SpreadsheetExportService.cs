@@ -557,7 +557,9 @@ public class SpreadsheetExportService
         var customerNames = NameLookup(data.Customers, c => c.Id, c => c.Name);
 
         // The same four columns the expenses sheet was missing, for the same reasons.
-        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Status", "Currency" };
+        // Invoice ID ties a revenue to the invoice it was collected on. Without it the invoice's
+        // revenue came back as a stray sale and the importer made a second one for the invoice.
+        var headers = new[] { "ID", "Date", "Customer ID", "Customer Name", "Invoice ID", "Product", "Quantity", "Unit Price", "Tax", "Shipping", "Total", "Reference", "Payment Status", "Kept Deposit", "Currency" };
         var filtered = data.Revenues.Where(s => IsInDateRange(s.Date, startDate, endDate));
         var rows = filtered.Select(s => new object[]
         {
@@ -565,6 +567,7 @@ public class SpreadsheetExportService
             s.Date,
             s.CustomerId ?? "",
             Named(customerNames, s.CustomerId),
+            s.InvoiceId ?? "",
             s.Description,
             s.Quantity,
             s.UnitPrice,
@@ -573,6 +576,7 @@ public class SpreadsheetExportService
             s.Total,
             s.ReferenceNumber,
             s.PaymentStatus.ToString(),
+            s.IsKeptDeposit,
             s.OriginalCurrency
         }).ToList();
         return (headers, rows);
@@ -761,11 +765,11 @@ public class SpreadsheetExportService
         {
             "ID", "Name", "Employee #", "SIN", "Province of Employment", "Pay Type", "Pay Rate",
             "Pay Frequency", "Standard Hours Per Week", "Federal Claim Amount", "Provincial Claim Amount",
-            "Ontario Dependants", "CPP Exempt", "EI Exempt", "Dental Benefit", "Start Date", "End Date",
+            "Federal Claims Zero", "Provincial Claims Zero", "Ontario Dependants", "CPP Exempt", "EI Exempt", "Dental Benefit", "Start Date", "End Date",
             "Street", "City", stateLabel, postalLabel, "Country", "Status", "Notes"
         };
 
-        var rows = data.Employees.Select(e => new object[]
+        var rows = data.Employees.Select(e => new[]
         {
             e.Id,
             e.Name,
@@ -784,6 +788,11 @@ public class SpreadsheetExportService
             e.StandardHoursPerWeek.HasValue ? (object)e.StandardHoursPerWeek.Value : "",
             e.FederalClaimAmount,
             e.ProvincialClaimAmount,
+
+            // A zero amount has always meant no TD1 was filed, so a form claiming nothing needs
+            // its own column to survive the trip.
+            e.FederalClaimIsZero,
+            e.ProvincialClaimIsZero,
 
             // Ontario only, and zero everywhere else. Exported so a sheet round trip does not
             // quietly drop it, the way the per-line invoice discount was being dropped.

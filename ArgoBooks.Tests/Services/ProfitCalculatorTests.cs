@@ -64,6 +64,7 @@ public class ProfitCalculatorTests
         {
             Id = "INV-1",
             Subtotal = 86.91m,
+            TaxAmount = 32.09m,
             Total = 119m,
             OriginalCurrency = "USD"
         });

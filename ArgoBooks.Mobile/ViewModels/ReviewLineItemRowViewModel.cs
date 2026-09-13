@@ -1,7 +1,4 @@
-using System;
 using ArgoBooks.Shared.Mobile;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 
 namespace ArgoBooks.Mobile.ViewModels;
 

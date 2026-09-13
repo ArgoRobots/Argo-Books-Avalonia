@@ -1,16 +1,8 @@
-using System;
-using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Markup.Xaml;
-using Avalonia.Threading;
 using ArgoBooks.Mobile.Services;
 using ArgoBooks.Mobile.ViewModels;
 using ArgoBooks.Mobile.Views;
 using ArgoBooks.Shared.Mobile;
 using ArgoBooks.Shared.Sync;
-using Microsoft.Maui.Storage;
 
 namespace ArgoBooks.Mobile;
 

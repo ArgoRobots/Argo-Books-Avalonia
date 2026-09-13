@@ -8,6 +8,7 @@ using ArgoBooks.Core.Services.Payroll;
 using ArgoBooks.Helpers;
 using ArgoBooks.Localization;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Telemetry;
 using ArgoBooks.Utilities;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -62,6 +63,14 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
 
     [ObservableProperty]
     private string _remittanceDueLabel = "Due to CRA";
+
+    /// <summary>
+    /// What goes to Revenu Quebec for the same pay dates, when there is any. A separate payment
+    /// to a separate agency, so it is named under the CRA figure rather than added to it, and it
+    /// carries no date: Revenu Quebec assigns its own schedule, which this app does not record.
+    /// </summary>
+    [ObservableProperty]
+    private string? _remittanceDueQuebec;
 
     /// <summary>
     /// Which CRA schedule the date above was worked out from, as a tooltip.
@@ -327,7 +336,7 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
                 await File.WriteAllBytesAsync(Path.Combine(directory, name), bytes);
             }
 
-            _ = App.TelemetryManager?.TrackFeatureAsync(Core.Models.Telemetry.FeatureName.PayStubsExported);
+            _ = App.TelemetryManager?.TrackFeatureAsync(FeatureName.PayStubsExported);
         }
         catch (Exception ex)
         {
@@ -466,6 +475,7 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
         YearToDateRemittance = CurrencyService.Format(14850m);
         RemittanceDue = CurrencyService.Format(4950m);
         RemittanceDueLabel = "Due to CRA";
+        RemittanceDueQuebec = null;
 
         // Semi-monthly, all in the past, so nothing reads as a deadline the owner has missed.
         var firstOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
@@ -522,10 +532,12 @@ public partial class PayRunsPageViewModel : SortablePageViewModelBase
         RemitterType remitter = App.CompanyManager?.CompanyData?.Settings.Company.RemitterType
                                 ?? RemitterType.Regular;
 
-        (decimal due, DateTime dueDate) = PayrollService.NextRemittance(_all, DateTime.Today, remitter);
+        (decimal due, decimal quebec, DateTime dueDate) =
+            PayrollService.NextRemittanceByAgency(_all, DateTime.Today, remitter);
 
         RemittanceDue = CurrencyService.Format(due);
         RemittanceDueLabel = $"Due to CRA by {dueDate:d MMMM}";
+        RemittanceDueQuebec = quebec > 0 ? $"Plus {CurrencyService.Format(quebec)} to Revenu Quebec" : null;
         RemittanceScheduleHint =
             $"{remitter.DisplayName()}. {remitter.Description()} Change it under Year end if CRA "
             + "has you on a different schedule.";

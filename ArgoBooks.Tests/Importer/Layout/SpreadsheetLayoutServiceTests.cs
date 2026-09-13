@@ -1,4 +1,3 @@
-using ArgoBooks.Core.Models.AI;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Core.Services.Layout;
 using ClosedXML.Excel;
@@ -21,21 +20,10 @@ public class SpreadsheetLayoutServiceTests
     /// Minimal fake LLM that always returns the same canned response (or null),
     /// and records how many times it was called.
     /// </summary>
-    private sealed class FakeGemini : IGeminiService
+    private sealed class FakeGemini(string? response) : IGeminiService
     {
-        private readonly string? _response;
-        public FakeGemini(string? response) => _response = response;
-
         public bool IsConfigured => true;
-        public int CallCount { get; private set; }
-
-        public Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
-            ReceiptAnalysisRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult<SupplierCategorySuggestion?>(null);
-
-        public Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
-            BankLineCategorizationRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult<List<BankLineSuggestion>?>(null);
+        private int CallCount { get; set; }
 
         public Task<string?> SendChatAsync(
             string systemPrompt, string userPrompt,
@@ -45,15 +33,8 @@ public class SpreadsheetLayoutServiceTests
             long? sizeFeature = null)
         {
             CallCount++;
-            return Task.FromResult(_response);
+            return Task.FromResult(response);
         }
-
-        public Task<string?> SendVisionChatAsync(
-            string systemPrompt, string userPrompt, string base64Image, string mimeType,
-            int maxTokens = 4000, double temperature = 0.1, string? model = null,
-            CancellationToken cancellationToken = default,
-            OperationKind operation = OperationKind.ReceiptScan)
-            => Task.FromResult<string?>(null);
     }
 
     // ─── Sheets matching the canned descriptors ──────────────────────────────

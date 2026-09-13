@@ -790,7 +790,8 @@ public partial class PurchaseOrderDisplayItem : ObservableObject
     /// <summary>
     /// Whether the order can be received.
     /// </summary>
-    public bool CanReceive => Status == PurchaseOrderStatus.OnOrder || Status == PurchaseOrderStatus.Sent || Status == PurchaseOrderStatus.Approved;
+    public bool CanReceive => Status == PurchaseOrderStatus.OnOrder || Status == PurchaseOrderStatus.Sent
+        || Status == PurchaseOrderStatus.Approved || Status == PurchaseOrderStatus.PartiallyReceived;
 
     /// <summary>
     /// Whether the order can be edited.

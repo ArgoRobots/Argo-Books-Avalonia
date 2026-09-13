@@ -3,9 +3,9 @@ using System.Globalization;
 using Avalonia.Threading;
 using ArgoBooks.Core.Data;
 using ArgoBooks.Core.Models.Payroll;
-using ArgoBooks.Core.Models.Telemetry;
 using ArgoBooks.Core.Services;
 using ArgoBooks.Services;
+using ArgoBooks.Shared.Telemetry;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -653,7 +653,14 @@ public partial class PayRunModalsViewModel : ViewModelBase
         // question, "which deadline has not passed yet", and returns the previous period's.
         DateTime due = PayrollService.RemittanceDueFor(_draft.PayDate, remitter);
 
-        RemittanceDueNote = $"Due to CRA by {due:d MMMM yyyy}.";
+        // Quebec income tax, QPP and QPIP are paid to Revenu Quebec, so for a Quebec employee the
+        // total above is two payments and the note names both.
+        decimal quebecShare = _draft.QuebecRemittance;
+
+        RemittanceDueNote = quebecShare == 0m
+            ? $"Due to CRA by {due:d MMMM yyyy}."
+            : $"{CurrencyService.Format(_draft.CraRemittance)} due to CRA by {due:d MMMM yyyy}, "
+              + $"{CurrencyService.Format(quebecShare)} to Revenu Quebec.";
     }
 
     /// <summary>
@@ -772,7 +779,8 @@ public partial class PayRunModalsViewModel : ViewModelBase
             Warnings.Add($"{employee.Name} has reached the QPIP maximum for the year.");
         }
 
-        if (employee.FederalClaimAmount == 0 && employee.ProvincialClaimAmount == 0)
+        if (employee.FederalClaimAmount == 0 && employee.ProvincialClaimAmount == 0
+            && !employee.FederalClaimIsZero && !employee.ProvincialClaimIsZero)
         {
             Warnings.Add($"{employee.Name} has no TD1 on file, so the basic personal amount is used.");
         }

@@ -1,4 +1,5 @@
 using ArgoBooks.Core.Data;
+using ArgoBooks.Core.Enums;
 using ArgoBooks.Core.Models.Common;
 using ArgoBooks.Core.Models.Insights;
 using ArgoBooks.Core.Models.Transactions;
@@ -11,7 +12,8 @@ namespace ArgoBooks.Core.Services;
 /// </summary>
 public class InsightsService(
     ILocalMLForecastingService mlForecastingService,
-    IForecastAccuracyService forecastAccuracyService)
+    IForecastAccuracyService forecastAccuracyService,
+    Func<DateTime>? today = null)
     : IInsightsService
 {
     // Minimum data requirements
@@ -21,6 +23,8 @@ public class InsightsService(
     public InsightsService() : this(new LocalMLForecastingService(), new ForecastAccuracyService())
     {
     }
+
+    private readonly Func<DateTime> _today = today ?? (() => DateTime.Today);
 
     // Anomaly detection thresholds
     private const double ZScoreThreshold = 2.0; // Standard deviations for anomaly
@@ -901,8 +905,13 @@ public class InsightsService(
     /// </summary>
     private static AnalysisDateRange CalculateForecastPeriod(AnalysisDateRange currentRange)
     {
-        // The forecast period is the next period after the current analysis range
         var today = DateTime.Today;
+
+        // A future range, as the Insights page passes ("Next Month"), is itself the period forecast.
+        if (currentRange.StartDate > today)
+            return AnalysisDateRange.Custom(currentRange.StartDate, currentRange.EndDate);
+
+        // A historical range forecasts the period after it
         var periodDays = currentRange.DayCount;
 
         // Start from today (or end of current range if it's in the past)
@@ -1091,7 +1100,8 @@ public class InsightsService(
         }
 
         var productSales = productSalesData
-            .Select(kvp => new { ProductId = kvp.Key, Revenue = kvp.Value.Revenue, RevenueDisplay = kvp.Value.RevenueDisplay, Cost = kvp.Value.Cost, Quantity = kvp.Value.Quantity })
+            .Select(kvp => new { ProductId = kvp.Key, kvp.Value.Revenue, kvp.Value.RevenueDisplay, kvp.Value.Cost,
+                kvp.Value.Quantity })
             .ToList();
 
         if (!productSales.Any()) return null;
@@ -1288,12 +1298,10 @@ public class InsightsService(
     internal static List<decimal> InterpolateMonthlyGaps(Dictionary<DateTime, decimal> knownValues, DateTime startMonth, DateTime endMonth)
     {
         // First pass: collect months with null for gaps
-        var months = new List<DateTime>();
         var values = new List<decimal?>();
         var current = startMonth;
         while (current <= endMonth)
         {
-            months.Add(current);
             values.Add(knownValues.TryGetValue(current, out var amount) ? amount : null);
             current = current.AddMonths(1);
         }
@@ -1417,94 +1425,44 @@ public class InsightsService(
     }
 
     /// <summary>
-    /// Maps a date range (which may be in the future for forecasting) to equivalent historical periods.
-    /// For example, "Next Month" maps to "This Month" (current) and "Last Month" (previous).
+    /// The current and previous periods a trend compares. A future range ("Next Month") maps to
+    /// this month, quarter or year so far, against the same days of the one before, so a
+    /// part-period is never measured against a whole one.
     /// </summary>
-    private static (AnalysisDateRange Current, AnalysisDateRange Previous) GetHistoricalAnalysisPeriods(AnalysisDateRange dateRange)
+    private (AnalysisDateRange Current, AnalysisDateRange Previous) GetHistoricalAnalysisPeriods(AnalysisDateRange dateRange)
     {
-        var today = DateTime.Today;
-        var periodDays = dateRange.DayCount;
+        var today = _today();
+        if (dateRange.StartDate <= today)
+            return (dateRange, dateRange.GetPreviousPeriod());
 
-        // If the date range is in the future or extends into the future, use equivalent historical periods
-        if (dateRange.StartDate > today)
-        {
-            // Future date range - map to historical equivalents
-            // Current period = most recent completed period of same length
-            // Previous period = the period before that
-
-            // Calculate the period length in months (approximate)
-            var periodMonths = Math.Max(1, (int)Math.Round(periodDays / 30.0));
-
-            DateTime currentStart, currentEnd, previousStart, previousEnd;
-
-            if (periodMonths <= 1)
-            {
-                // Monthly period - use this month and last month
-                currentStart = new DateTime(today.Year, today.Month, 1);
-                currentEnd = today;
-                previousStart = currentStart.AddMonths(-1);
-                previousEnd = currentStart.AddDays(-1);
-            }
-            else if (periodMonths <= 3)
-            {
-                // Quarterly period - use this quarter and last quarter
-                var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1);
-                currentStart = quarterStart;
-                currentEnd = today;
-                previousStart = quarterStart.AddMonths(-3);
-                previousEnd = quarterStart.AddDays(-1);
-            }
-            else
-            {
-                // Yearly period - use this year and last year
-                currentStart = new DateTime(today.Year, 1, 1);
-                currentEnd = today;
-                previousStart = new DateTime(today.Year - 1, 1, 1);
-                previousEnd = new DateTime(today.Year - 1, 12, 31);
-            }
-
-            return (
-                AnalysisDateRange.Custom(currentStart, currentEnd),
-                AnalysisDateRange.Custom(previousStart, previousEnd)
-            );
-        }
-
-        // Date range is historical - use as-is with its previous period
-        return (dateRange, dateRange.GetPreviousPeriod());
+        var (preset, current) = GetPeriodSoFar(dateRange, today);
+        var (previousStart, previousEnd) = ComparisonPeriod.For(preset, current.StartDate, current.EndDate);
+        return (current, AnalysisDateRange.Custom(previousStart, previousEnd));
     }
 
     /// <summary>
     /// Gets the historical date range to use for analysis when given a future forecast period.
     /// </summary>
-    private static AnalysisDateRange GetHistoricalDateRange(AnalysisDateRange dateRange)
+    private AnalysisDateRange GetHistoricalDateRange(AnalysisDateRange dateRange)
     {
-        var today = DateTime.Today;
+        var today = _today();
+        return dateRange.StartDate > today ? GetPeriodSoFar(dateRange, today).Range : dateRange;
+    }
 
-        if (dateRange.StartDate > today)
+    /// <summary>
+    /// This month, quarter or year, whichever is nearest the future range's length, up to the end of
+    /// today, since transactions carry a time of day.
+    /// </summary>
+    private static (DateRangePreset Preset, AnalysisDateRange Range) GetPeriodSoFar(AnalysisDateRange futureRange, DateTime today)
+    {
+        var periodMonths = Math.Max(1, (int)Math.Round(futureRange.DayCount / 30.0));
+        var (preset, start) = periodMonths switch
         {
-            // Future date range - use equivalent historical period
-            var periodDays = dateRange.DayCount;
-            var periodMonths = Math.Max(1, (int)Math.Round(periodDays / 30.0));
-
-            if (periodMonths <= 1)
-            {
-                // Use this month
-                return AnalysisDateRange.Custom(new DateTime(today.Year, today.Month, 1), today);
-            }
-            else if (periodMonths <= 3)
-            {
-                // Use this quarter
-                var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1);
-                return AnalysisDateRange.Custom(quarterStart, today);
-            }
-            else
-            {
-                // Use this year
-                return AnalysisDateRange.Custom(new DateTime(today.Year, 1, 1), today);
-            }
-        }
-
-        return dateRange;
+            <= 1 => (DateRangePreset.ThisMonth, new DateTime(today.Year, today.Month, 1)),
+            <= 3 => (DateRangePreset.ThisQuarter, new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1)),
+            _ => (DateRangePreset.ThisYear, new DateTime(today.Year, 1, 1))
+        };
+        return (preset, AnalysisDateRange.Custom(start, today.Date.AddDays(1).AddTicks(-1)));
     }
 
     #endregion
