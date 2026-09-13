@@ -250,7 +250,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// Gets the USD conversion ratio for a transaction's original currency amounts.
     /// Returns the multiplier to convert original currency values to USD equivalents.
     /// </summary>
-    private static decimal GetUSDRatio(Models.Transactions.Transaction txn)
+    private static decimal GetUSDRatio(Transaction txn)
     {
         if (txn.IsPendingConversion) return 0;
         if (string.Equals(txn.OriginalCurrency, "USD", StringComparison.OrdinalIgnoreCase))
@@ -268,7 +268,7 @@ public class AccountingReportDataService(CompanyData? companyData, ReportFilters
     /// DisplayCode.
     /// </summary>
     private Dictionary<string, decimal> GroupTransactionsByCategory(
-        IEnumerable<Models.Transactions.Transaction> transactions)
+        IEnumerable<Transaction> transactions)
     {
         var result = new Dictionary<string, decimal>();
 

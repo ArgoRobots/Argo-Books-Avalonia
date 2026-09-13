@@ -678,7 +678,7 @@ public partial class DashboardPageViewModel : ChartContextMenuViewModelBase, ICl
 
             cts.Token.ThrowIfCancellationRequested();
 
-            var googleSheetsService = new GoogleSheetsService(App.ErrorLogger, App.TelemetryManager);
+            var googleSheetsService = new GoogleSheetsService(App.ErrorLogger);
             var url = await googleSheetsService.ExportFormattedDataToGoogleSheetsAsync(
                 exportData,
                 chartTitle,

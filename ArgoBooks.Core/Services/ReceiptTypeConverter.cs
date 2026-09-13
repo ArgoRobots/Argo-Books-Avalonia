@@ -57,7 +57,7 @@ public static class ReceiptTypeConverter
         if (transaction == null)
             return ReceiptSwitchBlock.NoTransaction;
 
-        if (transaction is Models.Transactions.Revenue revenue)
+        if (transaction is Revenue revenue)
         {
             if (data.Payments.Any(p => p.RevenueId == id))
                 return ReceiptSwitchBlock.HasPayments;
@@ -68,7 +68,7 @@ public static class ReceiptTypeConverter
         if (data.Returns.Any(r => r.OriginalTransactionId == id))
             return ReceiptSwitchBlock.HasReturns;
 
-        if (transaction is Models.Transactions.Expense
+        if (transaction is Expense
             && data.PayRuns.Any(p => p.Lines.Any(l => l.ExpenseId == id)))
             return ReceiptSwitchBlock.UsedByPayRun;
 
@@ -86,7 +86,7 @@ public static class ReceiptTypeConverter
         var existing = Find(data, receipt) ?? throw new InvalidOperationException(
             $"Receipt {receipt.Id} has no transaction to switch.");
 
-        var toRevenue = existing is Models.Transactions.Expense;
+        var toRevenue = existing is Expense;
         var targetType = toRevenue ? CategoryType.Revenue : CategoryType.Expense;
 
         Category? createdCategory = null;
@@ -99,11 +99,11 @@ public static class ReceiptTypeConverter
 
         if (toRevenue)
         {
-            var expense = (Models.Transactions.Expense)existing;
+            var expense = (Expense)existing;
             data.Expenses.Remove(expense);
 
             data.IdCounters.Revenue++;
-            var revenue = new Models.Transactions.Revenue
+            var revenue = new Revenue
             {
                 Id = $"REV-{expense.Date:yyyy}-{data.IdCounters.Revenue:D5}",
                 Subtotal = expense.Amount,
@@ -115,11 +115,11 @@ public static class ReceiptTypeConverter
         }
         else
         {
-            var revenue = (Models.Transactions.Revenue)existing;
+            var revenue = (Revenue)existing;
             data.Revenues.Remove(revenue);
 
             data.IdCounters.Expense++;
-            var expense = new Models.Transactions.Expense
+            var expense = new Expense
             {
                 Id = $"PUR-{revenue.Date:yyyy}-{data.IdCounters.Expense:D5}",
                 SupplierId = ResolveSupplier(data, receipt, out createdSupplier)
@@ -320,7 +320,7 @@ public static class ReceiptTypeConverter
     private static string? ResolveSupplier(CompanyData data, Receipt receipt, out Supplier? created)
     {
         created = null;
-        var name = receipt.Supplier?.Trim();
+        var name = receipt.Supplier.Trim();
         if (string.IsNullOrEmpty(name)) return null;
 
         var match = data.Suppliers.FirstOrDefault(
@@ -340,7 +340,7 @@ public static class ReceiptTypeConverter
     private static string? ResolveCustomer(CompanyData data, Receipt receipt, out Customer? created)
     {
         created = null;
-        var name = receipt.Supplier?.Trim();
+        var name = receipt.Supplier.Trim();
         if (string.IsNullOrEmpty(name)) return null;
 
         var match = data.Customers.FirstOrDefault(
@@ -369,14 +369,14 @@ public static class ReceiptTypeConverter
 
     private static void Add(CompanyData data, Transaction transaction)
     {
-        if (transaction is Models.Transactions.Expense expense) data.Expenses.Add(expense);
-        else if (transaction is Models.Transactions.Revenue revenue) data.Revenues.Add(revenue);
+        if (transaction is Expense expense) data.Expenses.Add(expense);
+        else if (transaction is Revenue revenue) data.Revenues.Add(revenue);
     }
 
     private static void Remove(CompanyData data, Transaction transaction)
     {
-        if (transaction is Models.Transactions.Expense expense) data.Expenses.Remove(expense);
-        else if (transaction is Models.Transactions.Revenue revenue) data.Revenues.Remove(revenue);
+        if (transaction is Expense expense) data.Expenses.Remove(expense);
+        else if (transaction is Revenue revenue) data.Revenues.Remove(revenue);
     }
 
     private static void CopyShared(Transaction from, Transaction to, List<LineItem> lineItems)

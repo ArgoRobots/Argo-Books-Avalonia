@@ -49,8 +49,6 @@ public class PayrollAgainstCraCalculatorTests
     /// </summary>
     public sealed record Expected(decimal? Cpp, decimal? Ei, decimal? FederalTax, decimal? ProvincialTax)
     {
-        public static Expected NotCaptured => new(null, null, null, null);
-
         public bool IsCaptured => Cpp != null && Ei != null && FederalTax != null && ProvincialTax != null;
     }
 

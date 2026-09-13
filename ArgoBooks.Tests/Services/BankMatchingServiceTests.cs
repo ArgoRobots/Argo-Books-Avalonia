@@ -77,7 +77,7 @@ public class BankMatchingServiceTests
         data.Expenses.Add(new Expense { Id = "EXP-1", Total = 50m, Date = date, Description = "x", BankMatched = true });
 
         var line = Line(-50m, date, "x");
-        var result = new BankMatchingService().MatchDeterministic([line], data, new BankMatchingOptions());
+        new BankMatchingService().MatchDeterministic([line], data, new BankMatchingOptions());
 
         Assert.Equal(BankLineMatchStatus.Unmatched, line.MatchStatus);
     }

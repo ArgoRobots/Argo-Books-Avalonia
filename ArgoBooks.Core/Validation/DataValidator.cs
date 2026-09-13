@@ -145,22 +145,6 @@ public partial class DataValidator(CompanyData companyData)
 
     #endregion
 
-    #region Transaction Validation
-
-    #endregion
-
-    #region Entity Validation (continued)
-
-    #endregion
-
-    #region Inventory Validation
-
-    #endregion
-
-    #region Rental Validation
-
-    #endregion
-
     #region Helpers
 
     /// <summary>

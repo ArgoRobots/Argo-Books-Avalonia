@@ -202,16 +202,11 @@ public class UndoRedoManagerTests
 
     #region Mock Classes
 
-    private class MockUndoableAction : IUndoableAction
+    private class MockUndoableAction(string description) : IUndoableAction
     {
-        public string Description { get; }
+        public string Description { get; } = description;
         public bool UndoCalled { get; private set; }
         public bool RedoCalled { get; private set; }
-
-        public MockUndoableAction(string description)
-        {
-            Description = description;
-        }
 
         public void Undo() => UndoCalled = true;
         public void Redo() => RedoCalled = true;

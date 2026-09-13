@@ -17,7 +17,7 @@ public class InsightsSampleSnapshotTests : ModalViewModelTestBase
     private sealed class CountingInsightsService : IInsightsService
     {
         public int InsightsCalls { get; private set; }
-        public int ForecastCalls { get; private set; }
+        private int ForecastCalls { get; set; }
 
         public Task<InsightsData> GenerateInsightsAsync(CompanyData companyData, AnalysisDateRange dateRange)
         {

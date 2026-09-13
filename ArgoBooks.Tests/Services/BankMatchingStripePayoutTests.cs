@@ -17,7 +17,7 @@ public class BankMatchingStripePayoutTests
             new StripePayoutRecord { StripePayoutId = "po_1", AmountCents = 4825, Date = new DateTime(2026, 1, 15) });
 
         var line = new BankStatementLine { Id = "L1", Date = new DateTime(2026, 1, 16), Description = "STRIPE PAYOUT", Amount = 48.25m };
-        var result = new BankMatchingService().MatchDeterministic(new[] { line }, data, new BankMatchingOptions());
+        new BankMatchingService().MatchDeterministic(new[] { line }, data, new BankMatchingOptions());
 
         Assert.Equal(BankLineMatchStatus.Ignored, line.MatchStatus);
         Assert.Contains("Stripe", line.IgnoreReason ?? "");

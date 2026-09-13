@@ -368,7 +368,7 @@ public class T4Tests
     {
         // CRA: the totals are those reported from the slips filed with this summary. An
         // amendment for one employee must not total the other three.
-        CompanyData data = Data(Person("EMP-001", "Dana Smith"), Person("EMP-002", "Alex Jones"));
+        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones"));
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
         data.PayRuns.Add(Run("PR-0002", new DateTime(2026, 7, 3), "EMP-002", 5000m));
 
@@ -535,7 +535,7 @@ public class T4Tests
     {
         // One T4 return carries one summary however many people are on it. Sending the slip
         // count here would tell CRA to expect several returns inside one submission.
-        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones", "046454286"));
+        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones"));
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
 
         PayRun second = Run("PR-0002", new DateTime(2026, 7, 3), "EMP-002", 2000m);
@@ -671,7 +671,7 @@ public class T4Tests
     [Fact]
     public void TheSummaryCountsItsSlips()
     {
-        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones", "046454286"));
+        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones"));
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m));
 
         PayRun second = Run("PR-0002", new DateTime(2026, 7, 3), "EMP-002", 1500m);
@@ -756,7 +756,7 @@ public class T4Tests
         // CRA states QPP must not be included in the CPP totals, and there is no QPP total on
         // the T4 Summary at all: it goes to Revenu Quebec on the RL-1 Summary instead. So a
         // mixed employer totals less here than the sum of their slips, correctly.
-        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones", "046454286"));
+        CompanyData data = Data(Person(), Person("EMP-002", "Alex Jones"));
         data.Employees[1].Province = "QC";
 
         data.PayRuns.Add(Run("PR-0001", new DateTime(2026, 7, 3), "EMP-001", 2000m, cpp: 100m));

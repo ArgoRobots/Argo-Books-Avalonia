@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -185,7 +184,7 @@ public class ChartDisplayCurrencyTests : ModalViewModelTestBase
     }
 
     private static double[] Ys(IEnumerable<ISeries> series) =>
-        series.SelectMany(s => ((IEnumerable)s.Values!).Cast<ObservablePoint>())
+        series.SelectMany(s => s.Values!.Cast<ObservablePoint>())
             .Select(p => p.Y ?? 0)
             .ToArray();
 

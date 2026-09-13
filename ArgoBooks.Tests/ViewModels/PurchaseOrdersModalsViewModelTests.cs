@@ -30,10 +30,10 @@ public class PurchaseOrdersModalsViewModelTests : ModalViewModelTestBase
             Total = 100m,
             OriginalCurrency = "USD",
             TotalUSD = 100m,
-            LineItems = new List<PurchaseOrderLineItem>
-            {
+            LineItems =
+            [
                 new() { ProductId = "P1", Quantity = 1, UnitCost = 100m }
-            }
+            ]
         };
         Company.PurchaseOrders.Add(order);
         return order;

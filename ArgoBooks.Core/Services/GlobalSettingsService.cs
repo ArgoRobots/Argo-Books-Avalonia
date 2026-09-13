@@ -44,7 +44,6 @@ public class GlobalSettingsService : IGlobalSettingsService
         };
     }
 
-    /// <inheritdoc />
     public GlobalSettings GlobalSettings { get; private set; } = new();
 
     /// <summary>
@@ -53,10 +52,8 @@ public class GlobalSettingsService : IGlobalSettingsService
     /// </summary>
     public bool IsFirstRun { get; private set; }
 
-    /// <inheritdoc />
     public CompanySettings? CompanySettings { get; private set; }
 
-    /// <inheritdoc />
     public async Task LoadGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {
         var settingsPath = GetGlobalSettingsPath();
@@ -115,7 +112,6 @@ public class GlobalSettingsService : IGlobalSettingsService
         }
     }
 
-    /// <inheritdoc />
     public async Task SaveGlobalSettingsAsync(CancellationToken cancellationToken = default)
     {
         await _saveLock.WaitAsync(cancellationToken);
@@ -171,7 +167,6 @@ public class GlobalSettingsService : IGlobalSettingsService
         }
     }
 
-    /// <inheritdoc />
     public async Task LoadCompanySettingsAsync(string tempDirectory, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(tempDirectory);
@@ -201,7 +196,6 @@ public class GlobalSettingsService : IGlobalSettingsService
         }
     }
 
-    /// <inheritdoc />
     public async Task SaveCompanySettingsAsync(string tempDirectory, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(tempDirectory);
@@ -220,7 +214,6 @@ public class GlobalSettingsService : IGlobalSettingsService
             cancellationToken);
     }
 
-    /// <inheritdoc />
     public void ClearCompanySettings()
     {
         CompanySettings = null;
@@ -275,7 +268,6 @@ public class GlobalSettingsService : IGlobalSettingsService
         }
     }
 
-    /// <inheritdoc />
     public string GetAppDataPath()
     {
         return _platformService.GetAppDataPath();

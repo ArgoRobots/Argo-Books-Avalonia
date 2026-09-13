@@ -47,14 +47,6 @@ public class SpreadsheetChunkFailureTests
 
         public bool IsConfigured => true;
 
-        public Task<SupplierCategorySuggestion?> GetSupplierCategorySuggestionAsync(
-            ReceiptAnalysisRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult<SupplierCategorySuggestion?>(null);
-
-        public Task<List<BankLineSuggestion>?> GetBankLineSuggestionsAsync(
-            BankLineCategorizationRequest request, CancellationToken cancellationToken = default)
-            => Task.FromResult<List<BankLineSuggestion>?>(null);
-
         public Task<string?> SendChatAsync(
             string systemPrompt, string userPrompt,
             int maxTokens = 4000, double temperature = 0.1,
@@ -81,13 +73,6 @@ public class SpreadsheetChunkFailureTests
                 .Select(r => new { id = r[0], name = r[1] });
             return Task.FromResult<string?>(JsonSerializer.Serialize(customers));
         }
-
-        public Task<string?> SendVisionChatAsync(
-            string systemPrompt, string userPrompt, string base64Image, string mimeType,
-            int maxTokens = 4000, double temperature = 0.1, string? model = null,
-            CancellationToken cancellationToken = default,
-            OperationKind operation = OperationKind.ReceiptScan)
-            => Task.FromResult<string?>(null);
     }
 
     private static async Task<SheetImportResult> ImportAsync(SpreadsheetAnalysisService analysis)

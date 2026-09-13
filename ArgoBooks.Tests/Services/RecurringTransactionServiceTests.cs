@@ -226,7 +226,7 @@ public class RecurringTransactionServiceTests
 
         // A rate that moves by month, so a stale template value would be visible.
         RecurringTransactionService.GenerateDue(data, new DateTime(2026, 3, 15),
-            (decimal amount, string _, DateTime date, out decimal usd) =>
+            (amount, _, date, out usd) =>
             {
                 usd = amount * (0.70m + date.Month * 0.01m);
                 return true;
@@ -245,7 +245,7 @@ public class RecurringTransactionServiceTests
         var (data, _) = WithForeignMonthlyRent(new DateTime(2026, 1, 1));
 
         RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15),
-            (decimal _, string _, DateTime _, out decimal usd) =>
+            (_, _, _, out usd) =>
             {
                 usd = 0m;
                 return false;
@@ -268,7 +268,7 @@ public class RecurringTransactionServiceTests
         var (data, _) = WithMonthlyRent(new DateTime(2026, 1, 1));
 
         RecurringTransactionService.GenerateDue(data, new DateTime(2026, 1, 15),
-            (decimal _, string _, DateTime _, out decimal usd) =>
+            (_, _, _, out usd) =>
             {
                 usd = 0m;
                 return false;

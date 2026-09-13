@@ -650,7 +650,7 @@ public class PayrollServiceTests
             data, new DateTime(2026, 10, 1), RemitterType.Quarterly);
 
         (decimal monthly, _) = PayrollService.NextRemittance(
-            data, new DateTime(2026, 10, 1), RemitterType.Regular);
+            data, new DateTime(2026, 10, 1));
 
         Assert.Equal(new DateTime(2026, 10, 15), due);
 
@@ -683,11 +683,11 @@ public class PayrollServiceTests
     [Fact]
     public void TheDefault_IsStillRegular()
     {
-        var data = new List<PayRun> { RunOn("PR-0001", new DateTime(2026, 8, 14)) };
+        var remitterType = typeof(PayrollService).GetMethod(nameof(PayrollService.NextRemittance))!
+            .GetParameters()
+            .Single(p => p.ParameterType == typeof(RemitterType));
 
-        Assert.Equal(
-            PayrollService.NextRemittance(data, new DateTime(2026, 8, 16), RemitterType.Regular),
-            PayrollService.NextRemittance(data, new DateTime(2026, 8, 16)));
+        Assert.Equal(RemitterType.Regular, (RemitterType)remitterType.DefaultValue!);
     }
 
     #endregion

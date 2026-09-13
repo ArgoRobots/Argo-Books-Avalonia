@@ -17,7 +17,7 @@ namespace ArgoBooks.Core.Services;
 public static class InvoiceMath
 {
     /// <summary>Sum of the line subtotals, each already quantity x price less its own discount.</summary>
-    public static decimal Subtotal(IEnumerable<LineItem> lineItems) =>
+    public static decimal Subtotal(IEnumerable<LineItem>? lineItems) =>
         lineItems?.Sum(li => li.Subtotal) ?? 0m;
 
     /// <summary>The invoice-level discount in money, capped at the subtotal it comes off.</summary>

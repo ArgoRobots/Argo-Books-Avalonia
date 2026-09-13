@@ -25,8 +25,6 @@ public static class InvoiceTotalsService
     public static void RecalculateFromPayments(
         Invoice invoice, IEnumerable<Payment> allPayments)
     {
-        if (invoice == null) return;
-
         // Normalize currency comparison: treat null/empty as "USD" and
         // compare case-insensitively. This matches the historical inline
         // logic in PaymentPortalService.
@@ -97,7 +95,6 @@ public static class InvoiceTotalsService
     /// </summary>
     public static void RecalculateStatus(Invoice invoice)
     {
-        if (invoice == null) return;
         var hasPayments = invoice.AmountPaid > 0 || invoice.AmountRefunded > 0;
         if (invoice.Status == InvoiceStatus.Draft
             || invoice.Status == InvoiceStatus.Pending

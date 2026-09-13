@@ -39,13 +39,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
         // date the refund was issued. Same-day refund nets to 0; multi-day
         // leaves the original day's revenue intact and shows a negative on
         // the refund's day.
-        if (companyData.Payments != null)
+        foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
+                     companyData.Payments, startDate, endDate))
         {
-            foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
-                         companyData.Payments, startDate, endDate))
-            {
-                grossByDay[day] = (grossByDay.TryGetValue(day, out var v) ? v : 0m) - refunded;
-            }
+            grossByDay[day] = (grossByDay.TryGetValue(day, out var v) ? v : 0m) - refunded;
         }
 
         return grossByDay
@@ -285,13 +282,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveTotalUSD));
             // Subtract refunds cash-basis on the refund's day so the Revenue
             // series matches the standalone Revenue chart and stat card.
-            if (companyData.Payments != null)
+            foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
+                         companyData.Payments, startDate, endDate))
             {
-                foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
-                             companyData.Payments, startDate, endDate))
-                {
-                    revByDay[day] = revByDay.GetValueOrDefault(day, 0) - (double)refunded;
-                }
+                revByDay[day] = revByDay.GetValueOrDefault(day, 0) - (double)refunded;
             }
             var expByDay = companyData.Expenses
                 .Where(p => p.Date >= startDate && p.Date <= endDate)
@@ -357,10 +351,8 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
                 .Sum(s => s.EffectiveTotalUSD);
             // Subtract refunds within the same clamped window so the Revenue
             // series nets out refunds the same way other revenue surfaces do.
-            var refunds = companyData.Payments != null
-                ? (double)RefundAggregator.GetRefundedInDateRangeUSD(
-                    companyData.Payments, clampedStart, clampedEnd)
-                : 0;
+            var refunds = (double)RefundAggregator.GetRefundedInDateRangeUSD(
+                companyData.Payments, clampedStart, clampedEnd);
 
             return new ChartDataPoint
             {
@@ -410,13 +402,10 @@ public class ReportChartDataService(CompanyData? companyData, ReportFilters filt
             .GroupBy(s => s.Date.Date)
             .ToDictionary(g => g.Key, g => (double)g.Sum(s => s.EffectiveTotalUSD));
         // Subtract refunds cash-basis on the refund's day, as GetRevenueVsExpenses does.
-        if (companyData.Payments != null)
+        foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
+                     companyData.Payments, startDate, endDate))
         {
-            foreach (var (day, refunded) in RefundAggregator.GroupRefundsByDayUSD(
-                         companyData.Payments, startDate, endDate))
-            {
-                salesByDay[day] = salesByDay.GetValueOrDefault(day, 0) - (double)refunded;
-            }
+            salesByDay[day] = salesByDay.GetValueOrDefault(day, 0) - (double)refunded;
         }
 
         var purchasesByDay = companyData.Expenses

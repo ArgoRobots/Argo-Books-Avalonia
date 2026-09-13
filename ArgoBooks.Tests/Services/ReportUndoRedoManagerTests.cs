@@ -497,7 +497,7 @@ public class ReportUndoRedoManagerTests
         config.RemoveElement(middle.Id);
         manager.Undo();
 
-        Assert.Equal(new[] { back.Id, middle.Id, front.Id }, config.GetElementsByZOrder().Select(e => e.Id));
+        Assert.Equal([back.Id, middle.Id, front.Id], config.GetElementsByZOrder().Select(e => e.Id));
     }
 
     #endregion
@@ -544,7 +544,7 @@ public class ReportUndoRedoManagerTests
         RemoveElementsAction.RemoveAndRecord(config, [first, second], manager);
         manager.Undo();
 
-        Assert.Equal(new[] { kept.Id, first.Id, second.Id }, config.GetElementsByZOrder().Select(e => e.Id));
+        Assert.Equal([kept.Id, first.Id, second.Id], config.GetElementsByZOrder().Select(e => e.Id));
         Assert.Equal(2, config.GetElementById(second.Id)!.PageNumber);
         Assert.Equal(30, config.GetElementById(second.Id)!.X);
     }
@@ -565,7 +565,7 @@ public class ReportUndoRedoManagerTests
         manager.Undo();
         manager.Redo();
 
-        Assert.Equal(new[] { second.Id }, config.Elements.Select(e => e.Id));
+        Assert.Equal([second.Id], config.Elements.Select(e => e.Id));
     }
 
     [Fact]
@@ -583,16 +583,11 @@ public class ReportUndoRedoManagerTests
 
     #region Mock Classes
 
-    private class MockAction : IReportUndoableAction
+    private class MockAction(string description) : IReportUndoableAction
     {
-        public string Description { get; }
+        public string Description { get; } = description;
         public bool UndoCalled { get; private set; }
         public bool RedoCalled { get; private set; }
-
-        public MockAction(string description)
-        {
-            Description = description;
-        }
 
         public void Undo() => UndoCalled = true;
         public void Redo() => RedoCalled = true;

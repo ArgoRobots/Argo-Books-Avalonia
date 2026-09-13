@@ -100,7 +100,6 @@ public static class RecurringInvoiceService
     public static IReadOnlyList<Invoice> GenerateDueInvoices(CompanyData data, DateTime today)
     {
         var generated = new List<Invoice>();
-        if (data == null) return generated;
 
         var asOfDate = today.Date;
         var idGenerator = new IdGenerator(data);

@@ -154,10 +154,6 @@ public class ReportTableDataService(CompanyData? companyData, ReportFilters filt
 
     #endregion
 
-    #region Combined Data
-
-    #endregion
-
     #region Invoices Data
 
     public List<InvoiceTableRow> GetInvoicesTableData(TableReportElement tableConfig)

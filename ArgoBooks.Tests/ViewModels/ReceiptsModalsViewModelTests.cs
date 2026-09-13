@@ -15,7 +15,7 @@ public class ReceiptsModalsViewModelTests : ModalViewModelTestBase
     {
         IsApproved = true,
         IsRevenueOverride = false,
-        LineItemProductIds = new List<string?> { null },
+        LineItemProductIds = [null],
         ScanResult = new ReceiptScanResult
         {
             TotalAmount = total,
@@ -24,10 +24,10 @@ public class ReceiptsModalsViewModelTests : ModalViewModelTestBase
             SupplierName = "Acme",
             TransactionDate = date ?? new DateTime(2026, 3, 1),
             PaymentMethod = "Cash",
-            LineItems = new List<ScannedLineItem>
-            {
+            LineItems =
+            [
                 new() { Description = "Item", Quantity = 1, UnitPrice = total }
-            }
+            ]
         }
     };
 
@@ -128,7 +128,7 @@ public class ReceiptsModalsViewModelTests : ModalViewModelTestBase
         CreateSuggestedSupplier(vm, "Acme");
         CreateSuggestedProduct(vm, "Onions");
         item.SelectedSupplierId = Company.Suppliers.Single().Id;
-        item.LineItemProductIds = [Company.Products!.Single().Id];
+        item.LineItemProductIds = [Company.Products.Single().Id];
 
         await vm.CreateAllApprovedTransactionsCommand.ExecuteAsync(null);
         Assert.Single(Company.Suppliers);

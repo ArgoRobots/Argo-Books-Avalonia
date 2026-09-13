@@ -304,7 +304,7 @@ public class SampleCompanyService
     private static void RemoveAutoCreatedInvoiceRevenues(CompanyData data)
     {
         data.Revenues.RemoveAll(r =>
-            r.Notes != null && r.Notes.Contains("Auto-created from imported invoice"));
+            r.Notes.Contains("Auto-created from imported invoice"));
     }
 
     /// <summary>

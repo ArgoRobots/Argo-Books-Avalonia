@@ -111,7 +111,7 @@ public class RecurringInvoiceServiceTests
     {
         var data = new CompanyData();
         // Starts on Jan 31. Occurrences due by Apr 15: Jan 31, Feb 28, Mar 31 (Apr 30 is not yet due).
-        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 31), Frequency.Monthly));
+        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 31)));
 
         var generated = RecurringInvoiceService.GenerateDueInvoices(data, new DateTime(2026, 4, 15));
 
@@ -127,7 +127,7 @@ public class RecurringInvoiceServiceTests
     {
         var data = new CompanyData();
         // Jan 15 and Feb 15 are on/before Feb 20; Mar 15 is not.
-        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 15), Frequency.Monthly));
+        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 15)));
 
         var generated = RecurringInvoiceService.GenerateDueInvoices(data, new DateTime(2026, 2, 20));
 
@@ -144,7 +144,7 @@ public class RecurringInvoiceServiceTests
     public void GenerateDueInvoices_IsIdempotent()
     {
         var data = new CompanyData();
-        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 15), Frequency.Monthly));
+        data.RecurringInvoices.Add(MakeSchedule(new DateTime(2026, 1, 15)));
 
         var asOf = new DateTime(2026, 2, 20);
         var first = RecurringInvoiceService.GenerateDueInvoices(data, asOf);
@@ -173,7 +173,7 @@ public class RecurringInvoiceServiceTests
         var data = new CompanyData();
         // Ends the same day as the first occurrence: generate that one, then complete.
         data.RecurringInvoices.Add(MakeSchedule(
-            new DateTime(2026, 1, 15), Frequency.Monthly, endDate: new DateTime(2026, 1, 15)));
+            new DateTime(2026, 1, 15), endDate: new DateTime(2026, 1, 15)));
 
         var generated = RecurringInvoiceService.GenerateDueInvoices(data, new DateTime(2026, 6, 1));
 

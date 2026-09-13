@@ -239,7 +239,7 @@ public class T4Service
             problems.Add("A contact name is required on the T4 Summary, so CRA knows who to call.");
         }
 
-        if (new string((t4.ContactPhone ?? string.Empty).Where(char.IsAsciiDigit).ToArray()).Length < 10)
+        if (new string(t4.ContactPhone.Where(char.IsAsciiDigit).ToArray()).Length < 10)
         {
             problems.Add("A ten digit contact phone number is required on the T4 Summary.");
         }
@@ -422,8 +422,7 @@ public class T4Service
     /// </summary>
     private static (string Surname, string Given, string Initial) SplitName(string name)
     {
-        string[] parts = (name ?? string.Empty)
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        string[] parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         return parts.Length switch
         {

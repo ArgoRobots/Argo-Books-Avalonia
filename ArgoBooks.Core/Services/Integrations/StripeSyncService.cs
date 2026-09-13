@@ -23,32 +23,29 @@ public record StripeSyncPreview(
 /// works for manual payouts too. Preview is read-only; import writes the records, remembers
 /// the payouts, and advances the cursor.
 /// </summary>
-public class StripeSyncService
+public class StripeSyncService(StripeApiClient client)
 {
-    private readonly StripeApiClient _client;
-    public StripeSyncService(StripeApiClient client) => _client = client;
-
     public async Task<StripeSyncPreview> PreviewAsync(CompanyData data, CancellationToken ct = default)
     {
         var stripe = data.Settings.Integrations.Stripe;
         if (string.IsNullOrWhiteSpace(stripe.ApiKey))
             return Empty();
 
-        var rawCharges = await _client.FetchChargesUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
+        var rawCharges = await client.FetchChargesUntilAsync(stripe.ApiKey!, stripe.LastSyncCursor, ct);
         var newCursor = rawCharges.Count > 0 ? rawCharges[0].ChargeId : stripe.LastSyncCursor;
 
         // A charge's own expanded balance_transaction can silently yield a zero fee, so fill fees
         // from the balance-transactions list (the reliable source), keyed by charge id.
         var feeMap = rawCharges.Count > 0
-            ? await _client.FetchChargeFeesAsync(stripe.ApiKey!, ct)
-            : (IReadOnlyDictionary<string, StripeFee>)new Dictionary<string, StripeFee>();
+            ? await client.FetchChargeFeesAsync(stripe.ApiKey!, ct)
+            : new Dictionary<string, StripeFee>();
         var charges = rawCharges
             .Select(c => feeMap.TryGetValue(c.ChargeId, out var fee) && fee.Cents > c.FeeCents
                 ? c with { FeeCents = fee.Cents, FeeCurrency = fee.Currency ?? c.FeeCurrency }
                 : c)
             .ToList();
 
-        var payouts = await _client.FetchPayoutsAsync(stripe.ApiKey!, ct);
+        var payouts = await client.FetchPayoutsAsync(stripe.ApiKey!, ct);
         var known = new HashSet<string>(stripe.ImportedPayouts.Select(p => p.StripePayoutId), StringComparer.Ordinal);
         var newPayouts = payouts
             .Where(p => !known.Contains(p.Id) && p.Status is not ("canceled" or "failed"))

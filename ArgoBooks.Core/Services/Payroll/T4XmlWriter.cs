@@ -98,7 +98,7 @@ public static class T4XmlWriter
     /// </summary>
     private static string SubmissionReference(T4Return t4)
     {
-        string digits = new((t4.PayrollAccountNumber ?? string.Empty).Where(char.IsAsciiDigit).ToArray());
+        string digits = new(t4.PayrollAccountNumber.Where(char.IsAsciiDigit).ToArray());
         string tail = digits.Length >= 4 ? digits[^4..] : digits.PadLeft(4, '0');
 
         return $"{t4.TaxYear.ToString(CultureInfo.InvariantCulture)}{tail}";

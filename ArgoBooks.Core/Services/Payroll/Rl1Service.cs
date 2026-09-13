@@ -14,11 +14,9 @@ namespace ArgoBooks.Core.Services.Payroll;
 /// filed only for Quebec employees, so a mixed employer's two returns list different people and
 /// their totals are supposed to disagree.
 /// </summary>
-public class Rl1Service
+public class Rl1Service(PayrollRateService? rates = null)
 {
-    private readonly PayrollRateService _rates;
-
-    public Rl1Service(PayrollRateService? rates = null) => _rates = rates ?? new PayrollRateService();
+    private readonly PayrollRateService _rates = rates ?? new PayrollRateService();
 
     /// <summary>
     /// Assembles the return. Quebec employees only. Drafts are excluded here and refused
@@ -253,7 +251,7 @@ public class Rl1Service
     /// </summary>
     private static (string Surname, string Given) SplitName(string name)
     {
-        string[] parts = (name ?? string.Empty)
+        string[] parts = (name)
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         return parts.Length switch

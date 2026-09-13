@@ -1100,7 +1100,8 @@ public class InsightsService(
         }
 
         var productSales = productSalesData
-            .Select(kvp => new { ProductId = kvp.Key, Revenue = kvp.Value.Revenue, RevenueDisplay = kvp.Value.RevenueDisplay, Cost = kvp.Value.Cost, Quantity = kvp.Value.Quantity })
+            .Select(kvp => new { ProductId = kvp.Key, kvp.Value.Revenue, kvp.Value.RevenueDisplay, kvp.Value.Cost,
+                kvp.Value.Quantity })
             .ToList();
 
         if (!productSales.Any()) return null;
@@ -1297,12 +1298,10 @@ public class InsightsService(
     internal static List<decimal> InterpolateMonthlyGaps(Dictionary<DateTime, decimal> knownValues, DateTime startMonth, DateTime endMonth)
     {
         // First pass: collect months with null for gaps
-        var months = new List<DateTime>();
         var values = new List<decimal?>();
         var current = startMonth;
         while (current <= endMonth)
         {
-            months.Add(current);
             values.Add(knownValues.TryGetValue(current, out var amount) ? amount : null);
             current = current.AddMonths(1);
         }

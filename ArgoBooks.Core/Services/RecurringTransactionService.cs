@@ -65,7 +65,7 @@ internal sealed class OccurrenceSnapshot
         _quantity = target.Quantity;
         _unitPrice = target.UnitPrice;
         _amount = target.Amount;
-        _subtotal = target is Models.Transactions.Revenue revenue ? revenue.Subtotal : 0m;
+        _subtotal = target is Revenue revenue ? revenue.Subtotal : 0m;
         _total = target.Total;
         _originalCurrency = target.OriginalCurrency;
         _totalUsd = target.TotalUSD;
@@ -89,7 +89,7 @@ internal sealed class OccurrenceSnapshot
         _target.Quantity = _quantity;
         _target.UnitPrice = _unitPrice;
         _target.Amount = _amount;
-        if (_target is Models.Transactions.Revenue revenue)
+        if (_target is Revenue revenue)
             revenue.Subtotal = _subtotal;
         _target.Total = _total;
         _target.OriginalCurrency = _originalCurrency;
@@ -284,7 +284,7 @@ public static class RecurringTransactionService
                 target.Quantity = template.Quantity;
                 target.UnitPrice = template.UnitPrice;
                 target.Amount = template.Amount;
-                if (target is Models.Transactions.Revenue revenue)
+                if (target is Revenue revenue)
                     revenue.Subtotal = template.Amount;
 
                 // The edit form rebuilds the subtotal from the line items, so a line left at the
@@ -420,7 +420,7 @@ public static class RecurringTransactionService
         data.PendingConversions.Add(new PendingConversion
         {
             TransactionId = entry.Id,
-            TransactionType = entry is Models.Transactions.Revenue ? "Revenue" : "Expense",
+            TransactionType = entry is Revenue ? "Revenue" : "Expense",
             OriginalCurrency = entry.OriginalCurrency,
             TransactionDate = occurrence,
             Total = entry.Total,

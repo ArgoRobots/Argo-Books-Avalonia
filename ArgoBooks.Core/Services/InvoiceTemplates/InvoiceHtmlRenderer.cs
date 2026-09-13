@@ -49,6 +49,7 @@ public partial class InvoiceHtmlRenderer
     /// <param name="template">The template to use for rendering.</param>
     /// <param name="companyData">Company data for company info and customer lookup.</param>
     /// <param name="currencySymbol">Currency symbol to use (defaults to $).</param>
+    /// <param name="editable">True when rendering for the in-app editor, which keeps the tax, shipping and discount rows and the on-paper input fields.</param>
     /// <returns>The rendered HTML string.</returns>
     public string RenderInvoice(
         Invoice invoice,
@@ -169,7 +170,7 @@ public partial class InvoiceHtmlRenderer
         // Bill to
         sb.AppendLine("BILL TO:");
         sb.AppendLine(customer?.Name ?? "Unknown Customer");
-        var customerAddress = customer?.Address?.ToString();
+        var customerAddress = customer?.Address.ToString();
         if (!string.IsNullOrWhiteSpace(customerAddress))
             sb.AppendLine(customerAddress);
         if (!string.IsNullOrWhiteSpace(customer?.Email))
@@ -405,7 +406,7 @@ public partial class InvoiceHtmlRenderer
 
             // The footer is where the customer message lives: the invoice's Notes, falling back to the
             // template's default footer text when the user hasn't set notes. Editable on the paper.
-            ["FooterOrNotes"] = !string.IsNullOrEmpty(invoice.Notes) ? invoice.Notes : (template.FooterText ?? string.Empty),
+            ["FooterOrNotes"] = !string.IsNullOrEmpty(invoice.Notes) ? invoice.Notes : (template.FooterText),
             // ISO dates so the paper's date editor (an <input type=date>) can pre-fill.
             ["IssueDateIso"] = invoice.IssueDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
             ["DueDateIso"] = invoice.DueDate.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture),
@@ -620,13 +621,10 @@ public partial class InvoiceHtmlRenderer
     private static string BuildProcessingFeeLabel(CompanySettings companySettings)
     {
         var providers = new List<string>();
-        var accounts = companySettings.PaymentPortal?.ConnectedAccounts;
-        if (accounts != null)
-        {
-            if (accounts.StripeConnected) providers.Add("Stripe");
-            if (accounts.PaypalConnected) providers.Add("PayPal");
-            if (accounts.SquareConnected) providers.Add("Square");
-        }
+        var accounts = companySettings.PaymentPortal.ConnectedAccounts;
+        if (accounts.StripeConnected) providers.Add("Stripe");
+        if (accounts.PaypalConnected) providers.Add("PayPal");
+        if (accounts.SquareConnected) providers.Add("Square");
 
         var providerName = providers.Count > 0 ? string.Join(" / ", providers) : "Payment";
         return $"{providerName} processing fee";
@@ -639,8 +637,7 @@ public partial class InvoiceHtmlRenderer
     /// </summary>
     private static bool IsPortalConfigured(CompanySettings companySettings)
     {
-        var accounts = companySettings.PaymentPortal?.ConnectedAccounts;
-        if (accounts == null) return false;
+        var accounts = companySettings.PaymentPortal.ConnectedAccounts;
         return accounts.StripeConnected || accounts.PaypalConnected || accounts.SquareConnected;
     }
 

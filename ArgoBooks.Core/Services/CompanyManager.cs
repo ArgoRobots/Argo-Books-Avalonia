@@ -1339,7 +1339,7 @@ public class CompanyManager : IDisposable
         if (CompanyData == null || _currentTempDirectory == null)
             throw new InvalidOperationException("No company is currently open.");
 
-        var trimmed = newId?.Trim() ?? string.Empty;
+        var trimmed = newId.Trim();
         if (string.IsNullOrEmpty(trimmed))
             throw new ArgumentException("Customer ID cannot be empty.", nameof(newId));
 
@@ -1394,7 +1394,7 @@ public class CompanyManager : IDisposable
         if (CompanyData == null)
             throw new InvalidOperationException("No company is currently open.");
 
-        var trimmed = newId?.Trim() ?? string.Empty;
+        var trimmed = newId.Trim();
         if (string.IsNullOrEmpty(trimmed))
             throw new ArgumentException("Supplier ID cannot be empty.", nameof(newId));
 
@@ -1439,7 +1439,7 @@ public class CompanyManager : IDisposable
         if (CompanyData == null)
             throw new InvalidOperationException("No company is currently open.");
 
-        var trimmed = newId?.Trim() ?? string.Empty;
+        var trimmed = newId.Trim();
         if (string.IsNullOrEmpty(trimmed))
             throw new ArgumentException("Product ID cannot be empty.", nameof(newId));
 
@@ -1733,8 +1733,8 @@ public class CompanyManager : IDisposable
             // forecast backtest. This save writes none of those files, so the markers stay as the
             // temp copy has them; writing the new ones would make the next open skip that work.
             var onDisk = await _fileService.ReadJsonAsync<CompanySettings>(companyDir, "appSettings.json", cancellationToken);
-            var settings = System.Text.Json.JsonSerializer.Deserialize<CompanySettings>(
-                System.Text.Json.JsonSerializer.Serialize(CompanyData.Settings, FileService.JsonOptions),
+            var settings = JsonSerializer.Deserialize<CompanySettings>(
+                JsonSerializer.Serialize(CompanyData.Settings, FileService.JsonOptions),
                 FileService.JsonOptions)!;
             settings.InvoiceTotalsHealedVersion = onDisk?.InvoiceTotalsHealedVersion;
             settings.RevenuePaymentsMigratedVersion = onDisk?.RevenuePaymentsMigratedVersion;
@@ -1897,7 +1897,7 @@ public class CompanyOpenedEventArgs(string companyName, string filePath, bool is
 /// <summary>
 /// Event args for password required event.
 /// </summary>
-public class PasswordRequiredEventArgs() : EventArgs
+public class PasswordRequiredEventArgs : EventArgs
 {
     public string? Password { get; set; }
     public bool IsCancelled { get; set; }

@@ -7,7 +7,7 @@ namespace ArgoBooks.Core.Services;
 /// Service for tracking and enforcing receipt scan usage limits.
 /// Communicates with the server API to track usage per license key.
 /// </summary>
-public class ReceiptUsageService : IReceiptUsageService, IDisposable
+public class ReceiptUsageService : IReceiptUsageService
 {
     private static readonly string UsageApiUrl = $"{ApiConfig.BaseUrl}/api/receipt/usage.php";
 

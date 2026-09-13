@@ -43,7 +43,7 @@ public class TelemetryStorageService : ITelemetryStorageService
     /// <inheritdoc />
     public async Task RecordEventAsync(TelemetryEvent telemetryEvent, CancellationToken cancellationToken = default)
     {
-        await WithFreshStateAsync<bool>(async () =>
+        await WithFreshStateAsync(async () =>
         {
             var wrapper = new TelemetryEventWrapper
             {
@@ -77,7 +77,7 @@ public class TelemetryStorageService : ITelemetryStorageService
     /// <inheritdoc />
     public async Task<IReadOnlyList<TelemetryEvent>> GetPendingEventsAsync(CancellationToken cancellationToken = default)
     {
-        return await WithFreshStateAsync<IReadOnlyList<TelemetryEvent>>(() =>
+        return await WithFreshStateAsync(() =>
         {
             IReadOnlyList<TelemetryEvent> pending = _events
                 .Where(e => !e.Event.IsUploaded)
@@ -94,7 +94,7 @@ public class TelemetryStorageService : ITelemetryStorageService
     {
         var idSet = dataIds.ToHashSet();
 
-        await WithFreshStateAsync<bool>(async () =>
+        await WithFreshStateAsync(async () =>
         {
             // Counted from what this call actually flipped, not from the id set. A sibling
             // instance may have uploaded some of these already, and adding the whole set
@@ -264,12 +264,19 @@ public class TelemetryStorageService : ITelemetryStorageService
         try
         {
             await using var stream = File.OpenRead(path);
-            var loaded = await JsonSerializer.DeserializeAsync<List<TelemetryEventWrapper>>(stream, _jsonOptions, cancellationToken);
+            var loaded = await JsonSerializer.DeserializeAsync<List<StoredEventWrapper>>(stream, _jsonOptions, cancellationToken);
 
             // The converter answers an event it cannot read with null. Kept, that entry broke
             // every query over the list, all of which read Event, so pending events stopped
             // uploading for good. Dropping it costs that one event and nothing else.
-            _events = loaded?.Where(e => e.Event != null).ToList() ?? [];
+            var events = new List<TelemetryEventWrapper>();
+            foreach (var stored in loaded ?? [])
+            {
+                if (stored.Event is { } telemetryEvent)
+                    events.Add(new TelemetryEventWrapper { DataType = stored.DataType, Event = telemetryEvent });
+            }
+
+            _events = events;
             return true;
         }
         catch (Exception ex)
@@ -415,7 +422,7 @@ public class TelemetryStorageService : ITelemetryStorageService
     /// <inheritdoc />
     public async Task<string?> SaveBackupFileAsync(CancellationToken cancellationToken = default)
     {
-        return await WithFreshStateAsync<string?>(async () =>
+        return await WithFreshStateAsync(async () =>
         {
             var pendingEvents = _events
                 .Where(e => !e.Event.IsUploaded)
@@ -471,6 +478,17 @@ public class TelemetryStorageService : ITelemetryStorageService
 
         [JsonConverter(typeof(TelemetryEventConverter))]
         public TelemetryEvent Event { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// A wrapper as read from disk, where Event is null if the converter could not read it.
+    /// </summary>
+    private class StoredEventWrapper
+    {
+        public TelemetryDataType DataType { get; set; }
+
+        [JsonConverter(typeof(TelemetryEventConverter))]
+        public TelemetryEvent? Event { get; set; }
     }
 
     private class UploadState

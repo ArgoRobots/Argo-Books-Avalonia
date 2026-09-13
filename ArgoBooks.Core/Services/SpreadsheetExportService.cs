@@ -769,7 +769,7 @@ public class SpreadsheetExportService
             "Street", "City", stateLabel, postalLabel, "Country", "Status", "Notes"
         };
 
-        var rows = data.Employees.Select(e => new object[]
+        var rows = data.Employees.Select(e => new[]
         {
             e.Id,
             e.Name,

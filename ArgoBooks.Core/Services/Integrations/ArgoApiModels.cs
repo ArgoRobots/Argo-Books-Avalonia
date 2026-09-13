@@ -145,9 +145,7 @@ public record ArgoApiError(
 public record ArgoErrorEnvelope([property: JsonPropertyName("error")] ArgoApiError Error);
 
 /// <summary>Thrown when /v1 returns a structured error, so callers can show its message.</summary>
-public class ArgoApiException : Exception
+public class ArgoApiException(string code, string message) : Exception(message)
 {
-    public string Code { get; }
-
-    public ArgoApiException(string code, string message) : base(message) => Code = code;
+    public string Code { get; } = code;
 }

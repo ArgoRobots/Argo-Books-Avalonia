@@ -29,8 +29,8 @@ public class RefundPreTaxMathTests
         };
         var byId = new Dictionary<string, Invoice> { ["INV-1"] = invoice };
 
-        var preTax = RefundAggregator.GetRefundedPreTaxInDateRangeUSD(new[] { refund }, byId, Start, End);
-        var gross = RefundAggregator.GetRefundedInDateRangeUSD(new[] { refund }, Start, End);
+        var preTax = RefundAggregator.GetRefundedPreTaxInDateRangeUSD([refund], byId, Start, End);
+        var gross = RefundAggregator.GetRefundedInDateRangeUSD([refund], Start, End);
 
         Assert.Equal(86.91m, Math.Round(preTax, 2));
         Assert.Equal(119m, gross); // gross revenue subtraction is the full amount
@@ -46,7 +46,7 @@ public class RefundPreTaxMathTests
         };
 
         var preTax = RefundAggregator.GetRefundedPreTaxInDateRangeUSD(
-            new[] { refund }, new Dictionary<string, Invoice>(), Start, End);
+            [refund], new Dictionary<string, Invoice>(), Start, End);
 
         Assert.Equal(50m, preTax);
     }
@@ -98,7 +98,7 @@ public class RefundPreTaxMathTests
         var invoice = DiscountedInvoice();
         var byId = new Dictionary<string, Invoice> { [invoice.Id] = invoice };
 
-        var preTax = RefundAggregator.GetRefundedPreTaxInDateRangeUSD(new[] { FullRefundOf(invoice) }, byId, Start, End);
+        var preTax = RefundAggregator.GetRefundedPreTaxInDateRangeUSD([FullRefundOf(invoice)], byId, Start, End);
 
         Assert.Equal(50m, preTax);
     }
